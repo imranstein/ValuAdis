@@ -92,6 +92,8 @@ coverage/
 # Documentation (as requested)
 Docs/
 .windsurf/
+.agent/
+.cursor/
 
 # Logs
 logs/
