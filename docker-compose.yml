@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: valuadis_db
+    environment:
+      POSTGRES_DB: valuadis
+      POSTGRES_USER: valuadis_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - valuadis_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U valuadis_user -d valuadis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: valuadis_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "6379:6379"
+    networks:
+      - valuadis_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: valuadis_backend
+    environment:
+      DATABASE_URL: postgresql://valuadis_user:${DB_PASSWORD:-changeme}@db:5432/valuadis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY:-}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET:-}
+      MPESA_SHORTCODE: ${MPESA_SHORTCODE:-}
+      MPESA_PASSKEY: ${MPESA_PASSKEY:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - valuadis_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: valuadis_frontend
+    environment:
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8000/api/v1}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - valuadis_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  valuadis_network:
+    driver: bridge
