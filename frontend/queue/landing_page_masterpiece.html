@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuAdis - Valuation Clarified</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        "ethiopian-green": "#078160",
+                        "addis-blue": "#0A1128",
+                        "nano-banana": "#FFE135",
+                        "glass-border": "rgba(255, 255, 255, 0.1)",
+                        "glass-bg": "rgba(10, 17, 40, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(10, 17, 40, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #ffffff, #94a3b8);
+        }
+
+        /* Smooth reveal for sections */
+        .reveal-section {
+            position: relative;
+            z-index: 1;
+        }
+
+        .grid-bg {
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="font-display antialiased selection:bg-ethiopian-green selection:text-white">
+<!-- Day Mode: Hero Section -->
+<section class="relative min-h-screen w-full flex flex-col bg-white overflow-hidden">
+<!-- Minimal Nav -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-6 py-6 md:px-12 backdrop-blur-sm bg-white/50 border-b border-gray-100">
+<div class="flex items-center gap-2 text-ethiopian-green">
+<span class="material-symbols-outlined text-3xl">token</span>
+<span class="text-xl font-bold tracking-tight text-gray-900">ValuAdis</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-gray-600 hover:text-ethiopian-green transition-colors" href="#">Vision</a>
+<a class="text-sm font-medium text-gray-600 hover:text-ethiopian-green transition-colors" href="#">Methodology</a>
+<a class="text-sm font-medium text-gray-600 hover:text-ethiopian-green transition-colors" href="#">Compliance</a>
+</div>
+<button class="bg-ethiopian-green text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-[#066a4e] transition-all shadow-lg shadow-ethiopian-green/20">
+                Get Valuated
+            </button>
+</nav>
+<!-- Hero Content -->
+<div class="flex-1 flex flex-col lg:flex-row items-center justify-center px-6 md:px-12 pt-24 pb-12 max-w-[1400px] mx-auto w-full gap-12">
+<!-- Typography Side -->
+<div class="flex-1 flex flex-col gap-6 z-10">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-ethiopian-green animate-pulse"></span>
+<span class="text-xs font-mono font-medium text-gray-500 uppercase tracking-wider">Addis Ababa • Live</span>
+</div>
+<h1 class="text-6xl md:text-8xl lg:text-[7rem] font-black leading-[0.9] tracking-tighter text-ethiopian-green">
+                    Valuation.<br/>
+<span class="text-gray-900">Clarified.</span>
+</h1>
+<p class="text-lg md:text-xl text-gray-500 font-light max-w-md mt-4 leading-relaxed">
+                    Ultra-premium property valuation services designed for the modern Ethiopian market. Precision meets clarity.
+                </p>
+<div class="flex gap-4 mt-8">
+<button class="h-14 px-8 rounded-xl bg-gray-900 text-white font-semibold hover:bg-black transition-all flex items-center gap-2 group">
+                        Start Assessment
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="h-14 w-14 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Floating Glass UI Component -->
+<div class="flex-1 w-full relative flex justify-center lg:justify-end perspective-[2000px]">
+<!-- Background decorative blob -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-gray-100 to-white rounded-full blur-3xl -z-10"></div>
+<div class="glass-card-light w-full max-w-md p-8 rounded-3xl transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-transform duration-700 ease-out">
+<div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+<div class="flex flex-col">
+<span class="text-xs font-mono text-gray-400">DOC REF</span>
+<span class="font-mono font-bold text-gray-900">VA-8821X</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-ethiopian-green/10 flex items-center justify-center text-ethiopian-green">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-sm text-gray-500 mb-1">Estimated Value</p>
+<h3 class="text-3xl font-bold text-gray-900 tracking-tight">ETB 45.2M</h3>
+</div>
+<span class="text-ethiopian-green font-medium bg-ethiopian-green/5 px-2 py-1 rounded text-sm">+12.4%</span>
+</div>
+<div class="h-32 w-full bg-gray-50 rounded-xl overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/50"></div>
+<!-- Abstract graph line -->
+<svg class="w-full h-full text-ethiopian-green" preserveaspectratio="none" viewbox="0 0 100 50">
+<path d="M0 40 Q 20 45, 40 30 T 100 10" fill="none" stroke="currentColor" stroke-width="2"></path>
+<path d="M0 40 Q 20 45, 40 30 T 100 10 V 50 H 0 Z" fill="currentColor" opacity="0.1"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-2">
+<div class="p-3 bg-gray-50 rounded-lg">
+<span class="text-xs text-gray-400 block mb-1">Zone Type</span>
+<span class="text-sm font-semibold text-gray-800">Commercial A1</span>
+</div>
+<div class="p-3 bg-gray-50 rounded-lg">
+<span class="text-xs text-gray-400 block mb-1">Compliance</span>
+<span class="text-sm font-semibold text-gray-800">Verified</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Transition Section: The Morph -->
+<section class="relative w-full h-[60vh] bg-gradient-to-b from-white via-gray-100 to-addis-blue overflow-hidden flex items-center justify-center group">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1572916123490-5645396656e1?q=80&amp;w=2574&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay" data-alt="Aerial view of clean modern terrain" data-location="Addis Ababa" style=""></div>
+<!-- Grid overlay that gets stronger towards bottom -->
+<div class="absolute inset-0 bg-grid-pattern bg-[length:40px_40px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ease-in-out z-10 [mask-image:linear-gradient(to_bottom,transparent,black)]"></div>
+<div class="relative z-20 text-center max-w-2xl px-6">
+<span class="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-mono text-gray-500 mb-4 group-hover:text-nano-banana group-hover:border-nano-banana/30 transition-colors">SCROLL TO TRANSFORM</span>
+<h2 class="text-4xl md:text-5xl font-bold text-gray-900 group-hover:text-white transition-colors duration-700">
+                From Raw Terrain <br/>
+<span class="text-ethiopian-green group-hover:text-nano-banana transition-colors duration-700">to Smart Grid Intelligence</span>
+</h2>
+</div>
+<!-- Floating glow effect at bottom -->
+<div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-addis-blue to-transparent z-10"></div>
+</section>
+<!-- Night Mode: Bento Dashboard -->
+<section class="relative min-h-screen bg-addis-blue text-white py-20 px-6 md:px-12 overflow-hidden">
+<!-- Background Elements -->
+<div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-ethiopian-green to-transparent opacity-50"></div>
+<div class="absolute -right-20 top-40 w-96 h-96 bg-ethiopian-green/20 rounded-full blur-[100px]"></div>
+<div class="absolute -left-20 bottom-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px]"></div>
+<div class="max-w-[1400px] mx-auto relative z-10">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+<div>
+<h2 class="text-4xl md:text-6xl font-bold tracking-tight mb-4">
+<span class="text-gradient">Real-Time Intelligence</span>
+</h2>
+<p class="text-gray-400 max-w-lg text-lg">
+                        Proclamation 1365/2025 compliant analytics powered by live market data.
+                    </p>
+</div>
+<div class="flex gap-2">
+<span class="px-4 py-2 glass-card rounded-lg text-xs font-mono text-nano-banana border-nano-banana/30 flex items-center gap-2">
+<span class="w-2 h-2 bg-nano-banana rounded-full animate-ping"></span>
+                        LIVE DATA FEED
+                    </span>
+</div>
+</div>
+<!-- Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6 auto-rows-[minmax(180px,auto)]">
+<!-- Large Map Card -->
+<div class="col-span-1 md:col-span-6 lg:col-span-8 row-span-2 glass-card rounded-3xl p-1 relative overflow-hidden group">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&amp;w=2670&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700" data-alt="Dark mode city map grid" data-location="Addis Ababa" style=""></div>
+<div class="absolute inset-0 bg-gradient-to-t from-addis-blue/90 via-addis-blue/20 to-transparent"></div>
+<div class="relative h-full flex flex-col justify-between p-6">
+<div class="flex justify-between items-start">
+<div class="bg-black/40 backdrop-blur border border-white/10 rounded-lg p-2">
+<span class="material-symbols-outlined text-white/70">layers</span>
+</div>
+<div class="bg-nano-banana text-black text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
+                                Zone 04 Active
+                            </div>
+</div>
+<div>
+<h3 class="text-2xl font-bold mb-2">Bole Sub-City Sector 3</h3>
+<div class="flex gap-4 text-sm text-gray-300 font-mono">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">square_foot</span> 4,200 m²</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">trending_up</span> +15% YoY</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Compliance Status -->
+<div class="col-span-1 md:col-span-3 lg:col-span-4 glass-card rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-20">
+<span class="material-symbols-outlined text-6xl text-ethiopian-green">verified_user</span>
+</div>
+<div>
+<p class="text-gray-400 text-sm font-mono mb-2">REGULATORY STATUS</p>
+<h3 class="text-xl font-bold">Proclamation 1365/2025</h3>
+</div>
+<div class="mt-4">
+<div class="flex items-center gap-3 mb-2">
+<div class="h-2 flex-1 bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full w-[98%] bg-ethiopian-green rounded-full"></div>
+</div>
+<span class="text-ethiopian-green font-mono font-bold">98%</span>
+</div>
+<p class="text-xs text-gray-500">Compliance Score</p>
+</div>
+</div>
+<!-- Nano Tech Asset -->
+<div class="col-span-1 md:col-span-3 lg:col-span-4 glass-card rounded-3xl p-6 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-nano-banana/10 to-transparent"></div>
+<div class="text-center relative z-10">
+<div class="w-16 h-16 mx-auto bg-nano-banana rounded-xl flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(255,225,53,0.3)]">
+<span class="material-symbols-outlined text-black text-3xl">token</span>
+</div>
+<h3 class="text-lg font-bold text-white">Tokenized Asset</h3>
+<p class="text-nano-banana text-sm font-mono mt-1">0x88...21A</p>
+</div>
+</div>
+<!-- Quick Stats -->
+<div class="col-span-1 md:col-span-3 lg:col-span-4 glass-card rounded-3xl p-6 flex flex-col justify-center gap-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-nano-banana text-xl">bolt</span>
+</div>
+<div>
+<p class="text-xs text-gray-400 font-mono">PROCESSING SPEED</p>
+<p class="text-lg font-bold">0.4s <span class="text-gray-500 text-sm font-normal">/ valuation</span></p>
+</div>
+</div>
+<div class="w-full h-px bg-white/5"></div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-ethiopian-green text-xl">database</span>
+</div>
+<div>
+<p class="text-xs text-gray-400 font-mono">DATA POINTS</p>
+<p class="text-lg font-bold">1.2M <span class="text-gray-500 text-sm font-normal">indexed</span></p>
+</div>
+</div>
+</div>
+<!-- Call to Action Card -->
+<div class="col-span-1 md:col-span-3 lg:col-span-8 glass-card rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-r from-ethiopian-green/20 to-addis-blue/40 border-ethiopian-green/30">
+<div>
+<h3 class="text-2xl font-bold mb-2 text-white">Ready for precision?</h3>
+<p class="text-gray-300">Start your comprehensive property assessment today.</p>
+</div>
+<button class="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-nano-banana transition-colors flex items-center gap-2 whitespace-nowrap">
+                        Access Platform
+                        <span class="material-symbols-outlined">arrow_outward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer: Deep Immersion -->
+<footer class="bg-black text-white pt-24 pb-12 border-t border-white/5 relative overflow-hidden">
+<!-- Structural Grid Lines -->
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:6rem_6rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
+<div class="max-w-[1400px] mx-auto px-6 md:px-12 relative z-10">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-2 text-white mb-6">
+<span class="material-symbols-outlined text-3xl text-ethiopian-green">token</span>
+<span class="text-2xl font-bold tracking-tight">ValuAdis</span>
+</div>
+<p class="text-gray-500 font-mono text-sm max-w-sm leading-relaxed">
+                        Redefining property valuation through data-driven clarity and technological precision. Building trust in the Ethiopian real estate market.
+                    </p>
+</div>
+<div class="col-span-1">
+<h4 class="font-mono text-xs text-gray-500 mb-6 uppercase tracking-wider">Platform</h4>
+<ul class="space-y-4">
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">Technology</a></li>
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">Data Sources</a></li>
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">API Access</a></li>
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">Enterprise</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h4 class="font-mono text-xs text-gray-500 mb-6 uppercase tracking-wider">Company</h4>
+<ul class="space-y-4">
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">About Us</a></li>
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">Legal</a></li>
+<li><a class="text-gray-400 hover:text-nano-banana transition-colors text-sm" href="#">Contact</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-mono text-xs text-gray-600">© 2025 ValuAdis. All rights reserved.</p>
+<div class="flex gap-6">
+<span class="font-mono text-xs text-gray-600">ADDIS ABABA</span>
+<span class="font-mono text-xs text-gray-600">system_status: <span class="text-ethiopian-green">online</span></span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

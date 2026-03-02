@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuAdis - Valuation Redefined</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#078160",
+                        "accent-yellow": "#FFE135",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#030712",
+                        "glass-border": "rgba(255, 255, 255, 0.08)",
+                        "glass-bg": "rgba(255, 255, 255, 0.03)",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151; 
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(7, 129, 96, 0.3);
+        }
+
+        .neon-text-glow {
+            text-shadow: 0 0 10px rgba(7, 129, 96, 0.5);
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 overflow-x-hidden selection:bg-primary selection:text-white">
+<!-- Navbar -->
+<nav class="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center size-10 rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined !text-2xl">grid_view</span>
+</div>
+<span class="text-white text-xl font-bold tracking-tight">ValuAdis</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-slate-400 hover:text-white transition-colors" href="#">Platform</a>
+<a class="text-sm font-medium text-slate-400 hover:text-white transition-colors" href="#">Solutions</a>
+<a class="text-sm font-medium text-slate-400 hover:text-white transition-colors" href="#">Developers</a>
+<a class="text-sm font-medium text-slate-400 hover:text-white transition-colors" href="#">Pricing</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex text-slate-300 hover:text-white text-sm font-medium px-4 py-2 transition-colors">
+                    Login
+                </button>
+<button class="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all neon-glow flex items-center gap-2 group">
+<span>Get Started</span>
+<span class="material-symbols-outlined !text-lg group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+<!-- Background Grid -->
+<div class="absolute inset-0 bg-grid-pattern bg-[size:40px_40px] opacity-20 pointer-events-none [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
+<!-- Glowing Orbs -->
+<div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen animate-pulse"></div>
+<div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#054a38]/30 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="container mx-auto px-6 relative z-10 flex flex-col items-center text-center">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-mono mb-8 uppercase tracking-widest">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-yellow opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-accent-yellow"></span>
+</span>
+                Addis Ababa Live Data v2.0
+            </div>
+<h1 class="text-7xl md:text-9xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 mb-6 leading-[0.9]">
+                Valuation.<br/>
+<span class="text-stroke-white text-primary neon-text-glow">Redefined.</span>
+</h1>
+<p class="max-w-2xl text-lg md:text-xl text-slate-400 mb-10 leading-relaxed font-light">
+                The future of Ethiopian property intelligence. Precision analytics meeting kinetic design for the next generation of GovTech.
+            </p>
+<div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+<button class="h-14 px-8 rounded-xl bg-primary text-white font-bold text-lg hover:scale-105 transition-transform duration-300 shadow-[0_0_40px_-10px_rgba(7,129,96,0.6)] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">explore</span>
+                    Explore Platform
+                </button>
+<button class="h-14 px-8 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-lg hover:bg-white/10 transition-colors flex items-center justify-center gap-2 backdrop-blur-sm">
+<span class="material-symbols-outlined">play_circle</span>
+                    Watch Demo
+                </button>
+</div>
+<!-- Floating Abstract UI Element -->
+<div class="mt-20 w-full max-w-5xl h-[300px] md:h-[400px] relative rounded-t-3xl border-t border-x border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm overflow-hidden group">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&amp;w=2940&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay transition-transform duration-1000 group-hover:scale-110" data-alt="Abstract cityscape view at night representing Addis Ababa"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/50 to-transparent"></div>
+<div class="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-background-dark to-transparent"></div>
+<!-- Simulated HUD -->
+<div class="absolute inset-0 p-8 flex flex-col justify-end items-center">
+<div class="grid grid-cols-3 gap-8 w-full max-w-2xl text-center">
+<div>
+<div class="text-accent-yellow text-3xl font-bold font-mono">14.2m</div>
+<div class="text-slate-500 text-xs uppercase tracking-wider mt-1">Parcels Scanned</div>
+</div>
+<div>
+<div class="text-primary text-3xl font-bold font-mono">0.02s</div>
+<div class="text-slate-500 text-xs uppercase tracking-wider mt-1">Latency</div>
+</div>
+<div>
+<div class="text-white text-3xl font-bold font-mono">99.9%</div>
+<div class="text-slate-500 text-xs uppercase tracking-wider mt-1">Accuracy</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Section -->
+<section class="py-24 md:py-32 relative bg-background-dark">
+<div class="container mx-auto px-6 max-w-7xl">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+<div>
+<h2 class="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">The Intelligence Grid</h2>
+<p class="text-slate-400 max-w-md">Orchestrating complex property data into a seamless, interactive visual experience.</p>
+</div>
+<div class="flex gap-2">
+<button class="size-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<button class="size-12 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
+<!-- Card A: Interactive Map (Large) -->
+<div class="md:col-span-7 md:row-span-2 glass-card rounded-3xl p-1 relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="h-full w-full rounded-[1.2rem] bg-black relative overflow-hidden">
+<img alt="Satellite view of urban area with grid overlay" class="w-full h-full object-cover opacity-60 mix-blend-luminosity hover:mix-blend-normal transition-all duration-700 hover:scale-105" data-alt="Satellite map view of a city grid at night" data-location="Addis Ababa" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBasVIcBjAqmC4N1bGV8BwfeFWWiU3NSb0pbrlCfHKh0m-2ePJO5O_5bBR3i3vqF16_4eAIuN943-CU2cYPUhUWxkXaApIKLc9Bqs1KI6tThc8lv4PkH4LEC0EaPkfyweeWxOSqDfYlLBkDHAiVY-gxZTWsQhmuD2wsYfAlghTwhTPoI5YM2Toq9jd2Y0Ey4GChXEgHUXVbKzc2wspPRy-Gt1vc0wE0J5NRxE4inRNm2-UHwZ0hePfcLbuiiiztMD3zyvp-E3_nLZd"/>
+<!-- Floating UI Overlay -->
+<div class="absolute top-6 left-6 bg-black/80 backdrop-blur-md border border-white/10 p-4 rounded-xl">
+<div class="flex items-center gap-3 mb-2">
+<span class="size-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-mono text-slate-300">LIVE FEED // BOLE DISTRICT</span>
+</div>
+<h3 class="text-xl font-bold text-white">Zone 04, Parcel 291</h3>
+</div>
+<!-- 3D Boundary Overlay Mockup -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary bg-primary/10 rotate-12 flex items-center justify-center backdrop-blur-sm shadow-[0_0_30px_rgba(7,129,96,0.4)]">
+<span class="text-primary font-mono text-xs bg-black px-2 py-1">BOUNDARY LOCKED</span>
+</div>
+<div class="absolute bottom-6 right-6">
+<button class="bg-white text-black font-bold text-sm px-5 py-3 rounded-lg hover:bg-accent-yellow transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">view_in_ar</span>
+                                Enter 3D View
+                            </button>
+</div>
+</div>
+</div>
+<!-- Card B: Compliance Checklist (Tall) -->
+<div class="md:col-span-5 md:row-span-1 glass-card rounded-3xl p-6 flex flex-col justify-between group hover:border-primary/30 transition-colors">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-bold text-white">Compliance Stack</h3>
+<span class="material-symbols-outlined text-slate-500">verified_user</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center gap-3 group/item cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+<div class="relative flex items-center justify-center size-5">
+<input checked="" class="peer appearance-none size-5 border-2 border-slate-600 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white opacity-0 peer-checked:opacity-100 text-[14px]">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium group-hover/item:text-white transition-colors">Automated Registry Sync</span>
+</label>
+<label class="flex items-center gap-3 group/item cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+<div class="relative flex items-center justify-center size-5">
+<input checked="" class="peer appearance-none size-5 border-2 border-slate-600 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white opacity-0 peer-checked:opacity-100 text-[14px]">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium group-hover/item:text-white transition-colors">Tax Code Validation</span>
+</label>
+<label class="flex items-center gap-3 group/item cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+<div class="relative flex items-center justify-center size-5">
+<input class="peer appearance-none size-5 border-2 border-slate-600 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white opacity-0 peer-checked:opacity-100 text-[14px]">check</span>
+</div>
+<span class="text-slate-300 text-sm font-medium group-hover/item:text-white transition-colors">Legal Framework Check</span>
+</label>
+</div>
+</div>
+<!-- Card C: Analytics (Small) -->
+<div class="md:col-span-5 md:row-span-1 glass-card rounded-3xl p-6 relative overflow-hidden group hover:border-accent-yellow/30 transition-colors">
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-accent-yellow/10 rounded-full blur-3xl"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-3xl font-mono font-bold text-white mb-1">+127%</h3>
+<p class="text-slate-400 text-sm">Valuation Velocity</p>
+</div>
+<div class="bg-accent-yellow/20 text-accent-yellow p-2 rounded-lg">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+</div>
+<!-- Chart Bars Visualization -->
+<div class="flex items-end gap-2 h-24 w-full px-2">
+<div class="w-full bg-slate-800 rounded-t-sm h-[30%] group-hover:bg-primary/40 transition-colors delay-75"></div>
+<div class="w-full bg-slate-800 rounded-t-sm h-[50%] group-hover:bg-primary/60 transition-colors delay-100"></div>
+<div class="w-full bg-slate-800 rounded-t-sm h-[40%] group-hover:bg-primary/50 transition-colors delay-150"></div>
+<div class="w-full bg-slate-800 rounded-t-sm h-[70%] group-hover:bg-primary/80 transition-colors delay-200"></div>
+<div class="w-full bg-primary rounded-t-sm h-[60%] shadow-[0_0_15px_rgba(7,129,96,0.5)]"></div>
+<div class="w-full bg-accent-yellow rounded-t-sm h-[85%] shadow-[0_0_15px_rgba(255,225,53,0.5)] animate-pulse"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Daylight Transition: Instant Certificates -->
+<section class="bg-white text-slate-900 py-32 relative overflow-hidden">
+<div class="container mx-auto px-6 max-w-7xl">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<!-- Content -->
+<div class="order-2 lg:order-1">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-6">
+<span class="material-symbols-outlined text-sm text-primary">verified</span>
+                        Blockchain Verified
+                    </div>
+<h2 class="text-5xl md:text-6xl font-bold tracking-tight mb-8 text-slate-900">
+                        Certificates.<br/>
+<span class="text-primary italic">Instantaneous.</span>
+</h2>
+<p class="text-xl text-slate-600 mb-10 leading-relaxed font-light">
+                        Generate legally binding, government-approved valuation certificates in seconds. Zero paperwork, absolute clarity, ready for download.
+                    </p>
+<ul class="space-y-6 mb-10">
+<li class="flex items-start gap-4">
+<div class="flex-shrink-0 size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm font-bold">bolt</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900">Real-time Generation</h4>
+<p class="text-slate-500 text-sm">Processed on-chain immediately.</p>
+</div>
+</li>
+<li class="flex items-start gap-4">
+<div class="flex-shrink-0 size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm font-bold">qr_code</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900">QR Verifiable</h4>
+<p class="text-slate-500 text-sm">Scannable by banks and authorities.</p>
+</div>
+</li>
+</ul>
+<button class="text-slate-900 font-bold text-lg border-b-2 border-primary pb-1 hover:text-primary transition-colors flex items-center gap-2 group w-max">
+                        View Sample Certificate
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+</div>
+<!-- Document UI Visualization -->
+<div class="order-1 lg:order-2 relative">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-accent-yellow/10 rounded-full blur-3xl transform scale-90"></div>
+<!-- Paper Stack Effect -->
+<div class="relative z-10 w-full max-w-md mx-auto perspective-1000">
+<div class="relative bg-white rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 p-8 transform rotate-y-6 rotate-x-6 hover:rotate-0 transition-transform duration-500 ease-out">
+<!-- Header -->
+<div class="flex justify-between items-start mb-8 border-b border-slate-100 pb-6">
+<div class="flex items-center gap-3">
+<div class="size-10 bg-black rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<div class="text-xs font-bold text-slate-400 uppercase">Document Type</div>
+<div class="font-bold text-slate-900">Property Valuation</div>
+</div>
+</div>
+<div class="text-right">
+<div class="text-xs font-bold text-slate-400 uppercase">Date</div>
+<div class="font-mono text-slate-900">OCT 24, 2023</div>
+</div>
+</div>
+<!-- Body -->
+<div class="space-y-4 mb-8">
+<div class="h-4 bg-slate-100 rounded w-3/4"></div>
+<div class="h-4 bg-slate-100 rounded w-full"></div>
+<div class="h-4 bg-slate-100 rounded w-5/6"></div>
+<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+<div class="text-xs text-slate-400 font-bold mb-1">ESTIMATED VALUE</div>
+<div class="text-xl font-bold text-primary font-mono">ETB 4.2M</div>
+</div>
+<div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+<div class="text-xs text-slate-400 font-bold mb-1">CONFIDENCE</div>
+<div class="text-xl font-bold text-slate-900 font-mono">98.5%</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<div class="flex items-center justify-between pt-6 border-t border-slate-100">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-500">check_circle</span>
+<span class="text-sm font-medium text-slate-600">Digitally Signed</span>
+</div>
+<div class="size-12 bg-slate-900 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">qr_code_2</span>
+</div>
+</div>
+</div>
+<!-- Decorative background cards -->
+<div class="absolute top-4 left-4 right-[-1rem] bottom-[-1rem] bg-slate-50 rounded-xl border border-slate-200 -z-10 shadow-sm"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-background-dark border-t border-white/10 pt-20 pb-10 relative overflow-hidden">
+<!-- Grid Background -->
+<div class="absolute inset-0 bg-grid-pattern bg-[size:20px_20px] opacity-5 pointer-events-none"></div>
+<div class="container mx-auto px-6 relative z-10">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+<div class="col-span-1 md:col-span-1">
+<div class="flex items-center gap-2 mb-6 text-white">
+<div class="size-6 bg-primary rounded-sm"></div>
+<span class="font-bold text-xl">ValuAdis</span>
+</div>
+<p class="text-slate-500 text-sm mb-6">
+                        Empowering the Ethiopian real estate ecosystem with next-generation valuation intelligence.
+                    </p>
+<div class="flex gap-4">
+<a class="text-slate-400 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">favorite</span> <!-- Social icon placeholder -->
+</a>
+<a class="text-slate-400 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">public</span>
+</a>
+<a class="text-slate-400 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">mail</span>
+</a>
+</div>
+</div>
+<div>
+<h4 class="font-mono text-sm text-white font-bold mb-6 uppercase tracking-wider">Platform</h4>
+<ul class="space-y-4 text-sm text-slate-500">
+<li><a class="hover:text-primary transition-colors" href="#">Real-time Valuation</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Boundary Analysis</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">API Documentation</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Enterprise</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-mono text-sm text-white font-bold mb-6 uppercase tracking-wider">Company</h4>
+<ul class="space-y-4 text-sm text-slate-500">
+<li><a class="hover:text-primary transition-colors" href="#">About Us</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Careers</a> <span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded ml-2">HIRING</span></li>
+<li><a class="hover:text-primary transition-colors" href="#">Blog</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Press Kit</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-mono text-sm text-white font-bold mb-6 uppercase tracking-wider">System Status</h4>
+<div class="bg-white/5 border border-white/10 rounded-lg p-4">
+<div class="flex items-center gap-3 mb-2">
+<span class="size-2 rounded-full bg-green-500"></span>
+<span class="text-white text-sm font-medium">All Systems Operational</span>
+</div>
+<div class="text-xs text-slate-500 font-mono">
+                             Last updated: 14:02 UTC<br/>
+                             Server: ADD-01
+                         </div>
+</div>
+</div>
+</div>
+<div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-slate-600 text-sm font-mono">© 2023 ValuAdis GovTech. All rights reserved.</p>
+<div class="flex gap-8 text-sm text-slate-600 font-mono">
+<a class="hover:text-slate-400 transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-slate-400 transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>
