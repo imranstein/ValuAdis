@@ -91,7 +91,8 @@ class PropertyRepository(BaseRepository[Property]):
         property = self.get(property_id)
         if property and property.boundary:
             result = self.db.execute(
-                text(f"SELECT ST_Area(ST_Transform(boundary, 32637)) FROM properties WHERE id = {property_id}")
+                text("SELECT ST_Area(ST_Transform(boundary, 32637)) FROM properties WHERE id = :property_id"),
+                {"property_id": property_id}
             ).scalar()
             return result
         return None
