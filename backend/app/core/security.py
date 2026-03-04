@@ -13,7 +13,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")

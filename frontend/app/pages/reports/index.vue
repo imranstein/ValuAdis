@@ -214,7 +214,7 @@
                   <span>Taxable Value</span>
                 </label>
                 <label class="checkbox-item">
-                  <input type="checkbox" v-model="customReport.fields.property_type" />
+                  <input type="checkbox" v-model="customReport.fields.propertyType" />
                   <span>Property Type</span>
                 </label>
                 <label class="checkbox-item">
@@ -493,7 +493,7 @@
                   </div>
                   <div class="tax-card">
                     <h4>Effective Tax Rate</h4>
-                    <p>{{ reportData.summary.tax_rate.toFixed(2) }}%</p>
+                    <p>{{ (reportData?.summary?.tax_rate ?? 0).toFixed(2) }}%</p>
                   </div>
                   <div class="tax-card">
                     <h4>Revenue per Property</h4>
@@ -544,9 +544,9 @@
                   </div>
                 </div>
                 <div class="compliance-rate">
-                  <h4>Compliance Rate: {{ reportData.summary.compliance_rate.toFixed(1) }}%</h4>
+                  <h4>Compliance Rate: {{ (reportData?.summary?.compliance_rate ?? 0).toFixed(1) }}%</h4>
                   <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: reportData.summary.compliance_rate + '%' }"></div>
+                    <div class="progress-fill" :style="{ width: (reportData?.summary?.compliance_rate ?? 0) + '%' }"></div>
                   </div>
                 </div>
               </div>
@@ -591,7 +591,7 @@ const customReport = ref({
   name: '',
   dateRange: '',
   municipality: '',
-  property_type: '',
+  propertyType: '', 
   include_charts: true,
   include_tables: true,
   include_summary: true,
@@ -599,7 +599,7 @@ const customReport = ref({
     property_address: true,
     market_value: true,
     taxable_value: true,
-    property_type: true,
+    propertyType: true, 
     land_area: false,
     status: true,
     created_date: true,
@@ -666,7 +666,8 @@ const canGenerateCustom = computed(() => {
 async function generateReport(type) {
   console.log('Generating report:', type)
   
-  // Show loading state
+  // Reset error state and show loading
+  errorMessage.value = ''
   isLoading.value = true
   
   try {
@@ -692,6 +693,7 @@ async function generateReport(type) {
         await generateComplianceAudit(token)
         break
       default:
+        errorMessage.value = 'Unknown report type selected'
         console.error('Unknown report type:', type)
     }
   } catch (error) {
@@ -712,32 +714,30 @@ function viewScheduledReports() {
 
 // Report Generation Functions
 async function generateValuationSummary(token) {
-  try {
-    // Get valuations data
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      reportData.value = {
-        type: 'valuation_summary',
-        title: 'Valuation Summary Report',
-        data: data,
-        summary: {
-          total_valuations: data.length || 0,
-          total_market_value: data.reduce((sum, v) => sum + (v.market_value || 0), 0),
-          total_taxable_value: data.reduce((sum, v) => sum + (v.taxable_value || 0), 0),
-          avg_value: data.length > 0 ? data.reduce((sum, v) => sum + (v.market_value || 0), 0) / data.length : 0
-        }
-      }
-      showReportModal.value = true
-      currentReportType.value = 'valuation_summary'
-    }
-  } catch (error) {
-    console.error('Error generating valuation summary:', error)
-    throw error
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+  const response = await fetch(`${API_BASE}/api/v1/valuations/`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`HTTP ${response.status}: ${errorText}`)
   }
+  
+  const data = await response.json()
+  reportData.value = {
+    type: 'valuation_summary',
+    title: 'Valuation Summary Report',
+    data: data,
+    summary: {
+      total_valuations: data.length || 0,
+      total_market_value: data.reduce((sum, v) => sum + (v.market_value || 0), 0),
+      total_taxable_value: data.reduce((sum, v) => sum + (v.taxable_value || 0), 0),
+      avg_value: data.length > 0 ? data.reduce((sum, v) => sum + (v.market_value || 0), 0) / data.length : 0
+    }
+  }
+  showReportModal.value = true
+  currentReportType.value = 'valuation_summary'
 }
 
 async function generateMunicipalPerformance(token) {
@@ -879,9 +879,9 @@ async function generateMarketTrends(token) {
     if (response.ok) {
       const data = await response.json()
       
-      // Group by valuation date
+      // Group by valuation date using ISO date for consistency
       const trendsData = data.reduce((acc, valuation) => {
-        const date = new Date(valuation.valuation_date).toLocaleDateString()
+        const date = new Date(valuation.valuation_date).toISOString().slice(0, 10) // YYYY-MM-DD
         if (!acc[date]) {
           acc[date] = {
             count: 0,
@@ -970,7 +970,10 @@ function resetCustomReport() {
     name: '',
     dateRange: '',
     municipality: '',
-    propertyType: '',
+    propertyType: '', 
+    include_charts: true,
+    include_tables: true,
+    include_summary: true,
     fields: {
       valuation_id: true,
       property_address: true,
@@ -978,14 +981,19 @@ function resetCustomReport() {
       municipality: true,
       market_value: true,
       taxable_value: true,
-      property_type: true,
+      propertyType: true, 
       land_area: false,
       status: true,
       created_date: true,
       valuation_method: false,
       assessor_name: false
     },
-    format: 'pdf'
+    filters: {
+      date_range: '',
+      municipality: '',
+      propertyType: '', 
+      status: ''
+    }
   }
 }
 
@@ -1082,11 +1090,12 @@ function getFrequencyLabel(frequency) {
 }
 
 function formatDate(date) {
+  if (!date) return '-'
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
-  })
+  }).format(new Date(date))
 }
 
 // Utility Functions
@@ -1118,6 +1127,8 @@ function formatPropertyType(type) {
   const typeMap = {
     'residential': 'Residential Properties',
     'commercial': 'Commercial Properties',
+    'industrial': 'Industrial Properties',
+    'mixed_use': 'Mixed-use Properties',
     'agricultural': 'Agricultural Land',
     'unknown': 'Unknown Type'
   }

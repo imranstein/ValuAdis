@@ -483,6 +483,17 @@
           </button>
         </div>
 
+        <!-- Mock Data Warning Banner -->
+        <div v-if="usingMockData" style="background: #fff3cd; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffeaa7; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">⚠️</span>
+          <div style="flex: 1;">
+            <strong>Unable to connect to API.</strong> Displaying sample data. Some features may be limited.
+          </div>
+          <button @click="refreshScrapers" style="background: #007acc; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+            Retry
+          </button>
+        </div>
+
         <!-- Debug info -->
         <div style="background: #f0f8ff; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #007acc;">
           <small>🔍 Debug: Type={{ scraperType }}, activeTab="{{ activeTab }}", scrapers={{ scrapers.length }}, stats loaded={{ !!scraperStats.total_scrapers }}</small>
@@ -529,15 +540,18 @@
                 <tr v-for="item in scrapedData.slice(0, 50)" :key="item.id" style="border-bottom: 1px solid #eee;">
                   <td style="padding: 8px;">{{ item.id }}</td>
                   <td style="padding: 8px;">
-                    <span 
+                    <button 
                       v-if="scraperType === 'property'"
                       @click="viewPropertyDetails(item)"
-                      style="color: #007acc; cursor: pointer; text-decoration: underline;"
+                      @keydown.enter="viewPropertyDetails(item)"
+                      @keydown.space="viewPropertyDetails(item)"
+                      style="color: #007acc; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; font-family: inherit; font-size: inherit;"
                       :title="'Click to view details for ' + item.address"
+                      type="button"
                     >
                       {{ item.address }}
-                    </span>
-                    <span v-else>{{ item.make + ' ' + item.model }}</span>
+                    </button>
+                    <span v-else>{{ item.address || item.name }}</span>
                   </td>
                   <td style="padding: 8px;">{{ item.market_value ? 'ETB ' + item.market_value.toLocaleString() : 'N/A' }}</td>
                   <td style="padding: 8px;">
@@ -751,13 +765,15 @@ const scraperStats = ref({
   inactive_scrapers: 0,
   total_listings: 0,
   last_24h_listings: 0,
-  avg_success_rate: 0
+  avg_success_rate: 0,
+  error_count: 0
 })
 const scraperLogs = ref([])
 const showAddScraperModal = ref(false)
 const selectedScraper = ref(null)
 const isEditMode = ref(false)
 const logsPage = ref(1)
+const usingMockData = ref(false)
 
 // Methods
 async function loadSettings() {
@@ -842,20 +858,27 @@ function exportSettings() {
 async function loadScrapers() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/scrapers/', {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     })
+
     if (response.ok) {
       const data = await response.json()
       scrapers.value = data
+      usingMockData.value = false
     } else {
       // Fallback to mock data if API fails
       scrapers.value = getMockScrapers()
+      usingMockData.value = true
     }
   } catch (error) {
     console.error('Error loading scrapers:', error)
     // Fallback to mock data
     scrapers.value = getMockScrapers()
+    usingMockData.value = true
   }
 }
 
@@ -1101,7 +1124,7 @@ function getMockScraperStats() {
     active_scrapers: scraperType.value === 'property' ? 4 : 2,
     total_listings: scraperType.value === 'property' ? 702 : 679,
     avg_success_rate: scraperType.value === 'property' ? 83.3 : 90.7,
-    last_24h_scrapes: 24,
+    last_24h_listings: 24, // Use consistent naming
     error_count: scraperType.value === 'property' ? 3 : 1
   }
 }
@@ -1122,6 +1145,19 @@ async function loadScraperLogs() {
 
 // View property details
 function viewPropertyDetails(property) {
+  // Validate property and check for mock data before navigation
+  if (!property || !property.id) {
+    console.warn('Invalid property data:', property)
+    return
+  }
+  
+  // Check if this is mock data (you can add an isMock flag to mock data)
+  if (property.isMockData || property.id.toString().startsWith('mock-')) {
+    // Show user-friendly fallback instead of navigation
+    alert('This is sample data and cannot be viewed in detail.')
+    return
+  }
+  
   // Navigate to property details page
   navigateTo(`/properties/${property.id}`)
 }
@@ -1263,11 +1299,17 @@ watch(activeTab, (newTab) => {
 })
 
 // Watch for scraper type changes and reload data
-watch(scraperType, () => {
-  console.log('Scraper type changed to:', scraperType.value)
-  loadScrapers()
-  loadScrapedData()
-  loadScraperStats()
+watch(scraperType, async () => {
+  // Run all loads concurrently and wait for completion
+  try {
+    await Promise.all([
+      loadScrapers(),
+      loadScrapedData(),
+      loadScraperStats()
+    ])
+  } catch (err) {
+    console.error('Error reloading data after type change:', err)
+  }
 })
 </script>
 

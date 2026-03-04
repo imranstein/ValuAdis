@@ -23,9 +23,12 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loadingProperty" class="loading-container">
-      <ProgressSpinner />
-      <p>Loading property data...</p>
+    <div v-if="loadingProperty || propertyLoadError" class="loading-container">
+      <ProgressSpinner v-if="loadingProperty" />
+      <p v-if="loadingProperty">Loading property data...</p>
+      <Message v-if="propertyLoadError" severity="error" :closable="false">
+        {{ propertyLoadError }}
+      </Message>
     </div>
 
     <!-- Property Form -->
@@ -69,6 +72,7 @@ const formData = ref({
 })
 
 const loadingProperty = ref(true)
+const propertyLoadError = ref(null)
 const loading = ref(false)
 const error = ref(null)
 const success = ref(null)
@@ -102,11 +106,14 @@ onMounted(async () => {
 
 async function loadProperty() {
   loadingProperty.value = true
+  propertyLoadError.value = null
+  
   try {
     const token = localStorage.getItem('valuadis_token')
     const propertyId = route.params.id
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
 
-    const response = await fetch(`http://localhost:8020/api/v1/properties/${propertyId}`, {
+    const response = await fetch(`${API_BASE}/api/v1/properties/${propertyId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -126,16 +133,16 @@ async function loadProperty() {
         number_of_rooms: property.number_of_rooms || null
       }
     } else {
-      error.value = 'Failed to load property'
+      propertyLoadError.value = 'Failed to load property'
     }
   } catch (err) {
-    error.value = 'Network error. Please check your connection.'
+    propertyLoadError.value = 'Network error. Please check your connection.'
   } finally {
     loadingProperty.value = false
   }
 }
 
-async function handleSubmit() {
+async function handleSubmit(formPayload) {
   error.value = null
   success.value = null
   loading.value = true
@@ -143,17 +150,27 @@ async function handleSubmit() {
   try {
     const token = localStorage.getItem('valuadis_token')
     const propertyId = route.params.id
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
 
-    const response = await fetch(`http://localhost:8020/api/v1/properties/${propertyId}`, {
+    const response = await fetch(`${API_BASE}/api/v1/properties/${propertyId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(formData.value)
+      body: JSON.stringify(formPayload) // Use emitted form data instead of formData.value
     })
 
-    const data = await response.json()
+    let data
+    try {
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        data = await response.json()
+      } else {
+        data = { text: await response.text() }
+      }
+    } catch (parseErr) {
+      data = { text: await response.text() }
+    }
 
     if (response.ok) {
       success.value = 'Property updated successfully!'
@@ -161,7 +178,8 @@ async function handleSubmit() {
         router.push('/properties')
       }, 1500)
     } else {
-      error.value = data.detail || 'Failed to update property'
+      const errorMessage = data.detail || data.message || data.text || 'Failed to update property'
+      error.value = `Error ${response.status}: ${errorMessage}`
     }
   } catch (err) {
     error.value = 'Network error. Please check your connection.'
@@ -175,8 +193,9 @@ function viewProperty() {
 }
 
 function saveDraft(data) {
-  // Save draft to localStorage
-  localStorage.setItem('property_draft_edit', JSON.stringify(data))
+  // Save draft to localStorage with property ID
+  const propertyId = route.params.id
+  localStorage.setItem(`property_draft_edit_${propertyId}`, JSON.stringify(data))
   success.value = 'Draft saved successfully!'
 }
 

@@ -86,5 +86,8 @@ if settings.ENVIRONMENT == "production":
     if not settings.DATABASE_URL or "localhost" in settings.DATABASE_URL:
         raise ValueError("DATABASE_URL must be set to production database")
     
+    if "*" in settings.ALLOWED_HOSTS:
+        raise ValueError("ALLOWED_HOSTS cannot contain wildcard '*' in production")
+    
     if not settings.DATA_SOVEREIGNTY_REQUIRED:
         raise ValueError("Data sovereignty is required for Ethiopian compliance")

@@ -5,13 +5,17 @@ Initialize roles and permissions for ValuAdis platform
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse
 from app.core.config import settings
 from app.data.models import Role, Permission, User
 from app.data.models.role import user_roles, role_permissions
 
 def init_roles_permissions():
     """Initialize roles and permissions for the platform"""
-    print(f"Connecting to database: {settings.DATABASE_URL}")
+    # Parse DATABASE_URL to extract non-sensitive parts
+    parsed_url = urlparse(settings.DATABASE_URL)
+    safe_db_info = f"{parsed_url.scheme}://{parsed_url.hostname}:{parsed_url.port or '5432'}/{parsed_url.path.lstrip('/')}"
+    print(f"Connecting to database: {safe_db_info}")
     
     # Create engine and session
     engine = create_engine(settings.DATABASE_URL)
@@ -130,7 +134,7 @@ def init_roles_permissions():
         print(f"Created {len(roles_data)} roles")
         
         # Assign system admin role to first user if exists
-        first_user = db.query(User).first()
+        first_user = db.query(User).order_by(User.created_at.asc()).first()
         if first_user:
             system_admin_role = db.query(Role).filter_by(name="system_admin").first()
             if system_admin_role and system_admin_role not in first_user.roles:
@@ -150,6 +154,7 @@ def init_roles_permissions():
     except Exception as e:
         print(f"Error initializing roles and permissions: {e}")
         db.rollback()
+        raise  # Re-raise to ensure non-zero exit code
     finally:
         db.close()
         engine.dispose()

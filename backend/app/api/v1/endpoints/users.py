@@ -11,12 +11,36 @@ from app.core.database import get_db
 from app.core.security import get_current_user_id, get_password_hash
 from app.data.models.user import User
 from app.data.models.role import Role, Permission, UserRole, user_roles, role_permissions
-from app.schemas.user import UserResponse, UserCreate, UserUpdate, RoleResponse
+from app.schemas.user import UserResponse, UserCreate, UserUpdate, RoleResponse, PermissionResponse
 import structlog
 
 logger = structlog.get_logger()
 
 router = APIRouter()
+
+
+def require_admin_permission(allowed_roles: List[str] = ["system_admin", "firm_admin"]):
+    """FastAPI dependency to check if user has admin permissions"""
+    def check_admin_permission(
+        current_user_id: int = Depends(get_current_user_id),
+        db: Session = Depends(get_db)
+    ) -> User:
+        user = db.query(User).filter(User.id == current_user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if not any(role.name in allowed_roles for role in user.roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions"
+            )
+        
+        return user
+    
+    return check_admin_permission
 
 
 @router.get("/me", response_model=UserResponse, tags=["Users"])
@@ -34,11 +58,16 @@ async def get_current_user_info(
             )
         
         # Get user roles and permissions
-        user_role_assignments = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user_id).all()
+        roles_for_user = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user_id).all()
         permissions = []
-        for role in user_role_assignments:
-            role_perms = db.query(Permission).join(role_permissions).filter(role_permissions.c.role_id == role.id).all()
-            permissions.extend(role_perms)
+        seen_permission_ids = set()
+        
+        for role in roles_for_user:
+            role_perms = db.query(Permission).join(role_permissions).filter(role_permissions.c.role_id == role.id).distinct().all()
+            for perm in role_perms:
+                if perm.id not in seen_permission_ids:
+                    permissions.append(perm)
+                    seen_permission_ids.add(perm.id)
         
         return UserResponse(
             id=user.id,
@@ -53,10 +82,12 @@ async def get_current_user_info(
             is_valuer=user.is_valuer,
             created_at=user.created_at,
             updated_at=user.updated_at,
-            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_role_assignments],
-            permissions=[{"id": p.id, "name": p.name, "display_name": p.display_name, "resource": p.resource, "action": p.action} for p in permissions]
+            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in roles_for_user],
+            permissions=[PermissionResponse(id=p.id, name=p.name, display_name=p.display_name, resource=p.resource, action=p.action, description=p.description) for p in permissions]
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error fetching current user info", error=str(e), user_id=user_id)
         raise HTTPException(
@@ -73,33 +104,13 @@ async def get_users(
     is_active: Optional[bool] = None,
     role: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user: User = Depends(require_admin_permission())
 ):
     """
     Get all users with optional filtering
     Requires user management permission
     """
     try:
-        # Check if current user has permission to view users
-        current_user = db.query(User).filter(User.id == current_user_id).first()
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Current user not found"
-            )
-        
-        # Check permissions
-        has_permission = False
-        for user_role in current_user.roles:
-            if user_role.name in ["system_admin", "firm_admin"]:
-                has_permission = True
-                break
-        
-        if not has_permission:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions to view users"
-            )
         
         # Query users with filters
         query = db.query(User)
@@ -116,7 +127,7 @@ async def get_users(
         # Build response with roles
         user_responses = []
         for user in users:
-            user_roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
+            user_role_objs = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
             user_responses.append(UserResponse(
                 id=user.id,
                 email=user.email,
@@ -130,7 +141,7 @@ async def get_users(
                 is_valuer=user.is_valuer,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
-                roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_roles],
+                roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_role_objs],
                 permissions=[]  # Not including permissions in list view for performance
             ))
         
@@ -150,33 +161,12 @@ async def get_users(
 async def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user: User = Depends(require_admin_permission())
 ):
-    """
-    Create a new user
-    Requires user creation permission
+    """Create a new user
+    Requires user management permission
     """
     try:
-        # Check permissions
-        current_user = db.query(User).filter(User.id == current_user_id).first()
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Current user not found"
-            )
-        
-        has_permission = False
-        for user_role in current_user.roles:
-            if user_role.name in ["system_admin", "firm_admin"]:
-                has_permission = True
-                break
-        
-        if not has_permission:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions to create users"
-            )
-        
         # Check if email already exists
         existing_user = db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
@@ -213,16 +203,25 @@ async def create_user(
         
         # Assign roles if provided
         if user_data.role_ids:
-            for role_id in user_data.role_ids:
-                role = db.query(Role).filter(Role.id == role_id).first()
-                if role:
-                    new_user.roles.append(role)
+            # Validate all role IDs upfront
+            existing_roles = db.query(Role).filter(Role.id.in_(user_data.role_ids)).all()
+            existing_role_ids = {role.id for role in existing_roles}
+            
+            missing_role_ids = set(user_data.role_ids) - existing_role_ids
+            if missing_role_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid role IDs: {list(missing_role_ids)}"
+                )
+            
+            for role in existing_roles:
+                new_user.roles.append(role)
         
         db.commit()
         db.refresh(new_user)
         
         # Get user roles for response
-        user_roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == new_user.id).all()
+        roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == new_user.id).all()
         
         return UserResponse(
             id=new_user.id,
@@ -237,7 +236,7 @@ async def create_user(
             is_valuer=new_user.is_valuer,
             created_at=new_user.created_at,
             updated_at=new_user.updated_at,
-            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_roles],
+            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in roles],
             permissions=[]
         )
         
@@ -296,10 +295,37 @@ async def update_user(
         
         # Update user fields
         update_data = user_data.dict(exclude_unset=True)
+        
+        # Check for uniqueness conflicts on email and phone
+        if "email" in update_data:
+            existing_email = db.query(User).filter(
+                User.email == update_data["email"],
+                User.id != user_id
+            ).first()
+            if existing_email:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already exists"
+                )
+        
+        if "phone" in update_data:
+            existing_phone = db.query(User).filter(
+                User.phone == update_data["phone"],
+                User.id != user_id
+            ).first()
+            if existing_phone:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Phone number already exists"
+                )
+        
         for field, value in update_data.items():
             if field == "password" and value:
                 setattr(user, "password_hash", get_password_hash(value))
             elif field != "role_ids":
+                # Prevent self-updates from changing sensitive fields
+                if current_user_id == user_id and field in ["is_admin", "is_active", "is_verified"]:
+                    continue
                 setattr(user, field, value)
         
         # Update roles if provided and user has admin permissions
@@ -319,7 +345,7 @@ async def update_user(
         db.refresh(user)
         
         # Get user roles for response
-        user_roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
+        roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
         
         return UserResponse(
             id=user.id,
@@ -334,7 +360,7 @@ async def update_user(
             is_valuer=user.is_valuer,
             created_at=user.created_at,
             updated_at=user.updated_at,
-            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_roles],
+            roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in roles],
             permissions=[]
         )
         
@@ -352,31 +378,11 @@ async def update_user(
 @router.get("/roles", response_model=List[RoleResponse], tags=["Users"])
 async def get_roles(
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user: User = Depends(require_admin_permission())
 ):
     """Get all available roles"""
     try:
-        # Check permissions
-        current_user = db.query(User).filter(User.id == current_user_id).first()
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Current user not found"
-            )
-        
-        has_permission = False
-        for user_role in current_user.roles:
-            if user_role.name in ["system_admin", "firm_admin"]:
-                has_permission = True
-                break
-        
-        if not has_permission:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions to view roles"
-            )
-        
-        roles = db.query(Role).filter(Role.is_active == True).all()
+        roles = db.query(Role).filter(Role.is_active.is_(True)).all()
         return [RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in roles]
         
     except HTTPException:

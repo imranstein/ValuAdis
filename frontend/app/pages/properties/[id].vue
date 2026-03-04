@@ -1,14 +1,5 @@
 <template>
   <div class="property-detail-page">
-    <PropertyDetailView
-      :property="property"
-      :valuations="valuations"
-      :readonly="readonly"
-      @back="goBack"
-      @edit="editProperty"
-      @create-valuation="createValuation"
-    />
-    
     <!-- Loading State -->
     <div v-if="loading" class="loading-overlay">
       <ProgressSpinner />
@@ -19,6 +10,17 @@
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
     </Message>
+    
+    <!-- Property Detail View - only render when data is ready -->
+    <PropertyDetailView
+      v-if="!loading && !error && property && Object.keys(property).length > 0"
+      :property="property"
+      :valuations="valuations"
+      :readonly="readonly"
+      @back="goBack"
+      @edit="editProperty"
+      @create-valuation="createValuation"
+    />
   </div>
 </template>
 
@@ -36,51 +38,77 @@ const loading = ref(true)
 const error = ref(null)
 const readonly = ref(false)
 
+// Authenticated fetch helper
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem('valuadis_token')
+  
+  if (!token) {
+    router.push('/login')
+    throw new Error('No authentication token')
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...options.headers
+    }
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`HTTP ${response.status}: ${errorText}`)
+  }
+  
+  return response
+}
+
 onMounted(async () => {
-  await loadProperty()
-  await loadValuations()
-})
-
-async function loadProperty() {
-  loading.value = true
-  error.value = null
-
+  // Run both fetches in parallel for better performance
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/properties/${route.params.id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const result = await response.json()
-      property.value = result.data || result
-    } else {
-      error.value = 'Property not found'
+    const [propertyResponse, valuationsResponse] = await Promise.allSettled([
+      loadProperty(),
+      loadValuations()
+    ])
+    
+    // Handle individual failures
+    if (propertyResponse.status === 'rejected') {
+      error.value = propertyResponse.reason.message || 'Failed to load property details'
+    }
+    
+    if (valuationsResponse.status === 'rejected') {
+      console.error('Failed to load valuations:', valuationsResponse.reason)
+      // Don't set main error for valuations failure, just log it
     }
   } catch (err) {
     error.value = 'Failed to load property details'
   } finally {
     loading.value = false
   }
+})
+
+async function loadProperty() {
+  try {
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const response = await fetchWithAuth(`${API_BASE}/api/v1/properties/${route.params.id}`)
+    
+    const result = await response.json()
+    property.value = result.data || result
+  } catch (err) {
+    throw err // Re-throw to be handled by Promise.allSettled
+  }
 }
 
 async function loadValuations() {
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/valuations?property_id=${route.params.id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const result = await response.json()
-      valuations.value = result.data || []
-    }
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const response = await fetchWithAuth(`${API_BASE}/api/v1/valuations?property_id=${route.params.id}`)
+    
+    const result = await response.json()
+    valuations.value = result.data || []
   } catch (err) {
     console.error('Failed to load valuations:', err)
+    throw err // Re-throw to be handled by Promise.allSettled
   }
 }
 

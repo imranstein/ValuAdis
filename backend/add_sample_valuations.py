@@ -13,7 +13,11 @@ import random
 
 def add_sample_valuations():
     """Add sample valuation data"""
-    print(f"Connecting to database: {settings.DATABASE_URL}")
+    # Parse DATABASE_URL to extract non-sensitive parts
+    from urllib.parse import urlparse
+    parsed_url = urlparse(settings.DATABASE_URL)
+    safe_db_info = f"{parsed_url.scheme}://{parsed_url.hostname}:{parsed_url.port or '5432'}/{parsed_url.path.lstrip('/')}"
+    print(f"Connecting to database: {safe_db_info}")
     
     # Create engine and session
     engine = create_engine(settings.DATABASE_URL)
@@ -47,7 +51,7 @@ def add_sample_valuations():
                 municipality=random.choice(municipalities),
                 property_type=random.choice(property_types),
                 area_sqm=random.uniform(100, 1000),
-                boundary=text(f"ST_GeomFromText('{boundary_wkt}', 4326)"),
+                boundary=func.ST_GeomFromText(boundary_wkt, 4326),
                 status="valued"
             )
             db.add(prop)
@@ -56,18 +60,18 @@ def add_sample_valuations():
         db.commit()
         print(f"Created {len(properties)} sample properties")
         
+        # Convert string property type to enum (moved outside loop)
+        prop_type_map = {
+            "residential": PropertyType.RESIDENTIAL,
+            "commercial": PropertyType.COMMERCIAL,
+            "agricultural": PropertyType.AGRICULTURAL
+        }
+        
         # Now create valuations for these properties
         valuations = []
         for i, prop in enumerate(properties):
             # Generate realistic Ethiopian property values (in Birr)
             base_value = random.uniform(500000, 5000000)  # 500K to 5M Birr
-            
-            # Convert string property type to enum
-            prop_type_map = {
-                "residential": PropertyType.RESIDENTIAL,
-                "commercial": PropertyType.COMMERCIAL,
-                "agricultural": PropertyType.AGRICULTURAL
-            }
             
             valuation = Valuation(
                 property_id=prop.id,
@@ -100,6 +104,7 @@ def add_sample_valuations():
     except Exception as e:
         print(f"Error adding valuations: {e}")
         db.rollback()
+        raise  # Re-raise exception to ensure non-zero exit code
     finally:
         db.close()
         engine.dispose()

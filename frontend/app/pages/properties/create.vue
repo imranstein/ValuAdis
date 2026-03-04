@@ -44,28 +44,30 @@
 
     <!-- Property Form -->
     <div class="form-container">
+      <!-- Messages moved to top of form -->
+      <Message v-if="error" severity="error" :closable="false">
+        {{ error }}
+      </Message>
+
+      <Message v-if="success" severity="success" :closable="false">
+        {{ success }}
+      </Message>
+      
       <PropertyForm
         :initial-data="formData"
         :loading="loading"
         @submit="handleSubmit"
         @cancel="goBack"
         @save-draft="saveDraft"
+        @update-step="(step) => currentStep = step"
+        v-model:step="currentStep"
       />
     </div>
-
-    <!-- Messages -->
-    <Message v-if="error" severity="error" :closable="false">
-      {{ error }}
-    </Message>
-
-    <Message v-if="success" severity="success" :closable="false">
-      {{ success }}
-    </Message>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PropertyForm from '~/components/property/PropertyForm.vue'
 
@@ -77,6 +79,21 @@ const error = ref(null)
 const success = ref(null)
 const currentStep = ref(1)
 
+// Restore draft on mount
+onMounted(() => {
+  try {
+    const draft = localStorage.getItem('property_draft')
+    if (draft) {
+      const parsedDraft = JSON.parse(draft)
+      // Merge draft into form data
+      formData.value = { ...formData.value, ...parsedDraft }
+    }
+  } catch (err) {
+    console.warn('Failed to restore draft:', err)
+    // Leave formData as-is if draft is invalid
+  }
+})
+
 async function handleSubmit(data) {
   loading.value = true
   error.value = null
@@ -84,8 +101,9 @@ async function handleSubmit(data) {
 
   try {
     const token = localStorage.getItem('valuadis_token')
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
     
-    const response = await fetch('http://localhost:8020/api/v1/properties', {
+    const response = await fetch(`${API_BASE}/api/v1/properties`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,15 +112,27 @@ async function handleSubmit(data) {
       body: JSON.stringify(data)
     })
 
-    const result = await response.json()
+    let result
+    try {
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        result = await response.json()
+      } else {
+        result = { text: await response.text() }
+      }
+    } catch (parseErr) {
+      result = { text: await response.text() }
+    }
 
     if (response.ok) {
       success.value = 'Property created successfully!'
+      // Clear draft on successful submit
+      localStorage.removeItem('property_draft')
       setTimeout(() => {
         router.push('/properties')
       }, 1500)
     } else {
-      error.value = result.detail || 'Failed to create property'
+      const errorMessage = result.detail || result.message || result.text || 'Failed to create property'
+      error.value = `Error ${response.status}: ${errorMessage}`
     }
   } catch (err) {
     error.value = 'Network error. Please check your connection.'

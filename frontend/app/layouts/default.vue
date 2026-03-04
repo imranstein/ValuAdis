@@ -174,7 +174,7 @@
               type="text" 
               v-model="searchQuery" 
               placeholder="Search properties, valuations, users..."
-              @input="handleSearch"
+              @input="debouncedSearch"
               ref="searchInput"
             />
           </div>
@@ -194,15 +194,15 @@
             </div>
             <div v-else class="search-suggestions">
               <p class="suggestions-title">Quick Links</p>
-              <button @click="router.push('/properties')" class="suggestion-item">
+              <button @click="navigateToQuickLink('/properties')" class="suggestion-item">
                 <i class="pi pi-building"></i>
                 <span>All Properties</span>
               </button>
-              <button @click="router.push('/valuations')" class="suggestion-item">
+              <button @click="navigateToQuickLink('/valuations')" class="suggestion-item">
                 <i class="pi pi-calculator"></i>
                 <span>All Valuations</span>
               </button>
-              <button @click="router.push('/reports')" class="suggestion-item">
+              <button @click="navigateToQuickLink('/reports')" class="suggestion-item">
                 <i class="pi pi-file-pdf"></i>
                 <span>Reports</span>
               </button>
@@ -247,7 +247,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -272,11 +272,31 @@ const loadUserData = () => {
   if (token) {
     // Decode JWT to get user info (simple decode, not verification)
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      userName.value = payload.name || 'Test User'
-      userRole.value = payload.role || 'Administrator'
-      userEmail.value = payload.email || 'test@valuadis.com'
+      // Verify token has three parts
+      const parts = token.split('.')
+      if (parts.length !== 3) {
+        throw new Error('Invalid token format')
+      }
+      
+      // Guard against undefined payload
+      const payloadPart = parts[1]
+      if (!payloadPart) {
+        throw new Error('Missing token payload')
+      }
+      
+      // Convert base64url to standard base64
+      let base64Payload = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+      // Add padding if needed
+      while (base64Payload.length % 4) {
+        base64Payload += '='
+      }
+      
+      const payload = JSON.parse(atob(base64Payload))
+      userName.value = payload.name || payload.full_name || 'Test User'
+      userRole.value = payload.role || payload.user_type || 'Administrator'
+      userEmail.value = payload.email || payload.sub || 'test@valuadis.com'
     } catch (e) {
+      console.warn('Failed to decode JWT token:', e)
       userName.value = 'Test User'
       userRole.value = 'Administrator'
       userEmail.value = 'test@valuadis.com'
@@ -389,7 +409,10 @@ function markAllAsRead() {
   notifications.value.forEach(n => n.read = true)
 }
 
-async function handleSearch() {
+// Debounced search function
+let searchTimeout: NodeJS.Timeout | null = null
+
+function handleSearch() {
   if (!searchQuery.value) {
     searchResults.value = []
     return
@@ -407,8 +430,24 @@ async function handleSearch() {
   )
 }
 
+function debouncedSearch() {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    handleSearch()
+  }, 300)
+}
+
 function navigateToResult(result: any) {
   router.push(result.path)
+  showSearch.value = false
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
+function navigateToQuickLink(path: string) {
+  router.push(path)
   showSearch.value = false
   searchQuery.value = ''
   searchResults.value = []
@@ -419,17 +458,7 @@ function handleLogout() {
   router.push('/login')
 }
 
-// Close dropdowns when clicking outside
-watch([showNotifications, showSearch, showProfileMenu], () => {
-  if (showNotifications.value || showSearch.value || showProfileMenu.value) {
-    setTimeout(() => {
-      document.addEventListener('click', closeDropdowns)
-    }, 100)
-  } else {
-    document.removeEventListener('click', closeDropdowns)
-  }
-})
-
+// Close dropdowns when clicking outside - using lifecycle hooks instead of watcher
 function closeDropdowns(e: MouseEvent) {
   const target = e.target as HTMLElement
   if (!target.closest('.dropdown-menu') && !target.closest('.action-btn') && !target.closest('.user-menu')) {
@@ -438,6 +467,18 @@ function closeDropdowns(e: MouseEvent) {
     showProfileMenu.value = false
   }
 }
+
+// Add lifecycle hooks for proper event listener management
+onMounted(() => {
+  document.addEventListener('click', closeDropdowns)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdowns)
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+})
 </script>
 
 <style scoped>

@@ -7,11 +7,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.data.models.scraper import ScraperTarget
-from datetime import datetime
+from datetime import datetime, timezone
 
 def add_sample_scrapers():
     """Add sample scraper data"""
-    print(f"Connecting to database: {settings.DATABASE_URL}")
+    # Create a single timezone-aware timestamp for all records
+    now = datetime.now(tz=timezone.utc)
+    print("Connecting to database")
     
     # Create engine and session
     engine = create_engine(settings.DATABASE_URL)
@@ -36,7 +38,7 @@ def add_sample_scrapers():
                 'max_pages': 50,
                 'last_status': 'success',
                 'total_listings': 156,
-                'last_run': datetime.now()
+                'last_run': now
             },
             {
                 'domain': 'ethioproperty.com',
@@ -53,7 +55,7 @@ def add_sample_scrapers():
                 'max_pages': 30,
                 'last_status': 'success',
                 'total_listings': 89,
-                'last_run': datetime.now()
+                'last_run': now
             },
             {
                 'domain': 'mekelleproperty.et',
@@ -68,7 +70,7 @@ def add_sample_scrapers():
                 'max_pages': 20,
                 'last_status': 'error',
                 'total_listings': 45,
-                'last_run': datetime.now()
+                'last_run': now
             }
         ]
         
@@ -89,7 +91,7 @@ def add_sample_scrapers():
                 'max_pages': 100,
                 'last_status': 'success',
                 'total_listings': 234,
-                'last_run': datetime.now()
+                'last_run': now
             },
             {
                 'domain': 'addisauto.et',
@@ -105,18 +107,28 @@ def add_sample_scrapers():
                 'max_pages': 80,
                 'last_status': 'success',
                 'total_listings': 178,
-                'last_run': datetime.now()
+                'last_run': now
             }
         ]
         
-        # Add property scrapers
+        # Add property scrapers (check for duplicates)
         for scraper_data in property_scrapers:
+            existing = db.query(ScraperTarget).filter_by(domain=scraper_data['domain']).first()
+            if existing:
+                print(f"Property scraper for {scraper_data['domain']} already exists, skipping")
+                continue
             scraper = ScraperTarget(**scraper_data)
+            scraper.last_run = now
             db.add(scraper)
         
-        # Add vehicle scrapers
+        # Add vehicle scrapers (check for duplicates)
         for scraper_data in vehicle_scrapers:
+            existing = db.query(ScraperTarget).filter_by(domain=scraper_data['domain']).first()
+            if existing:
+                print(f"Vehicle scraper for {scraper_data['domain']} already exists, skipping")
+                continue
             scraper = ScraperTarget(**scraper_data)
+            scraper.last_run = now
             db.add(scraper)
         
         db.commit()
@@ -125,6 +137,7 @@ def add_sample_scrapers():
     except Exception as e:
         print(f"Error adding scrapers: {e}")
         db.rollback()
+        raise  # Re-raise exception to ensure non-zero exit code
     finally:
         db.close()
         engine.dispose()

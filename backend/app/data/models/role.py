@@ -4,7 +4,7 @@ Role and Permission Models for User Management
 Implements role-based access control (RBAC) for ValuAdis platform
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Table
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Table, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -13,16 +13,16 @@ from app.core.database import Base
 user_roles = Table(
     'user_roles',
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True)
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True)
 )
 
 # Many-to-many relationship table for roles and permissions
 role_permissions = Table(
     'role_permissions',
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
-    Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True)
+    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True)
 )
 
 
@@ -49,6 +49,9 @@ class Role(Base):
 class Permission(Base):
     """Permission model for RBAC system"""
     __tablename__ = "permissions"
+    __table_args__ = (
+        UniqueConstraint('resource', 'action', name='uq_permissions_resource_action'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False, index=True)
@@ -69,11 +72,16 @@ class Permission(Base):
 class UserRole(Base):
     """User role assignment with additional metadata"""
     __tablename__ = "user_role_assignments"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'role_id', name='uq_user_role_assignment'),
+        Index('ix_user_role_user_id', 'user_id'),
+        Index('ix_user_role_role_id', 'role_id'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    role_id = Column(Integer, ForeignKey('roles.id'), nullable=False)
-    assigned_by = Column(Integer, ForeignKey('users.id'), nullable=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    role_id = Column(Integer, ForeignKey('roles.id', ondelete='CASCADE'), nullable=False, index=True)
+    assigned_by = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     assigned_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)

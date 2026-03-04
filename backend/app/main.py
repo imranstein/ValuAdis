@@ -96,18 +96,38 @@ app = FastAPI(
 # Middleware (order matters: added last = runs first)
 # ---------------------------------------------------------------------------
 
-# CORS — simplified configuration for debugging
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
-)
+# CORS — environment-aware configuration
+if settings.ENVIRONMENT == "development":
+    # Development: allow all origins with credentials
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Production: use explicit origins
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://localhost:3020",
+        "http://127.0.0.1:3020",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
 
 # Security headers on all responses (added AFTER CORS)
-# Temporarily disabled for CORS debugging
-# app.add_middleware(SecurityHeadersMiddleware)
+# Re-enabled for non-development environments
+if settings.ENVIRONMENT != "development":
+    app.add_middleware(SecurityHeadersMiddleware)
 
 # ---------------------------------------------------------------------------
 # Routes
