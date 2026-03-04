@@ -1,0 +1,165 @@
+{
+  "common": {
+    "appName": "ValuAdis",
+    "tagline": "Ethiopian Property Valuation Platform",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "phone": "Phone Number",
+    "fullName": "Full Name",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logged out successfully",
+    "registerSuccess": "Registration successful",
+    "invalidCredentials": "Invalid email or password",
+    "phoneFormat": "Phone format: +251 9x xxx xxxx"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "valuations": "Valuations",
+    "quickValuation": "Quick Valuation",
+    "analytics": "Analytics",
+    "audit": "Audit & Compliance",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "property": {
+    "title": "Properties",
+    "create": "Add Property",
+    "edit": "Edit Property",
+    "delete": "Delete Property",
+    "view": "View Property",
+    "list": "Property List",
+    "address": "Address",
+    "municipality": "Municipality",
+    "propertyType": "Property Type",
+    "area": "Area (sqm)",
+    "coordinates": "GPS Coordinates",
+    "boundary": "Property Boundary",
+    "drawBoundary": "Draw Boundary on Map",
+    "status": "Status",
+    "createdAt": "Created Date",
+    "updatedAt": "Updated Date",
+    "types": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "agricultural": "Agricultural"
+    },
+    "municipalities": {
+      "addisAbaba": "Addis Ababa",
+      "bahirDar": "Bahir Dar",
+      "mekelle": "Mekelle",
+      "hawassa": "Hawassa",
+      "direDawa": "Dire Dawa",
+      "gondar": "Gondar",
+      "jimma": "Jimma",
+      "adama": "Adama"
+    },
+    "messages": {
+      "createSuccess": "Property created successfully",
+      "updateSuccess": "Property updated successfully",
+      "deleteSuccess": "Property deleted successfully",
+      "deleteConfirm": "Are you sure you want to delete this property?",
+      "noProperties": "No properties found",
+      "drawInstructions": "Click on the map to draw property boundary (minimum 3 points)"
+    }
+  },
+  "valuation": {
+    "title": "Valuations",
+    "create": "Create Valuation",
+    "calculate": "Calculate Valuation",
+    "quick": "Quick Valuation",
+    "marketValue": "Market Value",
+    "taxableValue": "Taxable Value (25%)",
+    "proclamation": "Proclamation 1365/2025 Compliant",
+    "condition": "Property Condition",
+    "neighborhood": "Neighborhood Quality",
+    "multiplier": "Type Multiplier",
+    "baseRate": "Base Rate (ETB/sqm)",
+    "totalValue": "Total Valuation",
+    "conditions": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor"
+    },
+    "neighborhoods": {
+      "premium": "Premium",
+      "standard": "Standard",
+      "developing": "Developing"
+    },
+    "messages": {
+      "calculateSuccess": "Valuation calculated successfully",
+      "createSuccess": "Valuation saved successfully",
+      "complianceNote": "Taxable value is exactly 25% of market value as per Proclamation 1365/2025"
+    }
+  },
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "totalProperties": "Total Properties",
+    "totalValuations": "Total Valuations",
+    "totalValue": "Total Property Value",
+    "averageValue": "Average Value",
+    "propertyTypes": "Property Types Distribution",
+    "municipalities": "Properties by Municipality",
+    "trends": "Market Trends",
+    "insights": "Market Insights",
+    "predictions": "ML Predictions",
+    "performance": "System Performance",
+    "engagement": "User Engagement"
+  },
+  "audit": {
+    "title": "Audit & Compliance",
+    "systemHealth": "System Health",
+    "compliance": "Compliance Status",
+    "proclamation": "Proclamation 1365/2025",
+    "reports": "Audit Reports",
+    "schedule": "Schedule Report",
+    "export": "Export Report",
+    "metrics": "System Metrics",
+    "compliant": "Compliant",
+    "nonCompliant": "Non-Compliant",
+    "pending": "Pending Review"
+  },
+  "dashboard": {
+    "welcome": "Welcome to ValuAdis",
+    "recentProperties": "Recent Properties",
+    "recentValuations": "Recent Valuations",
+    "quickActions": "Quick Actions",
+    "systemStatus": "System Status",
+    "operational": "All Systems Operational"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "notFound": "Resource not found.",
+    "validation": "Please check your input and try again.",
+    "server": "Server error. Please contact support."
+  }
+}

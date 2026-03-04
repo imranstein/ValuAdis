@@ -22,9 +22,12 @@ class User(Base):
     license_number = Column(String(50), nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
+    is_valuer = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
     properties = relationship("Property", back_populates="user")
     valuations = relationship("Valuation", back_populates="user")
+    # vehicles = relationship("Vehicle", back_populates="owner")  # Temporarily disabled

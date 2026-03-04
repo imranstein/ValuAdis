@@ -1,0 +1,165 @@
+{
+  "common": {
+    "appName": "ቫሉአዲስ",
+    "tagline": "የኢትዮጵያ ንብረት ግምት መድረክ",
+    "loading": "በመጫን ላይ...",
+    "save": "አስቀምጥ",
+    "cancel": "ሰርዝ",
+    "delete": "ሰርዝ",
+    "edit": "አርትዕ",
+    "view": "ይመልከቱ",
+    "create": "ፍጠር",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "export": "ወደ ውጭ ላክ",
+    "import": "አስገባ",
+    "yes": "አዎ",
+    "no": "አይ",
+    "confirm": "አረጋግጥ",
+    "back": "ተመለስ",
+    "next": "ቀጣይ",
+    "submit": "አስገባ",
+    "close": "ዝጋ"
+  },
+  "auth": {
+    "login": "ግባ",
+    "logout": "ውጣ",
+    "register": "ተመዝገብ",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "confirmPassword": "የይለፍ ቃል አረጋግጥ",
+    "phone": "ስልክ ቁጥር",
+    "fullName": "ሙሉ ስም",
+    "forgotPassword": "የይለፍ ቃል ረሱ?",
+    "rememberMe": "አስታውሰኝ",
+    "loginSuccess": "በተሳካ ሁኔታ ገብተዋል",
+    "logoutSuccess": "በተሳካ ሁኔታ ወጥተዋል",
+    "registerSuccess": "ምዝገባ ተሳክቷል",
+    "invalidCredentials": "ልክ ያልሆነ ኢሜይል ወይም የይለፍ ቃል",
+    "phoneFormat": "የስልክ ቅርጸት: +251 9x xxx xxxx"
+  },
+  "nav": {
+    "dashboard": "ዋና ገጽ",
+    "properties": "ንብረቶች",
+    "valuations": "ግምቶች",
+    "quickValuation": "ፈጣን ግምት",
+    "analytics": "ትንተና",
+    "audit": "ኦዲት እና ተገዢነት",
+    "settings": "ቅንብሮች",
+    "profile": "መገለጫ"
+  },
+  "property": {
+    "title": "ንብረቶች",
+    "create": "ንብረት ጨምር",
+    "edit": "ንብረት አርትዕ",
+    "delete": "ንብረት ሰርዝ",
+    "view": "ንብረት ይመልከቱ",
+    "list": "የንብረቶች ዝርዝር",
+    "address": "አድራሻ",
+    "municipality": "ከተማ",
+    "propertyType": "የንብረት አይነት",
+    "area": "ስፋት (ካሬ ሜትር)",
+    "coordinates": "የጂፒኤስ መጋጠሚያዎች",
+    "boundary": "የንብረት ድንበር",
+    "drawBoundary": "በካርታ ላይ ድንበር ይሳሉ",
+    "status": "ሁኔታ",
+    "createdAt": "የተፈጠረበት ቀን",
+    "updatedAt": "የተሻሻለበት ቀን",
+    "types": {
+      "residential": "የመኖሪያ",
+      "commercial": "የንግድ",
+      "agricultural": "የግብርና"
+    },
+    "municipalities": {
+      "addisAbaba": "አዲስ አበባ",
+      "bahirDar": "ባህር ዳር",
+      "mekelle": "መቐለ",
+      "hawassa": "ሐዋሳ",
+      "direDawa": "ድሬ ዳዋ",
+      "gondar": "ጎንደር",
+      "jimma": "ጅማ",
+      "adama": "አዳማ"
+    },
+    "messages": {
+      "createSuccess": "ንብረት በተሳካ ሁኔታ ተፈጥሯል",
+      "updateSuccess": "ንብረት በተሳካ ሁኔታ ተሻሽሏል",
+      "deleteSuccess": "ንብረት በተሳካ ሁኔታ ተሰርዟል",
+      "deleteConfirm": "እርግጠኛ ነዎት ይህን ንብረት መሰረዝ ይፈልጋሉ?",
+      "noProperties": "ምንም ንብረቶች አልተገኙም",
+      "drawInstructions": "የንብረት ድንበር ለመሳል በካርታ ላይ ጠቅ ያድርጉ (ቢያንስ 3 ነጥቦች)"
+    }
+  },
+  "valuation": {
+    "title": "ግምቶች",
+    "create": "ግምት ፍጠር",
+    "calculate": "ግምት አስላ",
+    "quick": "ፈጣን ግምት",
+    "marketValue": "የገበያ ዋጋ",
+    "taxableValue": "የታክስ ዋጋ (25%)",
+    "proclamation": "አዋጅ 1365/2025 ተገዢ",
+    "condition": "የንብረት ሁኔታ",
+    "neighborhood": "የአካባቢ ጥራት",
+    "multiplier": "የአይነት ማባዣ",
+    "baseRate": "መሰረታዊ ተመን (ብር/ካሬ ሜትር)",
+    "totalValue": "አጠቃላይ ግምት",
+    "conditions": {
+      "excellent": "በጣም ጥሩ",
+      "good": "ጥሩ",
+      "fair": "መካከለኛ",
+      "poor": "ደካማ"
+    },
+    "neighborhoods": {
+      "premium": "ፕሪሚየም",
+      "standard": "መደበኛ",
+      "developing": "በእድገት ላይ"
+    },
+    "messages": {
+      "calculateSuccess": "ግምት በተሳካ ሁኔታ ተሰልቷል",
+      "createSuccess": "ግምት በተሳካ ሁኔታ ተቀምጧል",
+      "complianceNote": "የታክስ ዋጋ በአዋጅ 1365/2025 መሰረት ከገበያ ዋጋ በትክክል 25% ነው"
+    }
+  },
+  "analytics": {
+    "title": "የትንተና ዳሽቦርድ",
+    "totalProperties": "አጠቃላይ ንብረቶች",
+    "totalValuations": "አጠቃላይ ግምቶች",
+    "totalValue": "አጠቃላይ የንብረት ዋጋ",
+    "averageValue": "አማካይ ዋጋ",
+    "propertyTypes": "የንብረት አይነቶች ስርጭት",
+    "municipalities": "በከተማ ንብረቶች",
+    "trends": "የገበያ አዝማሚያዎች",
+    "insights": "የገበያ ግንዛቤዎች",
+    "predictions": "የማሽን መማሪያ ትንበያዎች",
+    "performance": "የስርዓት አፈጻጸም",
+    "engagement": "የተጠቃሚ ተሳትፎ"
+  },
+  "audit": {
+    "title": "ኦዲት እና ተገዢነት",
+    "systemHealth": "የስርዓት ጤና",
+    "compliance": "የተገዢነት ሁኔታ",
+    "proclamation": "አዋጅ 1365/2025",
+    "reports": "የኦዲት ሪፖርቶች",
+    "schedule": "ሪፖርት ያቅዱ",
+    "export": "ሪፖርት ወደ ውጭ ላክ",
+    "metrics": "የስርዓት መለኪያዎች",
+    "compliant": "ተገዢ",
+    "nonCompliant": "ተገዢ ያልሆነ",
+    "pending": "በመገምገም ላይ"
+  },
+  "dashboard": {
+    "welcome": "ወደ ቫሉአዲስ እንኳን በደህና መጡ",
+    "recentProperties": "የቅርብ ጊዜ ንብረቶች",
+    "recentValuations": "የቅርብ ጊዜ ግምቶች",
+    "quickActions": "ፈጣን እርምጃዎች",
+    "systemStatus": "የስርዓት ሁኔታ",
+    "operational": "ሁሉም ስርዓቶች እየሰሩ ነው"
+  },
+  "errors": {
+    "generic": "ስህተት ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
+    "network": "የአውታረ መረብ ስህተት። እባክዎ ግንኙነትዎን ያረጋግጡ።",
+    "unauthorized": "ይህን እርምጃ ለመውሰድ ፈቃድ የለዎትም።",
+    "notFound": "ሀብት አልተገኘም።",
+    "validation": "እባክዎ ግቤትዎን ያረጋግጡ እና እንደገና ይሞክሩ።",
+    "server": "የአገልጋይ ስህተት። እባክዎ ድጋፍን ያነጋግሩ።"
+  }
+}

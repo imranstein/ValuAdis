@@ -44,10 +44,11 @@
 - **Maps**: flutter_map + OpenStreetMap
 
 ### DevOps
-- **Hosting**: cPanel (MVP) → Raxio Tier III (production)
+- **Hosting**: Yegara.com (Standard VPS) → Raxio Tier III (scale)
+- **Architecture**: Modular Monolith → Microservices (when needed)
 - **CI/CD**: GitHub Actions
-- **Monitoring**: Sentry
-- **Deployment**: Docker containers
+- **Monitoring**: Sentry + UptimeRobot
+- **Deployment**: Docker Compose + Nginx
 
 ---
 
@@ -76,6 +77,19 @@ docker-compose up -d
 # - API Documentation: http://localhost:8000/docs
 # - PostgreSQL: localhost:5432
 # - Redis: localhost:6379
+```
+
+### Production Deployment
+
+For production deployment on Yegara.com, see the [Deployment Guide](./DEPLOYMENT_README.md).
+
+```bash
+# Quick production deployment
+git clone https://github.com/yourusername/ValuAdis.git
+cd ValuAdis
+cp .env.production .env
+# Edit .env with production values
+./scripts/deploy.sh
 ```
 
 ### Backend Setup (Without Docker)

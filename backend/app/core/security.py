@@ -106,3 +106,8 @@ def sanitize_input(input_string: str) -> str:
         sanitized = sanitized.replace(char, '')
     
     return sanitized.strip()
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
+    """Get current user ID from JWT token - alias for get_current_user_id"""
+    return get_current_user_id(token)

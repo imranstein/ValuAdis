@@ -18,16 +18,11 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.exceptions import ValuAdisException
+from app.core.sentry import init_sentry, get_sentry_manager
 
-# Initialize Sentry if configured
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        integrations=[FastApiIntegration()],
-        environment=settings.ENVIRONMENT,
-        traces_sample_rate=0.1,
-        profiles_sample_rate=0.1,
-    )
+# Initialize Sentry
+init_sentry()
+sentry_manager = get_sentry_manager()
 
 # Create FastAPI application
 app = FastAPI(
