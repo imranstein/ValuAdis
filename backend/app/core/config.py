@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "ValuAdis API"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
     # Database (PostgreSQL + PostGIS)
     DATABASE_URL: str = "postgresql://valuadis_user:valuadis_2025@localhost:5432/valuadis"

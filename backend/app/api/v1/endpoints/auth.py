@@ -91,27 +91,37 @@ async def login(
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    """Refresh access token"""
+    """Refresh access token — rotates the refresh token on every call"""
     try:
         payload = verify_token(credentials.credentials)
+
+        # Reject access tokens used as refresh tokens
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token"
+            )
+
         user_id = payload.get("sub")
-        
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
             )
-        
-        # Generate new access token
+
+        # Issue fresh access + refresh tokens (rotation)
         access_token = create_access_token(data={"sub": user_id})
-        
+        new_refresh_token = create_refresh_token(data={"sub": user_id})
+
         return TokenResponse(
             access_token=access_token,
-            refresh_token=credentials.credentials,  # Keep same refresh token
+            refresh_token=new_refresh_token,
             token_type="bearer",
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
-        
+
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

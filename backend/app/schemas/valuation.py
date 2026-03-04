@@ -14,7 +14,7 @@ class ValuationCreate(BaseModel):
     property_id: int = Field(..., description="ID of the property being valued")
     property_type: str = Field(..., description="Type of property (residential, commercial, agricultural)")
     municipality: str = Field(..., description="Ethiopian municipality")
-    area_sqm: float = Field(..., gt=0, description="Property area in square meters")
+    area_sqm: float = Field(..., gt=0, lt=100_000, description="Property area in square meters")
     coordinates: List[Tuple[float, float]] = Field(..., description="GPS boundary coordinates")
     
     @validator('property_type')

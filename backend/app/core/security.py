@@ -67,13 +67,19 @@ def verify_token(token: str) -> dict:
 def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     """Extract user ID from JWT token"""
     payload = verify_token(token)
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    raw_sub = payload.get("sub")
+    if raw_sub is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    return user_id
+    try:
+        return int(raw_sub)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
 
 
 def validate_ethiopian_phone_number(phone: str) -> bool:
