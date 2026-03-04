@@ -4,9 +4,10 @@ Properties Endpoints
 Property CRUD operations for ValuAdis
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Tuple
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.schemas.property import (
@@ -16,8 +17,70 @@ from app.schemas.property import (
     PropertyListResponse
 )
 from app.services.property_service import PropertyService
+from app.services.spatial_service import SpatialService
+from app.core.exceptions import SpatialOperationException
 
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Spatial / GIS endpoints
+# ---------------------------------------------------------------------------
+
+class SpatialRequest(BaseModel):
+    coordinates: List[List[float]]   # [[lon, lat], ...]
+
+
+class OverlapRequest(BaseModel):
+    coordinates_a: List[List[float]]
+    coordinates_b: List[List[float]]
+
+
+def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:
+    return [(c[0], c[1]) for c in coords]
+
+
+@router.post("/spatial/summary", tags=["Properties"])
+async def spatial_summary(
+    body: SpatialRequest,
+    _: int = Depends(get_current_user_id),
+):
+    """
+    Return a full spatial summary (area, perimeter, centroid, bounding box)
+    for a set of GPS boundary coordinates.
+    """
+    try:
+        coords = _to_tuples(body.coordinates)
+        svc = SpatialService()
+        return {"success": True, "data": svc.get_spatial_summary(coords)}
+    except SpatialOperationException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post("/spatial/overlap", tags=["Properties"])
+async def check_overlap(
+    body: OverlapRequest,
+    _: int = Depends(get_current_user_id),
+):
+    """
+    Check whether two property boundaries overlap and return the overlap
+    area (m²) and percentage.
+    """
+    try:
+        svc = SpatialService()
+        a = _to_tuples(body.coordinates_a)
+        b = _to_tuples(body.coordinates_b)
+        overlaps = svc.polygons_overlap(a, b)
+        overlap_area = svc.calculate_overlap_area(a, b) if overlaps else 0.0
+        overlap_pct  = svc.get_overlap_percentage(a, b) if overlaps else 0.0
+        return {
+            "success":       True,
+            "overlaps":      overlaps,
+            "overlap_area_sqm": round(overlap_area, 2),
+            "overlap_percentage": round(overlap_pct, 4),
+        }
+    except SpatialOperationException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("", response_model=PropertyResponse, status_code=201)

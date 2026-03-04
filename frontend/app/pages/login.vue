@@ -7,7 +7,7 @@
           <p style="color: #6b7280;">Ethiopian Property Valuation Platform</p>
         </div>
       </template>
-      
+
       <template #content>
         <form @submit.prevent="handleLogin" style="display: flex; flex-direction: column; gap: 1rem;">
           <div>
@@ -39,16 +39,16 @@
             />
           </div>
 
-          <div v-if="error" style="padding: 0.75rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem;">
-            <p style="font-size: 0.875rem; color: #dc2626;">{{ error }}</p>
+          <div v-if="errorMessage" style="padding: 0.75rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem;">
+            <p style="font-size: 0.875rem; color: #dc2626;">{{ errorMessage }}</p>
           </div>
 
           <Button
             type="submit"
             label="Login"
             style="width: 100%; background-color: #078160; border-color: #078160;"
-            :loading="loading"
-            :disabled="loading"
+            :loading="authStore.loading"
+            :disabled="authStore.loading"
           />
 
           <div style="text-align: center; font-size: 0.875rem; color: #6b7280;">
@@ -60,45 +60,29 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({ middleware: 'guest' })
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-const credentials = ref({
-  email: '',
-  password: ''
-})
-
-const loading = ref(false)
-const error = ref(null)
+const credentials = ref({ email: '', password: '' })
+const errorMessage = ref<string | null>(null)
 
 async function handleLogin() {
-  error.value = null
-  loading.value = true
-  
+  errorMessage.value = null
   try {
-    const response = await fetch('http://localhost:8020/api/v1/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(credentials.value)
-    })
-
-    const data = await response.json()
-
-    if (response.ok && data.access_token) {
-      localStorage.setItem('valuadis_token', data.access_token)
-      router.push('/')
-    } else {
-      error.value = data.detail || 'Login failed'
-    }
-  } catch (err) {
-    error.value = 'Network error. Please check if backend is running on port 8020.'
-  } finally {
-    loading.value = false
+    await authStore.login(credentials.value)
+    router.push('/')
+  } catch (err: any) {
+    errorMessage.value =
+      err?.message ||
+      authStore.error ||
+      'Login failed. Please check your credentials.'
   }
 }
 </script>
