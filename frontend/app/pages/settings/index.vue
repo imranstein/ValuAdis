@@ -524,22 +524,43 @@
 
         <!-- Raw Scraped Data Section -->
         <div v-if="showRawData" style="background: white; padding: 20px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px;">
-          <h3>🗃️ Raw Scraped Data (Last 50 {{ scraperType === 'property' ? 'Properties' : 'Vehicles' }})</h3>
-          <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">🗃️ Scraped {{ scraperType === 'property' ? 'Properties' : 'Vehicles' }}</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span style="color: #666; font-size: 14px;">
+                Showing {{ ((pagination.currentPage - 1) * pagination.rowsPerPage) + 1 }}-{{ Math.min(pagination.currentPage * pagination.rowsPerPage, pagination.totalRecords) }} of {{ pagination.totalRecords }} results
+              </span>
+              <select v-model="pagination.rowsPerPage" @change="updatePagination" style="padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="10">10 rows</option>
+                <option value="25">25 rows</option>
+                <option value="50">50 rows</option>
+                <option value="100">100 rows</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Data Table -->
+          <div style="border: 1px solid #eee; border-radius: 5px; overflow: hidden;">
             <table style="width: 100%; border-collapse: collapse;">
-              <thead style="position: sticky; top: 0; background: #f8f9fa;">
+              <thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
                 <tr>
-                  <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">ID</th>
-                  <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">{{ scraperType === 'property' ? 'Address' : 'Make/Model' }}</th>
-                  <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Price</th>
-                  <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Source</th>
-                  <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Date</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">#</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">ID</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">{{ scraperType === 'property' ? 'Address' : 'Make/Model' }}</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">Price</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">Source</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">Date</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in scrapedData.slice(0, 50)" :key="item.id" style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px;">{{ item.id }}</td>
-                  <td style="padding: 8px;">
+                <tr v-for="(item, index) in paginatedData" :key="item.id" style="border-bottom: 1px solid #eee; transition: background-color 0.2s;" 
+                    @mouseover="$event.currentTarget.style.backgroundColor = '#f8f9fa'" 
+                    @mouseout="$event.currentTarget.style.backgroundColor = 'transparent'">
+                  <td style="padding: 12px; text-align: center; font-weight: 500; color: #666;">
+                    {{ ((pagination.currentPage - 1) * pagination.rowsPerPage) + index + 1 }}
+                  </td>
+                  <td style="padding: 12px; font-family: monospace; color: #333;">{{ item.id }}</td>
+                  <td style="padding: 12px;">
                     <button 
                       v-if="scraperType === 'property'"
                       @click="viewPropertyDetails(item)"
@@ -553,16 +574,77 @@
                     </button>
                     <span v-else>{{ item.address || item.name }}</span>
                   </td>
-                  <td style="padding: 8px;">{{ item.market_value ? 'ETB ' + item.market_value.toLocaleString() : 'N/A' }}</td>
-                  <td style="padding: 8px;">
-                    <span style="background: #007acc; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                  <td style="padding: 12px; font-weight: 500;">
+                    {{ item.market_value ? 'ETB ' + Number(item.market_value).toLocaleString() : 'N/A' }}
+                  </td>
+                  <td style="padding: 12px;">
+                    <span style="background: #007acc; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;">
                       {{ item.source_domain || 'Unknown' }}
                     </span>
                   </td>
-                  <td style="padding: 8px;">{{ new Date(item.created_at).toLocaleDateString() }}</td>
+                  <td style="padding: 12px; color: #666; font-size: 14px;">{{ new Date(item.created_at).toLocaleDateString() }}</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          
+          <!-- Pagination Controls -->
+          <div v-if="pagination.totalRecords > pagination.rowsPerPage" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <div style="display: flex; gap: 5px;">
+              <button 
+                @click="goToPage(1)" 
+                :disabled="pagination.currentPage === 1"
+                style="padding: 6px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; disabled: opacity: 0.5; disabled: cursor: not-allowed;"
+              >
+                First
+              </button>
+              <button 
+                @click="goToPage(pagination.currentPage - 1)" 
+                :disabled="pagination.currentPage === 1"
+                style="padding: 6px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; disabled: opacity: 0.5; disabled: cursor: not-allowed;"
+              >
+                Previous
+              </button>
+              
+              <!-- Page Numbers -->
+              <div style="display: flex; gap: 2px;">
+                <button 
+                  v-for="page in visiblePages" 
+                  :key="page"
+                  @click="goToPage(page)"
+                  :style="{
+                    padding: '6px 10px',
+                    border: '1px solid #ddd',
+                    background: page === pagination.currentPage ? '#007acc' : 'white',
+                    color: page === pagination.currentPage ? 'white' : '#333',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: page === pagination.currentPage ? '600' : 'normal'
+                  }"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <button 
+                @click="goToPage(pagination.currentPage + 1)" 
+                :disabled="pagination.currentPage === totalPages"
+                style="padding: 6px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; disabled: opacity: 0.5; disabled: cursor: not-allowed;"
+              >
+                Next
+              </button>
+              <button 
+                @click="goToPage(totalPages)" 
+                :disabled="pagination.currentPage === totalPages"
+                style="padding: 6px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; disabled: opacity: 0.5; disabled: cursor: not-allowed;"
+              >
+                Last
+              </button>
+            </div>
+            
+            <div style="color: #666; font-size: 14px;">
+              Page {{ pagination.currentPage }} of {{ totalPages }}
+            </div>
           </div>
         </div>
 
@@ -654,7 +736,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { navigateTo } from '#app'
 import ScraperStats from '~/components/settings/ScraperStats.vue'
 import ScraperTable from '~/components/settings/ScraperTable.vue'
@@ -670,6 +752,11 @@ const saveStatus = ref(null)
 const scraperType = ref('property')
 const showRawData = ref(false)
 const scrapedData = ref([])
+const pagination = ref({
+  currentPage: 1,
+  rowsPerPage: 10,
+  totalRecords: 0
+})
 
 const settingsTabs = [
   { id: 'general', label: 'General', icon: 'pi pi-cog' },
@@ -886,119 +973,151 @@ async function loadScrapedData() {
   try {
     const token = localStorage.getItem('valuadis_token')
     const endpoint = scraperType.value === 'property' ? 'properties' : 'vehicles'
-    const response = await fetch(`http://localhost:8020/api/v1/${endpoint}?limit=50`, {
+    const response = await fetch(`http://localhost:8020/api/v1/${endpoint}?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
       const data = await response.json()
       scrapedData.value = data.data || data
+      // Update pagination total
+      pagination.value.totalRecords = scrapedData.value.length
+      // Reset to first page when loading new data
+      pagination.value.currentPage = 1
     } else {
       // Fallback to mock data if API fails
       scrapedData.value = getMockScrapedData()
+      pagination.value.totalRecords = scrapedData.value.length
+      pagination.value.currentPage = 1
     }
   } catch (error) {
     console.error('Error loading scraped data:', error)
     // Fallback to mock data
     scrapedData.value = getMockScrapedData()
+    pagination.value.totalRecords = scrapedData.value.length
+    pagination.value.currentPage = 1
   }
+}
+
+// Pagination computed properties
+const paginatedData = computed(() => {
+  const start = (pagination.value.currentPage - 1) * pagination.value.rowsPerPage
+  const end = start + pagination.value.rowsPerPage
+  return scrapedData.value.slice(start, end)
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(pagination.value.totalRecords / pagination.value.rowsPerPage)
+})
+
+const visiblePages = computed(() => {
+  const current = pagination.value.currentPage
+  const total = totalPages.value
+  const delta = 2 // Show 2 pages before and after current
+  
+  const range = []
+  const rangeWithDots = []
+  let l
+
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i)
+  }
+
+  if (current - delta > 2) {
+    rangeWithDots.push(1, '...')
+  } else {
+    rangeWithDots.push(1)
+  }
+
+  rangeWithDots.push(...range)
+
+  if (current + delta < total - 1) {
+    rangeWithDots.push('...', total)
+  } else {
+    rangeWithDots.push(total)
+  }
+
+  return rangeWithDots.filter((page, index, array) => array.indexOf(page) === index)
+})
+
+// Pagination methods
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value && page !== pagination.value.currentPage) {
+    pagination.value.currentPage = page
+  }
+}
+
+function updatePagination() {
+  pagination.value.currentPage = 1 // Reset to first page when changing rows per page
 }
 
 // Mock data for demonstration
 function getMockScrapedData() {
   if (scraperType.value === 'property') {
-    return [
-      {
-        id: 1,
-        address: 'Bole, Addis Ababa - Modern 3 Bedroom Apartment',
-        market_value: 2500000,
-        source_domain: 'livingethio.com',
-        created_at: '2026-03-03T09:17:48Z',
-        area_sqm: 120,
-        property_type: 'apartment',
-        bedrooms: 3,
-        bathrooms: 2
-      },
-      {
-        id: 2,
-        address: 'Kazanchis, Addis Ababa - Office Space for Rent',
-        market_value: 1800000,
-        source_domain: 'livingethio.com',
-        created_at: '2026-03-03T09:17:48Z',
-        area_sqm: 85,
-        property_type: 'commercial',
-        bedrooms: 0,
-        bathrooms: 1
-      },
-      {
-        id: 3,
-        address: 'Mekanisa, Addis Ababa - 2 Bedroom House',
-        market_value: 3200000,
-        source_domain: 'livingethio.com',
-        created_at: '2026-03-03T09:17:48Z',
-        area_sqm: 150,
-        property_type: 'house',
-        bedrooms: 2,
-        bathrooms: 1
-      },
-      {
-        id: 4,
-        address: 'CMC, Addis Ababa - 4 Bedroom Villa',
-        market_value: 5500000,
-        source_domain: 'livingethio.com',
-        created_at: '2026-03-03T09:17:48Z',
-        area_sqm: 280,
-        property_type: 'villa',
-        bedrooms: 4,
-        bathrooms: 3
-      },
-      {
-        id: 5,
-        address: 'Piassa, Addis Ababa - Studio Apartment',
-        market_value: 980000,
-        source_domain: 'livingethio.com',
-        created_at: '2026-03-03T09:17:48Z',
-        area_sqm: 45,
-        property_type: 'apartment',
-        bedrooms: 1,
-        bathrooms: 1
-      }
+    // Generate 25 mock properties for pagination testing
+    const properties = []
+    const addresses = [
+      'Bole, Addis Ababa - Modern 3 Bedroom Apartment',
+      'Kazanchis, Addis Ababa - Office Space for Rent',
+      'Mekanisa, Addis Ababa - 2 Bedroom House',
+      'CMC, Addis Ababa - 4 Bedroom Villa',
+      'Piassa, Addis Ababa - Studio Apartment',
+      'Saris, Addis Ababa - Penthouse Apartment',
+      'Bole Medhanialem, Addis Ababa - Commercial Building',
+      'Mekelle, Tigray - Modern Apartment Complex',
+      'Gondar, Amhara - Traditional House',
+      'Bahir Dar, Amhara - Lake View Villa',
+      'Hawassa, Sidama - Resort Property',
+      'Adama, Oromia - Industrial Warehouse',
+      'Jimma, Oromia - Agricultural Land',
+      'Dessie, Amhara - Multi-story Building',
+      'Harar, Harari - Historic Property',
+      'Shashemene, Oromia - Shopping Complex',
+      'Nekemte, Oromia - Residential Plot',
+      'Dire Dawa, Somali - Mixed-use Building',
+      'Arba Minch, SNNPR - Eco-lodge',
+      'Weldiya, Amhara - Government Office',
+      'Sebeta, Oromia - Manufacturing Plant',
+      'Debre Berhan, Amhara - University Housing',
+      'Modjo, Oromia - Logistics Center',
+      'Ziway, Oromia - Lakeside Property',
+      'Kombolcha, Amhara - Textile Factory',
+      'Gambela, Gambela - Agricultural Estate'
     ]
+    
+    for (let i = 0; i < 25; i++) {
+      properties.push({
+        id: i + 1,
+        address: addresses[i],
+        market_value: Math.floor(Math.random() * 5000000) + 500000,
+        source_domain: ['livingethio.com', 'ethiopianproperties.com', 'addisproperty.gov.et'][Math.floor(Math.random() * 3)],
+        created_at: new Date(2026, 2, Math.floor(Math.random() * 28) + 1, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toISOString(),
+        area_sqm: Math.floor(Math.random() * 300) + 50,
+        property_type: ['apartment', 'house', 'villa', 'commercial', 'land'][Math.floor(Math.random() * 5)],
+        bedrooms: Math.floor(Math.random() * 5),
+        bathrooms: Math.floor(Math.random() * 4) + 1
+      })
+    }
+    return properties
   } else {
-    return [
-      {
-        id: 1,
-        make: 'Toyota',
-        model: 'Camry 2020',
-        market_value: 850000,
-        source_domain: 'ethiocars.com',
-        created_at: '2026-03-03T09:15:32Z',
-        year: 2020,
-        mileage: 45000,
-        fuel_type: 'petrol'
-      },
-      {
-        id: 2,
-        make: 'Honda',
-        model: 'CR-V 2019',
-        market_value: 1200000,
-        source_domain: 'ethiocars.com',
-        created_at: '2026-03-03T09:15:32Z',
-        year: 2019,
-        mileage: 62000,
-        fuel_type: 'petrol'
-      },
-      {
-        id: 3,
-        make: 'Nissan',
-        model: 'Patrol 2021',
-        market_value: 2800000,
-        source_domain: 'ethiocars.com',
-        created_at: '2026-03-03T09:15:32Z',
-        year: 2021,
-        mileage: 15000,
-        fuel_type: 'diesel'
-      }
-    ]
+    // Generate 20 mock vehicles for pagination testing
+    const vehicles = []
+    const makes = ['Toyota', 'Honda', 'Nissan', 'Mitsubishi', 'Hyundai', 'Kia', 'Ford', 'Volkswagen', 'BMW', 'Mercedes']
+    const models = ['Camry', 'Corolla', 'CR-V', 'Patrol', 'Lancer', 'Elantra', 'Focus', 'Golf', 'X5', 'C-Class']
+    
+    for (let i = 0; i < 20; i++) {
+      vehicles.push({
+        id: i + 1,
+        make: makes[Math.floor(Math.random() * makes.length)],
+        model: models[Math.floor(Math.random() * models.length)] + ' ' + (2018 + Math.floor(Math.random() * 5)),
+        market_value: Math.floor(Math.random() * 3000000) + 300000,
+        source_domain: ['ethiocars.com', 'ethiomotors.com', 'car Ethiopia.et'][Math.floor(Math.random() * 3)],
+        created_at: new Date(2026, 2, Math.floor(Math.random() * 28) + 1, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toISOString(),
+        year: 2018 + Math.floor(Math.random() * 5),
+        mileage: Math.floor(Math.random() * 100000) + 5000,
+        fuel_type: ['petrol', 'diesel', 'hybrid'][Math.floor(Math.random() * 3)]
+      })
+    }
+    return vehicles
   }
 }
 
@@ -1300,6 +1419,10 @@ watch(activeTab, (newTab) => {
 
 // Watch for scraper type changes and reload data
 watch(scraperType, async () => {
+  // Reset pagination when switching types
+  pagination.value.currentPage = 1
+  pagination.value.totalRecords = 0
+  
   // Run all loads concurrently and wait for completion
   try {
     await Promise.all([
