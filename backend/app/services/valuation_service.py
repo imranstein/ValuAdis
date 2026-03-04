@@ -301,8 +301,8 @@ class ValuationService:
                 raise PropertyValidationError("Area must be greater than 0")
             if area_decimal > 100000:
                 raise PropertyValidationError("Area exceeds maximum allowed size (100 000 sqm)")
-        except (ValueError, TypeError):
-            raise PropertyValidationError("Invalid area value")
+        except (ValueError, TypeError) as e:
+            raise PropertyValidationError("Invalid area value") from e
 
         condition = property_data.get("condition", "good")
         if condition not in self._condition_factors:
@@ -318,17 +318,9 @@ class ValuationService:
 
         if "coordinates" in property_data:
             coordinates = property_data["coordinates"]
-            if not isinstance(coordinates, list) or len(coordinates) < 4:
-                raise PropertyValidationError("Coordinates must form a valid polygon (≥ 4 points)")
-
-            if coordinates[0] != coordinates[-1]:
-                raise PropertyValidationError("Coordinates must form a closed polygon")
-
-            for coord in coordinates:
-                if not isinstance(coord, (list, tuple)) or len(coord) != 2:
-                    raise PropertyValidationError("Invalid coordinate format")
-                lon, lat = coord
-                if not (-180 <= lon <= 180) or not (-90 <= lat <= 90):
-                    raise PropertyValidationError("Invalid coordinate range")
-                if not (33 <= lon <= 48) or not (3 <= lat <= 15):
-                    raise PropertyValidationError("Coordinates must be within Ethiopia")
+            if not self._spatial_service.validate_polygon(coordinates):
+                raise PropertyValidationError(
+                    "Coordinates must form a valid closed polygon (≥ 4 points, first == last)"
+                )
+            if not self._spatial_service.validate_ethiopian_coordinates(coordinates):
+                raise PropertyValidationError("Coordinates must be within Ethiopia")

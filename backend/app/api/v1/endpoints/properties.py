@@ -37,7 +37,18 @@ class OverlapRequest(BaseModel):
 
 
 def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:
-    return [(c[0], c[1]) for c in coords]
+    result: List[Tuple[float, float]] = []
+    for i, c in enumerate(coords):
+        if not isinstance(c, (list, tuple)) or len(c) < 2:
+            raise ValueError(
+                f"Coordinate at index {i} must have at least 2 elements, got: {c!r}"
+            )
+        if not all(isinstance(v, (int, float)) for v in c[:2]):
+            raise ValueError(
+                f"Coordinate at index {i} must contain numbers, got: {c!r}"
+            )
+        result.append((float(c[0]), float(c[1])))
+    return result
 
 
 @router.post("/spatial/summary", tags=["Properties"])
@@ -53,8 +64,10 @@ async def spatial_summary(
         coords = _to_tuples(body.coordinates)
         svc = SpatialService()
         return {"success": True, "data": svc.get_spatial_summary(coords)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SpatialOperationException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/spatial/overlap", tags=["Properties"])
@@ -79,8 +92,10 @@ async def check_overlap(
             "overlap_area_sqm": round(overlap_area, 2),
             "overlap_percentage": round(overlap_pct, 4),
         }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SpatialOperationException as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("", response_model=PropertyResponse, status_code=201)

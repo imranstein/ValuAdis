@@ -12,6 +12,7 @@ import io
 from app.services.valuation_service import ValuationService
 from app.services.spatial_service import SpatialService
 from app.services.certificate_service import CertificateService
+from app.services.auth_service import AuthService
 from app.schemas.valuation import (
     ValuationCreate, ValuationUpdate, ValuationResponse, 
     ValuationListResponse, ValuationDetail, ValuationCalculation
@@ -290,8 +291,14 @@ async def download_certificate(
         if not valuation:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Valuation not found")
 
+        # Only issue certificates for approved valuations
+        if valuation.get("status") != "approved":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Certificate can only be generated for approved valuations",
+            )
+
         # Fetch owner name via auth service
-        from app.services.auth_service import AuthService
         auth_svc = AuthService(db)
         owner = await auth_svc.get_user_by_id(user_id)
         owner_name = owner.full_name if owner else "Unknown Owner"
@@ -324,7 +331,10 @@ async def download_certificate(
         raise
     except Exception as e:
         logger.error("Error generating certificate", error=str(e), valuation_id=valuation_id)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Certificate generation failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Certificate generation failed",
+        ) from e
 
 
 @router.post("/calculate", response_model=ValuationCalculation, tags=["Valuations"])

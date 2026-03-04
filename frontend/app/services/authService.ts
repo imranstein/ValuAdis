@@ -61,7 +61,7 @@ class AuthService {
     })
     if (!res.ok) {
       if (res.status === 401) {
-        this.removeToken()
+        this.logout()
         if (process.client) window.location.href = '/login'
       }
       throw new Error('Failed to get current user')
@@ -73,6 +73,9 @@ class AuthService {
     const config = useRuntimeConfig()
     const baseURL = config.public.apiBaseUrl as string
     const refreshTok = this.getRefreshToken()
+    if (!refreshTok) {
+      throw new Error('No refresh token available')
+    }
     const res = await fetch(`${baseURL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -80,9 +83,13 @@ class AuthService {
         Authorization: `Bearer ${refreshTok}`,
       },
     })
-    if (!res.ok) throw new Error('Token refresh failed')
+    if (!res.ok) {
+      throw new Error(`Token refresh failed: ${res.status} ${res.statusText}`)
+    }
     const tokens: AuthTokens = await res.json()
     this.setToken(tokens.access_token)
+    // Persist the rotated refresh token returned by the server
+    if (tokens.refresh_token) this.setRefreshToken(tokens.refresh_token)
     return tokens
   }
 

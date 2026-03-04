@@ -181,9 +181,12 @@ class SpatialService:
         coords_a: List[Tuple[float, float]],
         coords_b: List[Tuple[float, float]],
     ) -> bool:
-        """Return True when the two polygons share any area."""
+        """Return True when the two polygons share any area (not merely touch at an edge/corner)."""
         try:
-            return Polygon(coords_a).intersects(Polygon(coords_b))
+            poly_a = Polygon(coords_a)
+            poly_b = Polygon(coords_b)
+            # Use positive intersection area; intersects() is True for boundary touches too
+            return poly_a.intersection(poly_b).area > 0
         except Exception as exc:
             raise SpatialOperationException(f"Failed to check overlap: {exc}") from exc
 

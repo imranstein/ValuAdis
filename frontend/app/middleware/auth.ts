@@ -10,6 +10,7 @@ export default defineNuxtRouteMiddleware(async () => {
       try {
         await authStore.fetchCurrentUser()
       } catch {
+        authStore.logout()
         return navigateTo('/login')
       }
     }

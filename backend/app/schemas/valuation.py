@@ -19,7 +19,7 @@ class ValuationCreate(BaseModel):
     
     @validator('property_type')
     def validate_property_type(cls, v):
-        allowed_types = ['residential', 'commercial', 'agricultural']
+        allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
         if v not in allowed_types:
             raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
@@ -59,7 +59,7 @@ class ValuationUpdate(BaseModel):
     @validator('property_type')
     def validate_property_type(cls, v):
         if v is not None:
-            allowed_types = ['residential', 'commercial', 'agricultural']
+            allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
             if v not in allowed_types:
                 raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
