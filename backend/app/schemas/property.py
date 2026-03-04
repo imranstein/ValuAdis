@@ -9,6 +9,23 @@ from typing import List, Optional, Tuple
 from datetime import datetime
 
 
+# ---------------------------------------------------------------------------
+# Spatial / GIS request schemas (used by /spatial/summary and /spatial/overlap)
+# ---------------------------------------------------------------------------
+
+class SpatialRequest(BaseModel):
+    """GPS boundary coordinates submitted for spatial analysis."""
+
+    coordinates: List[List[float]]  # [[lon, lat], …]
+
+
+class OverlapRequest(BaseModel):
+    """Two polygon boundaries submitted for overlap analysis."""
+
+    coordinates_a: List[List[float]]
+    coordinates_b: List[List[float]]
+
+
 class PropertyCreate(BaseModel):
     """Property creation request"""
     address: str
@@ -24,7 +41,7 @@ class PropertyCreate(BaseModel):
     
     @validator('property_type')
     def validate_property_type(cls, v):
-        allowed_types = ['residential', 'commercial', 'agricultural']
+        allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
         if v not in allowed_types:
             raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
@@ -59,7 +76,7 @@ class PropertyUpdate(BaseModel):
     @validator('property_type')
     def validate_property_type(cls, v):
         if v is not None:
-            allowed_types = ['residential', 'commercial', 'agricultural']
+            allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
             if v not in allowed_types:
                 raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v

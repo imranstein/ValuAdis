@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "ValuAdis API"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
     # Database (PostgreSQL + PostGIS)
     DATABASE_URL: str = "postgresql://valuadis_user:valuadis_2025@localhost:5432/valuadis"
@@ -39,7 +39,15 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3001", "http://localhost:3003", "http://localhost:5173"]
+    ALLOWED_HOSTS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:3003",
+        "http://localhost:3020",
+        "http://127.0.0.1:3020",
+        "http://localhost:5173",
+    ]
     
     # M-Pesa Ethiopia
     MPESA_CONSUMER_KEY: str = ""

@@ -5,9 +5,11 @@ Monitoring and health check endpoints for ValuAdis API
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.redis import get_redis
+from app.core.config import settings
 import redis
 
 router = APIRouter()
@@ -23,19 +25,11 @@ async def ping():
 async def check_database(db: Session = Depends(get_db)):
     """Check database connection"""
     try:
-        # Execute simple query to test connection
-        db.execute("SELECT 1")
-        return {
-            "status": "healthy",
-            "service": "postgresql",
-            "message": "Database connection successful"
-        }
-    except Exception as e:
-        return {
-            "status": "unhealthy",
-            "service": "postgresql",
-            "message": f"Database connection failed: {str(e)}"
-        }
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "service": "postgresql"}
+    except Exception:
+        # Suppress error details — don't leak connection info
+        return {"status": "unhealthy", "service": "postgresql"}
 
 
 @router.get("/redis", tags=["Health"])
@@ -66,17 +60,17 @@ async def full_health_check(
     
     # Database check
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         checks["database"] = {"status": "healthy"}
-    except Exception as e:
-        checks["database"] = {"status": "unhealthy", "error": str(e)}
+    except Exception:
+        checks["database"] = {"status": "unhealthy"}
     
     # Redis check
     try:
         redis_client.ping()
         checks["redis"] = {"status": "healthy"}
-    except Exception as e:
-        checks["redis"] = {"status": "unhealthy", "error": str(e)}
+    except Exception:
+        checks["redis"] = {"status": "unhealthy"}
     
     # Overall status
     all_healthy = all(check["status"] == "healthy" for check in checks.values())

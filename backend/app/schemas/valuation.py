@@ -6,7 +6,7 @@ Pydantic models for valuation request/response validation
 
 from pydantic import BaseModel, Field, validator
 from typing import List, Tuple, Optional
-from datetime import datetime
+from datetime import date, datetime
 
 
 class ValuationCreate(BaseModel):
@@ -14,36 +14,62 @@ class ValuationCreate(BaseModel):
     property_id: int = Field(..., description="ID of the property being valued")
     property_type: str = Field(..., description="Type of property (residential, commercial, agricultural)")
     municipality: str = Field(..., description="Ethiopian municipality")
-    area_sqm: float = Field(..., gt=0, description="Property area in square meters")
+    area_sqm: float = Field(..., gt=0, lt=100_000, description="Property area in square meters")
     coordinates: List[Tuple[float, float]] = Field(..., description="GPS boundary coordinates")
-    
+    # Proclamation 1365/2025 Annex B inputs — optional, with sensible defaults
+    condition: str = Field("good", description="Property condition grade (excellent/good/fair/poor)")
+    neighborhood_quality: str = Field("average", description="Neighborhood quality tier")
+    construction_year: Optional[int] = Field(None, description="Year of construction for depreciation")
+
     @validator('property_type')
     def validate_property_type(cls, v):
-        allowed_types = ['residential', 'commercial', 'agricultural']
+        allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
         if v not in allowed_types:
             raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
-    
+
+    @validator('condition')
+    def validate_condition(cls, v):
+        allowed = ['excellent', 'good', 'fair', 'poor']
+        if v not in allowed:
+            raise ValueError(f'Condition must be one of: {", ".join(allowed)}')
+        return v
+
+    @validator('neighborhood_quality')
+    def validate_neighborhood_quality(cls, v):
+        allowed = ['prime', 'above_average', 'average', 'below_average', 'developing']
+        if v not in allowed:
+            raise ValueError(f'neighborhood_quality must be one of: {", ".join(allowed)}')
+        return v
+
+    @validator('construction_year')
+    def validate_construction_year(cls, v):
+        if v is not None:
+            current_year = date.today().year
+            if not (1800 <= v <= current_year):
+                raise ValueError(f'construction_year must be between 1800 and {current_year}')
+        return v
+
     @validator('municipality')
     def validate_municipality(cls, v):
         if len(v.strip()) < 2:
             raise ValueError('Municipality name must be at least 2 characters')
         return v.strip()
-    
+
     @validator('coordinates')
     def validate_coordinates(cls, v):
         if len(v) < 4:
             raise ValueError('At least 3 coordinate points required to form a polygon')
-        
+
         # Check if polygon is closed
         if v[0] != v[-1]:
             raise ValueError('Coordinates must form a closed polygon (first == last)')
-        
+
         # Validate coordinate ranges
         for lon, lat in v:
             if not (-180 <= lon <= 180) or not (-90 <= lat <= 90):
                 raise ValueError('Invalid coordinate range')
-        
+
         return v
 
 
@@ -59,7 +85,7 @@ class ValuationUpdate(BaseModel):
     @validator('property_type')
     def validate_property_type(cls, v):
         if v is not None:
-            allowed_types = ['residential', 'commercial', 'agricultural']
+            allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
             if v not in allowed_types:
                 raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v

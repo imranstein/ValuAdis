@@ -6,9 +6,14 @@ Following ValuAdis clean architecture and 7 pillars
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
+import io
 from app.services.valuation_service import ValuationService
 from app.services.spatial_service import SpatialService
+from app.services.certificate_service import CertificateService
+from app.services.auth_service import AuthService
 from app.schemas.valuation import (
     ValuationCreate, ValuationUpdate, ValuationResponse, 
     ValuationListResponse, ValuationDetail, ValuationCalculation
@@ -269,6 +274,71 @@ async def delete_valuation(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+@router.get("/{valuation_id}/certificate", tags=["Valuations"])
+async def download_certificate(
+    valuation_id: int,
+    user_id: int = Depends(get_current_user_id),
+    valuation_service: ValuationService = Depends(get_valuation_service),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate and download a Proclamation 1365/2025-compliant PDF certificate
+    for an approved valuation.
+    """
+    try:
+        valuation = valuation_service.get_valuation_by_id(valuation_id, user_id)
+        if not valuation:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Valuation not found")
+
+        # Only issue certificates for approved valuations
+        if valuation.get("status") != "approved":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Certificate can only be generated for approved valuations",
+            )
+
+        # Fetch owner name via auth service
+        auth_svc = AuthService(db)
+        owner = await auth_svc.get_user_by_id(user_id)
+        owner_name = owner.full_name if owner else "Unknown Owner"
+
+        # Property data may be embedded in valuation or fetched separately
+        property_data = {
+            "address":             valuation.get("address", "—"),
+            "municipality":        valuation.get("municipality", "—"),
+            "property_type":       valuation.get("property_type", "residential"),
+            "area_sqm":            valuation.get("area_sqm", 0),
+            "condition":           valuation.get("condition", "good"),
+            "neighborhood_quality": valuation.get("neighborhood_quality", "average"),
+        }
+
+        cert_service = CertificateService()
+        # ReportLab is CPU-bound; run in a threadpool to avoid blocking the
+        # async event loop under concurrent load.
+        pdf_bytes = await run_in_threadpool(
+            cert_service.generate_certificate,
+            valuation,
+            property_data,
+            owner_name,
+        )
+
+        filename = f"ValuAdis_Certificate_{valuation_id}.pdf"
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error generating certificate", error=str(e), valuation_id=valuation_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Certificate generation failed",
+        ) from e
 
 
 @router.post("/calculate", response_model=ValuationCalculation, tags=["Valuations"])

@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
       await fetchCurrentUser()
       return true
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Login failed'
+      error.value = err.message || 'Login failed'
       throw err
     } finally {
       loading.value = false
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
       await fetchCurrentUser()
       return true
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Registration failed'
+      error.value = err.message || 'Registration failed'
       throw err
     } finally {
       loading.value = false
@@ -51,7 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       user.value = await authService.getCurrentUser()
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch user'
+      error.value = err.message || 'Failed to fetch user'
       throw err
     } finally {
       loading.value = false
