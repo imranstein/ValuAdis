@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL with PostGIS
@@ -59,7 +59,7 @@ services:
       - ./backend:/app
       - backend_uploads:/app/uploads
     ports:
-      - "8000:8000"
+      - "8020:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -75,19 +75,20 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: valuadis_frontend
+    working_dir: /app/app
     environment:
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8000/api/v1}
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8020/api/v1}
     volumes:
       - ./frontend:/app
-      - /app/node_modules
-      - /app/.nuxt
+      - /app/app/node_modules
+      - /app/app/.nuxt
     ports:
-      - "3000:3000"
+      - "3020:3020"
     depends_on:
       - backend
     networks:
       - valuadis_network
-    command: npm run dev
+    command: sh -c "npm install --force && npm run dev"
 
 volumes:
   postgres_data:
