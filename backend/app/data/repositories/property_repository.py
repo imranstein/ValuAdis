@@ -91,7 +91,8 @@ class PropertyRepository(BaseRepository[Property]):
         property = self.get(property_id)
         if property and property.boundary:
             result = self.db.execute(
-                text(f"SELECT ST_Area(ST_Transform(boundary, 32637)) FROM properties WHERE id = {property_id}")
+                text("SELECT ST_Area(ST_Transform(boundary, 32637)) FROM properties WHERE id = :property_id"),
+                {"property_id": property_id}
             ).scalar()
             return result
         return None
@@ -110,21 +111,23 @@ class PropertyRepository(BaseRepository[Property]):
     
     def get_property_statistics(self, user_id: Optional[int] = None) -> dict:
         """Get property statistics"""
-        query = self.db.query(Property)
-        
+        # ⚡ Bolt Optimization: Combine count, sum, and avg into a single database query
+        # to reduce roundtrips from 4 to 2 (one for aggregates, one for group_by).
+        base_query = self.db.query(Property)
         if user_id:
-            query = query.filter(Property.user_id == user_id)
-        
-        total_properties = query.count()
-        total_area = query.with_entities(
-            func.sum(Property.area_sqm)
-        ).scalar() or 0
-        
-        avg_area = query.with_entities(
+            base_query = base_query.filter(Property.user_id == user_id)
+
+        aggregates = base_query.with_entities(
+            func.count(Property.id),
+            func.sum(Property.area_sqm),
             func.avg(Property.area_sqm)
-        ).scalar() or 0
+        ).first()
+
+        total_properties = aggregates[0] or 0
+        total_area = aggregates[1] or 0
+        avg_area = aggregates[2] or 0
         
-        properties_by_type = query.with_entities(
+        properties_by_type = base_query.with_entities(
             Property.property_type,
             func.count(Property.id)
         ).group_by(Property.property_type).all()
