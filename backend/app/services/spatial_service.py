@@ -198,13 +198,19 @@ class SpatialService:
         """
         Return the geodesic overlap area in **square metres**.
 
-        Returns 0.0 when the polygons do not intersect.
+        Returns 0.0 when the polygons do not share any area — including when
+        they only touch at an edge or vertex (intersection is a LineString,
+        Point, or GeometryCollection with no area).
         """
         try:
             poly_a = Polygon(coords_a)
             poly_b = Polygon(coords_b)
             intersection = poly_a.intersection(poly_b)
             if intersection.is_empty:
+                return 0.0
+            # Only Polygon/MultiPolygon carry meaningful area; LineString/Point
+            # touching geometries would cause misleading Geod results.
+            if not isinstance(intersection, (Polygon, MultiPolygon)):
                 return 0.0
             area, _ = self.geod.geometry_area_perimeter(intersection)
             return abs(area)
@@ -272,23 +278,51 @@ class SpatialService:
             raise SpatialOperationException(f"Failed to get bounding box: {exc}") from exc
 
     def merge_polygons(
-        self, polygon_list: List[List[Tuple[float, float]]]
+        self,
+        polygon_list: List[List[Tuple[float, float]]],
+        fallback_convex_hull: bool = False,
     ) -> List[Tuple[float, float]]:
         """
         Union a list of polygons into a single merged boundary.
 
-        Returns the exterior ring of the resulting polygon (or convex hull
-        for multi-part results).
+        Args:
+            polygon_list: List of polygon coordinate lists to union.
+            fallback_convex_hull: Controls MultiPolygon handling when
+                ``unary_union`` returns a non-contiguous result:
+
+                * ``False`` (default) — raises
+                  :class:`SpatialOperationException` with message
+                  "Cannot merge non-contiguous polygons".  Use this when
+                  callers should be informed that the inputs do not form a
+                  single contiguous parcel.
+                * ``True`` — falls back to ``convex_hull`` of the
+                  multi-part union, silently changing the semantics.  Only
+                  use when an approximate enclosing boundary is acceptable.
+
+        Returns:
+            Exterior ring of the merged polygon as a closed list of
+            (longitude, latitude) tuples.
+
+        Raises:
+            SpatialOperationException: Input is non-contiguous and
+                ``fallback_convex_hull`` is False, or any Shapely error.
         """
         try:
             polys = [Polygon(c) for c in polygon_list]
             merged = unary_union(polys)
             if isinstance(merged, MultiPolygon):
+                if not fallback_convex_hull:
+                    raise SpatialOperationException(
+                        "Cannot merge non-contiguous polygons; "
+                        "pass fallback_convex_hull=True to use convex hull instead"
+                    )
                 merged = merged.convex_hull
             coords = list(merged.exterior.coords)
             if coords[0] != coords[-1]:
                 coords.append(coords[0])
             return coords
+        except SpatialOperationException:
+            raise
         except Exception as exc:
             raise SpatialOperationException(f"Failed to merge polygons: {exc}") from exc
 
@@ -329,7 +363,13 @@ class SpatialService:
     def coordinates_to_geojson(
         coordinates: List[Tuple[float, float]],
     ) -> Dict:
-        """Return a GeoJSON *Polygon* feature dict for the given coordinates."""
+        """Return a GeoJSON *geometry* dict (``{"type": "Polygon", "coordinates": […]}``)
+        for the given coordinates.
+
+        Note: this returns a GeoJSON **geometry** object, not a Feature.
+        Wrap in ``{"type": "Feature", "geometry": …, "properties": {}}`` if a
+        full GeoJSON Feature is required.
+        """
         try:
             return mapping(Polygon(coordinates))
         except Exception as exc:

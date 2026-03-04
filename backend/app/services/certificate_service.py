@@ -180,6 +180,14 @@ class CertificateService:
         valuation_date = valuation.get("valuation_date") or issue_date
         if hasattr(valuation_date, "strftime"):
             valuation_date = valuation_date.strftime("%d %B %Y")
+        elif isinstance(valuation_date, str) and valuation_date != issue_date:
+            # Parse ISO datetime strings (e.g. "2025-03-04T12:34:56" or "2025-03-04")
+            # that originate from Valuation.to_dict() so the certificate always
+            # displays a human-readable date rather than a raw timestamp.
+            try:
+                valuation_date = datetime.fromisoformat(valuation_date).strftime("%d %B %Y")
+            except ValueError:
+                pass  # keep the raw string if it cannot be parsed
 
         data = [
             ["Certificate No.", cert_number, "Issue Date", issue_date],

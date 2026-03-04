@@ -5,7 +5,6 @@ Property CRUD operations for ValuAdis
 """
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Tuple
 from app.core.database import get_db
@@ -14,26 +13,15 @@ from app.schemas.property import (
     PropertyCreate,
     PropertyUpdate,
     PropertyResponse,
-    PropertyListResponse
+    PropertyListResponse,
+    SpatialRequest,
+    OverlapRequest,
 )
 from app.services.property_service import PropertyService
 from app.services.spatial_service import SpatialService
 from app.core.exceptions import SpatialOperationException
 
 router = APIRouter()
-
-
-# ---------------------------------------------------------------------------
-# Spatial / GIS endpoints
-# ---------------------------------------------------------------------------
-
-class SpatialRequest(BaseModel):
-    coordinates: List[List[float]]   # [[lon, lat], ...]
-
-
-class OverlapRequest(BaseModel):
-    coordinates_a: List[List[float]]
-    coordinates_b: List[List[float]]
 
 
 def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:

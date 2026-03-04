@@ -171,6 +171,7 @@ class ValuationService:
         neighborhood       = property_data.get("neighborhood_quality", "average")
         construction_year  = property_data.get("construction_year")
 
+        is_fallback_rate   = municipality not in self._base_rates
         base_rate          = self._base_rates.get(municipality, Decimal("220.00"))
         type_mult          = self._property_type_multipliers.get(property_type, Decimal("1.0"))
         condition_factor   = self._condition_factors.get(condition, Decimal("1.0"))
@@ -195,6 +196,7 @@ class ValuationService:
             "neighborhood_quality":      neighborhood,
             "construction_year":         construction_year,
             "base_rate_per_sqm":         float(base_rate),
+            "is_fallback_rate":          is_fallback_rate,
             "type_multiplier":           float(type_mult),
             "condition_factor":          float(condition_factor),
             "neighborhood_multiplier":   float(neighborhood_mult),

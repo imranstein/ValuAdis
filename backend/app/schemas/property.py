@@ -9,6 +9,23 @@ from typing import List, Optional, Tuple
 from datetime import datetime
 
 
+# ---------------------------------------------------------------------------
+# Spatial / GIS request schemas (used by /spatial/summary and /spatial/overlap)
+# ---------------------------------------------------------------------------
+
+class SpatialRequest(BaseModel):
+    """GPS boundary coordinates submitted for spatial analysis."""
+
+    coordinates: List[List[float]]  # [[lon, lat], …]
+
+
+class OverlapRequest(BaseModel):
+    """Two polygon boundaries submitted for overlap analysis."""
+
+    coordinates_a: List[List[float]]
+    coordinates_b: List[List[float]]
+
+
 class PropertyCreate(BaseModel):
     """Property creation request"""
     address: str

@@ -7,6 +7,7 @@ Following ValuAdis clean architecture and 7 pillars
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
 import io
 from app.services.valuation_service import ValuationService
@@ -314,10 +315,13 @@ async def download_certificate(
         }
 
         cert_service = CertificateService()
-        pdf_bytes = cert_service.generate_certificate(
-            valuation=valuation,
-            property_data=property_data,
-            owner_name=owner_name,
+        # ReportLab is CPU-bound; run in a threadpool to avoid blocking the
+        # async event loop under concurrent load.
+        pdf_bytes = await run_in_threadpool(
+            cert_service.generate_certificate,
+            valuation,
+            property_data,
+            owner_name,
         )
 
         filename = f"ValuAdis_Certificate_{valuation_id}.pdf"

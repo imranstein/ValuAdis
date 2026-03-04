@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   FLUTTER_VERSION: '3.16.0'
 
 jobs:
@@ -122,7 +122,7 @@ jobs:
         npm run build
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-build
         path: frontend/.output/
@@ -156,7 +156,7 @@ jobs:
         flutter build apk --debug
 
     - name: Upload APK artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mobile-apk
         path: mobile/build/app/outputs/flutter-apk/
@@ -281,9 +281,10 @@ jobs:
         echo "Production deployment complete"
 
     - name: Notify deployment
+      # Skip when the secret is not configured (e.g., forks / PRs without access)
+      if: ${{ secrets.SLACK_WEBHOOK != '' }}
       uses: 8398a7/action-slack@v3
       with:
         status: ${{ job.status }}
         channel: '#deployments'
         webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-      if: always()
