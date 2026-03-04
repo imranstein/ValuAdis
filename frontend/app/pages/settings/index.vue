@@ -528,7 +528,17 @@
               <tbody>
                 <tr v-for="item in scrapedData.slice(0, 50)" :key="item.id" style="border-bottom: 1px solid #eee;">
                   <td style="padding: 8px;">{{ item.id }}</td>
-                  <td style="padding: 8px;">{{ scraperType === 'property' ? item.address : (item.make + ' ' + item.model) }}</td>
+                  <td style="padding: 8px;">
+                    <span 
+                      v-if="scraperType === 'property'"
+                      @click="viewPropertyDetails(item)"
+                      style="color: #007acc; cursor: pointer; text-decoration: underline;"
+                      :title="'Click to view details for ' + item.address"
+                    >
+                      {{ item.address }}
+                    </span>
+                    <span v-else>{{ item.make + ' ' + item.model }}</span>
+                  </td>
                   <td style="padding: 8px;">{{ item.market_value ? 'ETB ' + item.market_value.toLocaleString() : 'N/A' }}</td>
                   <td style="padding: 8px;">
                     <span style="background: #007acc; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
@@ -631,6 +641,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { navigateTo } from '#app'
 import ScraperStats from '~/components/settings/ScraperStats.vue'
 import ScraperTable from '~/components/settings/ScraperTable.vue'
 import AddScraperModal from '~/components/settings/AddScraperModal.vue'
@@ -837,9 +848,14 @@ async function loadScrapers() {
     if (response.ok) {
       const data = await response.json()
       scrapers.value = data
+    } else {
+      // Fallback to mock data if API fails
+      scrapers.value = getMockScrapers()
     }
   } catch (error) {
     console.error('Error loading scrapers:', error)
+    // Fallback to mock data
+    scrapers.value = getMockScrapers()
   }
 }
 
@@ -963,6 +979,102 @@ function getMockScrapedData() {
   }
 }
 
+// Mock scrapers data
+function getMockScrapers() {
+  if (scraperType.value === 'property') {
+    return [
+      {
+        id: 1,
+        domain: 'addisproperty.gov.et',
+        name: 'Addis Ababa Property Portal',
+        type: 'property',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T12:49:19Z',
+        total_listings: 156,
+        schedule: 'daily',
+        success_rate: 95.2
+      },
+      {
+        id: 2,
+        domain: 'ethioproperty.com',
+        name: 'EthioProperty Listings',
+        type: 'property',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T12:49:19Z',
+        total_listings: 89,
+        schedule: 'twice_daily',
+        success_rate: 88.7
+      },
+      {
+        id: 3,
+        domain: 'mekelleproperty.et',
+        name: 'Mekelle Real Estate',
+        type: 'property',
+        status: 'inactive',
+        last_status: 'error',
+        last_run: '2026-03-04T12:49:19Z',
+        total_listings: 45,
+        schedule: 'daily',
+        success_rate: 72.3
+      },
+      {
+        id: 4,
+        domain: 'ethiocar.com',
+        name: 'EthioCar Property',
+        type: 'property',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T12:49:19Z',
+        total_listings: 234,
+        schedule: 'every_4_hours',
+        success_rate: 91.8
+      },
+      {
+        id: 5,
+        domain: 'addisauto.et',
+        name: 'Addis Auto Properties',
+        type: 'property',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T12:49:19Z',
+        total_listings: 178,
+        schedule: 'every_6_hours',
+        success_rate: 84.6
+      }
+    ]
+  } else {
+    // Vehicle scrapers
+    return [
+      {
+        id: 6,
+        domain: 'ethiocars.com',
+        name: 'EthioCar Marketplace',
+        type: 'vehicle',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T11:30:00Z',
+        total_listings: 412,
+        schedule: 'daily',
+        success_rate: 89.3
+      },
+      {
+        id: 7,
+        domain: 'addisauto.et',
+        name: 'Addis Auto Sales',
+        type: 'vehicle',
+        status: 'active',
+        last_status: 'success',
+        last_run: '2026-03-04T11:30:00Z',
+        total_listings: 267,
+        schedule: 'twice_daily',
+        success_rate: 92.1
+      }
+    ]
+  }
+}
+
 async function loadScraperStats() {
   try {
     const token = localStorage.getItem('valuadis_token')
@@ -971,9 +1083,26 @@ async function loadScraperStats() {
     })
     if (response.ok) {
       scraperStats.value = await response.json()
+    } else {
+      // Fallback to mock data if API fails
+      scraperStats.value = getMockScraperStats()
     }
   } catch (error) {
     console.error('Error loading scraper stats:', error)
+    // Fallback to mock data
+    scraperStats.value = getMockScraperStats()
+  }
+}
+
+// Mock scraper stats
+function getMockScraperStats() {
+  return {
+    total_scrapers: scraperType.value === 'property' ? 5 : 2,
+    active_scrapers: scraperType.value === 'property' ? 4 : 2,
+    total_listings: scraperType.value === 'property' ? 702 : 679,
+    avg_success_rate: scraperType.value === 'property' ? 83.3 : 90.7,
+    last_24h_scrapes: 24,
+    error_count: scraperType.value === 'property' ? 3 : 1
   }
 }
 
@@ -989,6 +1118,12 @@ async function loadScraperLogs() {
   } catch (error) {
     console.error('Error loading scraper logs:', error)
   }
+}
+
+// View property details
+function viewPropertyDetails(property) {
+  // Navigate to property details page
+  navigateTo(`/properties/${property.id}`)
 }
 
 async function refreshScrapers() {
@@ -1130,7 +1265,9 @@ watch(activeTab, (newTab) => {
 // Watch for scraper type changes and reload data
 watch(scraperType, () => {
   console.log('Scraper type changed to:', scraperType.value)
+  loadScrapers()
   loadScrapedData()
+  loadScraperStats()
 })
 </script>
 
