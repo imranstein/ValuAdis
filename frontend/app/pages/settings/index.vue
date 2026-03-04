@@ -449,7 +449,8 @@
             </div>
           </div>
         </div>
-
+      </div>
+      
       <!-- Web Scraper Settings -->
       <div v-if="activeTab === 'scraper'" class="settings-section">
         <div class="section-header">
@@ -626,7 +627,6 @@
       <span>{{ saveStatus.message }}</span>
     </div>
   </div>
-</div>
 </template>
 
 <script setup>
@@ -831,7 +831,7 @@ function exportSettings() {
 async function loadScrapers() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/scrapers', {
+    const response = await fetch('http://localhost:8020/api/v1/scrapers/', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
@@ -966,7 +966,7 @@ function getMockScrapedData() {
 async function loadScraperStats() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/scrapers/stats', {
+    const response = await fetch('http://localhost:8020/api/v1/scrapers/stats/', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
@@ -980,7 +980,7 @@ async function loadScraperStats() {
 async function loadScraperLogs() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/logs?limit=50&skip=${(logsPage.value - 1) * 50}`, {
+    const response = await fetch(`http://localhost:8020/api/v1/scrapers/logs/?limit=50&skip=${(logsPage.value - 1) * 50}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {

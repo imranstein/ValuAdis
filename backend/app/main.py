@@ -96,17 +96,18 @@ app = FastAPI(
 # Middleware (order matters: added last = runs first)
 # ---------------------------------------------------------------------------
 
-# Security headers on all responses
-app.add_middleware(SecurityHeadersMiddleware)
-
-# CORS — restrict to known allowed origins, specific methods and headers only
+# CORS — simplified configuration for debugging
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_HOSTS,
+    allow_origins=["*"],  # Allow all origins temporarily
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
+
+# Security headers on all responses (added AFTER CORS)
+# Temporarily disabled for CORS debugging
+# app.add_middleware(SecurityHeadersMiddleware)
 
 # ---------------------------------------------------------------------------
 # Routes

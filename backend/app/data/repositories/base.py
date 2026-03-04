@@ -37,6 +37,21 @@ class BaseRepository(Generic[ModelType]):
         
         return query.offset(skip).limit(limit).all()
     
+    def get_multi_by_user(
+        self,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ModelType]:
+        """Get multiple records for a specific user with pagination"""
+        query = self.db.query(self.model)
+        
+        # Check if model has user_id field
+        if hasattr(self.model, 'user_id'):
+            query = query.filter(self.model.user_id == user_id)
+        
+        return query.offset(skip).limit(limit).all()
+    
     def create(self, obj_in: Dict[str, Any]) -> ModelType:
         """Create new record"""
         db_obj = self.model(**obj_in)

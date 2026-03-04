@@ -375,6 +375,202 @@
         </div>
       </div>
     </div>
+
+    <!-- Report Modal -->
+    <div v-if="showReportModal" class="modal-overlay" @click="showReportModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>{{ reportData?.title }}</h2>
+          <button class="close-btn" @click="showReportModal = false">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Loading State -->
+          <div v-if="isLoading" class="loading-state">
+            <i class="pi pi-spin pi-spinner"></i>
+            <p>Generating report...</p>
+          </div>
+          
+          <!-- Report Content -->
+          <div v-else-if="reportData" class="report-content">
+            <!-- Summary Section -->
+            <div class="report-summary">
+              <h3>📊 Executive Summary</h3>
+              <div class="summary-grid">
+                <div v-for="(value, key) in reportData.summary" :key="key" class="summary-item">
+                  <div class="summary-label">{{ formatSummaryKey(key) }}</div>
+                  <div class="summary-value">{{ formatSummaryValue(value, key) }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Report Type Specific Content -->
+            <div class="report-details">
+              <!-- Valuation Summary -->
+              <div v-if="currentReportType === 'valuation_summary'" class="valuation-summary">
+                <h3>📈 Valuation Overview</h3>
+                <div class="stats-grid">
+                  <div class="stat-card">
+                    <h4>Total Valuations</h4>
+                    <p>{{ reportData.summary.total_valuations }}</p>
+                  </div>
+                  <div class="stat-card">
+                    <h4>Total Market Value</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.total_market_value) }}</p>
+                  </div>
+                  <div class="stat-card">
+                    <h4>Total Taxable Value</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.total_taxable_value) }}</p>
+                  </div>
+                  <div class="stat-card">
+                    <h4>Average Value</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.avg_value) }}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Municipal Performance -->
+              <div v-if="currentReportType === 'municipal_performance'" class="municipal-performance">
+                <h3>🏛️ Municipal Performance</h3>
+                <div class="municipality-grid">
+                  <div v-for="(data, municipality) in reportData.data" :key="municipality" class="municipality-card">
+                    <h4>{{ municipality }}</h4>
+                    <div class="municipality-stats">
+                      <div class="stat">
+                        <span class="label">Valuations:</span>
+                        <span class="value">{{ data.count }}</span>
+                      </div>
+                      <div class="stat">
+                        <span class="label">Total Value:</span>
+                        <span class="value">ETB {{ formatCurrency(data.total_value) }}</span>
+                      </div>
+                      <div class="stat">
+                        <span class="label">Tax Revenue:</span>
+                        <span class="value">ETB {{ formatCurrency(data.total_taxable) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Property Type Analysis -->
+              <div v-if="currentReportType === 'property_type_analysis'" class="property-type-analysis">
+                <h3>🏠 Property Type Analysis</h3>
+                <div class="type-grid">
+                  <div v-for="(data, type) in reportData.data" :key="type" class="type-card">
+                    <h4>{{ formatPropertyType(type) }}</h4>
+                    <div class="type-stats">
+                      <div class="stat">
+                        <span class="label">Count:</span>
+                        <span class="value">{{ data.count }}</span>
+                      </div>
+                      <div class="stat">
+                        <span class="label">Total Value:</span>
+                        <span class="value">ETB {{ formatCurrency(data.total_value) }}</span>
+                      </div>
+                      <div class="stat">
+                        <span class="label">Average:</span>
+                        <span class="value">ETB {{ formatCurrency(data.avg_value) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Tax Revenue Report -->
+              <div v-if="currentReportType === 'tax_revenue'" class="tax-revenue">
+                <h3>💰 Tax Revenue Analysis</h3>
+                <div class="tax-stats">
+                  <div class="tax-card">
+                    <h4>Total Tax Revenue</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.total_tax_revenue) }}</p>
+                  </div>
+                  <div class="tax-card">
+                    <h4>Total Market Value</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.total_market_value) }}</p>
+                  </div>
+                  <div class="tax-card">
+                    <h4>Effective Tax Rate</h4>
+                    <p>{{ reportData.summary.tax_rate.toFixed(2) }}%</p>
+                  </div>
+                  <div class="tax-card">
+                    <h4>Revenue per Property</h4>
+                    <p>ETB {{ formatCurrency(reportData.summary.revenue_per_property) }}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Market Trends -->
+              <div v-if="currentReportType === 'market_trends'" class="market-trends">
+                <h3>📈 Market Trends</h3>
+                <div class="trends-chart">
+                  <div class="trend-summary">
+                    <p><strong>Total Days Analyzed:</strong> {{ reportData.summary.total_days }}</p>
+                    <p><strong>Peak Activity Day:</strong> {{ reportData.summary.peak_day }}</p>
+                  </div>
+                  <div class="trends-data">
+                    <div v-for="date in reportData.sorted_dates" :key="date" class="trend-item">
+                      <div class="trend-date">{{ date }}</div>
+                      <div class="trend-stats">
+                        <span>{{ reportData.data[date].count }} valuations</span>
+                        <span>ETB {{ formatCurrency(reportData.data[date].total_value) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Compliance Audit -->
+              <div v-if="currentReportType === 'compliance_audit'" class="compliance-audit">
+                <h3>✅ Compliance Audit</h3>
+                <div class="compliance-stats">
+                  <div class="compliance-card">
+                    <h4>Total Valuations</h4>
+                    <p>{{ reportData.data.total_valuations }}</p>
+                  </div>
+                  <div class="compliance-card compliant">
+                    <h4>Compliant</h4>
+                    <p>{{ reportData.data.compliant_valuations }}</p>
+                  </div>
+                  <div class="compliance-card pending">
+                    <h4>Pending</h4>
+                    <p>{{ reportData.data.pending_valuations }}</p>
+                  </div>
+                  <div class="compliance-card draft">
+                    <h4>Draft</h4>
+                    <p>{{ reportData.data.draft_valuations }}</p>
+                  </div>
+                </div>
+                <div class="compliance-rate">
+                  <h4>Compliance Rate: {{ reportData.summary.compliance_rate.toFixed(1) }}%</h4>
+                  <div class="progress-bar">
+                    <div class="progress-fill" :style="{ width: reportData.summary.compliance_rate + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Error State -->
+          <div v-else-if="errorMessage" class="error-state">
+            <i class="pi pi-exclamation-triangle"></i>
+            <p>{{ errorMessage }}</p>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="action-button secondary" @click="showReportModal = false">
+            Close
+          </button>
+          <button class="action-button primary" @click="exportReport">
+            <i class="pi pi-download"></i>
+            Export PDF
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -385,16 +581,22 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // Reactive data
+const isLoading = ref(false)
+const errorMessage = ref('')
+const reportData = ref(null)
+const showReportModal = ref(false)
+const currentReportType = ref('')
+
 const customReport = ref({
   name: '',
   dateRange: '',
   municipality: '',
-  propertyType: '',
+  property_type: '',
+  include_charts: true,
+  include_tables: true,
+  include_summary: true,
   fields: {
-    valuation_id: true,
     property_address: true,
-    owner_name: false,
-    municipality: true,
     market_value: true,
     taxable_value: true,
     property_type: true,
@@ -461,9 +663,43 @@ const canGenerateCustom = computed(() => {
 })
 
 // Methods
-function generateReport(type) {
+async function generateReport(type) {
   console.log('Generating report:', type)
-  // Navigate to report generation or show modal
+  
+  // Show loading state
+  isLoading.value = true
+  
+  try {
+    const token = localStorage.getItem('valuadis_token')
+    
+    switch(type) {
+      case 'valuation_summary':
+        await generateValuationSummary(token)
+        break
+      case 'municipal_performance':
+        await generateMunicipalPerformance(token)
+        break
+      case 'property_type_analysis':
+        await generatePropertyTypeAnalysis(token)
+        break
+      case 'tax_revenue':
+        await generateTaxRevenueReport(token)
+        break
+      case 'market_trends':
+        await generateMarketTrends(token)
+        break
+      case 'compliance_audit':
+        await generateComplianceAudit(token)
+        break
+      default:
+        console.error('Unknown report type:', type)
+    }
+  } catch (error) {
+    console.error('Error generating report:', error)
+    errorMessage.value = 'Failed to generate report. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function createNewReport() {
@@ -472,6 +708,257 @@ function createNewReport() {
 
 function viewScheduledReports() {
   console.log('Viewing scheduled reports')
+}
+
+// Report Generation Functions
+async function generateValuationSummary(token) {
+  try {
+    // Get valuations data
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      reportData.value = {
+        type: 'valuation_summary',
+        title: 'Valuation Summary Report',
+        data: data,
+        summary: {
+          total_valuations: data.length || 0,
+          total_market_value: data.reduce((sum, v) => sum + (v.market_value || 0), 0),
+          total_taxable_value: data.reduce((sum, v) => sum + (v.taxable_value || 0), 0),
+          avg_value: data.length > 0 ? data.reduce((sum, v) => sum + (v.market_value || 0), 0) / data.length : 0
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'valuation_summary'
+    }
+  } catch (error) {
+    console.error('Error generating valuation summary:', error)
+    throw error
+  }
+}
+
+async function generateMunicipalPerformance(token) {
+  try {
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      
+      // Group by municipality
+      const municipalityData = data.reduce((acc, valuation) => {
+        const municipality = valuation.municipality || 'Unknown'
+        if (!acc[municipality]) {
+          acc[municipality] = {
+            count: 0,
+            total_value: 0,
+            total_taxable: 0,
+            valuations: []
+          }
+        }
+        acc[municipality].count++
+        acc[municipality].total_value += valuation.market_value || 0
+        acc[municipality].total_taxable += valuation.taxable_value || 0
+        acc[municipality].valuations.push(valuation)
+        return acc
+      }, {})
+      
+      reportData.value = {
+        type: 'municipal_performance',
+        title: 'Municipal Performance Report',
+        data: municipalityData,
+        summary: {
+          total_municipalities: Object.keys(municipalityData).length,
+          top_municipality: Object.entries(municipalityData)
+            .sort(([,a], [,b]) => b.total_value - a.total_value)[0]?.[0] || 'N/A'
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'municipal_performance'
+    }
+  } catch (error) {
+    console.error('Error generating municipal performance:', error)
+    throw error
+  }
+}
+
+async function generatePropertyTypeAnalysis(token) {
+  try {
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      
+      // Group by property type
+      const typeData = data.reduce((acc, valuation) => {
+        const type = valuation.property_type || 'unknown'
+        if (!acc[type]) {
+          acc[type] = {
+            count: 0,
+            total_value: 0,
+            avg_value: 0,
+            valuations: []
+          }
+        }
+        acc[type].count++
+        acc[type].total_value += valuation.market_value || 0
+        acc[type].valuations.push(valuation)
+        return acc
+      }, {})
+      
+      // Calculate averages
+      Object.keys(typeData).forEach(type => {
+        typeData[type].avg_value = typeData[type].count > 0 
+          ? typeData[type].total_value / typeData[type].count 
+          : 0
+      })
+      
+      reportData.value = {
+        type: 'property_type_analysis',
+        title: 'Property Type Analysis Report',
+        data: typeData,
+        summary: {
+          total_types: Object.keys(typeData).length,
+          most_common_type: Object.entries(typeData)
+            .sort(([,a], [,b]) => b.count - a.count)[0]?.[0] || 'N/A'
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'property_type_analysis'
+    }
+  } catch (error) {
+    console.error('Error generating property type analysis:', error)
+    throw error
+  }
+}
+
+async function generateTaxRevenueReport(token) {
+  try {
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      
+      const totalTaxRevenue = data.reduce((sum, v) => sum + (v.taxable_value || 0), 0)
+      const totalMarketValue = data.reduce((sum, v) => sum + (v.market_value || 0), 0)
+      
+      reportData.value = {
+        type: 'tax_revenue',
+        title: 'Tax Revenue Report',
+        data: data,
+        summary: {
+          total_tax_revenue: totalTaxRevenue,
+          total_market_value: totalMarketValue,
+          tax_rate: totalMarketValue > 0 ? (totalTaxRevenue / totalMarketValue) * 100 : 0,
+          revenue_per_property: data.length > 0 ? totalTaxRevenue / data.length : 0
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'tax_revenue'
+    }
+  } catch (error) {
+    console.error('Error generating tax revenue report:', error)
+    throw error
+  }
+}
+
+async function generateMarketTrends(token) {
+  try {
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      
+      // Group by valuation date
+      const trendsData = data.reduce((acc, valuation) => {
+        const date = new Date(valuation.valuation_date).toLocaleDateString()
+        if (!acc[date]) {
+          acc[date] = {
+            count: 0,
+            total_value: 0,
+            avg_value: 0
+          }
+        }
+        acc[date].count++
+        acc[date].total_value += valuation.market_value || 0
+        return acc
+      }, {})
+      
+      // Calculate averages and sort by date
+      Object.keys(trendsData).forEach(date => {
+        trendsData[date].avg_value = trendsData[date].count > 0 
+          ? trendsData[date].total_value / trendsData[date].count 
+          : 0
+      })
+      
+      const sortedDates = Object.keys(trendsData).sort()
+      
+      reportData.value = {
+        type: 'market_trends',
+        title: 'Market Trends Report',
+        data: trendsData,
+        sorted_dates: sortedDates,
+        summary: {
+          total_days: sortedDates.length,
+          peak_day: sortedDates.length > 0 
+            ? sortedDates.reduce((a, b) => trendsData[a].total_value > trendsData[b].total_value ? a : b)
+            : 'N/A'
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'market_trends'
+    }
+  } catch (error) {
+    console.error('Error generating market trends:', error)
+    throw error
+  }
+}
+
+async function generateComplianceAudit(token) {
+  try {
+    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      
+      // Compliance checks
+      const complianceData = {
+        total_valuations: data.length,
+        compliant_valuations: data.filter(v => v.status === 'approved').length,
+        pending_valuations: data.filter(v => v.status === 'pending').length,
+        draft_valuations: data.filter(v => v.status === 'draft').length,
+        rejected_valuations: data.filter(v => v.status === 'rejected').length,
+        compliance_rate: data.length > 0 ? (data.filter(v => v.status === 'approved').length / data.length) * 100 : 0
+      }
+      
+      reportData.value = {
+        type: 'compliance_audit',
+        title: 'Compliance Audit Report',
+        data: complianceData,
+        summary: {
+          compliance_rate: complianceData.compliance_rate,
+          needs_attention: complianceData.pending_valuations + complianceData.draft_valuations
+        }
+      }
+      showReportModal.value = true
+      currentReportType.value = 'compliance_audit'
+    }
+  } catch (error) {
+    console.error('Error generating compliance audit:', error)
+    throw error
+  }
 }
 
 function generateCustomReport() {
@@ -595,11 +1082,52 @@ function getFrequencyLabel(frequency) {
 }
 
 function formatDate(date) {
-  return new Date(date).toLocaleDateString('en-ET', {
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   })
+}
+
+// Utility Functions
+function formatCurrency(value) {
+  if (!value || value === 0) return '0'
+  return new Intl.NumberFormat('en-US').format(Math.round(value))
+}
+
+function formatSummaryKey(key) {
+  return key.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ')
+}
+
+function formatSummaryValue(value, key) {
+  if (typeof value === 'number') {
+    if (key.includes('rate') || key.includes('percentage')) {
+      return `${value.toFixed(1)}%`
+    } else if (key.includes('value') || key.includes('revenue')) {
+      return `ETB ${formatCurrency(value)}`
+    } else {
+      return value.toLocaleString()
+    }
+  }
+  return value
+}
+
+function formatPropertyType(type) {
+  const typeMap = {
+    'residential': 'Residential Properties',
+    'commercial': 'Commercial Properties',
+    'agricultural': 'Agricultural Land',
+    'unknown': 'Unknown Type'
+  }
+  return typeMap[type] || type
+}
+
+function exportReport() {
+  console.log('Exporting report:', reportData.value?.title)
+  // TODO: Implement PDF export functionality
+  alert('PDF export functionality will be implemented soon!')
 }
 </script>
 
@@ -1246,5 +1774,397 @@ function formatDate(date) {
     flex-direction: column;
     gap: 0.5rem;
   }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 900px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Report Content Styles */
+.report-summary {
+  margin-bottom: 2rem;
+}
+
+.report-summary h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.stat-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Municipality Grid */
+.municipality-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.municipality-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.municipality-card h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.municipality-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.municipality-stats .stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.municipality-stats .label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.municipality-stats .value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Property Type Grid */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.type-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.type-card h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.type-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.type-stats .stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.type-stats .label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.type-stats .value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Tax Stats */
+.tax-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.tax-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.tax-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.tax-card p {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Compliance Stats */
+.compliance-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.compliance-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.compliance-card.compliant {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.compliance-card.pending {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.compliance-card.draft {
+  background: #f1f5f9;
+  border-color: #64748b;
+}
+
+.compliance-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.compliance-card p {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.compliance-rate {
+  text-align: center;
+}
+
+.compliance-rate h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 1rem;
+  background: #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #22c55e;
+  transition: width 0.3s ease;
+}
+
+/* Loading and Error States */
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}
+
+.loading-state i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.error-state {
+  text-align: center;
+  padding: 3rem;
+  color: #ef4444;
+}
+
+.error-state i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Market Trends */
+.trends-chart {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.trend-summary {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.trend-summary p {
+  margin: 0.25rem 0;
+  color: #64748b;
+}
+
+.trends-data {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.trend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.trend-item:last-child {
+  border-bottom: none;
+}
+
+.trend-date {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.trend-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 </style>

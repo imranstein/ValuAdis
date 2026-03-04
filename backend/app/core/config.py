@@ -47,6 +47,7 @@ class Settings(BaseSettings):
         "http://localhost:3020",
         "http://127.0.0.1:3020",
         "http://localhost:5173",
+        "*"  # Temporary: Allow all origins for debugging
     ]
     
     # M-Pesa Ethiopia

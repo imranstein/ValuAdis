@@ -1,149 +1,59 @@
 <template>
-  <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-    <div style="margin-bottom: 1.5rem;">
-      <h1 style="font-size: 1.875rem; font-weight: bold; color: #111827;">Edit Property</h1>
-      <p style="color: #6b7280; margin-top: 0.25rem;">Update property information</p>
+  <div class="edit-property-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1>Edit Property</h1>
+        <p>Update property information and details</p>
+      </div>
+      <div class="header-actions">
+        <Button
+          label="View Property"
+          icon="pi pi-eye"
+          severity="secondary"
+          @click="viewProperty"
+        />
+        <Button
+          label="Back to Properties"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          @click="goBack"
+        />
+      </div>
     </div>
 
-    <div v-if="loadingProperty" style="text-align: center; padding: 3rem;">
-      <ProgressBar mode="indeterminate" style="height: 6px;" />
-      <p style="margin-top: 1rem; color: #6b7280;">Loading property...</p>
+    <!-- Loading State -->
+    <div v-if="loadingProperty" class="loading-container">
+      <ProgressSpinner />
+      <p>Loading property data...</p>
     </div>
 
-    <Card v-else>
-      <template #content>
-        <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 1.5rem;">
-          <div>
-            <label for="address" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Address *
-            </label>
-            <InputText
-              id="address"
-              v-model="formData.address"
-              style="width: 100%;"
-              required
-            />
-          </div>
+    <!-- Property Form -->
+    <div v-else class="form-container">
+      <PropertyForm
+        :initial-data="formData"
+        :loading="loading"
+        @submit="handleSubmit"
+        @cancel="goBack"
+        @save-draft="saveDraft"
+      />
+    </div>
 
-          <div>
-            <label for="municipality" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Municipality *
-            </label>
-            <Dropdown
-              id="municipality"
-              v-model="formData.municipality"
-              :options="municipalities"
-              placeholder="Select municipality"
-              style="width: 100%;"
-              required
-            />
-          </div>
+    <!-- Messages -->
+    <Message v-if="error" severity="error" :closable="false">
+      {{ error }}
+    </Message>
 
-          <div>
-            <label for="property_type" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Property Type *
-            </label>
-            <Dropdown
-              id="property_type"
-              v-model="formData.property_type"
-              :options="propertyTypes"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select property type"
-              style="width: 100%;"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="area_sqm" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Land Area (m²) *
-            </label>
-            <InputText
-              id="area_sqm"
-              v-model.number="formData.area_sqm"
-              type="number"
-              step="0.01"
-              min="0"
-              style="width: 100%;"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="building_area_sqm" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Building Area (m²)
-            </label>
-            <InputText
-              id="building_area_sqm"
-              v-model.number="formData.building_area_sqm"
-              type="number"
-              step="0.01"
-              min="0"
-              style="width: 100%;"
-            />
-          </div>
-
-          <div>
-            <label for="year_built" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Year Built
-            </label>
-            <InputText
-              id="year_built"
-              v-model.number="formData.year_built"
-              type="number"
-              min="1900"
-              :max="currentYear"
-              style="width: 100%;"
-            />
-          </div>
-
-          <div>
-            <label for="number_of_rooms" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">
-              Number of Rooms
-            </label>
-            <InputText
-              id="number_of_rooms"
-              v-model.number="formData.number_of_rooms"
-              type="number"
-              min="0"
-              style="width: 100%;"
-            />
-          </div>
-
-          <div v-if="error" style="padding: 0.75rem; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem;">
-            <p style="font-size: 0.875rem; color: #dc2626;">{{ error }}</p>
-          </div>
-
-          <div v-if="success" style="padding: 0.75rem; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem;">
-            <p style="font-size: 0.875rem; color: #16a34a;">{{ success }}</p>
-          </div>
-
-          <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-            <Button
-              type="button"
-              label="Cancel"
-              severity="secondary"
-              @click="goBack"
-              :disabled="loading"
-            />
-            <Button
-              type="submit"
-              label="Update Property"
-              style="background-color: #078160; border-color: #078160;"
-              :loading="loading"
-              :disabled="loading"
-            />
-          </div>
-        </form>
-      </template>
-    </Card>
+    <Message v-if="success" severity="success" :closable="false">
+      {{ success }}
+    </Message>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import PropertyForm from '~/components/property/PropertyForm.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -260,7 +170,94 @@ async function handleSubmit() {
   }
 }
 
+function viewProperty() {
+  router.push(`/properties/${route.params.id}`)
+}
+
+function saveDraft(data) {
+  // Save draft to localStorage
+  localStorage.setItem('property_draft_edit', JSON.stringify(data))
+  success.value = 'Draft saved successfully!'
+}
+
 function goBack() {
   router.push('/properties')
 }
 </script>
+
+<style scoped>
+.edit-property-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+}
+
+.header-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.header-content p {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.loading-container p {
+  margin-top: 1rem;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+}
+</style>

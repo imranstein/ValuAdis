@@ -127,18 +127,113 @@
         
         <div class="header-right">
           <div class="header-actions">
-            <button class="action-btn">
+            <button class="action-btn" @click="toggleNotifications" title="Notifications">
               <i class="pi pi-bell"></i>
-              <span class="notification-badge">3</span>
+              <span class="notification-badge" v-if="notificationCount > 0">{{ notificationCount }}</span>
             </button>
-            <button class="action-btn">
+            <button class="action-btn" @click="toggleSearch" title="Search">
               <i class="pi pi-search"></i>
             </button>
-            <div class="user-menu">
+            <div class="user-menu" @click="toggleProfileMenu">
               <div class="user-avatar-small">
                 <span>{{ userInitials }}</span>
               </div>
             </div>
+          </div>
+        </div>
+        
+        <!-- Notifications Dropdown -->
+        <div v-if="showNotifications" class="dropdown-menu notifications-dropdown">
+          <div class="dropdown-header">
+            <h3>Notifications</h3>
+            <button @click="markAllAsRead" class="text-btn">Mark all as read</button>
+          </div>
+          <div class="notifications-list">
+            <div v-if="notifications.length === 0" class="empty-state">
+              <i class="pi pi-bell"></i>
+              <p>No new notifications</p>
+            </div>
+            <div v-for="notification in notifications" :key="notification.id" class="notification-item" :class="{ unread: !notification.read }">
+              <div class="notification-icon" :style="{ background: notification.color }">
+                <i :class="notification.icon"></i>
+              </div>
+              <div class="notification-content">
+                <p class="notification-title">{{ notification.title }}</p>
+                <p class="notification-message">{{ notification.message }}</p>
+                <span class="notification-time">{{ notification.time }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Search Dropdown -->
+        <div v-if="showSearch" class="dropdown-menu search-dropdown">
+          <div class="search-input-wrapper">
+            <i class="pi pi-search"></i>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search properties, valuations, users..."
+              @input="handleSearch"
+              ref="searchInput"
+            />
+          </div>
+          <div class="search-results">
+            <div v-if="searchQuery && searchResults.length === 0" class="empty-state">
+              <i class="pi pi-search"></i>
+              <p>No results found</p>
+            </div>
+            <div v-else-if="searchQuery" class="results-list">
+              <div v-for="result in searchResults" :key="result.id" class="search-result-item" @click="navigateToResult(result)">
+                <i :class="result.icon"></i>
+                <div>
+                  <p class="result-title">{{ result.title }}</p>
+                  <span class="result-type">{{ result.type }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else class="search-suggestions">
+              <p class="suggestions-title">Quick Links</p>
+              <button @click="router.push('/properties')" class="suggestion-item">
+                <i class="pi pi-building"></i>
+                <span>All Properties</span>
+              </button>
+              <button @click="router.push('/valuations')" class="suggestion-item">
+                <i class="pi pi-calculator"></i>
+                <span>All Valuations</span>
+              </button>
+              <button @click="router.push('/reports')" class="suggestion-item">
+                <i class="pi pi-file-pdf"></i>
+                <span>Reports</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Profile Dropdown -->
+        <div v-if="showProfileMenu" class="dropdown-menu profile-dropdown">
+          <div class="profile-header">
+            <div class="profile-avatar">
+              <span>{{ userInitials }}</span>
+            </div>
+            <div>
+              <p class="profile-name">{{ userName || 'Admin User' }}</p>
+              <p class="profile-email">{{ userEmail || 'admin@valuadis.com' }}</p>
+            </div>
+          </div>
+          <div class="profile-menu-items">
+            <button @click="router.push('/profile')" class="menu-item">
+              <i class="pi pi-user"></i>
+              <span>My Profile</span>
+            </button>
+            <button @click="router.push('/settings')" class="menu-item">
+              <i class="pi pi-cog"></i>
+              <span>Settings</span>
+            </button>
+            <button @click="handleLogout" class="menu-item logout">
+              <i class="pi pi-sign-out"></i>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </header>
@@ -152,22 +247,84 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useAuthStore } from '~/stores/auth'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
 
-const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-const { userName, userRole } = storeToRefs(authStore)
 
 const sidebarOpen = ref(false)
+const showNotifications = ref(false)
+const showSearch = ref(false)
+const showProfileMenu = ref(false)
+const searchQuery = ref('')
+const searchResults = ref<any[]>([])
+const searchInput = ref<HTMLInputElement | null>(null)
+
+// User data from localStorage
+const userName = ref('')
+const userRole = ref('')
+const userEmail = ref('')
+
+// Load user data
+const loadUserData = () => {
+  const token = localStorage.getItem('valuadis_token')
+  if (token) {
+    // Decode JWT to get user info (simple decode, not verification)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      userName.value = payload.name || 'Test User'
+      userRole.value = payload.role || 'Administrator'
+      userEmail.value = payload.email || 'test@valuadis.com'
+    } catch (e) {
+      userName.value = 'Test User'
+      userRole.value = 'Administrator'
+      userEmail.value = 'test@valuadis.com'
+    }
+  }
+}
+
+loadUserData()
+
+// Notifications
+const notifications = ref([
+  {
+    id: 1,
+    title: 'New Valuation Request',
+    message: 'Property at Bole Road requires valuation',
+    time: '5 minutes ago',
+    read: false,
+    icon: 'pi pi-calculator',
+    color: '#059669'
+  },
+  {
+    id: 2,
+    title: 'Report Generated',
+    message: 'Monthly valuation report is ready',
+    time: '1 hour ago',
+    read: false,
+    icon: 'pi pi-file-pdf',
+    color: '#3b82f6'
+  },
+  {
+    id: 3,
+    title: 'System Update',
+    message: 'New features available in settings',
+    time: '3 hours ago',
+    read: true,
+    icon: 'pi pi-cog',
+    color: '#8b5cf6'
+  }
+])
+
+const notificationCount = computed(() => {
+  return notifications.value.filter(n => !n.read).length
+})
 
 const userInitials = computed(() => {
   if (!userName.value) return 'U'
   const names = userName.value.split(' ')
-  return names.map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  return names.map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
 const pageTitle = computed(() => {
@@ -204,9 +361,82 @@ function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value
 }
 
+function toggleNotifications() {
+  showNotifications.value = !showNotifications.value
+  showSearch.value = false
+  showProfileMenu.value = false
+}
+
+function toggleSearch() {
+  showSearch.value = !showSearch.value
+  showNotifications.value = false
+  showProfileMenu.value = false
+  
+  if (showSearch.value) {
+    nextTick(() => {
+      searchInput.value?.focus()
+    })
+  }
+}
+
+function toggleProfileMenu() {
+  showProfileMenu.value = !showProfileMenu.value
+  showNotifications.value = false
+  showSearch.value = false
+}
+
+function markAllAsRead() {
+  notifications.value.forEach(n => n.read = true)
+}
+
+async function handleSearch() {
+  if (!searchQuery.value) {
+    searchResults.value = []
+    return
+  }
+  
+  // Simulate search - in production, this would call the backend API
+  const mockResults = [
+    { id: 1, title: 'Bole Road Property', type: 'Property', icon: 'pi pi-building', path: '/properties/1' },
+    { id: 2, title: 'Valuation Report #123', type: 'Valuation', icon: 'pi pi-calculator', path: '/valuations/123' },
+    { id: 3, title: 'John Doe', type: 'User', icon: 'pi pi-user', path: '/users/3' }
+  ]
+  
+  searchResults.value = mockResults.filter(r => 
+    r.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+}
+
+function navigateToResult(result: any) {
+  router.push(result.path)
+  showSearch.value = false
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
 function handleLogout() {
-  authStore.logout()
+  localStorage.removeItem('valuadis_token')
   router.push('/login')
+}
+
+// Close dropdowns when clicking outside
+watch([showNotifications, showSearch, showProfileMenu], () => {
+  if (showNotifications.value || showSearch.value || showProfileMenu.value) {
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdowns)
+    }, 100)
+  } else {
+    document.removeEventListener('click', closeDropdowns)
+  }
+})
+
+function closeDropdowns(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.dropdown-menu') && !target.closest('.action-btn') && !target.closest('.user-menu')) {
+    showNotifications.value = false
+    showSearch.value = false
+    showProfileMenu.value = false
+  }
 }
 </script>
 
@@ -292,6 +522,7 @@ function handleLogout() {
   padding: 1rem 0;
   flex: 1;
   overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 .nav-section {
@@ -536,6 +767,331 @@ function handleLogout() {
   font-weight: 600;
   font-size: 0.75rem;
   cursor: pointer;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  z-index: 1000;
+  min-width: 320px;
+  max-width: 400px;
+  max-height: 500px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dropdown-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.text-btn {
+  background: none;
+  border: none;
+  color: #059669;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.text-btn:hover {
+  background: #f0fdf4;
+}
+
+/* Notifications Dropdown */
+.notifications-dropdown {
+  width: 380px;
+}
+
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item.unread {
+  background: #f0fdf4;
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.notification-message {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0 0 0.25rem 0;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Search Dropdown */
+.search-dropdown {
+  width: 450px;
+}
+
+.search-input-wrapper {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search-input-wrapper i {
+  color: #64748b;
+}
+
+.search-input-wrapper input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.search-input-wrapper input::placeholder {
+  color: #94a3b8;
+}
+
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.results-list {
+  padding: 0.5rem;
+}
+
+.search-result-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-result-item:hover {
+  background: #f8fafc;
+}
+
+.search-result-item i {
+  color: #059669;
+  font-size: 1.125rem;
+}
+
+.result-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.result-type {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.search-suggestions {
+  padding: 1rem;
+}
+
+.suggestions-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: 0.05em;
+}
+
+.suggestion-item {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  text-align: left;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.suggestion-item:hover {
+  background: #f8fafc;
+  color: #059669;
+}
+
+.suggestion-item i {
+  color: #94a3b8;
+}
+
+.suggestion-item:hover i {
+  color: #059669;
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  width: 280px;
+}
+
+.profile-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.profile-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.profile-email {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.profile-menu-items {
+  padding: 0.5rem;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  text-align: left;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background: #f8fafc;
+  color: #059669;
+}
+
+.menu-item.logout {
+  color: #ef4444;
+}
+
+.menu-item.logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.menu-item i {
+  width: 20px;
+  text-align: center;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 /* Page Content */
