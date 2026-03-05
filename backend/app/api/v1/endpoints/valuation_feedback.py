@@ -8,7 +8,7 @@ GET  /valuation-feedback/metrics  - Get current trust metrics
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.core.database import get_db
@@ -25,14 +25,14 @@ class FeedbackCreate(BaseModel):
     final_value: float
     approved_without_change: bool
     comments: Optional[str] = None
-    property_context: Optional[dict] = {}
+    property_context: Optional[dict] = Field(default_factory=dict)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def submit_feedback(
     payload: FeedbackCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user),
 ):
     """Submit reviewer feedback on an AI valuation."""
     if payload.final_value <= 0:
@@ -44,7 +44,7 @@ def submit_feedback(
     feedback = svc.record_feedback(
         db=db,
         property_id=payload.property_id,
-        reviewer_id=current_user.id,
+        reviewer_id=current_user_id,
         ai_estimate=payload.ai_estimate,
         final_value=payload.final_value,
         approved_without_change=payload.approved_without_change,

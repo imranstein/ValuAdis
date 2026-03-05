@@ -53,6 +53,11 @@ const propertyRef = ref('')
 
 onMounted(async () => {
   const propertyId = Number(route.params.id)
+  if (!Number.isInteger(propertyId) || propertyId <= 0) {
+    loadError.value = 'Invalid property ID in URL.'
+    loading.value = false
+    return
+  }
   const token = localStorage.getItem('valuadis_token')
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
 

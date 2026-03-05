@@ -84,6 +84,11 @@ class PropertyCreate(BaseModel):
     comparable_properties: Optional[List[Dict]] = Field(default_factory=list)
     valuation_notes: Optional[str] = None
 
+    # AI valuation metadata — stored on the property so reviewer panel can activate
+    ai_estimated_value: Optional[float] = None
+    ai_confidence_score: Optional[float] = None
+    ai_trust_score_at_time: Optional[float] = None
+
     @validator('address')
     def validate_address(cls, v):
         if len(v.strip()) < 5:
@@ -153,6 +158,11 @@ class PropertyUpdate(BaseModel):
     comparable_properties: Optional[List[Dict]] = None
     valuation_notes: Optional[str] = None
     status: Optional[str] = None
+
+    # AI valuation metadata
+    ai_estimated_value: Optional[float] = None
+    ai_confidence_score: Optional[float] = None
+    ai_trust_score_at_time: Optional[float] = None
 
     @validator('property_type')
     def validate_property_type(cls, v):

@@ -135,7 +135,8 @@ function handlePhotoDrop(e: DragEvent) {
   addPhotos(files)
 }
 function addPhotos(files: File[]) {
-  const filtered = files.filter(f => f.size <= 5 * 1024 * 1024)
+  // Enforce image type in code — drag-and-drop can bypass input[accept]
+  const filtered = files.filter(f => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024)
   const remaining = 20 - form.photos.length
   form.photos.push(...filtered.slice(0, remaining))
 }
@@ -152,8 +153,17 @@ function handleDocDrop(e: DragEvent) {
   const files = Array.from(e.dataTransfer?.files || [])
   addDocs(files)
 }
+const ALLOWED_DOC_TYPES = [
+  'application/pdf',
+  'image/jpeg', 'image/png', 'image/tiff',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
 function addDocs(files: File[]) {
-  const filtered = files.filter(f => f.size <= 10 * 1024 * 1024)
+  // Enforce allowed document types — drag-and-drop can bypass input[accept]
+  const filtered = files.filter(
+    f => ALLOWED_DOC_TYPES.includes(f.type) && f.size <= 10 * 1024 * 1024
+  )
   const remaining = 10 - form.documents.length
   form.documents.push(...filtered.slice(0, remaining))
 }

@@ -53,7 +53,17 @@ const currentUser = ref(null)
 const trustMetrics = ref(null)
 
 const reviewerRoles = ['valuer', 'firm_admin', 'municipal_admin', 'system_admin']
-const isReviewer = computed(() => currentUser.value && reviewerRoles.includes(currentUser.value.role))
+const isReviewer = computed(() => {
+  const user = currentUser.value
+  if (!user) return false
+  // Handle single string role, array of role strings, or array of role objects
+  const role = user.role
+  if (!role) return false
+  const roleNames: string[] = Array.isArray(role)
+    ? role.map((r: any) => (typeof r === 'string' ? r : r?.name ?? ''))
+    : [typeof role === 'string' ? role : role?.name ?? '']
+  return roleNames.some((r) => reviewerRoles.includes(r))
+})
 const aiEstimate = computed(() => property.value?.ai_estimated_value ?? null)
 
 // Authenticated fetch helper

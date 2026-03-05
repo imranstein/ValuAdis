@@ -42,7 +42,9 @@
             :disabled="store.isSubmitting"
             @click="handleSaveDraft"
           />
-          <span class="step-counter">Step {{ store.currentStep }} of 7</span>
+          <span class="step-counter">
+            {{ store.currentStep <= 7 ? `Step ${store.currentStep} of 7` : 'Review & Submit' }}
+          </span>
           <div class="nav-actions">
             <Button
               v-if="store.currentStep > 1"
@@ -53,6 +55,7 @@
               :disabled="store.isSubmitting"
               @click="store.prevStep()"
             />
+            <!-- Steps 1–6: plain Next -->
             <Button
               v-if="store.currentStep < 7"
               label="Next"
@@ -62,6 +65,17 @@
               :disabled="store.isSubmitting"
               @click="store.nextStep()"
             />
+            <!-- Step 7: advance into Review & Submit -->
+            <Button
+              v-if="store.currentStep === 7"
+              label="Review & Submit"
+              icon="pi pi-check-circle"
+              icon-pos="right"
+              severity="success"
+              :disabled="store.isSubmitting"
+              @click="store.nextStep()"
+            />
+            <!-- Step 8 (review): submit handled inside WizardReviewSummary -->
           </div>
         </div>
       </div>

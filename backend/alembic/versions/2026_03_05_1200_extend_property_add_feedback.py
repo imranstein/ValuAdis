@@ -72,11 +72,11 @@ def upgrade() -> None:
     op.create_table(
         'valuation_feedback',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('property_id', sa.Integer(), sa.ForeignKey('properties.id'), nullable=False),
-        sa.Column('valuation_id', sa.Integer(), sa.ForeignKey('valuations.id'), nullable=True),
-        sa.Column('reviewer_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
-        sa.Column('ai_estimate', sa.Float(), nullable=False),
-        sa.Column('final_approved_value', sa.Float(), nullable=False),
+        sa.Column('property_id', sa.Integer(), sa.ForeignKey('properties.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('valuation_id', sa.Integer(), sa.ForeignKey('valuations.id', ondelete='SET NULL'), nullable=True),
+        sa.Column('reviewer_id', sa.Integer(), sa.ForeignKey('users.id', ondelete='RESTRICT'), nullable=False),
+        sa.Column('ai_estimate', sa.Numeric(precision=18, scale=2), nullable=False),
+        sa.Column('final_approved_value', sa.Numeric(precision=18, scale=2), nullable=False),
         sa.Column('delta_percentage', sa.Float(), nullable=True),
         sa.Column('approved_without_change', sa.Boolean(), nullable=True),
         sa.Column('reviewer_comments', sa.Text(), nullable=True),
@@ -85,7 +85,7 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
         sa.PrimaryKeyConstraint('id'),
     )
-    op.create_index('ix_valuation_feedback_id', 'valuation_feedback', ['id'], unique=False)
+    # No index on 'id' — primary key already creates one in PostgreSQL
     op.create_index('ix_valuation_feedback_property_id', 'valuation_feedback', ['property_id'], unique=False)
 
 

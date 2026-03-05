@@ -129,7 +129,9 @@ const phoneLocal = ref(
 
 watch(phoneLocal, (val) => {
   phoneError.value = ''
-  form.owner_phone = val ? `+251${val}` : ''
+  // Strip all non-digits and cap at 9 chars before writing to store
+  const digits = val.replace(/\D/g, '').slice(0, 9)
+  form.owner_phone = digits ? `+251${digits}` : ''
 })
 
 function formatPhone() {

@@ -145,7 +145,8 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
   }
 
   function nextStep() {
-    if (validateStep(currentStep.value) && currentStep.value < TOTAL_STEPS) {
+    // Allow advancing through all 7 steps + into the review summary (step 8)
+    if (validateStep(currentStep.value) && currentStep.value <= TOTAL_STEPS) {
       currentStep.value++
     }
   }
@@ -262,9 +263,25 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
 
     try {
       const d = formData.value
+
+      // If user only dropped a pin (no polygon drawn), derive a point polygon
+      // so the backend coordinates field is never empty.
+      let resolvedCoordinates: number[][] = d.boundaries
+      if (resolvedCoordinates.length === 0 && d.latitude !== null && d.longitude !== null) {
+        const DELTA = 0.0002 // ~22 m bounding box at equator
+        const lat = d.latitude!, lng = d.longitude!
+        resolvedCoordinates = [
+          [lng - DELTA, lat - DELTA],
+          [lng + DELTA, lat - DELTA],
+          [lng + DELTA, lat + DELTA],
+          [lng - DELTA, lat + DELTA],
+          [lng - DELTA, lat - DELTA], // closed ring
+        ]
+      }
+
       const payload = {
         ...d,
-        coordinates: d.boundaries,
+        coordinates: resolvedCoordinates,
         ai_estimated_value: aiEstimate.value?.value ?? null,
         ai_confidence_score: aiEstimate.value?.confidence ?? null,
         ai_trust_score_at_time: trustMetrics.value?.trust_score ?? null,
