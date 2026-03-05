@@ -732,6 +732,13 @@
       <i :class="saveStatus.icon"></i>
       <span>{{ saveStatus.message }}</span>
     </div>
+    
+    <!-- Notification Toast -->
+    <NotificationToast 
+      v-for="notification in notifications" 
+      :key="notification.id"
+      :notification="notification"
+    />
   </div>
 </template>
 
@@ -742,11 +749,18 @@ import ScraperStats from '~/components/settings/ScraperStats.vue'
 import ScraperTable from '~/components/settings/ScraperTable.vue'
 import AddScraperModal from '~/components/settings/AddScraperModal.vue'
 import ScraperLogs from '~/components/settings/ScraperLogs.vue'
+import NotificationToast from '~/components/ui/NotificationToast.vue'
+import { useNotifications } from '~/composables/useNotifications.js'
+import { scraperService } from '~/services/scraperService.js'
 
 // Reactive data
 const activeTab = ref('general')
 const isSaving = ref(false)
 const saveStatus = ref(null)
+
+// Notifications
+const { notifications, success, error, warning, info } = useNotifications()
+const currentNotification = ref({})
 
 // Scraper management
 const scraperType = ref('property')
@@ -950,59 +964,40 @@ function exportSettings() {
 
 // Scraper Management Methods
 async function loadScrapers() {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      scrapers.value = data
-      usingMockData.value = false
-    } else {
-      // Fallback to mock data if API fails
-      scrapers.value = getMockScrapers()
-      usingMockData.value = true
-    }
-  } catch (error) {
-    console.error('Error loading scrapers:', error)
-    // Fallback to mock data
+  const result = await scraperService.getScrapers()
+  
+  if (result.success) {
+    scrapers.value = result.data
+    usingMockData.value = false
+    success('Scrapers loaded successfully')
+  } else {
+    // Fallback to mock data if API fails
     scrapers.value = getMockScrapers()
     usingMockData.value = true
+    warning('Using demo data - Unable to connect to server', {
+      duration: 8000
+    })
   }
 }
 
 async function loadScrapedData() {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const endpoint = scraperType.value === 'property' ? 'properties' : 'vehicles'
-    const response = await fetch(`${API_BASE}/api/v1/${endpoint}?limit=1000`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      const data = await response.json()
-      scrapedData.value = data.data || data
-      // Update pagination total
-      pagination.value.totalRecords = scrapedData.value.length
-      // Reset to first page when loading new data
-      pagination.value.currentPage = 1
-    } else {
-      // Fallback to mock data if API fails
-      scrapedData.value = getMockScrapedData()
-      pagination.value.totalRecords = scrapedData.value.length
-      pagination.value.currentPage = 1
-    }
-  } catch (error) {
-    console.error('Error loading scraped data:', error)
-    // Fallback to mock data
+  // Optimize payload size - use pagination
+  const limit = pagination.value.rowsPerPage * 5 // Load 5 pages at a time
+  const result = await scraperService.getScrapedData(scraperType.value, { limit })
+  
+  if (result.success) {
+    scrapedData.value = result.data.data || result.data || []
+    // Update pagination total
+    pagination.value.totalRecords = result.data.total || scrapedData.value.length
+    // Reset to first page when loading new data
+    pagination.value.currentPage = 1
+    success(`${scraperType.value === 'property' ? 'Property' : 'Vehicle'} data loaded`)
+  } else {
+    // Fallback to mock data if API fails
     scrapedData.value = getMockScrapedData()
     pagination.value.totalRecords = scrapedData.value.length
     pagination.value.currentPage = 1
+    warning(`Using demo ${scraperType.value} data - Unable to connect to server`)
   }
 }
 
@@ -1226,22 +1221,15 @@ function getMockScrapers() {
 }
 
 async function loadScraperStats() {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/stats`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      scraperStats.value = await response.json()
-    } else {
-      // Fallback to mock data if API fails
-      scraperStats.value = getMockScraperStats()
-    }
-  } catch (error) {
-    console.error('Error loading scraper stats:', error)
-    // Fallback to mock data
+  const result = await scraperService.getScraperStats()
+  
+  if (result.success) {
+    scraperStats.value = result.data
+    success('Scraper statistics loaded')
+  } else {
+    // Fallback to mock data if API fails
     scraperStats.value = getMockScraperStats()
+    warning('Using demo statistics - Unable to connect to server')
   }
 }
 
@@ -1258,17 +1246,17 @@ function getMockScraperStats() {
 }
 
 async function loadScraperLogs() {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/logs?limit=50&skip=${(logsPage.value - 1) * 50}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      scraperLogs.value = await response.json()
-    }
-  } catch (error) {
-    console.error('Error loading scraper logs:', error)
+  const result = await scraperService.getScraperLogs({
+    skip: (logsPage.value - 1) * 50,
+    limit: 50
+  })
+  
+  if (result.success) {
+    scraperLogs.value = result.data
+    success('Scraper logs loaded')
+  } else {
+    scraperLogs.value = []
+    warning('Unable to load scraper logs - No logs available')
   }
 }
 
@@ -1276,19 +1264,20 @@ async function loadScraperLogs() {
 function viewPropertyDetails(property) {
   // Validate property and check for mock data before navigation
   if (!property || !property.id) {
-    console.warn('Invalid property data:', property)
+    warning('Invalid property data - Cannot view details')
     return
   }
   
   // Check if this is mock data (you can add an isMock flag to mock data)
   if (property.isMockData || property.id.toString().startsWith('mock-')) {
     // Show user-friendly fallback instead of navigation
-    alert('This is sample data and cannot be viewed in detail.')
+    warning('This is sample data and cannot be viewed in detail')
     return
   }
   
   // Navigate to property details page
   navigateTo(`/properties/${property.id}`)
+  success(`Navigating to property details`)
 }
 
 async function refreshScrapers() {
@@ -1300,58 +1289,41 @@ async function refreshLogs() {
 }
 
 async function toggleScraper(scraperId) {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/toggle`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      await refreshScrapers()
-    }
-  } catch (error) {
-    console.error('Error toggling scraper:', error)
-    alert('Failed to toggle scraper')
+  const result = await scraperService.toggleScraper(scraperId)
+  
+  if (result.success) {
+    await refreshScrapers()
+    success('Scraper status updated successfully')
+  } else {
+    error('Failed to toggle scraper - Please try again')
   }
 }
 
 async function testScraper(scraperId) {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/test`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      const result = await response.json()
-      alert(`Test ${result.success ? 'successful' : 'failed'}!\nItems found: ${result.items_found}\n${result.error_message || ''}`)
+  const result = await scraperService.testScraper(scraperId)
+  
+  if (result.success) {
+    const testResult = result.data
+    if (testResult.success) {
+      success(`Test successful! Found ${testResult.items_found} items`)
+    } else {
+      warning(`Test completed: ${testResult.error_message || 'No items found'}`)
     }
-  } catch (error) {
-    console.error('Error testing scraper:', error)
-    alert('Failed to test scraper')
+  } else {
+    error('Failed to test scraper - Please try again')
   }
 }
 
 async function runScraper(scraperId) {
   if (!confirm('Start scraping now? This may take several minutes.')) return
   
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/run`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      const result = await response.json()
-      alert(result.message)
-      await refreshScrapers()
-    }
-  } catch (error) {
-    console.error('Error running scraper:', error)
-    alert('Failed to start scraper')
+  const result = await scraperService.runScraper(scraperId)
+  
+  if (result.success) {
+    success(result.data.message || 'Scraper started successfully')
+    await refreshScrapers()
+  } else {
+    error('Failed to start scraper - Please try again')
   }
 }
 
@@ -1364,49 +1336,27 @@ function editScraper(scraper) {
 async function deleteScraper(scraperId) {
   if (!confirm('Are you sure you want to delete this scraper?')) return
   
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (response.ok) {
-      await refreshScrapers()
-    }
-  } catch (error) {
-    console.error('Error deleting scraper:', error)
-    alert('Failed to delete scraper')
+  const result = await scraperService.deleteScraper(scraperId)
+  
+  if (result.success) {
+    await refreshScrapers()
+    success('Scraper deleted successfully')
+  } else {
+    error('Failed to delete scraper - Please try again')
   }
 }
 
 async function saveScraper(scraperData) {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const url = isEditMode.value 
-      ? `${API_BASE}/api/v1/scrapers/${selectedScraper.value.id}`
-      : `${API_BASE}/api/v1/scrapers`
-    
-    const response = await fetch(url, {
-      method: isEditMode.value ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(scraperData)
-    })
-    
-    if (response.ok) {
-      await refreshScrapers()
-      closeScraperModal()
-    } else {
-      const error = await response.json()
-      alert(error.detail || 'Failed to save scraper')
-    }
-  } catch (error) {
-    console.error('Error saving scraper:', error)
-    alert('Failed to save scraper')
+  const result = isEditMode.value 
+    ? await scraperService.updateScraper(selectedScraper.value.id, scraperData)
+    : await scraperService.createScraper(scraperData)
+  
+  if (result.success) {
+    await refreshScrapers()
+    closeScraperModal()
+    success(isEditMode.value ? 'Scraper updated successfully' : 'Scraper created successfully')
+  } else {
+    error(result.error || 'Failed to save scraper - Please try again')
   }
 }
 
