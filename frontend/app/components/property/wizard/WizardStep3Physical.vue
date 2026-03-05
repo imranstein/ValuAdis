@@ -93,7 +93,7 @@
               v-model="form.year_built"
               placeholder="e.g., 2005"
               :min="1800"
-              :max="2026"
+              :max="currentYear"
               :useGrouping="false"
               class="w-full"
             />
@@ -214,8 +214,10 @@ const store = usePropertyWizardStore()
 const form = store.formData
 const errors = computed(() => store.stepErrors[3] || {})
 
+const currentYear = new Date().getFullYear()
+
 const buildingAge = computed(() =>
-  form.year_built ? new Date().getFullYear() - form.year_built : null
+  form.year_built ? currentYear - form.year_built : null
 )
 
 function onAreaChange() {

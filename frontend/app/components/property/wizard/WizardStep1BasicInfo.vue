@@ -187,7 +187,10 @@ const registrationDateObj = ref<Date | null>(
 )
 
 function onDateSelect(date: Date) {
-  form.registration_date = date.toISOString().split('T')[0]
+  // Use toLocaleDateString('sv') to get YYYY-MM-DD in the *local* timezone.
+  // toISOString() converts to UTC first which shifts the date by -1 day for
+  // users east of UTC+0 when the picker fires at midnight local time.
+  form.registration_date = date.toLocaleDateString('sv')
 }
 
 function selectType(value: string) {

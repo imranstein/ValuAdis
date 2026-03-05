@@ -172,6 +172,21 @@ onMounted(async () => {
     }
   })
 
+  // Update stored boundaries when the user edits an existing polygon vertex
+  mapInstance.on((L as any).Draw.Event.EDITED, (e: any) => {
+    e.layers.eachLayer((layer: any) => {
+      const latlngs = layer.getLatLngs()[0]
+      form.boundaries = latlngs.map((ll: any) => [ll.lng, ll.lat])
+      // Ensure the polygon is closed (GeoJSON requirement)
+      if (
+        form.boundaries.length > 0 &&
+        JSON.stringify(form.boundaries[0]) !== JSON.stringify(form.boundaries[form.boundaries.length - 1])
+      ) {
+        form.boundaries.push(form.boundaries[0])
+      }
+    })
+  })
+
   mapInstance.on((L as any).Draw.Event.DELETED, () => {
     form.boundaries = []
   })

@@ -123,8 +123,11 @@ const currentStepComponent = computed(() => {
 })
 
 onMounted(() => {
-  // Try to restore draft
-  const restored = store.loadDraft()
+  // Only restore a draft when we are NOT in edit mode.
+  // In edit mode the page already called store.loadFromProperty(), and
+  // loading a stale draft on top of that would silently overwrite the
+  // data fetched from the server.
+  const restored = !store.editPropertyId && store.loadDraft()
   if (restored) draftRestored.value = true
 
   // Auto-save every 30 seconds

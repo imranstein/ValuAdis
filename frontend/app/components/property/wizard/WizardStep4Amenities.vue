@@ -25,16 +25,18 @@
           <i class="pi pi-building text-emerald-600" /> Amenities
         </h3>
         <div class="feature-grid">
-          <div
+          <button
             v-for="item in amenityItems"
             :key="item.key"
+            type="button"
             class="feature-card"
             :class="{ selected: form.amenities[item.key] }"
+            :aria-pressed="!!form.amenities[item.key]"
             @click="toggleAmenity(item.key)"
           >
             <i :class="item.icon" class="feature-icon" />
             <span>{{ item.label }}</span>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -44,16 +46,18 @@
           <i class="pi pi-bolt text-emerald-600" /> Utilities
         </h3>
         <div class="feature-grid">
-          <div
+          <button
             v-for="item in utilityItems"
             :key="item.key"
+            type="button"
             class="feature-card"
             :class="{ selected: form.utilities[item.key] }"
+            :aria-pressed="!!form.utilities[item.key]"
             @click="toggleUtility(item.key)"
           >
             <i :class="item.icon" class="feature-icon" />
             <span>{{ item.label }}</span>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -207,6 +211,12 @@ const utilityItems = [
 }
 
 .feature-card {
+  /* Reset browser button defaults so the styling is consistent */
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  line-height: inherit;
+  /* Layout */
   width: 130px;
   min-height: 80px;
   display: flex;
@@ -224,6 +234,7 @@ const utilityItems = [
   color: #64748b;
   background: white;
   user-select: none;
+  text-align: center;
 }
 
 .feature-card:hover {

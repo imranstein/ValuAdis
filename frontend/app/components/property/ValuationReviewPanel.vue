@@ -126,6 +126,7 @@ const props = defineProps<{
   aiEstimate: number | null
   trustScore: number | null
   totalReviews?: number
+  propertyContext?: Record<string, unknown>
 }>()
 
 const mode = ref<'approve' | 'modify'>('approve')
@@ -194,6 +195,7 @@ async function submitReview() {
         final_value: resolvedFinal,
         approved_without_change: approved,
         comments: comments.value || null,
+        property_context: props.propertyContext ?? {},
       }),
     })
 

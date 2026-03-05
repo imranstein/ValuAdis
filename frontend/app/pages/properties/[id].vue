@@ -29,6 +29,7 @@
         :ai-estimate="aiEstimate"
         :trust-score="trustMetrics?.trust_score ?? null"
         :total-reviews="trustMetrics?.total_reviews"
+        :property-context="propertyContext"
         class="review-panel-wrapper"
       />
     </template>
@@ -65,6 +66,15 @@ const isReviewer = computed(() => {
   return roleNames.some((r) => reviewerRoles.includes(r))
 })
 const aiEstimate = computed(() => property.value?.ai_estimated_value ?? null)
+
+// Build the context dict sent to the valuation feedback service so it can
+// learn from property-type / condition / area patterns.
+const propertyContext = computed(() => ({
+  property_type: property.value?.property_type ?? null,
+  municipality: property.value?.municipality ?? null,
+  condition: property.value?.condition ?? null,
+  area_sqm: property.value?.area_sqm ?? null,
+}))
 
 // Authenticated fetch helper
 async function fetchWithAuth(url, options = {}) {

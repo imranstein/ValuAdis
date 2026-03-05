@@ -433,7 +433,7 @@ git commit -m "feat(backend): add valuation feedback service with AI trust scori
 ## Task 6: Backend — Feedback API Routes
 
 **Files:**
-- Create: `backend/app/api/routes/valuation_feedback.py`
+- Create: `backend/app/api/v1/endpoints/valuation_feedback.py`
 - Modify: `backend/app/main.py` (or router aggregator) to include new router
 
 **Step 1:** Create routes:
@@ -487,7 +487,7 @@ def get_metrics():
 
 **Step 3:** Commit:
 ```bash
-git add backend/app/api/routes/valuation_feedback.py
+git add backend/app/api/v1/endpoints/valuation_feedback.py
 git commit -m "feat(api): add /valuation-feedback endpoints for reviewer loop"
 ```
 

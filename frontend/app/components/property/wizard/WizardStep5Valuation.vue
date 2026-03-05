@@ -243,7 +243,10 @@ const valuationDateObj = ref<Date | null>(
 )
 
 function onDateSelect(date: Date) {
-  form.valuation_date = date.toISOString().split('T')[0]
+  // Use toLocaleDateString('sv') to get YYYY-MM-DD in the *local* timezone.
+  // toISOString() converts to UTC first which can shift the date by -1 day for
+  // users east of UTC+0 (e.g. Ethiopia, UTC+3) when the picker fires at midnight.
+  form.valuation_date = date.toLocaleDateString('sv')
 }
 
 const canCalculate = computed(() =>
@@ -269,8 +272,9 @@ async function runCalculation() {
 function useAIValue() {
   if (store.aiEstimate) {
     form.market_value = store.aiEstimate.value
-    if (store.aiEstimate.land_value) form.land_value = store.aiEstimate.land_value
-    if (store.aiEstimate.building_value) form.building_value = store.aiEstimate.building_value
+    // Use != null (not falsy check) so a value of 0 is still written to the form
+    if (store.aiEstimate.land_value != null) form.land_value = store.aiEstimate.land_value
+    if (store.aiEstimate.building_value != null) form.building_value = store.aiEstimate.building_value
   }
 }
 

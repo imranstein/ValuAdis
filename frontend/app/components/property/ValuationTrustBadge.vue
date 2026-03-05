@@ -2,7 +2,7 @@
   <div class="trust-badge" :class="badgeClass" :title="tooltip">
     <i :class="badgeIcon" class="badge-icon" />
     <span class="badge-label">{{ badgeLabel }}</span>
-    <span class="badge-score">{{ score?.toFixed(0) }}%</span>
+    <span class="badge-score">{{ score !== null ? `${score.toFixed(0)}%` : '—' }}</span>
   </div>
 </template>
 
