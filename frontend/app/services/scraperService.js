@@ -1,7 +1,9 @@
 import { apiService } from './apiService.js'
 
-class ScraperService {
-  constructor() {
+class ScraperService
+{
+  constructor ()
+  {
     this.endpoints = {
       scrapers: '/api/v1/scrapers/',
       stats: '/api/v1/scrapers/stats',
@@ -11,113 +13,137 @@ class ScraperService {
     }
   }
 
-  getAuthToken() {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('valuadis_token')
-    }
-    return null
+  getAuthHeaders ()
+  {
+    // With httpOnly cookies, we don't need to send Authorization header
+    // The browser automatically includes the httpOnly cookie
+    return {}
   }
 
-  getAuthHeaders() {
-    const token = this.getAuthToken()
-    return token ? { 'Authorization': `Bearer ${token}` } : {}
+  getAuthCredentials ()
+  {
+    // Include credentials for httpOnly cookie support
+    return { credentials: 'include' }
   }
 
-  async handleApiCall(call, fallbackData = null) {
-    try {
+  async handleApiCall ( call, fallbackData = null )
+  {
+    try
+    {
       const result = await call()
       return { success: true, data: result }
-    } catch (error) {
-      console.error('API call failed:', error)
-      return { 
-        success: false, 
+    } catch ( error )
+    {
+      console.error( 'API call failed:', error )
+      return {
+        success: false,
         error: error.message,
-        data: fallbackData 
+        data: fallbackData
       }
     }
   }
 
-  async getScrapers(options = {}) {
+  async getScrapers ( options = {} )
+  {
     const { skip = 0, limit = 100 } = options
     return this.handleApiCall(
-      () => apiService.get(`${this.endpoints.scrapers}?skip=${skip}&limit=${limit}`, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.get( `${ this.endpoints.scrapers }?skip=${ skip }&limit=${ limit }`, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async getScraperStats() {
+  async getScraperStats ()
+  {
     return this.handleApiCall(
-      () => apiService.get(this.endpoints.stats, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.get( this.endpoints.stats, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async getScraperLogs(options = {}) {
+  async getScraperLogs ( options = {} )
+  {
     const { skip = 0, limit = 50 } = options
     return this.handleApiCall(
-      () => apiService.get(`${this.endpoints.logs}?skip=${skip}&limit=${limit}`, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.get( `${ this.endpoints.logs }?skip=${ skip }&limit=${ limit }`, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async getScrapedData(type, options = {}) {
+  async getScrapedData ( type, options = {} )
+  {
     const { limit = 100 } = options
     const endpoint = type === 'property' ? this.endpoints.properties : this.endpoints.vehicles
     return this.handleApiCall(
-      () => apiService.get(`${endpoint}?limit=${limit}`, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.get( `${ endpoint }?limit=${ limit }`, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async toggleScraper(scraperId) {
+  async toggleScraper ( scraperId )
+  {
     return this.handleApiCall(
-      () => apiService.patch(`${this.endpoints.scrapers}${scraperId}/toggle`, {}, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.patch( `${ this.endpoints.scrapers }${ scraperId }/toggle`, {}, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async testScraper(scraperId) {
+  async testScraper ( scraperId )
+  {
     return this.handleApiCall(
-      () => apiService.post(`${this.endpoints.scrapers}${scraperId}/test`, {}, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.post( `${ this.endpoints.scrapers }${ scraperId }/test`, {}, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async runScraper(scraperId) {
+  async runScraper ( scraperId )
+  {
     return this.handleApiCall(
-      () => apiService.post(`${this.endpoints.scrapers}${scraperId}/run`, {}, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.post( `${ this.endpoints.scrapers }${ scraperId }/run`, {}, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async deleteScraper(scraperId) {
+  async deleteScraper ( scraperId )
+  {
     return this.handleApiCall(
-      () => apiService.delete(`${this.endpoints.scrapers}${scraperId}`, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.delete( `${ this.endpoints.scrapers }${ scraperId }`, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async createScraper(scraperData) {
+  async createScraper ( scraperData )
+  {
     return this.handleApiCall(
-      () => apiService.post(this.endpoints.scrapers, scraperData, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.post( this.endpoints.scrapers, scraperData, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 
-  async updateScraper(scraperId, scraperData) {
+  async updateScraper ( scraperId, scraperData )
+  {
     return this.handleApiCall(
-      () => apiService.put(`${this.endpoints.scrapers}${scraperId}`, scraperData, {
-        headers: this.getAuthHeaders()
-      })
+      () => apiService.put( `${ this.endpoints.scrapers }${ scraperId }`, scraperData, {
+        headers: this.getAuthHeaders(),
+        ...this.getAuthCredentials()
+      } )
     )
   }
 }
