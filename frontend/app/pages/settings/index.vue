@@ -863,10 +863,13 @@ const logsPage = ref(1)
 const usingMockData = ref(false)
 
 // Methods
+// Settings endpoint not implemented yet
+/*
 async function loadSettings() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/settings', {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/settings`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -884,14 +887,17 @@ async function loadSettings() {
     console.error('Error loading settings:', error)
   }
 }
+*/
 
+/*
 async function saveAllSettings() {
   isSaving.value = true
   saveStatus.value = null
 
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/settings', {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -928,6 +934,7 @@ async function saveAllSettings() {
     }, 5000)
   }
 }
+*/
 
 function exportSettings() {
   const dataStr = JSON.stringify(settings.value, null, 2)
@@ -945,7 +952,7 @@ function exportSettings() {
 async function loadScrapers() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
     const response = await fetch(`${API_BASE}/api/v1/scrapers/`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -972,8 +979,9 @@ async function loadScrapers() {
 async function loadScrapedData() {
   try {
     const token = localStorage.getItem('valuadis_token')
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
     const endpoint = scraperType.value === 'property' ? 'properties' : 'vehicles'
-    const response = await fetch(`http://localhost:8020/api/v1/${endpoint}?limit=1000`, {
+    const response = await fetch(`${API_BASE}/api/v1/${endpoint}?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
@@ -1220,7 +1228,8 @@ function getMockScrapers() {
 async function loadScraperStats() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/scrapers/stats/', {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/stats`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
@@ -1251,7 +1260,8 @@ function getMockScraperStats() {
 async function loadScraperLogs() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/logs/?limit=50&skip=${(logsPage.value - 1) * 50}`, {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/logs?limit=50&skip=${(logsPage.value - 1) * 50}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (response.ok) {
@@ -1292,7 +1302,8 @@ async function refreshLogs() {
 async function toggleScraper(scraperId) {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/${scraperId}/toggle`, {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/toggle`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -1308,7 +1319,8 @@ async function toggleScraper(scraperId) {
 async function testScraper(scraperId) {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/${scraperId}/test`, {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/test`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -1327,7 +1339,8 @@ async function runScraper(scraperId) {
   
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/${scraperId}/run`, {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}/run`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -1353,7 +1366,8 @@ async function deleteScraper(scraperId) {
   
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/scrapers/${scraperId}`, {
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const response = await fetch(`${API_BASE}/api/v1/scrapers/${scraperId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -1369,9 +1383,10 @@ async function deleteScraper(scraperId) {
 async function saveScraper(scraperData) {
   try {
     const token = localStorage.getItem('valuadis_token')
+    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
     const url = isEditMode.value 
-      ? `http://localhost:8020/api/v1/scrapers/${selectedScraper.value.id}`
-      : 'http://localhost:8020/api/v1/scrapers'
+      ? `${API_BASE}/api/v1/scrapers/${selectedScraper.value.id}`
+      : `${API_BASE}/api/v1/scrapers`
     
     const response = await fetch(url, {
       method: isEditMode.value ? 'PUT' : 'POST',
@@ -1402,7 +1417,7 @@ function closeScraperModal() {
 }
 
 onMounted(() => {
-  loadSettings()
+  // loadSettings() // Settings endpoint not implemented yet
   loadScrapers()
   loadScraperStats()
   loadScraperLogs()
