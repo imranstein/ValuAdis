@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "trust_score": 75.0,
+  "total_reviews": 0,
+  "approved_unchanged": 0,
+  "modified_reviews": 0,
+  "avg_error_pct": 0.0,
+  "last_30d_accuracy": 0.0,
+  "feedback_history": [],
+  "patterns": {
+    "overestimated_when": [],
+    "underestimated_when": []
+  }
+}

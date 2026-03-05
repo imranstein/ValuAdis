@@ -12,22 +12,35 @@
     </Message>
     
     <!-- Property Detail View - only render when data is ready -->
-    <PropertyDetailView
-      v-if="!loading && !error && property && Object.keys(property).length > 0"
-      :property="property"
-      :valuations="valuations"
-      :readonly="readonly"
-      @back="goBack"
-      @edit="editProperty"
-      @create-valuation="createValuation"
-    />
+    <template v-if="!loading && !error && property && Object.keys(property).length > 0">
+      <PropertyDetailView
+        :property="property"
+        :valuations="valuations"
+        :readonly="readonly"
+        @back="goBack"
+        @edit="editProperty"
+        @create-valuation="createValuation"
+      />
+
+      <!-- Reviewer Valuation Panel -->
+      <ValuationReviewPanel
+        v-if="isReviewer && aiEstimate"
+        :property-id="property.id"
+        :ai-estimate="aiEstimate"
+        :trust-score="trustMetrics?.trust_score ?? null"
+        :total-reviews="trustMetrics?.total_reviews"
+        :property-context="propertyContext"
+        class="review-panel-wrapper"
+      />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PropertyDetailView from '~/components/property/PropertyDetailView.vue'
+import ValuationReviewPanel from '~/components/property/ValuationReviewPanel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -37,6 +50,31 @@ const valuations = ref([])
 const loading = ref(true)
 const error = ref(null)
 const readonly = ref(false)
+const currentUser = ref(null)
+const trustMetrics = ref(null)
+
+const reviewerRoles = ['valuer', 'firm_admin', 'municipal_admin', 'system_admin']
+const isReviewer = computed(() => {
+  const user = currentUser.value
+  if (!user) return false
+  // Handle single string role, array of role strings, or array of role objects
+  const role = user.role
+  if (!role) return false
+  const roleNames: string[] = Array.isArray(role)
+    ? role.map((r: any) => (typeof r === 'string' ? r : r?.name ?? ''))
+    : [typeof role === 'string' ? role : role?.name ?? '']
+  return roleNames.some((r) => reviewerRoles.includes(r))
+})
+const aiEstimate = computed(() => property.value?.ai_estimated_value ?? null)
+
+// Build the context dict sent to the valuation feedback service so it can
+// learn from property-type / condition / area patterns.
+const propertyContext = computed(() => ({
+  property_type: property.value?.property_type ?? null,
+  municipality: property.value?.municipality ?? null,
+  condition: property.value?.condition ?? null,
+  area_sqm: property.value?.area_sqm ?? null,
+}))
 
 // Authenticated fetch helper
 async function fetchWithAuth(url, options = {}) {
@@ -64,11 +102,18 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 onMounted(async () => {
-  // Run both fetches in parallel for better performance
+  // Load current user from localStorage
+  const userJson = localStorage.getItem('valuadis_user')
+  if (userJson) {
+    try { currentUser.value = JSON.parse(userJson) } catch {}
+  }
+
+  // Run all fetches in parallel for better performance
   try {
     const [propertyResponse, valuationsResponse] = await Promise.allSettled([
       loadProperty(),
-      loadValuations()
+      loadValuations(),
+      loadTrustMetrics(),
     ])
     
     // Handle individual failures
@@ -123,6 +168,14 @@ function editProperty(id) {
 function createValuation(id) {
   router.push(`/valuations/create?property_id=${id}`)
 }
+
+async function loadTrustMetrics() {
+  try {
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const res = await fetch(`${API_BASE}/api/v1/valuation-feedback/metrics`)
+    if (res.ok) trustMetrics.value = await res.json()
+  } catch {}
+}
 </script>
 
 <style scoped>
@@ -151,5 +204,10 @@ function createValuation(id) {
 .loading-overlay p {
   color: #64748b;
   font-size: 1rem;
+}
+
+.review-panel-wrapper {
+  max-width: 560px;
+  margin: 1.5rem auto 0;
 }
 </style>
