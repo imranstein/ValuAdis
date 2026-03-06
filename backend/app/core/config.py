@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     
-    # Database (PostgreSQL + PostGIS)
-    DATABASE_URL: str = "postgresql://valuadis_user:valuadis_2025@localhost:5432/valuadis"
+    # Database (SQLite for testing, can be changed to PostgreSQL/SQL Server)
+    DATABASE_URL: str = "sqlite:///./valuadis.db"
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
     DB_NAME: str = "valuadis"

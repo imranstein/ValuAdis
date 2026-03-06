@@ -218,19 +218,34 @@ const saveSettings = async () => {
   saveStatus.value = null
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // API call to save settings
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+    const token = localStorage.getItem('valuadis_token')
     
-    // Save to localStorage for demo
-    localStorage.setItem('valuadis_settings', JSON.stringify(settings))
-    
-    saveStatus.value = {
-      type: 'success',
-      icon: 'pi pi-check',
-      message: 'Settings saved successfully'
+    if (!token) {
+      throw new Error('Authentication required')
     }
-    
-    success('Settings saved successfully')
+
+    const response = await fetch(`${API_BASE}/api/v1/settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(settings)
+    })
+
+    if (response.ok) {
+      saveStatus.value = {
+        type: 'success',
+        icon: 'pi pi-check',
+        message: 'Settings saved successfully'
+      }
+      
+      success('Settings saved successfully')
+    } else {
+      throw new Error('Failed to save settings')
+    }
   } catch (err) {
     saveStatus.value = {
       type: 'error',

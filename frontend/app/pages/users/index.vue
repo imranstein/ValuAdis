@@ -493,64 +493,8 @@ const userForm = ref({
   confirm_password: ''
 })
 
-// Mock users data (will be replaced with API call)
-const users = ref([
-  {
-    id: 1,
-    name: 'Abebe Kebede',
-    email: 'abebe.kebede@valuadis.gov.et',
-    phone: '+251 911 234 567',
-    role: 'admin',
-    municipality: 'addis_ababa',
-    status: 'active',
-    last_login: '2024-01-28T10:30:00Z',
-    created_at: '2023-06-15T08:00:00Z'
-  },
-  {
-    id: 2,
-    name: 'Tigist Haile',
-    email: 'tigist.haile@valuadis.gov.et',
-    phone: '+251 922 345 678',
-    role: 'assessor',
-    municipality: 'addis_ababa',
-    status: 'active',
-    last_login: '2024-01-27T14:15:00Z',
-    created_at: '2023-08-20T09:30:00Z'
-  },
-  {
-    id: 3,
-    name: 'Dawit Mengistu',
-    email: 'dawit.mengistu@valuadis.gov.et',
-    phone: '+251 933 456 789',
-    role: 'supervisor',
-    municipality: 'mekelle',
-    status: 'active',
-    last_login: '2024-01-26T16:45:00Z',
-    created_at: '2023-09-10T11:15:00Z'
-  },
-  {
-    id: 4,
-    name: 'Sara Ahmed',
-    email: 'sara.ahmed@valuadis.gov.et',
-    phone: '+251 944 567 890',
-    role: 'clerk',
-    municipality: 'dire_dawa',
-    status: 'pending',
-    last_login: null,
-    created_at: '2024-01-15T13:20:00Z'
-  },
-  {
-    id: 5,
-    name: 'Michael Tesfaye',
-    email: 'michael.tesfaye@valuadis.gov.et',
-    phone: '+251 955 678 901',
-    role: 'viewer',
-    municipality: 'bahir_dar',
-    status: 'inactive',
-    last_login: '2023-12-20T09:10:00Z',
-    created_at: '2023-10-05T14:30:00Z'
-  }
-])
+// Real users data from API
+const users = ref([])
 
 // Computed properties
 const filteredUsers = computed(() => {
@@ -881,12 +825,14 @@ onMounted(async () => {
 
     if (response.ok) {
       const data = await response.json()
-      users.value = data.data || users.value // Fallback to mock data if API fails
+      users.value = data.data || []
     } else {
-      console.error('Failed to load users from API, using mock data')
+      console.error('Failed to load users from API')
+      users.value = []
     }
   } catch (error) {
     console.error('Error loading users:', error)
+    users.value = []
   }
 })
 </script>

@@ -325,11 +325,11 @@ const customEndDate = ref('')
 const selectedMunicipality = ref('')
 const selectedTrendPeriod = ref('monthly')
 
-// Mock data
-const totalValuations = ref(1247)
-const totalMarketValue = ref(2847500000)
-const averagePropertyValue = ref(2285000)
-const averageProcessingTime = ref(3.2)
+// Real data from API
+const totalValuations = ref(0)
+const totalMarketValue = ref(0)
+const averagePropertyValue = ref(0)
+const averageProcessingTime = ref(0)
 
 const trendPeriods = [
   { label: 'Daily', value: 'daily' },
@@ -346,62 +346,9 @@ const propertyTypes = [
   { label: 'Mixed Use', value: 'mixed_use', color: '#ef4444' }
 ]
 
-const recentValuations = ref([
-  {
-    id: 1,
-    valuation_id: 'VAL-2024-145',
-    property_address: 'Bole Medhanialem, Addis Ababa',
-    owner_name: 'Abebe Kebede',
-    market_value: 2500000,
-    status: 'approved',
-    created_date: '2024-01-28'
-  },
-  {
-    id: 2,
-    valuation_id: 'VAL-2024-146',
-    property_address: 'Kirkos, Addis Ababa',
-    owner_name: 'Tigist Haile',
-    market_value: 850000,
-    status: 'pending',
-    created_date: '2024-01-27'
-  },
-  {
-    id: 3,
-    valuation_id: 'VAL-2024-147',
-    property_address: 'Mekelle Industrial Zone',
-    owner_name: 'Dawit Mengistu',
-    market_value: 4500000,
-    status: 'approved',
-    created_date: '2024-01-26'
-  }
-])
+const recentValuations = ref([])
 
-const topProperties = ref([
-  {
-    id: 1,
-    property_address: 'Bole International Airport Area',
-    property_type: 'commercial',
-    market_value: 15000000,
-    municipality: 'Addis Ababa',
-    created_date: '2024-01-15'
-  },
-  {
-    id: 2,
-    property_address: 'Mekelle Industrial Park',
-    property_type: 'industrial',
-    market_value: 8500000,
-    municipality: 'Mekelle',
-    created_date: '2024-01-18'
-  },
-  {
-    id: 3,
-    property_address: 'Hawassa Resort Complex',
-    property_type: 'commercial',
-    market_value: 6200000,
-    municipality: 'Hawassa',
-    created_date: '2024-01-20'
-  }
-])
+const topProperties = ref([])
 
 // Computed properties
 const selectedPeriod = computed(() => {
@@ -463,8 +410,10 @@ const pieSegments = computed(() => {
   const total = 100
   let currentAngle = 0
   
+  // This will be populated with real data from API
+  const percentages = [0, 0, 0, 0, 0]
+  
   return propertyTypes.map((type, index) => {
-    const percentages = [35, 25, 20, 15, 5] // Mock percentages
     const percentage = percentages[index]
     const degrees = (percentage / 100) * 360
     
@@ -479,12 +428,12 @@ const pieSegments = computed(() => {
 })
 
 const municipalData = computed(() => [
-  { name: 'Addis Ababa', count: 523, percentage: 42 },
-  { name: 'Dire Dawa', count: 187, percentage: 15 },
-  { name: 'Mekelle', count: 224, percentage: 18 },
-  { name: 'Bahir Dar', count: 149, percentage: 12 },
-  { name: 'Hawassa', count: 87, percentage: 7 },
-  { name: 'Others', count: 77, percentage: 6 }
+  { name: 'Addis Ababa', count: 0, percentage: 0 },
+  { name: 'Dire Dawa', count: 0, percentage: 0 },
+  { name: 'Mekelle', count: 0, percentage: 0 },
+  { name: 'Bahir Dar', count: 0, percentage: 0 },
+  { name: 'Hawassa', count: 0, percentage: 0 },
+  { name: 'Others', count: 0, percentage: 0 }
 ])
 
 const topPerformer = computed(() => 'Addis Ababa')

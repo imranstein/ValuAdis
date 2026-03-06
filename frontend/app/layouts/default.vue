@@ -57,6 +57,12 @@
                 <span>Analytics</span>
               </a>
             </li>
+            <li class="nav-item" :class="{ active: $route.path === '/map' }">
+              <a href="/map" @click.prevent="$router.push('/map')" class="nav-link">
+                <i class="pi pi-map"></i>
+                <span>Property Map</span>
+              </a>
+            </li>
             <li class="nav-item" :class="{ active: $route.path === '/reports' }">
               <a href="/reports" @click.prevent="$router.push('/reports')" class="nav-link">
                 <i class="pi pi-file-pdf"></i>
@@ -418,16 +424,9 @@ function handleSearch() {
     return
   }
   
-  // Simulate search - in production, this would call the backend API
-  const mockResults = [
-    { id: 1, title: 'Bole Road Property', type: 'Property', icon: 'pi pi-building', path: '/properties/1' },
-    { id: 2, title: 'Valuation Report #123', type: 'Valuation', icon: 'pi pi-calculator', path: '/valuations/123' },
-    { id: 3, title: 'John Doe', type: 'User', icon: 'pi pi-user', path: '/users/3' }
-  ]
-  
-  searchResults.value = mockResults.filter(r => 
-    r.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  // In production, this would call the backend API search endpoint
+  // For now, search results are empty until API is implemented
+  searchResults.value = []
 }
 
 function debouncedSearch() {

@@ -60,8 +60,8 @@ const isReviewer = computed(() => {
   // Handle single string role, array of role strings, or array of role objects
   const role = user.role
   if (!role) return false
-  const roleNames: string[] = Array.isArray(role)
-    ? role.map((r: any) => (typeof r === 'string' ? r : r?.name ?? ''))
+  const roleNames = Array.isArray(role)
+    ? role.map((r) => (typeof r === 'string' ? r : r?.name ?? ''))
     : [typeof role === 'string' ? role : role?.name ?? '']
   return roleNames.some((r) => reviewerRoles.includes(r))
 })

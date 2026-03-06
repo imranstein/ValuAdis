@@ -1,19 +1,19 @@
 <template>
-  <div class="valuations-container">
+  <div class="vehicles-container">
     <!-- Page Header -->
     <div class="page-header">
       <div class="header-content">
-        <h1>Valuations</h1>
-        <p>Manage and track all property valuations and assessments</p>
+        <h1>Vehicle Valuations</h1>
+        <p>Manage and track all vehicle valuations and assessments</p>
       </div>
       <div class="header-actions">
-        <button class="action-button secondary" @click="exportValuations">
+        <button class="action-button secondary" @click="exportVehicles">
           <i class="pi pi-download"></i>
           Export
         </button>
-        <button class="action-button primary" @click="router.push('/valuations/quick')">
+        <button class="action-button primary" @click="router.push('/vehicles/create')">
           <i class="pi pi-plus"></i>
-          Quick Valuation
+          Add Vehicle
         </button>
       </div>
     </div>
@@ -26,12 +26,41 @@
           <input 
             type="text" 
             v-model="searchQuery" 
-            placeholder="Search valuations by property address, owner, or ID..."
+            placeholder="Search vehicles by make, model, VIN, or plate..."
           />
         </div>
       </div>
       
       <div class="filter-section">
+        <select v-model="selectedMake" class="filter-dropdown">
+          <option value="">All Makes</option>
+          <option v-for="make in makes" :key="make" :value="make">
+            {{ make }}
+          </option>
+        </select>
+        
+        <select v-model="selectedYear" class="filter-dropdown">
+          <option value="">All Years</option>
+          <option v-for="year in years" :key="year" :value="year">
+            {{ year }}
+          </option>
+        </select>
+        
+        <select v-model="selectedRegion" class="filter-dropdown">
+          <option value="">All Regions</option>
+          <option value="Addis Ababa">Addis Ababa</option>
+          <option value="Oromia">Oromia</option>
+          <option value="Amhara">Amhara</option>
+          <option value="Tigray">Tigray</option>
+          <option value="Southern">Southern</option>
+          <option value="Somali">Somali</option>
+          <option value="Afar">Afar</option>
+          <option value="Benishangul">Benishangul</option>
+          <option value="Gambela">Gambela</option>
+          <option value="Harari">Harari</option>
+          <option value="Dire Dawa">Dire Dawa</option>
+        </select>
+        
         <select v-model="selectedStatus" class="filter-dropdown">
           <option value="">All Status</option>
           <option value="draft">Draft</option>
@@ -39,29 +68,6 @@
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
           <option value="expired">Expired</option>
-        </select>
-        
-        <select v-model="selectedMunicipality" class="filter-dropdown">
-          <option value="">All Municipalities</option>
-          <option value="addis_ababa">Addis Ababa</option>
-          <option value="dire_dawa">Dire Dawa</option>
-          <option value="mekelle">Mekelle</option>
-          <option value="gondar">Gondar</option>
-          <option value="bahir_dar">Bahir Dar</option>
-          <option value="hawassa">Hawassa</option>
-          <option value="adama">Adama</option>
-          <option value="jimma">Jimma</option>
-          <option value="dessie">Dessie</option>
-          <option value="harar">Harar</option>
-        </select>
-        
-        <select v-model="selectedType" class="filter-dropdown">
-          <option value="">All Types</option>
-          <option value="residential">Residential</option>
-          <option value="commercial">Commercial</option>
-          <option value="industrial">Industrial</option>
-          <option value="agricultural">Agricultural</option>
-          <option value="mixed_use">Mixed Use</option>
         </select>
         
         <button class="reset-button" @click="resetFilters">
@@ -75,14 +81,14 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
-          <i class="pi pi-file-text"></i>
+          <i class="pi pi-car"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ totalValuations }}</h3>
-          <p>Total Valuations</p>
+          <h3>{{ totalVehicles }}</h3>
+          <p>Total Vehicles</p>
           <div class="stat-trend positive">
             <i class="pi pi-arrow-up"></i>
-            <span>12% from last month</span>
+            <span>8% from last month</span>
           </div>
         </div>
       </div>
@@ -110,7 +116,7 @@
           <p>Approved</p>
           <div class="stat-trend positive">
             <i class="pi pi-arrow-up"></i>
-            <span>8% from last month</span>
+            <span>12% from last month</span>
           </div>
         </div>
       </div>
@@ -124,18 +130,18 @@
           <p>Total Market Value</p>
           <div class="stat-trend positive">
             <i class="pi pi-arrow-up"></i>
-            <span>15% from last month</span>
+            <span>18% from last month</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Valuations Registry -->
-    <div class="valuations-registry">
+    <!-- Vehicle Registry -->
+    <div class="vehicles-registry">
       <div class="registry-header">
-        <h2>Valuation Registry</h2>
+        <h2>Vehicle Registry</h2>
         <div class="registry-info">
-          <span>{{ filteredValuations.length }} valuations</span>
+          <span>{{ filteredVehicles.length }} vehicles</span>
           <div class="view-toggle">
             <button 
               class="view-btn" 
@@ -157,28 +163,28 @@
 
       <!-- Table View -->
       <div v-if="viewMode === 'table'" class="table-container">
-        <table class="valuations-table">
+        <table class="vehicles-table">
           <thead>
             <tr>
-              <th @click="sortBy('valuation_id')">
-                Valuation ID
-                <i class="pi" :class="getSortIcon('valuation_id')"></i>
+              <th @click="sortBy('vehicle_name')">
+                Vehicle
+                <i class="pi" :class="getSortIcon('vehicle_name')"></i>
               </th>
-              <th @click="sortBy('property_address')">
-                Property Address
-                <i class="pi" :class="getSortIcon('property_address')"></i>
+              <th @click="sortBy('year')">
+                Year
+                <i class="pi" :class="getSortIcon('year')"></i>
               </th>
-              <th @click="sortBy('owner_name')">
-                Owner
-                <i class="pi" :class="getSortIcon('owner_name')"></i>
+              <th @click="sortBy('vin')">
+                VIN
+                <i class="pi" :class="getSortIcon('vin')"></i>
               </th>
-              <th @click="sortBy('municipality')">
-                Municipality
-                <i class="pi" :class="getSortIcon('municipality')"></i>
+              <th @click="sortBy('plate_number')">
+                Plate
+                <i class="pi" :class="getSortIcon('plate_number')"></i>
               </th>
-              <th @click="sortBy('property_type')">
-                Type
-                <i class="pi" :class="getSortIcon('property_type')"></i>
+              <th @click="sortBy('region')">
+                Region
+                <i class="pi" :class="getSortIcon('region')"></i>
               </th>
               <th @click="sortBy('market_value')">
                 Market Value
@@ -196,52 +202,52 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="valuation in paginatedValuations" :key="valuation.id">
+            <tr v-for="vehicle in paginatedVehicles" :key="vehicle.id">
               <td>
-                <span class="valuation-id">{{ valuation.valuation_id }}</span>
-              </td>
-              <td>
-                <div class="property-info">
-                  <i class="pi pi-map-marker"></i>
-                  <span>{{ valuation.property_address }}</span>
+                <div class="vehicle-info">
+                  <div class="vehicle-name">{{ vehicle.make }} {{ vehicle.model }}</div>
+                  <div class="vehicle-details">{{ vehicle.body_type || 'N/A' }}</div>
                 </div>
               </td>
               <td>
-                <div class="owner-info">
-                  <div class="owner-avatar">{{ getInitials(valuation.owner_name) }}</div>
-                  <span>{{ valuation.owner_name }}</span>
-                </div>
+                <span class="year-badge">{{ vehicle.year }}</span>
               </td>
               <td>
-                <span class="municipality-badge">{{ valuation.municipality }}</span>
+                <span class="vin-text">{{ vehicle.vin }}</span>
               </td>
               <td>
-                <span class="type-badge" :class="valuation.property_type">{{ getPropertyTypeLabel(valuation.property_type) }}</span>
+                <span class="plate-number">{{ vehicle.plate_number }}</span>
+              </td>
+              <td>
+                <span class="region-badge">{{ vehicle.region || 'N/A' }}</span>
               </td>
               <td>
                 <div class="value-info">
-                  <div class="market-value">{{ formatCurrency(valuation.market_value) }}</div>
-                  <div class="taxable-value">{{ formatCurrency(valuation.taxable_value) }}</div>
+                  <div class="market-value">{{ formatCurrency(vehicle.market_value) }}</div>
+                  <div class="taxable-value">Tax: {{ formatCurrency(vehicle.taxable_value) }}</div>
                 </div>
               </td>
               <td>
-                <span class="status-badge" :class="valuation.status">{{ getStatusLabel(valuation.status) }}</span>
+                <span class="status-badge" :class="vehicle.status">{{ getStatusLabel(vehicle.status) }}</span>
               </td>
               <td>
-                <span class="date">{{ formatDate(valuation.created_date) }}</span>
+                <span class="date">{{ formatDate(vehicle.created_date) }}</span>
               </td>
               <td>
                 <div class="action-buttons">
-                  <button class="action-btn view" @click="viewValuation(valuation)" title="View">
+                  <button class="action-btn view" @click="viewVehicle(vehicle)" title="View">
                     <i class="pi pi-eye"></i>
                   </button>
-                  <button class="action-btn edit" @click="editValuation(valuation)" title="Edit">
+                  <button class="action-btn edit" @click="editVehicle(vehicle)" title="Edit">
                     <i class="pi pi-pencil"></i>
                   </button>
-                  <button class="action-btn download" @click="downloadValuation(valuation)" title="Download">
+                  <button class="action-btn valuation" @click="createValuation(vehicle)" title="Valuate">
+                    <i class="pi pi-calculator"></i>
+                  </button>
+                  <button class="action-btn download" @click="downloadVehicle(vehicle)" title="Download">
                     <i class="pi pi-download"></i>
                   </button>
-                  <button class="action-btn delete" @click="deleteValuation(valuation)" title="Delete">
+                  <button class="action-btn delete" @click="deleteVehicle(vehicle)" title="Delete">
                     <i class="pi pi-trash"></i>
                   </button>
                 </div>
@@ -253,49 +259,60 @@
 
       <!-- Grid View -->
       <div v-else class="grid-container">
-        <div v-for="valuation in paginatedValuations" :key="valuation.id" class="valuation-card">
+        <div v-for="vehicle in paginatedVehicles" :key="vehicle.id" class="vehicle-card">
           <div class="card-header">
-            <div class="valuation-info">
-              <span class="valuation-id">{{ valuation.valuation_id }}</span>
-              <span class="status-badge" :class="valuation.status">{{ getStatusLabel(valuation.status) }}</span>
+            <div class="vehicle-info">
+              <div class="vehicle-name">{{ vehicle.make }} {{ vehicle.model }}</div>
+              <span class="status-badge" :class="vehicle.status">{{ getStatusLabel(vehicle.status) }}</span>
             </div>
             <div class="card-actions">
-              <button class="action-btn view" @click="viewValuation(valuation)">
+              <button class="action-btn view" @click="viewVehicle(vehicle)">
                 <i class="pi pi-eye"></i>
               </button>
             </div>
           </div>
           
           <div class="card-content">
-            <div class="property-details">
-              <h4>{{ valuation.property_address }}</h4>
-              <div class="property-meta">
-                <span class="municipality-badge">{{ valuation.municipality }}</span>
-                <span class="type-badge" :class="valuation.property_type">{{ getPropertyTypeLabel(valuation.property_type) }}</span>
+            <div class="vehicle-details">
+              <div class="year-info">
+                <span class="year-badge">{{ vehicle.year }}</span>
+                <span class="body-type">{{ vehicle.body_type || 'N/A' }}</span>
+              </div>
+              <div class="identification">
+                <div class="vin-info">
+                  <span class="label">VIN:</span>
+                  <span class="value">{{ vehicle.vin }}</span>
+                </div>
+                <div class="plate-info">
+                  <span class="label">Plate:</span>
+                  <span class="value">{{ vehicle.plate_number }}</span>
+                </div>
               </div>
             </div>
             
-            <div class="owner-details">
-              <div class="owner-avatar">{{ getInitials(valuation.owner_name) }}</div>
-              <span>{{ valuation.owner_name }}</span>
+            <div class="location-info">
+              <span class="region-badge">{{ vehicle.region || 'N/A' }}</span>
             </div>
             
             <div class="value-details">
-              <div class="market-value">{{ formatCurrency(valuation.market_value) }}</div>
-              <div class="taxable-value">Taxable: {{ formatCurrency(valuation.taxable_value) }}</div>
+              <div class="market-value">{{ formatCurrency(vehicle.market_value) }}</div>
+              <div class="taxable-value">Taxable: {{ formatCurrency(vehicle.taxable_value) }}</div>
             </div>
           </div>
           
           <div class="card-footer">
-            <span class="date">{{ formatDate(valuation.created_date) }}</span>
+            <span class="date">{{ formatDate(vehicle.created_date) }}</span>
             <div class="card-actions">
-              <button class="action-btn edit" @click="editValuation(valuation)">
+              <button class="action-btn edit" @click="editVehicle(vehicle)">
                 <i class="pi pi-pencil"></i>
               </button>
-              <button class="action-btn download" @click="downloadValuation(valuation)">
+              <button class="action-btn valuation" @click="createValuation(vehicle)">
+                <i class="pi pi-calculator"></i>
+              </button>
+              <button class="action-btn download" @click="downloadVehicle(vehicle)">
                 <i class="pi pi-download"></i>
               </button>
-              <button class="action-btn delete" @click="deleteValuation(valuation)">
+              <button class="action-btn delete" @click="deleteVehicle(vehicle)">
                 <i class="pi pi-trash"></i>
               </button>
             </div>
@@ -304,23 +321,23 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="filteredValuations.length === 0" class="empty-state">
+      <div v-if="filteredVehicles.length === 0" class="empty-state">
         <div class="empty-icon">
-          <i class="pi pi-file-text"></i>
+          <i class="pi pi-car"></i>
         </div>
-        <h3>No valuations found</h3>
-        <p>Create your first valuation to get started</p>
-        <button class="action-button primary" @click="router.push('/valuations/quick')">
+        <h3>No vehicles found</h3>
+        <p>Add your first vehicle to get started with valuations</p>
+        <button class="action-button primary" @click="router.push('/vehicles/create')">
           <i class="pi pi-plus"></i>
-          Create Valuation
+          Add Vehicle
         </button>
       </div>
     </div>
 
     <!-- Pagination -->
-    <div v-if="filteredValuations.length > itemsPerPage" class="pagination">
+    <div v-if="filteredVehicles.length > itemsPerPage" class="pagination">
       <div class="pagination-info">
-        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredValuations.length) }} of {{ filteredValuations.length }} valuations</span>
+        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredVehicles.length) }} of {{ filteredVehicles.length }} vehicles</span>
       </div>
       <div class="pagination-controls">
         <button 
@@ -351,40 +368,117 @@ const router = useRouter()
 
 // Reactive data
 const searchQuery = ref('')
+const selectedMake = ref('')
+const selectedYear = ref('')
+const selectedRegion = ref('')
 const selectedStatus = ref('')
-const selectedMunicipality = ref('')
-const selectedType = ref('')
 const viewMode = ref('table')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const sortField = ref('created_date')
 const sortDirection = ref('desc')
 
-const valuations = ref([])
+const vehicles = ref([
+  {
+    id: 1,
+    make: 'Toyota',
+    model: 'Corolla',
+    year: 2020,
+    vin: '1HGBH41JXMN109186',
+    plate_number: 'AA-123-BC',
+    body_type: 'Sedan',
+    fuel_type: 'Gasoline',
+    transmission: 'Automatic',
+    engine_capacity: 1798,
+    mileage: 45000,
+    color: 'White',
+    region: 'Addis Ababa',
+    city: 'Addis Ababa',
+    import_year: 2020,
+    custom_duty_paid: true,
+    market_value: 850000,
+    taxable_value: 212500,
+    status: 'approved',
+    created_date: '2024-01-15'
+  },
+  {
+    id: 2,
+    make: 'Hyundai',
+    model: 'Tucson',
+    year: 2021,
+    vin: '2HMNU5AE7MH123456',
+    plate_number: 'BB-456-DE',
+    body_type: 'SUV',
+    fuel_type: 'Gasoline',
+    transmission: 'Automatic',
+    engine_capacity: 1998,
+    mileage: 35000,
+    color: 'Silver',
+    region: 'Oromia',
+    city: 'Adama',
+    import_year: 2021,
+    custom_duty_paid: true,
+    market_value: 1200000,
+    taxable_value: 300000,
+    status: 'pending',
+    created_date: '2024-01-18'
+  },
+  {
+    id: 3,
+    make: 'Isuzu',
+    model: 'NPR',
+    year: 2019,
+    vin: 'JALBE41V9L1234567',
+    plate_number: 'CC-789-FG',
+    body_type: 'Truck',
+    fuel_type: 'Diesel',
+    transmission: 'Manual',
+    engine_capacity: 2999,
+    mileage: 85000,
+    color: 'Blue',
+    region: 'Amhara',
+    city: 'Bahir Dar',
+    import_year: 2019,
+    custom_duty_paid: false,
+    market_value: 1500000,
+    taxable_value: 375000,
+    status: 'draft',
+    created_date: '2024-01-20'
+  }
+])
+
+// Available makes and years for filters
+const makes = ref(['Toyota', 'Hyundai', 'Isuzu', 'Nissan', 'Honda', 'Mazda', 'Kia', 'Mercedes-Benz', 'BMW', 'Audi'])
+const years = ref(Array.from({ length: 35 }, (_, i) => 2024 - i))
 
 // Computed properties
-const filteredValuations = computed(() => {
-  let filtered = valuations.value
+const filteredVehicles = computed(() => {
+  let filtered = vehicles.value
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(v => 
-      v.property_address.toLowerCase().includes(query) ||
-      v.owner_name.toLowerCase().includes(query) ||
-      v.valuation_id.toLowerCase().includes(query)
+      v.make.toLowerCase().includes(query) ||
+      v.model.toLowerCase().includes(query) ||
+      v.vin.toLowerCase().includes(query) ||
+      v.plate_number.toLowerCase().includes(query)
     )
+  }
+
+  if (selectedMake.value) {
+    filtered = filtered.filter(v => v.make === selectedMake.value)
+  }
+
+  if (selectedYear.value) {
+    filtered = filtered.filter(v => v.year === parseInt(selectedYear.value))
+  }
+
+  if (selectedRegion.value) {
+    filtered = filtered.filter(v => v.region === selectedRegion.value)
   }
 
   if (selectedStatus.value) {
     filtered = filtered.filter(v => v.status === selectedStatus.value)
-  }
-
-  if (selectedMunicipality.value) {
-    filtered = filtered.filter(v => v.municipality === selectedMunicipality.value)
-  }
-
-  if (selectedType.value) {
-    filtered = filtered.filter(v => v.property_type === selectedType.value)
   }
 
   // Sort
@@ -407,20 +501,20 @@ const filteredValuations = computed(() => {
   return filtered
 })
 
-const paginatedValuations = computed(() => {
+const paginatedVehicles = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return filteredValuations.value.slice(start, end)
+  return filteredVehicles.value.slice(start, end)
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredValuations.value.length / itemsPerPage.value)
+  return Math.ceil(filteredVehicles.value.length / itemsPerPage.value)
 })
 
-const totalValuations = computed(() => valuations.value.length)
-const pendingValuations = computed(() => valuations.value.filter(v => v.status === 'pending').length)
-const approvedValuations = computed(() => valuations.value.filter(v => v.status === 'approved').length)
-const totalMarketValue = computed(() => valuations.value.reduce((sum, v) => sum + v.market_value, 0))
+const totalVehicles = computed(() => vehicles.value.length)
+const pendingValuations = computed(() => vehicles.value.filter(v => v.status === 'pending').length)
+const approvedValuations = computed(() => vehicles.value.filter(v => v.status === 'approved').length)
+const totalMarketValue = computed(() => vehicles.value.reduce((sum, v) => sum + v.market_value, 0))
 
 // Methods
 function sortBy(field) {
@@ -435,21 +529,6 @@ function sortBy(field) {
 function getSortIcon(field) {
   if (sortField.value !== field) return 'pi-sort'
   return sortDirection.value === 'asc' ? 'pi-sort-up' : 'pi-sort-down'
-}
-
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function getPropertyTypeLabel(type) {
-  const labels = {
-    residential: 'Residential',
-    commercial: 'Commercial',
-    industrial: 'Industrial',
-    agricultural: 'Agricultural',
-    mixed_use: 'Mixed Use'
-  }
-  return labels[type] || type
 }
 
 function getStatusLabel(status) {
@@ -482,48 +561,53 @@ function formatDate(date) {
 
 function resetFilters() {
   searchQuery.value = ''
+  selectedMake.value = ''
+  selectedYear.value = ''
+  selectedRegion.value = ''
   selectedStatus.value = ''
-  selectedMunicipality.value = ''
-  selectedType.value = ''
   currentPage.value = 1
 }
 
-function viewValuation(valuation) {
-  router.push(`/valuations/${valuation.id}`)
+function viewVehicle(vehicle) {
+  router.push(`/vehicles/${vehicle.id}`)
 }
 
-function editValuation(valuation) {
-  router.push(`/valuations/${valuation.id}/edit`)
+function editVehicle(vehicle) {
+  router.push(`/vehicles/${vehicle.id}/edit`)
 }
 
-function downloadValuation(valuation) {
+function createValuation(vehicle) {
+  router.push(`/vehicles/${vehicle.id}/valuation`)
+}
+
+function downloadVehicle(vehicle) {
   // Download functionality
-  console.log('Downloading valuation:', valuation.valuation_id)
+  console.log('Downloading vehicle:', vehicle.make, vehicle.model)
 }
 
-function deleteValuation(valuation) {
-  if (confirm(`Are you sure you want to delete valuation ${valuation.valuation_id}?`)) {
-    const index = valuations.value.findIndex(v => v.id === valuation.id)
+function deleteVehicle(vehicle) {
+  if (confirm(`Are you sure you want to delete ${vehicle.make} ${vehicle.model}?`)) {
+    const index = vehicles.value.findIndex(v => v.id === vehicle.id)
     if (index > -1) {
-      valuations.value.splice(index, 1)
+      vehicles.value.splice(index, 1)
     }
   }
 }
 
-function exportValuations() {
+function exportVehicles() {
   // Export functionality
-  console.log('Exporting valuations')
+  console.log('Exporting vehicles')
 }
 
 onMounted(() => {
-  // Load valuations from API
-  console.log('Loading valuations...')
+  // Load vehicles from API
+  console.log('Loading vehicles...')
 })
 </script>
 
 <style scoped>
-/* Valuations Container */
-.valuations-container {
+/* Vehicles Container */
+.vehicles-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
@@ -731,8 +815,8 @@ onMounted(() => {
   color: #ef4444;
 }
 
-/* Valuations Registry */
-.valuations-registry {
+/* Vehicles Registry */
+.vehicles-registry {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -791,12 +875,12 @@ onMounted(() => {
   overflow-x: auto;
 }
 
-.valuations-table {
+.vehicles-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.valuations-table th {
+.vehicles-table th {
   background: #f8fafc;
   padding: 1rem;
   text-align: left;
@@ -807,51 +891,32 @@ onMounted(() => {
   user-select: none;
 }
 
-.valuations-table th:hover {
+.vehicles-table th:hover {
   background: #f1f5f9;
 }
 
-.valuations-table td {
+.vehicles-table td {
   padding: 1rem;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.valuation-id {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  color: #059669;
-}
-
-.property-info {
+.vehicle-info {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.property-info i {
+.vehicle-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.vehicle-details {
+  font-size: 0.875rem;
   color: #6b7280;
 }
 
-.owner-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.owner-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #059669;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.municipality-badge {
+.year-badge {
   background: #e0f2fe;
   color: #0369a1;
   padding: 0.25rem 0.75rem;
@@ -860,36 +925,24 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.type-badge {
+.vin-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.plate-number {
+  font-weight: 500;
+  color: #374151;
+}
+
+.region-badge {
+  background: #dbeafe;
+  color: #1e40af;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
-}
-
-.type-badge.residential {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.type-badge.commercial {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.type-badge.industrial {
-  background: #e9d5ff;
-  color: #7c3aed;
-}
-
-.type-badge.agricultural {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.type-badge.mixed_use {
-  background: #fef3c7;
-  color: #d97706;
 }
 
 .value-info {
@@ -982,6 +1035,16 @@ onMounted(() => {
   color: white;
 }
 
+.action-btn.valuation {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.action-btn.valuation:hover {
+  background: #0369a1;
+  color: white;
+}
+
 .action-btn.download {
   background: #e0f2fe;
   color: #0369a1;
@@ -1010,7 +1073,7 @@ onMounted(() => {
   padding: 2rem;
 }
 
-.valuation-card {
+.vehicle-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -1019,7 +1082,7 @@ onMounted(() => {
   transition: all 0.3s;
 }
 
-.valuation-card:hover {
+.vehicle-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
@@ -1032,7 +1095,7 @@ onMounted(() => {
   border-bottom: 1px solid #f1f5f9;
 }
 
-.valuation-info {
+.vehicle-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1042,23 +1105,43 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
-.property-details h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
+.vehicle-details {
+  margin-bottom: 1rem;
 }
 
-.property-meta {
+.year-info {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
 }
 
-.owner-details {
+.body-type {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.identification {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.vin-info, .plate-info {
+  display: flex;
+  font-size: 0.875rem;
+}
+
+.label {
+  font-weight: 500;
+  color: #6b7280;
+  min-width: 40px;
+}
+
+.value {
+  color: #374151;
+}
+
+.location-info {
   margin: 1rem 0;
 }
 

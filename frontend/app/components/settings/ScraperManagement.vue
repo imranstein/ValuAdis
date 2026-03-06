@@ -40,13 +40,6 @@
       </button>
     </div>
 
-    <!-- Connection Status -->
-    <div v-if="usingMockData" class="connection-warning">
-      <i class="pi pi-exclamation-triangle"></i>
-      <span>Unable to connect to API. Displaying sample data. Some features may be limited.</span>
-      <button @click="refreshScrapers" class="btn-small">Retry</button>
-    </div>
-
     <!-- Debug Info -->
     <div class="debug-info">
       🔍 Debug: Type={{ scraperType }}, activeTab="scraper", scrapers={{ scrapers.length }}, stats loaded={{ !!scraperStats }}
@@ -74,14 +67,6 @@
     <!-- Scraped Data -->
     <div class="scraped-data-section">
       <h3>📊 Scraped {{ scraperType === 'property' ? 'Properties' : 'Vehicles' }}</h3>
-      
-      <div v-if="usingMockData" class="mock-data-warning">
-        <i class="pi pi-exclamation-triangle"></i>
-        <span>Using demo {{ scraperType }} data - Unable to connect to server</span>
-        <button @click="loadScrapedData" class="btn-small">
-          <i class="pi pi-refresh"></i>
-        </button>
-      </div>
 
       <!-- Data Table with Pagination -->
       <div v-if="scrapedData.length > 0" class="data-table-container">
@@ -113,7 +98,6 @@
                 <button 
                   @click="viewDetails(item)"
                   class="btn-small"
-                  :disabled="item.isMockData"
                 >
                   View
                 </button>
@@ -187,9 +171,16 @@ const isEditMode = ref(false)
 
 // Data
 const scrapers = ref([])
-const scraperStats = ref(null)
+const scraperStats = ref({
+  total_scrapers: 0,
+  active_scrapers: 0,
+  inactive_scrapers: 0,
+  total_listings: 0,
+  last_24h_listings: 0,
+  avg_success_rate: 0,
+  error_count: 0
+})
 const scrapedData = ref([])
-const usingMockData = ref(false)
 
 // Loading states
 const scrapersLoading = ref(false)
@@ -224,13 +215,14 @@ const loadScrapers = async () => {
     const result = await scraperService.getScrapers()
     if (result.success) {
       scrapers.value = result.data
-      usingMockData.value = false
       success('Scrapers loaded successfully')
     } else {
-      scrapers.value = getMockScrapers()
-      usingMockData.value = true
-      warning('Using demo data - Unable to connect to server', { duration: 8000 })
+      error('Failed to load scrapers - Please check your connection')
+      scrapers.value = []
     }
+  } catch (err) {
+    error('Failed to connect to server - Please check your connection')
+    scrapers.value = []
   } finally {
     scrapersLoading.value = false
   }
@@ -244,8 +236,27 @@ const loadScraperStats = async () => {
       scraperStats.value = result.data
       success('Scraper statistics loaded')
     } else {
-      scraperStats.value = getMockScraperStats()
-      warning('Using demo statistics - Unable to connect to server')
+      error('Failed to load scraper statistics')
+      scraperStats.value = {
+        total_scrapers: 0,
+        active_scrapers: 0,
+        inactive_scrapers: 0,
+        total_listings: 0,
+        last_24h_listings: 0,
+        avg_success_rate: 0,
+        error_count: 0
+      }
+    }
+  } catch (err) {
+    error('Failed to connect to server')
+    scraperStats.value = {
+      total_scrapers: 0,
+      active_scrapers: 0,
+      inactive_scrapers: 0,
+      total_listings: 0,
+      last_24h_listings: 0,
+      avg_success_rate: 0,
+      error_count: 0
     }
   } finally {
     statsLoading.value = false
@@ -264,11 +275,16 @@ const loadScrapedData = async () => {
       pagination.value.currentPage = 1
       success(`${scraperType.value === 'property' ? 'Property' : 'Vehicle'} data loaded`)
     } else {
-      scrapedData.value = getMockScrapedData()
-      pagination.value.totalRecords = scrapedData.value.length
+      error(`Failed to load ${scraperType.value} data`)
+      scrapedData.value = []
+      pagination.value.totalRecords = 0
       pagination.value.currentPage = 1
-      warning(`Using demo ${scraperType.value} data - Unable to connect to server`)
     }
+  } catch (err) {
+    error(`Failed to connect to server`)
+    scrapedData.value = []
+    pagination.value.totalRecords = 0
+    pagination.value.currentPage = 1
   } finally {
     dataLoading.value = false
   }
@@ -358,13 +374,12 @@ const viewDetails = (item) => {
     return
   }
   
-  if (item.isMockData || item.id.toString().startsWith('mock-')) {
-    warning('This is sample data and cannot be viewed in detail')
-    return
-  }
-  
   // Navigate to details page
-  info(`Navigating to ${scraperType.value} details`)
+  const detailsPath = scraperType.value === 'property' 
+    ? `/properties/${item.id}` 
+    : `/vehicles/${item.id}`
+  
+  navigateTo(detailsPath)
 }
 
 const formatPrice = (price) => {
@@ -383,67 +398,6 @@ const getStatusClass = (status) => {
     'under_offer': 'status-under-offer'
   }
   return classes[status?.toLowerCase()] || 'status-available'
-}
-
-// Mock data functions
-const getMockScrapers = () => {
-  return [
-    {
-      id: 1,
-      domain: 'addisproperty.gov.et',
-      url_template: 'https://addisproperty.gov.et/listings?page={page}',
-      enabled: true,
-      selectors: {
-        property_title: '.property-title',
-        price: '.price',
-        location: '.location',
-        bedrooms: '.bedrooms',
-        bathrooms: '.bathrooms'
-      },
-      schedule: 'daily',
-      max_pages: 50,
-      last_run: '2026-03-04T09:49:19.106100Z',
-      last_status: 'success',
-      total_listings: 156
-    }
-  ]
-}
-
-const getMockScraperStats = () => {
-  return {
-    total_scrapers: scraperType.value === 'property' ? 5 : 2,
-    active_scrapers: scraperType.value === 'property' ? 4 : 2,
-    total_listings: scraperType.value === 'property' ? 702 : 679,
-    avg_success_rate: scraperType.value === 'property' ? 83.3 : 90.7,
-    last_24h_listings: 24,
-    error_count: scraperType.value === 'property' ? 3 : 1
-  }
-}
-
-const getMockScrapedData = () => {
-  if (scraperType.value === 'property') {
-    return [
-      {
-        id: 'mock-1',
-        address: '123 Test Street',
-        property_type: 'Residential',
-        price: 450000,
-        status: 'Available',
-        isMockData: true
-      }
-    ]
-  } else {
-    return [
-      {
-        id: 'mock-1',
-        make: 'Toyota',
-        model: 'Camry',
-        price: 850000,
-        status: 'Available',
-        isMockData: true
-      }
-    ]
-  }
 }
 
 // Watchers

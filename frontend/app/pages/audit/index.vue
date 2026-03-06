@@ -305,89 +305,8 @@ const itemsPerPage = ref(20)
 const showModal = ref(false)
 const selectedLog = ref(null)
 
-// Mock audit logs (will be replaced with API call)
-const auditLogs = ref([
-  {
-    id: 1,
-    timestamp: '2024-01-28T10:30:00Z',
-    user_name: 'Abebe Kebede',
-    user_id: 1,
-    action_type: 'create',
-    module: 'valuations',
-    resource_type: 'valuation',
-    resource_id: 'VAL-2024-145',
-    ip_address: '192.168.1.100',
-    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    status: 'success',
-    description: 'Created new valuation for property at Bole Medhanialem',
-    changes: {
-      property_address: 'Bole Medhanialem, Addis Ababa',
-      market_value: 2500000,
-      property_type: 'commercial'
-    }
-  },
-  {
-    id: 2,
-    timestamp: '2024-01-28T09:15:00Z',
-    user_name: 'Tigist Haile',
-    user_id: 2,
-    action_type: 'login',
-    module: 'auth',
-    resource_type: 'session',
-    resource_id: 'sess_12345',
-    ip_address: '192.168.1.101',
-    user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    status: 'success',
-    description: 'User logged in successfully'
-  },
-  {
-    id: 3,
-    timestamp: '2024-01-27T16:45:00Z',
-    user_name: 'Dawit Mengistu',
-    user_id: 3,
-    action_type: 'update',
-    module: 'users',
-    resource_type: 'user',
-    resource_id: '4',
-    ip_address: '192.168.1.102',
-    user_agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
-    status: 'success',
-    description: 'Updated user profile for Sara Ahmed',
-    changes: {
-      role: 'clerk',
-      municipality: 'dire_dawa',
-      status: 'active'
-    }
-  },
-  {
-    id: 4,
-    timestamp: '2024-01-27T14:20:00Z',
-    user_name: 'System',
-    user_id: 0,
-    action_type: 'export',
-    module: 'reports',
-    resource_type: 'report',
-    resource_id: 'rpt_67890',
-    ip_address: '127.0.0.1',
-    user_agent: 'ValuAdis System',
-    status: 'success',
-    description: 'Automated monthly valuation report generated'
-  },
-  {
-    id: 5,
-    timestamp: '2024-01-26T11:30:00Z',
-    user_name: 'Abebe Kebede',
-    user_id: 1,
-    action_type: 'delete',
-    module: 'properties',
-    resource_type: 'property',
-    resource_id: 'PROP-123',
-    ip_address: '192.168.1.100',
-    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    status: 'success',
-    description: 'Deleted property record due to data duplication'
-  }
-])
+// Real audit logs from API
+const auditLogs = ref([])
 
 // Computed properties
 const filteredLogs = computed(() => {
@@ -567,12 +486,14 @@ async function refreshLogs() {
 
     if (response.ok) {
       const data = await response.json()
-      auditLogs.value = data.data || auditLogs.value // Fallback to mock data
+      auditLogs.value = data.data || []
     } else {
       console.error('Failed to load audit logs from API')
+      auditLogs.value = []
     }
   } catch (error) {
     console.error('Error loading audit logs:', error)
+    auditLogs.value = []
   }
 }
 
