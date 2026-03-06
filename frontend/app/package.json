@@ -25,7 +25,7 @@
     "chart.js": "^4.4.1",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
-    "nuxt": "^3.10.0",
+    "nuxt": "^3.19.0",
     "pinia": "^2.1.7",
     "primeicons": "^7.0.0",
     "primevue": "^3.50.0",
