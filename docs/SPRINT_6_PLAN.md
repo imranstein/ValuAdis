@@ -30,12 +30,12 @@ Sprint 6 is the next work batch after Sprint 5 finalization. Jira may not have a
 | Task | Description | Status |
 |------|-------------|--------|
 | VA-111 | Generate technical documentation | Done |
-| VA-112 | Create user training materials | To Do |
-| VA-113 | Implement zero-downtime migrations | To Do |
+| VA-112 | Create user training materials | Done |
+| VA-113 | Implement zero-downtime migrations | Done |
 | VA-115 | Create data migration scripts | Done |
 | VA-116 | Optimize data caching strategy | Done |
 | VA-119 | Create user feedback system | Done |
-| VA-120 | Verify regulatory compliance | To Do |
+| VA-120 | Verify regulatory compliance | Done |
 
 ## Mobile Tasks (Sprint 4 / Future)
 

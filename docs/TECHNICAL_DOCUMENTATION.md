@@ -63,4 +63,4 @@ Header: `Authorization: Bearer <access_token>`
 
 - **Docker**: `docker-compose.yml` (dev), `docker-compose.prod.yml` (prod)
 - **Backup**: `scripts/backup.sh`, `scripts/verify_backup.sh`
-- **Docs**: `docs/DB_BACKUP_STRATEGY.md`, `docs/MONITORING_LOGGING.md`, `docs/NOTIFICATIONS.md`
+- **Docs**: `docs/DB_BACKUP_STRATEGY.md`, `docs/MONITORING_LOGGING.md`, `docs/NOTIFICATIONS.md`, `docs/ZERO_DOWNTIME_MIGRATIONS.md`, `docs/REGULATORY_COMPLIANCE.md`, `docs/USER_TRAINING_GUIDE.md`
