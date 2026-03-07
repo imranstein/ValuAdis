@@ -106,31 +106,26 @@
 
 ## 4. Smallest Safe Update Plan
 
-### Phase 1: High-Confidence, Low-Risk (Do First)
+### Phase 1: High-Confidence, Low-Risk ✅ APPLIED
 
 #### Frontend (`frontend/`)
-```bash
-cd frontend
-npm install nuxt@^3.21.1
-npm audit fix
-```
+- Nuxt ^3.21.1, serialize-javascript override, .npmrc (legacy-peer-deps)
+- **Result:** 0 vulnerabilities, build OK
 
 #### Frontend App (`frontend/app/`)
-```bash
-cd frontend/app
-npm install nuxt@^3.21.1 @nuxt/eslint-config@^1.15.2 @pinia/nuxt@^0.11.3 postcss@^8.5.8
-npm audit fix
-```
+- Nuxt ^3.21.1, postcss ^8.5.8, serialize-javascript override, .npmrc (legacy-peer-deps)
+- **Result:** Build OK; 11 vulns remain (minimatch, esbuild, vue-tsc — require breaking upgrades)
+- *Deferred:* @pinia/nuxt 0.11 (needs Pinia 3), @nuxt/eslint-config 1.15 (needs ESLint 9+)
 
 #### Backend
 ```diff
 # requirements.txt
 -fastapi==0.109.0
-+fastapi>=0.109.1,<0.110.0
++fastapi==0.109.2
 -python-multipart==0.0.20
-+python-multipart>=0.0.22
++python-multipart==0.0.22
 -sentry-sdk[fastapi]==1.39.2
-+sentry-sdk[fastapi]>=1.45.1
++sentry-sdk[fastapi]==1.45.1
 ```
 
 ### Phase 2: Override for serialize-javascript (Both Frontends)
