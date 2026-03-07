@@ -22,6 +22,7 @@ class User(Base):
     license_number = Column(String(50), nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     is_valuer = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

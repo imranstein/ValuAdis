@@ -16,7 +16,7 @@ class TestProperties:
         """Test successful property creation"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -33,7 +33,7 @@ class TestProperties:
         """Test property creation with invalid coordinates fails"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Invalid coordinates (not closed polygon)
         invalid_property_data = {
@@ -60,7 +60,7 @@ class TestProperties:
         """Test getting user's properties"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -79,7 +79,7 @@ class TestProperties:
         """Test getting specific property by ID"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -104,7 +104,7 @@ class TestProperties:
         """Test updating property"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -128,7 +128,7 @@ class TestProperties:
         """Test deleting property"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = register_response.json().get("access_token") or register_response.json().get("data", {}).get("access_token")
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}

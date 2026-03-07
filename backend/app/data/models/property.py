@@ -62,6 +62,7 @@ class Property(Base):
     amenities = Column(JSON, default=dict)
     utilities = Column(JSON, default=dict)
     additional_features = Column(Text)
+    custom_attributes = Column(JSON, default=dict)  # VA-117: extensible key-value
 
     # --- Ownership ---
     owner_name = Column(String(200))
@@ -121,6 +122,7 @@ class Property(Base):
             "ai_estimated_value": self.ai_estimated_value,
             "ai_confidence_score": self.ai_confidence_score,
             "status": self.status,
+            "custom_attributes": self.custom_attributes or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

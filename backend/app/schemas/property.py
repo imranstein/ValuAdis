@@ -139,6 +139,7 @@ class PropertyUpdate(BaseModel):
     amenities: Optional[Dict[str, bool]] = None
     utilities: Optional[Dict[str, bool]] = None
     additional_features: Optional[str] = None
+    custom_attributes: Optional[Dict[str, Any]] = None
     owner_name: Optional[str] = None
     owner_phone: Optional[str] = None
     owner_email: Optional[str] = None

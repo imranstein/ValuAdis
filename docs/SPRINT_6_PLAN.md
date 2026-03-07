@@ -16,14 +16,14 @@ Sprint 6 is the next work batch after Sprint 5 finalization. Jira may not have a
 
 ### Medium Priority
 
-| Task | Description |
-|------|-------------|
-| VA-95 | Setup automated notifications (email/SMS) |
-| VA-106 | Setup DB schema validation |
-| VA-107 | Optimize PostGIS spatial indexes |
-| VA-109 | Create external API integration tests |
-| VA-117 | Implement property attribute management |
-| VA-118 | Build user registration approval flow |
+| Task | Description | Status |
+|------|-------------|--------|
+| VA-95 | Setup automated notifications (email/SMS) | To Do |
+| VA-106 | Setup DB schema validation | Done |
+| VA-107 | Optimize PostGIS spatial indexes | Done |
+| VA-109 | Create external API integration tests | Done |
+| VA-117 | Implement property attribute management | Done |
+| VA-118 | Build user registration approval flow | Done |
 
 ### Lower Priority
 

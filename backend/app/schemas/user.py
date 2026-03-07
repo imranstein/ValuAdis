@@ -59,6 +59,7 @@ class UserResponse(BaseModel):
     license_number: str
     is_active: bool
     is_verified: bool
+    is_approved: Optional[bool] = True
     is_admin: bool
     is_valuer: bool
     created_at: datetime
@@ -139,6 +140,7 @@ class UserUpdate(BaseModel):
     license_number: Optional[str] = None
     is_active: Optional[bool] = None
     is_verified: Optional[bool] = None
+    is_approved: Optional[bool] = None
     is_admin: Optional[bool] = None
     is_valuer: Optional[bool] = None
     role_ids: Optional[List[int]] = None

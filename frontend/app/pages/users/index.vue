@@ -221,6 +221,9 @@
               </td>
               <td>
                 <div class="action-buttons">
+                  <button v-if="user.is_approved === false" class="action-btn approve" @click="approveUser(user)" title="Approve">
+                    <i class="pi pi-check-circle"></i>
+                  </button>
                   <button class="action-btn view" @click="viewUser(user)" title="View">
                     <i class="pi pi-eye"></i>
                   </button>
@@ -228,6 +231,7 @@
                     <i class="pi pi-pencil"></i>
                   </button>
                   <button 
+                    v-if="user.is_approved !== false"
                     class="action-btn" 
                     :class="user.status === 'active' ? 'deactivate' : 'activate'"
                     @click="toggleUserStatus(user)" 
@@ -285,10 +289,14 @@
           <div class="card-footer">
             <span class="status-badge" :class="user.status">{{ getStatusLabel(user.status) }}</span>
             <div class="card-actions">
+              <button v-if="user.is_approved === false" class="action-btn approve" @click="approveUser(user)" title="Approve">
+                <i class="pi pi-check-circle"></i>
+              </button>
               <button class="action-btn edit" @click="editUser(user)">
                 <i class="pi pi-pencil"></i>
               </button>
               <button 
+                v-if="user.is_approved !== false"
                 class="action-btn" 
                 :class="user.status === 'active' ? 'deactivate' : 'activate'"
                 @click="toggleUserStatus(user)"
@@ -599,7 +607,7 @@ function getStatusLabel(status) {
     active: 'Active',
     inactive: 'Inactive',
     suspended: 'Suspended',
-    pending: 'Pending'
+    pending: 'Pending Approval'
   }
   return labels[status] || status
 }
@@ -750,6 +758,27 @@ async function saveUser() {
   }
 }
 
+async function approveUser(user) {
+  try {
+    const token = localStorage.getItem('valuadis_token')
+    const response = await fetch(`${apiBase}/api/v1/users/${user.id}/approve?approved=true`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (response.ok) {
+      user.is_approved = true
+      user.status = 'active'
+      alert('User approved successfully!')
+    } else {
+      const err = await response.json()
+      alert(err.detail || 'Failed to approve user')
+    }
+  } catch (e) {
+    console.error('Approve failed:', e)
+    alert('Network error. Please try again.')
+  }
+}
+
 async function toggleUserStatus(user) {
   const newStatus = user.status === 'active' ? 'inactive' : 'active'
   
@@ -832,7 +861,8 @@ onMounted(async () => {
       users.value = raw.map(u => ({
         ...u,
         name: u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-        status: u.is_active === false ? 'inactive' : (u.status || 'active'),
+        status: u.is_approved === false ? 'pending' : (u.is_active === false ? 'inactive' : (u.status || 'active')),
+        is_approved: u.is_approved !== false,
         role: u.roles?.[0]?.name || u.role || 'viewer',
         last_login: u.last_login || u.updated_at
       }))
@@ -1303,6 +1333,14 @@ onMounted(async () => {
   color: white;
 }
 
+.action-btn.approve {
+  background: #dcfce7;
+  color: #059669;
+}
+.action-btn.approve:hover {
+  background: #059669;
+  color: white;
+}
 .action-btn.activate {
   background: #dcfce7;
   color: #059669;

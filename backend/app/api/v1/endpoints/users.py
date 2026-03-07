@@ -32,12 +32,13 @@ def require_admin_permission(allowed_roles: List[str] = ["system_admin", "firm_a
                 detail="User not found"
             )
         
+        if user.is_admin:
+            return user
         if not any(role.name in allowed_roles for role in user.roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions"
             )
-        
         return user
     
     return check_admin_permission
@@ -78,6 +79,7 @@ async def get_current_user_info(
             license_number=user.license_number,
             is_active=user.is_active,
             is_verified=user.is_verified,
+            is_approved=getattr(user, "is_approved", True),
             is_admin=user.is_admin,
             is_valuer=user.is_valuer,
             created_at=user.created_at,
@@ -137,12 +139,13 @@ async def get_users(
                 license_number=user.license_number,
                 is_active=user.is_active,
                 is_verified=user.is_verified,
+                is_approved=getattr(user, "is_approved", True),
                 is_admin=user.is_admin,
                 is_valuer=user.is_valuer,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
                 roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_role_objs],
-                permissions=[]  # Not including permissions in list view for performance
+                permissions=[]
             ))
         
         return user_responses
@@ -155,6 +158,40 @@ async def get_users(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch users"
         )
+
+
+@router.patch("/{user_id}/approve", response_model=UserResponse, tags=["Users"])
+async def approve_user(
+    user_id: int,
+    approved: bool = True,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_permission())
+):
+    """Approve or revoke user registration (VA-118). Admin only."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.is_approved = approved
+    db.commit()
+    db.refresh(user)
+    roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        phone=user.phone,
+        municipality=user.municipality,
+        license_number=user.license_number,
+        is_active=user.is_active,
+        is_verified=user.is_verified,
+        is_approved=user.is_approved,
+        is_admin=user.is_admin,
+        is_valuer=user.is_valuer,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+        roles=[RoleResponse(id=r.id, name=r.name, display_name=r.display_name, description=r.description) for r in roles],
+        permissions=[]
+    )
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["Users"])
@@ -324,7 +361,7 @@ async def update_user(
                 setattr(user, "password_hash", get_password_hash(value))
             elif field != "role_ids":
                 # Prevent self-updates from changing sensitive fields
-                if current_user_id == user_id and field in ["is_admin", "is_active", "is_verified"]:
+                if current_user_id == user_id and field in ["is_admin", "is_active", "is_verified", "is_approved"]:
                     continue
                 setattr(user, field, value)
         

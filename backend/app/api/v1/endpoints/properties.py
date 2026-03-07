@@ -233,6 +233,26 @@ async def get_property(
     return PropertyResponse(success=True, data=property.to_dict())
 
 
+@router.patch("/{property_id}/attributes", response_model=PropertyResponse, tags=["Properties"])
+async def update_property_attributes(
+    property_id: int,
+    attributes: dict = Body(..., description="Custom attributes key-value map"),
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """VA-117: Update custom attributes for a property. Merges with existing."""
+    property_service = PropertyService(db)
+    prop = await property_service.get_property_by_id(property_id, current_user_id)
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    existing = getattr(prop, "custom_attributes", None) or {}
+    merged = {**existing, **attributes}
+    prop.custom_attributes = merged
+    db.commit()
+    db.refresh(prop)
+    return PropertyResponse(success=True, data=prop.to_dict())
+
+
 @router.put("/{property_id}", response_model=PropertyResponse)
 async def update_property(
     property_id: int,

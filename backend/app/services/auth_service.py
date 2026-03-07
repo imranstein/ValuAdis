@@ -32,8 +32,7 @@ class AuthService:
         
         # Hash password
         user_data["password_hash"] = get_password_hash(user_data.pop("password"))
-        
-        # Create user
+        user_data["is_approved"] = False  # VA-118: New registrations require admin approval
         return self.user_repo.create_user(user_data)
     
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
@@ -45,7 +44,8 @@ class AuthService:
         
         if not user.is_active:
             raise AuthenticationException("Account is deactivated")
-        
+        if not getattr(user, "is_approved", True):
+            raise AuthenticationException("Account pending approval. Please contact an administrator.")
         if not verify_password(password, user.password_hash):
             raise AuthenticationException("Invalid email or password")
         
