@@ -7,6 +7,10 @@
         <p>Manage and track all property records and valuations</p>
       </div>
       <div class="header-actions">
+        <button class="action-button secondary" @click="showImportModal = true">
+          <i class="pi pi-upload"></i>
+          Bulk Import
+        </button>
         <button class="action-button secondary" @click="exportProperties">
           <i class="pi pi-download"></i>
           Export
@@ -292,6 +296,45 @@
         </button>
       </div>
     </div>
+
+    <!-- Bulk Import Modal -->
+    <div v-if="showImportModal" class="modal-overlay" @click.self="showImportModal = false">
+      <div class="modal-content import-modal">
+        <div class="modal-header">
+          <h3>Bulk Import Properties</h3>
+          <button class="modal-close" @click="showImportModal = false">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="import-help">Upload a CSV or JSON file. CSV must have headers: <code>address</code>, <code>municipality</code>, <code>property_type</code>, <code>area_sqm</code>. Optional: <code>latitude</code>, <code>longitude</code>, <code>parcel_number</code>, <code>condition</code>.</p>
+          <div class="file-upload">
+            <input ref="fileInput" type="file" accept=".csv,.json" @change="onFileSelected" class="file-input-hidden" />
+            <button type="button" class="action-button secondary" @click="triggerFileInput">
+              <i class="pi pi-upload"></i>
+              Choose File
+            </button>
+            <span v-if="selectedFile" class="file-name">{{ selectedFile.name }}</span>
+          </div>
+          <div v-if="importResult" class="import-result" :class="importResult.errors?.length ? 'has-errors' : 'success'">
+            <p><strong>Created:</strong> {{ importResult.created }}</p>
+            <p v-if="importResult.errors?.length"><strong>Errors:</strong> {{ importResult.errors.length }}</p>
+            <ul v-if="importResult.errors?.length">
+              <li v-for="(e, i) in importResult.errors.slice(0, 5)" :key="i">Row {{ e.row }}: {{ e.error }}</li>
+              <li v-if="importResult.errors.length > 5">... and {{ importResult.errors.length - 5 }} more</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="action-button secondary" @click="showImportModal = false">Close</button>
+          <button class="action-button primary" @click="runImport" :disabled="!selectedFile || isImporting">
+            <i v-if="isImporting" class="pi pi-spin pi-spinner"></i>
+            <i v-else class="pi pi-upload"></i>
+            {{ isImporting ? 'Importing...' : 'Import' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -306,10 +349,18 @@ const loading = ref(false)
 const deleteDialog = ref(false)
 const propertyToDelete = ref(null)
 
+const config = useRuntimeConfig()
+const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
+
 const searchQuery = ref('')
 const selectedMunicipality = ref('')
 const selectedType = ref('')
 const viewMode = ref('table')
+const showImportModal = ref(false)
+const selectedFile = ref(null)
+const fileInput = ref(null)
+const importResult = ref(null)
+const isImporting = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const sortField = ref('address')
@@ -438,9 +489,58 @@ function resetFilters() {
   currentPage.value = 1
 }
 
-function exportProperties() {
-  // Placeholder for export functionality
-  console.log('Export properties')
+function triggerFileInput() {
+  fileInput.value?.click()
+}
+
+function onFileSelected(e) {
+  const f = e.target?.files?.[0]
+  selectedFile.value = f || null
+  importResult.value = null
+}
+
+async function runImport() {
+  if (!selectedFile.value) return
+  isImporting.value = true
+  importResult.value = null
+  try {
+    const token = localStorage.getItem('valuadis_token')
+    const formData = new FormData()
+    formData.append('file', selectedFile.value)
+    const res = await fetch(`${apiBase}/api/v1/properties/import`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`)
+    importResult.value = data.data || data
+    if (importResult.value?.created > 0) {
+      loadProperties()
+    }
+  } catch (e) {
+    importResult.value = { created: 0, errors: [{ row: 0, error: e.message }] }
+  } finally {
+    isImporting.value = false
+  }
+}
+
+async function exportProperties() {
+  const token = localStorage.getItem('valuadis_token')
+  try {
+    const r = await fetch(`${apiBase}/api/v1/properties/export?format=csv`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const blob = await r.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'properties_export.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export failed:', e)
+  }
 }
 
 function formatCurrency(value) {
@@ -1188,4 +1288,70 @@ function getPropertyTypeIcon(type) {
     flex-direction: column;
   }
 }
+
+/* Bulk Import Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content.import-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.modal-header h3 { margin: 0; font-size: 1.25rem; }
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+.modal-body { padding: 1.5rem; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+.import-help {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+.import-help code {
+  background: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.file-input-hidden { position: absolute; width: 0; height: 0; opacity: 0; }
+.file-name { font-size: 0.875rem; color: #475569; }
+.import-result {
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+.import-result.success { background: #dcfce7; color: #166534; }
+.import-result.has-errors { background: #fef3c7; color: #92400e; }
+.import-result ul { margin: 0.5rem 0 0 1rem; padding: 0; }
 </style>

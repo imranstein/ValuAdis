@@ -524,29 +524,34 @@
               
               <!-- Compliance Audit -->
               <div v-if="currentReportType === 'compliance_audit'" class="compliance-audit">
-                <h3>✅ Compliance Audit</h3>
+                <h3>✅ Proclamation 1365/2025 Compliance</h3>
                 <div class="compliance-stats">
                   <div class="compliance-card">
-                    <h4>Total Valuations</h4>
-                    <p>{{ reportData.data.total_valuations }}</p>
+                    <h4>Total Analyzed</h4>
+                    <p>{{ reportData.summary?.total_analyzed ?? 0 }}</p>
                   </div>
                   <div class="compliance-card compliant">
                     <h4>Compliant</h4>
-                    <p>{{ reportData.data.compliant_valuations }}</p>
+                    <p>{{ reportData.summary?.compliant ?? 0 }}</p>
                   </div>
                   <div class="compliance-card pending">
-                    <h4>Pending</h4>
-                    <p>{{ reportData.data.pending_valuations }}</p>
-                  </div>
-                  <div class="compliance-card draft">
-                    <h4>Draft</h4>
-                    <p>{{ reportData.data.draft_valuations }}</p>
+                    <h4>Non-Compliant</h4>
+                    <p>{{ reportData.summary?.non_compliant ?? 0 }}</p>
                   </div>
                 </div>
                 <div class="compliance-rate">
                   <h4>Compliance Rate: {{ (reportData?.summary?.compliance_rate ?? 0).toFixed(1) }}%</h4>
                   <div class="progress-bar">
                     <div class="progress-fill" :style="{ width: (reportData?.summary?.compliance_rate ?? 0) + '%' }"></div>
+                  </div>
+                </div>
+                <div v-if="reportData.data?.municipality_analysis && Object.keys(reportData.data.municipality_analysis).length" class="municipality-compliance">
+                  <h4>By Municipality</h4>
+                  <div class="muni-list">
+                    <div v-for="(mun, name) in reportData.data.municipality_analysis" :key="name" class="muni-item">
+                      <span>{{ name }}</span>
+                      <span>{{ (mun.compliance_rate ?? 0).toFixed(1) }}%</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -566,7 +571,7 @@
           </button>
           <button class="action-button primary" @click="exportReport">
             <i class="pi pi-download"></i>
-            Export PDF
+            Export JSON
           </button>
         </div>
       </div>
@@ -579,6 +584,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
 
 // Reactive data
 const isLoading = ref(false)
@@ -714,26 +721,25 @@ function viewScheduledReports() {
 
 // Report Generation Functions
 async function generateValuationSummary(token) {
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-  const response = await fetch(`${API_BASE}/api/v1/valuations/`, {
+  const response = await fetch(`${apiBase}/api/v1/valuations?limit=1000`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
-  
   if (!response.ok) {
     const errorText = await response.text()
     throw new Error(`HTTP ${response.status}: ${errorText}`)
   }
-  
-  const data = await response.json()
+  const json = await response.json()
+  const data = json.data || json
+  const list = Array.isArray(data) ? data : (data.data || [])
   reportData.value = {
     type: 'valuation_summary',
     title: 'Valuation Summary Report',
-    data: data,
+    data: list,
     summary: {
-      total_valuations: data.length || 0,
-      total_market_value: data.reduce((sum, v) => sum + (v.market_value || 0), 0),
-      total_taxable_value: data.reduce((sum, v) => sum + (v.taxable_value || 0), 0),
-      avg_value: data.length > 0 ? data.reduce((sum, v) => sum + (v.market_value || 0), 0) / data.length : 0
+      total_valuations: list.length || 0,
+      total_market_value: list.reduce((sum, v) => sum + (v.market_value || 0), 0),
+      total_taxable_value: list.reduce((sum, v) => sum + (v.taxable_value || 0), 0),
+      avg_value: list.length > 0 ? list.reduce((sum, v) => sum + (v.market_value || 0), 0) / list.length : 0
     }
   }
   showReportModal.value = true
@@ -742,15 +748,15 @@ async function generateValuationSummary(token) {
 
 async function generateMunicipalPerformance(token) {
   try {
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+    const response = await fetch(`${apiBase}/api/v1/valuations?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-    
     if (response.ok) {
-      const data = await response.json()
+      const json = await response.json()
+      const data = json.data || json
+      const list = Array.isArray(data) ? data : (data.data || [])
       
-      // Group by municipality
-      const municipalityData = data.reduce((acc, valuation) => {
+      const municipalityData = list.reduce((acc, valuation) => {
         const municipality = valuation.municipality || 'Unknown'
         if (!acc[municipality]) {
           acc[municipality] = {
@@ -788,15 +794,15 @@ async function generateMunicipalPerformance(token) {
 
 async function generatePropertyTypeAnalysis(token) {
   try {
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+    const response = await fetch(`${apiBase}/api/v1/valuations?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-    
     if (response.ok) {
-      const data = await response.json()
+      const json = await response.json()
+      const data = json.data || json
+      const list = Array.isArray(data) ? data : (data.data || [])
       
-      // Group by property type
-      const typeData = data.reduce((acc, valuation) => {
+      const typeData = list.reduce((acc, valuation) => {
         const type = valuation.property_type || 'unknown'
         if (!acc[type]) {
           acc[type] = {
@@ -840,25 +846,25 @@ async function generatePropertyTypeAnalysis(token) {
 
 async function generateTaxRevenueReport(token) {
   try {
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+    const response = await fetch(`${apiBase}/api/v1/valuations?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-    
     if (response.ok) {
-      const data = await response.json()
+      const json = await response.json()
+      const data = (json.data || json)
+      const list = Array.isArray(data) ? data : (data.data || [])
       
-      const totalTaxRevenue = data.reduce((sum, v) => sum + (v.taxable_value || 0), 0)
-      const totalMarketValue = data.reduce((sum, v) => sum + (v.market_value || 0), 0)
-      
+      const totalTaxRevenue = list.reduce((sum, v) => sum + (v.taxable_value || 0), 0)
+      const totalMarketValue = list.reduce((sum, v) => sum + (v.market_value || 0), 0)
       reportData.value = {
         type: 'tax_revenue',
         title: 'Tax Revenue Report',
-        data: data,
+        data: list,
         summary: {
           total_tax_revenue: totalTaxRevenue,
           total_market_value: totalMarketValue,
           tax_rate: totalMarketValue > 0 ? (totalTaxRevenue / totalMarketValue) * 100 : 0,
-          revenue_per_property: data.length > 0 ? totalTaxRevenue / data.length : 0
+          revenue_per_property: list.length > 0 ? totalTaxRevenue / list.length : 0
         }
       }
       showReportModal.value = true
@@ -872,15 +878,14 @@ async function generateTaxRevenueReport(token) {
 
 async function generateMarketTrends(token) {
   try {
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+    const response = await fetch(`${apiBase}/api/v1/valuations?limit=1000`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-    
     if (response.ok) {
-      const data = await response.json()
-      
-      // Group by valuation date using ISO date for consistency
-      const trendsData = data.reduce((acc, valuation) => {
+      const json = await response.json()
+      const data = json.data || json
+      const list = Array.isArray(data) ? data : (data.data || [])
+      const trendsData = list.reduce((acc, valuation) => {
         const date = new Date(valuation.valuation_date).toISOString().slice(0, 10) // YYYY-MM-DD
         if (!acc[date]) {
           acc[date] = {
@@ -926,35 +931,26 @@ async function generateMarketTrends(token) {
 
 async function generateComplianceAudit(token) {
   try {
-    const response = await fetch('http://localhost:8020/api/v1/valuations/', {
+    const response = await fetch(`${apiBase}/api/v1/audit/report/compliance`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-    
-    if (response.ok) {
-      const data = await response.json()
-      
-      // Compliance checks
-      const complianceData = {
-        total_valuations: data.length,
-        compliant_valuations: data.filter(v => v.status === 'approved').length,
-        pending_valuations: data.filter(v => v.status === 'pending').length,
-        draft_valuations: data.filter(v => v.status === 'draft').length,
-        rejected_valuations: data.filter(v => v.status === 'rejected').length,
-        compliance_rate: data.length > 0 ? (data.filter(v => v.status === 'approved').length / data.length) * 100 : 0
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const json = await response.json()
+    const report = json.report || json
+    const p = report?.proclamation_1365_2025_compliance || {}
+    reportData.value = {
+      type: 'compliance_audit',
+      title: 'Compliance Audit Report (Proclamation 1365/2025)',
+      data: report,
+      summary: {
+        compliance_rate: p.compliance_rate ?? 0,
+        total_analyzed: report?.total_valuations_analyzed ?? 0,
+        compliant: p.compliant_count ?? 0,
+        non_compliant: p.non_compliant_count ?? 0
       }
-      
-      reportData.value = {
-        type: 'compliance_audit',
-        title: 'Compliance Audit Report',
-        data: complianceData,
-        summary: {
-          compliance_rate: complianceData.compliance_rate,
-          needs_attention: complianceData.pending_valuations + complianceData.draft_valuations
-        }
-      }
-      showReportModal.value = true
-      currentReportType.value = 'compliance_audit'
     }
+    showReportModal.value = true
+    currentReportType.value = 'compliance_audit'
   } catch (error) {
     console.error('Error generating compliance audit:', error)
     throw error
@@ -1135,10 +1131,41 @@ function formatPropertyType(type) {
   return typeMap[type] || type
 }
 
-function exportReport() {
-  console.log('Exporting report:', reportData.value?.title)
-  // TODO: Implement PDF export functionality
-  alert('PDF export functionality will be implemented soon!')
+async function exportReport() {
+  const type = currentReportType.value
+  const auditExportMap = { compliance_audit: 'compliance', valuation_summary: 'summary', market_trends: 'system' }
+  const auditType = auditExportMap[type]
+  const token = localStorage.getItem('valuadis_token')
+  if (auditType) {
+    try {
+      const res = await fetch(`${apiBase}/api/v1/audit/export/${auditType}?format=json`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error(`Export failed: ${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${type}_report_${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Export failed:', e)
+      downloadReportAsJson(reportData.value)
+    }
+  } else {
+    downloadReportAsJson(reportData.value)
+  }
+}
+function downloadReportAsJson(data) {
+  const str = JSON.stringify(data, null, 2)
+  const blob = new Blob([str], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `report_${currentReportType.value}_${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -2080,6 +2107,31 @@ function exportReport() {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+.municipality-compliance {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.municipality-compliance h4 {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.75rem 0;
+}
+
+.muni-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.muni-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
   color: #1e293b;
 }
 

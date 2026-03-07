@@ -6,6 +6,7 @@ Business logic for property operations including spatial calculations
 
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
+from geoalchemy2 import WKTElement
 from app.core.exceptions import ValidationException, SpatialOperationException
 from app.data.repositories.property_repository import PropertyRepository
 from app.services.spatial_service import SpatialService
@@ -92,6 +93,66 @@ class PropertyService:
     async def delete_property(self, property_id: int, user_id: int) -> bool:
         """Delete property (user must be owner)"""
         return self.property_repo.delete_property(property_id, user_id)
+
+    async def bulk_import(
+        self, rows: List[dict], user_id: int
+    ) -> dict:
+        """
+        Bulk import properties from CSV/JSON rows.
+        Each row must have: address, municipality, property_type, area_sqm.
+        Optional: latitude, longitude, parcel_number, condition, etc.
+        """
+        created = []
+        errors = []
+        for i, row in enumerate(rows):
+            try:
+                area_sqm = float(row.get("area_sqm", row.get("area_sqm_sqm", 0)) or 0)
+                if area_sqm <= 0:
+                    errors.append({"row": i + 1, "error": "area_sqm must be positive"})
+                    continue
+                address = str(row.get("address", "") or "").strip()
+                municipality = str(row.get("municipality", "") or "").strip()
+                property_type = str(row.get("property_type", row.get("propertyType", "residential")) or "residential").strip()
+                if not address or not municipality:
+                    errors.append({"row": i + 1, "error": "address and municipality required"})
+                    continue
+
+                coords = row.get("coordinates")
+                lat = row.get("latitude")
+                lon = row.get("longitude")
+                boundary_wkt = None
+                if coords and isinstance(coords, (list, tuple)) and len(coords) >= 3:
+                    if self.spatial_service.validate_polygon(coords):
+                        boundary_wkt = self.spatial_service.create_wkt_polygon(coords)
+                        area_sqm = self.spatial_service.calculate_area(coords)
+                elif lat is not None and lon is not None:
+                    try:
+                        lat_f, lon_f = float(lat), float(lon)
+                        boundary_wkt = self.spatial_service.create_wkt_polygon(
+                            [[lon_f, lat_f], [lon_f + 0.0001, lat_f], [lon_f + 0.0001, lat_f + 0.0001], [lon_f, lat_f + 0.0001], [lon_f, lat_f]]
+                        )
+                    except (TypeError, ValueError):
+                        pass
+
+                boundary_geom = WKTElement(boundary_wkt, srid=4326) if boundary_wkt else None
+                data = {
+                    "user_id": user_id,
+                    "address": address,
+                    "municipality": municipality,
+                    "property_type": property_type,
+                    "area_sqm": area_sqm,
+                    "latitude": float(lat) if lat is not None else None,
+                    "longitude": float(lon) if lon is not None else None,
+                    "boundary": boundary_geom,
+                    "parcel_number": str(row.get("parcel_number", "") or "").strip() or None,
+                    "condition": str(row.get("condition", "") or "").strip() or None,
+                    "status": "active",
+                }
+                p = self.property_repo.create_property(data)
+                created.append({"id": p.id, "address": p.address})
+            except Exception as e:
+                errors.append({"row": i + 1, "error": str(e)})
+        return {"created": len(created), "errors": errors, "properties": created}
     
     async def find_nearby_properties(
         self,

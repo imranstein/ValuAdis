@@ -4,12 +4,13 @@ Properties Endpoints
 Property CRUD operations for ValuAdis
 """
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Tuple
 import csv
 import io
+import json
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.schemas.property import (
@@ -106,6 +107,45 @@ async def create_property(
         return PropertyResponse(success=True, data=property.to_dict())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/import", tags=["Properties"])
+async def bulk_import_properties(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Bulk import properties from CSV or JSON file.
+    CSV must have headers: address, municipality, property_type, area_sqm
+    Optional: latitude, longitude, parcel_number, condition
+    """
+    content = await file.read()
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded")
+
+    rows = []
+    fn = (file.filename or "").lower()
+    if fn.endswith(".json"):
+        try:
+            data = json.loads(text)
+            rows = data if isinstance(data, list) else data.get("properties", data.get("data", []))
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}")
+    elif fn.endswith(".csv") or "csv" in (file.content_type or ""):
+        reader = csv.DictReader(io.StringIO(text))
+        rows = list(reader)
+    else:
+        raise HTTPException(status_code=400, detail="File must be CSV or JSON")
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="No rows to import")
+
+    property_service = PropertyService(db)
+    result = await property_service.bulk_import(rows, user_id=current_user_id)
+    return {"success": True, "data": result}
 
 
 @router.get("/export", tags=["Properties"])

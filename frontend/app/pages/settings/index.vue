@@ -35,9 +35,43 @@
           <h2>Valuation Settings</h2>
           <p>Property valuation methods and calculation parameters</p>
         </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Valuation settings coming soon...</span>
+        <div class="settings-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Default Method</label>
+              <select v-model="settings.valuation.default_method">
+                <option value="comparative">Comparative</option>
+                <option value="cost">Cost</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Market Adjustment Factor (%)</label>
+              <input v-model.number="settings.valuation.market_adjustment_factor" type="number" step="0.1" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Depreciation Rate (%)</label>
+              <input v-model.number="settings.valuation.depreciation_rate" type="number" step="0.1" />
+            </div>
+            <div class="form-field">
+              <label>Min Property Value (ETB)</label>
+              <input v-model.number="settings.valuation.min_property_value" type="number" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>
+                <input v-model="settings.valuation.proclamation_compliance" type="checkbox" />
+                Enforce Proclamation 1365/2025 (25% taxable)
+              </label>
+            </div>
+            <div class="form-field">
+              <label>Valuation Validity (days)</label>
+              <input v-model.number="settings.valuation.validity_period" type="number" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -47,9 +81,29 @@
           <h2>Notification Settings</h2>
           <p>Configure system notifications and alerts</p>
         </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Notification settings coming soon...</span>
+        <div class="settings-form">
+          <div class="form-field">
+            <label><input v-model="settings.notifications.email_enabled" type="checkbox" /> Email notifications enabled</label>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>SMTP Server</label>
+              <input v-model="settings.notifications.smtp_server" type="text" placeholder="smtp.example.com" />
+            </div>
+            <div class="form-field">
+              <label>SMTP Port</label>
+              <input v-model.number="settings.notifications.smtp_port" type="number" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Notification Types</label>
+            <div class="checkbox-group">
+              <label><input v-model="settings.notifications.types.valuation_completed" type="checkbox" /> Valuation completed</label>
+              <label><input v-model="settings.notifications.types.user_registration" type="checkbox" /> User registration</label>
+              <label><input v-model="settings.notifications.types.system_alerts" type="checkbox" /> System alerts</label>
+              <label><input v-model="settings.notifications.types.backup_completed" type="checkbox" /> Backup completed</label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -59,9 +113,38 @@
           <h2>Security Settings</h2>
           <p>Security policies and access control</p>
         </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Security settings coming soon...</span>
+        <div class="settings-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Min Password Length</label>
+              <input v-model.number="settings.security.min_password_length" type="number" min="6" max="32" />
+            </div>
+            <div class="form-field">
+              <label>Password Expiry (days)</label>
+              <input v-model.number="settings.security.password_expiry" type="number" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label><input v-model="settings.security.require_uppercase" type="checkbox" /> Require uppercase</label>
+            </div>
+            <div class="form-field">
+              <label><input v-model="settings.security.require_numbers" type="checkbox" /> Require numbers</label>
+            </div>
+            <div class="form-field">
+              <label><input v-model="settings.security.require_special_chars" type="checkbox" /> Require special chars</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Session Timeout (min)</label>
+              <input v-model.number="settings.security.session_timeout" type="number" />
+            </div>
+            <div class="form-field">
+              <label>Max Login Attempts</label>
+              <input v-model.number="settings.security.login_attempts" type="number" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -71,9 +154,34 @@
           <h2>Backup Settings</h2>
           <p>Data backup and recovery configuration</p>
         </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Backup settings coming soon...</span>
+        <div class="settings-form">
+          <div class="form-field">
+            <label><input v-model="settings.backup.enabled" type="checkbox" /> Automated backups enabled</label>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Frequency</label>
+              <select v-model="settings.backup.frequency">
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Time (UTC)</label>
+              <input v-model="settings.backup.time" type="time" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Retention (days)</label>
+              <input v-model.number="settings.backup.retention" type="number" />
+            </div>
+            <div class="form-field">
+              <label><input v-model="settings.backup.encryption" type="checkbox" /> Encrypt backups</label>
+            </div>
+          </div>
+          <p class="settings-note">See <code>docs/DB_BACKUP_STRATEGY.md</code> for full backup documentation.</p>
         </div>
       </div>
 
@@ -83,9 +191,20 @@
           <h2>API Settings</h2>
           <p>API configuration and integration settings</p>
         </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>API settings coming soon...</span>
+        <div class="settings-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Base URL</label>
+              <input v-model="settings.api.base_url" type="text" placeholder="http://localhost:8020/api" />
+            </div>
+            <div class="form-field">
+              <label>Rate Limit (req/min)</label>
+              <input v-model.number="settings.api.rate_limit" type="number" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label><input v-model="settings.api.enable_docs" type="checkbox" /> Enable API documentation (Swagger)</label>
+          </div>
         </div>
       </div>
       
@@ -135,6 +254,12 @@ const settingsTabs = [
 ]
 
 const settings = ref({
+  display: {
+    items_per_page: 25,
+    theme: 'light',
+    show_tooltips: true,
+    enable_animations: true
+  },
   general: {
     platform_name: 'ValuAdis',
     platform_description: 'Ethiopian Property Valuation Platform',
@@ -429,6 +554,43 @@ onMounted(() => {
 
 .settings-section {
   padding: 2rem;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.settings-note {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 1rem;
+}
+
+.settings-note code {
+  background: #f1f5f9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
 }
 
 .section-header {

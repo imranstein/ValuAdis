@@ -242,6 +242,36 @@ async def generate_summary_report(
         )
 
 
+@router.get("/report/{report_type}")
+async def get_report_data(
+    report_type: str,
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    days_back: Optional[int] = Query(30),
+    db: Session = Depends(get_db),
+    _: int = Depends(get_current_user_id),
+):
+    """Get report data for UI display (system, compliance, summary)."""
+    from fastapi.responses import JSONResponse
+
+    if report_type not in ("system", "compliance", "summary"):
+        raise HTTPException(status_code=400, detail="Invalid report type. Use: system, compliance, summary")
+    if not end_date:
+        end_date = datetime.utcnow()
+    if not start_date:
+        start_date = end_date - timedelta(days=days_back)
+
+    audit_service = AuditService(db)
+    if report_type == "system":
+        report = audit_service.generate_system_audit_report(start_date, end_date)
+    elif report_type == "compliance":
+        report = audit_service.generate_ethiopian_compliance_report()
+    else:
+        report = audit_service.generate_summary_report()
+
+    return JSONResponse(content={"success": True, "report": report, "report_type": report_type})
+
+
 @router.get("/export/{report_type}")
 async def export_audit_report(
     report_type: str,
@@ -249,7 +279,8 @@ async def export_audit_report(
     end_date: Optional[datetime] = Query(None, description="Report end date"),
     days_back: Optional[int] = Query(30, description="Days back from end date"),
     format: str = Query("json", description="Export format (json)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: int = Depends(get_current_user_id),
 ):
     """
     Export audit report in specified format
@@ -288,23 +319,16 @@ async def export_audit_report(
                 detail=f"Invalid report type: {report_type}. Valid types: system, compliance, summary"
             )
         
-        # Export report
+        # Export report as downloadable JSON
         if format.lower() == "json":
-            filename = f"{report_type}_audit_report"
-            exported_file = audit_service.export_audit_report_to_json(report, filename)
-            
-            return {
-                "success": True,
-                "message": f"Report exported successfully",
-                "filename": exported_file,
-                "download_url": f"/api/v1/audit/download/{exported_file}",
-                "metadata": {
-                    "report_type": report_type,
-                    "format": format,
-                    "generated_at": datetime.utcnow().isoformat(),
-                    "file_size": f"{len(json.dumps(report, default=str))} bytes"
-                }
-            }
+            from fastapi.responses import Response
+            content = json.dumps(report, indent=2, default=str)
+            filename = f"{report_type}_audit_report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+            return Response(
+                content=content,
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
+            )
         else:
             raise HTTPException(
                 status_code=400,
