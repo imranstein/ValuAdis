@@ -5,8 +5,11 @@ Property CRUD operations for ValuAdis
 """
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Tuple
+import csv
+import io
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.schemas.property import (
@@ -103,6 +106,43 @@ async def create_property(
         return PropertyResponse(success=True, data=property.to_dict())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/export", tags=["Properties"])
+async def export_properties(
+    format: str = "csv",
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """Export properties as CSV"""
+    if format.lower() != "csv":
+        raise HTTPException(status_code=400, detail="Only CSV format is supported")
+    property_service = PropertyService(db)
+    properties, _ = await property_service.get_user_properties(
+        user_id=current_user_id, skip=0, limit=10000
+    )
+    output = io.StringIO()
+    writer = csv.writer(output)
+    headers = ["id", "address", "municipality", "property_type", "area_sqm", "market_value", "status", "created_at"]
+    writer.writerow(headers)
+    for p in properties:
+        d = p.to_dict()
+        writer.writerow([
+            d.get("id"),
+            d.get("address", ""),
+            d.get("municipality", ""),
+            d.get("property_type", ""),
+            d.get("area_sqm"),
+            d.get("market_value"),
+            d.get("status", ""),
+            d.get("created_at", ""),
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=properties_export.csv"},
+    )
 
 
 @router.get("", response_model=PropertyListResponse)

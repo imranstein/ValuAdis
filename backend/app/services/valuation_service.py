@@ -270,6 +270,35 @@ class ValuationService:
             return True
         return False
 
+    def override_valuation(
+        self,
+        valuation_id: int,
+        market_value: float,
+        taxable_value: Optional[float],
+        override_reason: Optional[str],
+    ) -> Dict[str, Any]:
+        """
+        Override market_value and taxable_value (admin/senior valuer only).
+        taxable_value defaults to 25% of market_value if not provided.
+        """
+        valuation = self.valuation_repo.get_valuation_by_id(valuation_id)
+        if not valuation:
+            raise ValuAdisException("Valuation not found")
+
+        from decimal import Decimal
+        mv = Decimal(str(market_value))
+        tv = Decimal(str(taxable_value)) if taxable_value is not None else self.calculate_taxable_value(mv)
+
+        updates = {"market_value": float(mv), "taxable_value": float(tv)}
+        updated = self.valuation_repo.update(valuation, updates)
+        return updated.to_dict() if hasattr(updated, "to_dict") else {
+            "id": updated.id,
+            "property_id": updated.property_id,
+            "market_value": updated.market_value,
+            "taxable_value": updated.taxable_value,
+            "status": updated.status.value if hasattr(updated.status, "value") else str(updated.status),
+        }
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------

@@ -15,3 +15,7 @@ class ValuationRepository(BaseRepository[Valuation]):
     def get_valuation_by_id_and_user(self, valuation_id: int, user_id: int):
         """Get a specific valuation by ID, ensuring it belongs to user"""
         return self.db.query(Valuation).filter(Valuation.id == valuation_id, Valuation.user_id == user_id).first()
+
+    def get_valuation_by_id(self, valuation_id: int):
+        """Get a valuation by ID (for admin override - no user filter)"""
+        return self.db.query(Valuation).filter(Valuation.id == valuation_id).first()

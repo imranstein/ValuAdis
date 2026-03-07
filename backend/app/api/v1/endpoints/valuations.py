@@ -10,23 +10,46 @@ from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
 import io
+import csv
 from app.services.valuation_service import ValuationService
 from app.services.spatial_service import SpatialService
 from app.services.certificate_service import CertificateService
 from app.services.auth_service import AuthService
 from app.schemas.valuation import (
-    ValuationCreate, ValuationUpdate, ValuationResponse, 
-    ValuationListResponse, ValuationDetail, ValuationCalculation
+    ValuationCreate, ValuationUpdate, ValuationResponse,
+    ValuationListResponse, ValuationDetail, ValuationCalculation,
+    ValuationOverrideRequest,
 )
 from app.core.exceptions import ValuAdisException, PropertyValidationError
 from app.core.security import get_current_user_id
 from app.core.database import get_db
+from app.data.models.user import User
 from sqlalchemy.orm import Session
 import structlog
 
 logger = structlog.get_logger()
 
 router = APIRouter()
+
+ALLOWED_OVERRIDE_ROLES = ["system_admin", "firm_admin", "municipal_admin", "senior_valuer"]
+
+
+def require_valuation_override_permission(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> User:
+    """Dependency: only admins or senior valuers can override valuations."""
+    user = db.query(User).filter(User.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.is_admin:
+        return user
+    if any(role.name in ALLOWED_OVERRIDE_ROLES for role in user.roles):
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only admins or senior valuers can override valuations",
+    )
 
 
 def get_valuation_service(db: Session = Depends(get_db)) -> ValuationService:
@@ -101,6 +124,41 @@ async def create_valuation(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+@router.get("/export", tags=["Valuations"])
+async def export_valuations(
+    format: str = "csv",
+    user_id: int = Depends(get_current_user_id),
+    valuation_service: ValuationService = Depends(get_valuation_service),
+):
+    """Export valuations as CSV"""
+    if format.lower() != "csv":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only CSV format is supported")
+    valuations, _ = valuation_service.get_user_valuations(user_id=user_id, skip=0, limit=10000)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    headers = ["id", "property_id", "property_type", "municipality", "area_sqm", "market_value", "taxable_value", "status", "valuation_date", "created_at"]
+    writer.writerow(headers)
+    for v in valuations:
+        writer.writerow([
+            v.get("id"),
+            v.get("property_id"),
+            v.get("property_type", ""),
+            v.get("municipality", ""),
+            v.get("area_sqm"),
+            v.get("market_value"),
+            v.get("taxable_value"),
+            v.get("status", ""),
+            v.get("valuation_date", ""),
+            v.get("created_at", ""),
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=valuations_export.csv"},
+    )
 
 
 @router.get("/{valuation_id}", response_model=ValuationDetail, tags=["Valuations"])
@@ -339,6 +397,41 @@ async def download_certificate(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Certificate generation failed",
         ) from e
+
+
+@router.patch("/{valuation_id}/override", response_model=ValuationResponse, tags=["Valuations"])
+async def override_valuation(
+    valuation_id: int,
+    override_data: ValuationOverrideRequest,
+    _: User = Depends(require_valuation_override_permission),
+    valuation_service: ValuationService = Depends(get_valuation_service),
+):
+    """
+    Override market_value and taxable_value (admin/senior valuer only).
+
+    Used when senior valuers need to adjust algorithm-calculated values
+    based on professional judgment.
+    """
+    try:
+        result = valuation_service.override_valuation(
+            valuation_id=valuation_id,
+            market_value=override_data.market_value,
+            taxable_value=override_data.taxable_value,
+            override_reason=override_data.override_reason,
+        )
+        return ValuationResponse(
+            success=True,
+            data=result,
+            message="Valuation override applied successfully",
+        )
+    except ValuAdisException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error("Valuation override failed", error=str(e), valuation_id=valuation_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Valuation override failed",
+        )
 
 
 @router.post("/calculate", response_model=ValuationCalculation, tags=["Valuations"])

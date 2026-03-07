@@ -138,3 +138,10 @@ class ValuationCalculation(BaseModel):
     base_rate: float = Field(..., description="Base rate per sqm used")
     multiplier: float = Field(..., description="Property type multiplier applied")
     calculation_date: datetime = Field(default_factory=datetime.now)
+
+
+class ValuationOverrideRequest(BaseModel):
+    """Request schema for senior valuer/admin valuation override"""
+    market_value: float = Field(..., gt=0, description="Override market value in ETB")
+    taxable_value: Optional[float] = Field(None, gt=0, description="Override taxable value (default: 25% of market_value)")
+    override_reason: Optional[str] = Field(None, max_length=500, description="Reason for override (audit trail)")
