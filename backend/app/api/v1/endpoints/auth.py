@@ -145,6 +145,8 @@ async def get_current_user(
             detail="User not found"
         )
     
+    role_names = [r.name for r in user.roles] if user.roles else []
+    primary_role = role_names[0] if role_names else ("system_admin" if user.is_admin else "valuer")
     return {
         "id": user.id,
         "email": user.email,
@@ -152,5 +154,8 @@ async def get_current_user(
         "phone": user.phone,
         "municipality": user.municipality,
         "license_number": user.license_number,
+        "is_admin": user.is_admin,
+        "role": primary_role,
+        "roles": role_names,
         "created_at": user.created_at
     }

@@ -109,6 +109,7 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: ['admin'] })
 import { ref, onMounted } from 'vue'
 import GeneralSettings from '~/components/settings/GeneralSettings.vue'
 import ScraperManagement from '~/components/settings/ScraperManagement.vue'

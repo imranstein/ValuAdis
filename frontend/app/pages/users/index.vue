@@ -459,6 +459,7 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: ['admin'] })
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 

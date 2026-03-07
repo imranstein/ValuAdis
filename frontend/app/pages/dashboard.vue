@@ -174,9 +174,10 @@
           </div>
         </div>
         <div class="activity-chart">
-          <div class="chart-placeholder">
+          <Chart v-if="valuationChartData" type="bar" :data="valuationChartData" :options="chartOptions" style="height: 180px" />
+          <div v-else class="chart-placeholder">
             <i class="pi pi-chart-bar"></i>
-            <p>Valuation trends chart</p>
+            <p>Loading chart...</p>
           </div>
         </div>
         <div class="activity-summary">
@@ -192,6 +193,20 @@
             <span class="summary-label">Pending Review</span>
             <span class="summary-value">{{ activitySummary.pendingReview }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Property Type Distribution -->
+      <div v-if="propertyTypeChartData" class="content-card">
+        <div class="card-header">
+          <h2>Property Types</h2>
+          <button class="view-all-btn" @click="router.push('/analytics')">
+            View Analytics
+            <i class="pi pi-arrow-right"></i>
+          </button>
+        </div>
+        <div class="chart-widget">
+          <Chart type="doughnut" :data="propertyTypeChartData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 180px" />
         </div>
       </div>
     </div>
@@ -295,6 +310,19 @@ const activitySummary = ref({
 })
 const complianceIssues = ref(0)
 const complianceRate = ref(0)
+const valuationChartData = ref(null)
+const propertyTypeChartData = ref(null)
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false }
+  },
+  scales: {
+    y: { beginAtZero: true }
+  }
+}
 
 function setComplianceRate(rate) {
   complianceRate.value = Math.round(rate ?? 0)
@@ -334,6 +362,12 @@ async function loadDashboardStats() {
     if (data.compliance) {
       setComplianceRate(data.compliance.compliance_rate)
       complianceIssues.value = 0
+    }
+    if (data.property_types && Object.keys(data.property_types).length > 0) {
+      propertyTypeChartData.value = {
+        labels: Object.keys(data.property_types).map((k) => k.replace(/_/g, ' ')),
+        datasets: [{ data: Object.values(data.property_types), backgroundColor: ['#059669', '#047857', '#10b981', '#34d399', '#6ee7b7'] }]
+      }
     }
   } catch (error) {
     console.error('Failed to load dashboard stats:', error)
@@ -410,6 +444,20 @@ async function loadActivitySummary() {
       completedToday: items.filter((v) => v.status === 'approved' && String(v.valuation_date || '').startsWith(today)).length,
       inProgress: items.filter((v) => v.status === 'in_progress' || v.status === 'draft').length,
       pendingReview: items.filter((v) => v.status === 'pending').length
+    }
+    const labels = []
+    const counts = []
+    const now = new Date()
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const dayStr = d.toISOString().slice(0, 10)
+      labels.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))
+      counts.push(items.filter((v) => String(v.valuation_date || v.created_at || '').startsWith(dayStr)).length)
+    }
+    valuationChartData.value = {
+      labels,
+      datasets: [{ label: 'Valuations', data: counts, backgroundColor: '#059669' }]
     }
   } catch {
     activitySummary.value = { completedToday: 0, inProgress: 0, pendingReview: 0 }
@@ -494,6 +542,7 @@ function getStatusClass(status) {
 .filter-btn.active { background: #059669; color: white; border-color: #059669; }
 .activity-chart { padding: 1.5rem; height: 200px; }
 .chart-placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; border-radius: 8px; color: #64748b; }
+.chart-widget { padding: 1.5rem; }
 .activity-summary { display: flex; justify-content: space-around; padding: 1rem 1.5rem; border-top: 1px solid #f1f5f9; }
 .summary-item { text-align: center; }
 .summary-label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; }

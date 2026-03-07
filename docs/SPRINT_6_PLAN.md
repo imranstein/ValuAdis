@@ -1,0 +1,51 @@
+# Sprint 6: Post-Integration & Enhancements
+
+Sprint 6 is the next work batch after Sprint 5 finalization. Jira may not have a formal "Sprint 6" – these tasks are from the Integration backlog.
+
+## Priority: Web Platform (Non-Mobile)
+
+### High Priority
+
+| Task | Description |
+|------|-------------|
+| VA-96 | Build analytics dashboard widgets |
+| VA-98 | Implement report generation UI |
+| VA-99 | Build system settings UI |
+| VA-127 | Build bulk import API |
+| VA-128 | Create bulk import UI |
+
+### Medium Priority
+
+| Task | Description |
+|------|-------------|
+| VA-95 | Setup automated notifications (email/SMS) |
+| VA-106 | Setup DB schema validation |
+| VA-107 | Optimize PostGIS spatial indexes |
+| VA-109 | Create external API integration tests |
+| VA-117 | Implement property attribute management |
+| VA-118 | Build user registration approval flow |
+
+### Lower Priority
+
+| Task | Description |
+|------|-------------|
+| VA-111 | Generate technical documentation |
+| VA-112 | Create user training materials |
+| VA-113 | Implement zero-downtime migrations |
+| VA-115 | Create data migration scripts |
+| VA-116 | Optimize data caching strategy |
+| VA-119 | Create user feedback system |
+| VA-120 | Verify regulatory compliance |
+
+## Mobile Tasks (Sprint 4 / Future)
+
+- VA-101–VA-105: Offline validation, sync retry, encryption, crash reporting, UI tests
+- VA-126: Sync queue UI
+- VA-137–VA-138: Background sync, offline search
+
+## Suggested Sprint 6 Start
+
+1. **VA-96**: Enhance dashboard with chart widgets (Chart.js already in use)
+2. **VA-127/VA-128**: Bulk property import API + UI
+3. **VA-98**: Report generation UI (build on existing audit/report APIs)
+4. **VA-99**: System settings UI (configuration management)

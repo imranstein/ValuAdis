@@ -288,6 +288,7 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: ['admin'] })
 import { ref, computed, onMounted } from 'vue'
 
 // Reactive data
@@ -477,8 +478,10 @@ function closeModal() {
 
 async function refreshLogs() {
   try {
+    const config = useRuntimeConfig()
+    const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/audit/logs', {
+    const response = await fetch(`${apiBase}/api/v1/audit/logs`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

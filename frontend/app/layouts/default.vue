@@ -72,7 +72,7 @@
           </ul>
         </div>
 
-        <div class="nav-section">
+        <div v-if="canAccessAdmin" class="nav-section">
           <h3>Admin</h3>
           <ul class="nav-list">
             <li class="nav-item" :class="{ active: $route.path === '/users' }">
@@ -255,9 +255,20 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '~/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
+
+const ADMIN_ROLES = ['system_admin', 'firm_admin', 'municipal_admin']
+const canAccessAdmin = computed(() => {
+  const u = authStore.user
+  if (!u) return false
+  if ((u as any).is_admin) return true
+  const role = (u as any).role || (u as any).user_type
+  return role && ADMIN_ROLES.includes(role)
+})
 
 const sidebarOpen = ref(false)
 const showNotifications = ref(false)

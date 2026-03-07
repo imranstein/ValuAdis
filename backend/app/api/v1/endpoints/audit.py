@@ -12,6 +12,7 @@ from typing import Optional
 import json
 
 from app.core.database import get_db
+from app.core.security import get_current_user_id
 from app.services.audit_service import AuditService
 from app.schemas.audit import (
     AuditReportResponse,
@@ -23,7 +24,84 @@ import structlog
 
 logger = structlog.get_logger()
 
-router = APIRouter(prefix="/audit", tags=["Audit"])
+router = APIRouter(tags=["Audit"])
+
+
+@router.get("/logs")
+async def get_audit_logs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    action: Optional[str] = Query(None),
+    module: Optional[str] = Query(None),
+    _: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """
+    List audit log entries for the audit log viewer UI.
+    Supports filtering by date range, action, and module (table_name).
+    """
+    from sqlalchemy import text
+    from app.data.models.user import User
+
+    conditions = []
+    params = {"skip": skip, "limit": limit}
+    if start_date:
+        conditions.append("al.timestamp >= :start_date")
+        params["start_date"] = start_date
+    if end_date:
+        conditions.append("al.timestamp <= :end_date")
+        params["end_date"] = end_date
+    if action:
+        conditions.append("al.action = :action")
+        params["action"] = action.upper()
+    if module:
+        conditions.append("al.table_name = :module")
+        params["module"] = module
+
+    where_clause = " AND ".join(conditions) if conditions else "1=1"
+    full_sql = f"""
+        SELECT al.id, al.table_name, al.record_id, al.action, al.old_values, al.new_values,
+               al.user_id, al.ip_address, al.user_agent, al.timestamp
+        FROM audit_logs al
+        WHERE {where_clause}
+        ORDER BY al.timestamp DESC
+        OFFSET :skip LIMIT :limit
+    """
+    count_sql = f"SELECT COUNT(*) FROM audit_logs al WHERE {where_clause}"
+
+    result = db.execute(text(full_sql), params)
+    rows = result.fetchall()
+    count_params = {k: v for k, v in params.items() if k not in ("skip", "limit")}
+    total = db.execute(text(count_sql), count_params).scalar() or 0
+
+    user_ids = {r.user_id for r in rows if r.user_id}
+    users = {}
+    if user_ids:
+        user_map = db.query(User).filter(User.id.in_(user_ids)).all()
+        users = {u.id: u.full_name for u in user_map}
+
+    logs = []
+    for r in rows:
+        action_lower = (r.action or "VIEW").lower()
+        logs.append({
+            "id": r.id,
+            "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+            "user_id": r.user_id,
+            "user_name": users.get(r.user_id, "System") if r.user_id else "System",
+            "action_type": action_lower,
+            "module": r.table_name or "unknown",
+            "resource_type": r.table_name or "unknown",
+            "resource_id": r.record_id,
+            "ip_address": str(r.ip_address) if r.ip_address else "—",
+            "user_agent": r.user_agent or "",
+            "status": "success",
+            "description": f"{r.action or 'View'} on {r.table_name or 'unknown'} #{r.record_id}",
+            "changes": r.new_values if r.new_values else r.old_values,
+        })
+
+    return {"success": True, "data": logs, "total": total, "skip": skip, "limit": limit}
 
 
 @router.get("/system", response_model=AuditReportResponse)
