@@ -1,6 +1,6 @@
 # Dependency Audit Report
 
-**Date:** March 7, 2025  
+**Date:** March 7, 2026
 **Scope:** `frontend/`, `frontend/app/`, `backend/`
 
 ---
@@ -94,7 +94,8 @@
 | Package | Current | Issue | Fixed In |
 |---------|---------|-------|----------|
 | fastapi | 0.109.0 | ReDoS in Content-Type parsing (PYSEC-2024-38) | 0.109.1+ |
-| python-multipart | 0.0.20 | DoS via malformed boundary (CVE-2024-53981); Path traversal (CVE-2026-24486) in non-default config | 0.0.22+ |
+| python-multipart | 0.0.20 | DoS via malformed boundary (CVE-2024-53981); Path traversal (CVE-2026-24486) in non-default config | 0.0.21+ (requires Python ≥3.10; kept at 0.0.20 for Python 3.9 compatibility) |
+| python-jose | 3.3.0 | Algorithm confusion (CVE-2024-33664, CVE-2024-33663); Weak key material (CVE-2024-29370) | 3.4.0+ |
 | sentry-sdk | 1.39.2 | Env var exposure to subprocesses (GHSA-g92j-qhmh-64v2) | 1.45.1+ or 2.8.0+ |
 
 ### Other Packages (Patch Updates Recommended)
@@ -122,8 +123,8 @@
 # requirements.txt
 -fastapi==0.109.0
 +fastapi==0.109.2
--python-multipart==0.0.20
-+python-multipart==0.0.22
+ python-multipart==0.0.20  # kept at 0.0.20; 0.0.21+ requires Python ≥3.10
++psycopg2-binary==2.9.9
 -sentry-sdk[fastapi]==1.39.2
 +sentry-sdk[fastapi]==1.45.1
 ```

@@ -50,7 +50,7 @@
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="features" ref="featuresRef">
+    <section id="features" class="features">
       <div class="section-inner">
         <p class="section-eyebrow">What We Offer</p>
         <h2 class="section-title">Comprehensive Valuation Solutions</h2>
@@ -124,11 +124,10 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
   layout: 'landing',
-  middleware: 'guest-landing'
+  middleware: 'guest'
 })
 
 const isScrolled = ref(false)
-const featuresRef = ref<HTMLElement | null>(null)
 
 const features = [
   {

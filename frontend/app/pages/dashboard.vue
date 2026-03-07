@@ -3,7 +3,7 @@
     <!-- Welcome Header -->
     <div class="welcome-header">
       <div class="welcome-content">
-        <h1>Welcome back, Admin</h1>
+        <h1>Welcome back, {{ userName }}</h1>
         <p>Here's what's happening with your property and vehicle valuations today.</p>
       </div>
       <div class="welcome-actions">
@@ -32,8 +32,8 @@
         <div class="stat-content">
           <h3>{{ stats.totalProperties }}</h3>
           <p>Total Properties</p>
-          <span class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i> 12% from last month
+          <span class="stat-trend neutral">
+            <i class="pi pi-minus"></i> —
           </span>
         </div>
       </div>
@@ -45,8 +45,8 @@
         <div class="stat-content">
           <h3>{{ vehicleStats.totalVehicles }}</h3>
           <p>Total Vehicles</p>
-          <span class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i> 8% from last month
+          <span class="stat-trend neutral">
+            <i class="pi pi-minus"></i> —
           </span>
         </div>
       </div>
@@ -59,8 +59,8 @@
         <div class="stat-content">
           <h3>{{ stats.totalValuations }}</h3>
           <p>Total Valuations</p>
-          <span class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i> 8% from last month
+          <span class="stat-trend neutral">
+            <i class="pi pi-minus"></i> —
           </span>
         </div>
       </div>
@@ -72,21 +72,8 @@
         <div class="stat-content">
           <h3>{{ formatCurrency(stats.totalMarketValue + vehicleStats.totalMarketValue) }}</h3>
           <p>Total Market Value</p>
-          <span class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i> 23% growth
-          </span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-check-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ calculateComplianceRate() }}%</h3>
-          <p>Compliance Rate</p>
           <span class="stat-trend neutral">
-            <i class="pi pi-minus"></i> No change
+            <i class="pi pi-minus"></i> —
           </span>
         </div>
       </div>
@@ -117,45 +104,25 @@
           </button>
         </div>
         <div class="recent-properties">
-          <div class="property-item">
+          <div v-if="recentProperties.length === 0" class="empty-state">
+            <i class="pi pi-inbox"></i>
+            <p>No properties yet</p>
+          </div>
+          <div
+            v-for="property in recentProperties"
+            :key="property.id"
+            class="property-item"
+          >
             <div class="property-icon">
               <i class="pi pi-home"></i>
             </div>
             <div class="property-info">
-              <h4>123 Test Street</h4>
-              <p>Addis Ababa • Residential</p>
-              <span class="property-value">ETB 450,000</span>
+              <h4>{{ property.address }}</h4>
+              <p>{{ property.location }} • {{ property.type }}</p>
+              <span class="property-value">{{ formatCurrency(property.value) }}</span>
             </div>
             <div class="property-status">
-              <span class="status-badge completed">Completed</span>
-            </div>
-          </div>
-          
-          <div class="property-item">
-            <div class="property-icon">
-              <i class="pi pi-building"></i>
-            </div>
-            <div class="property-info">
-              <h4>Bole Commercial Center</h4>
-              <p>Addis Ababa • Commercial</p>
-              <span class="property-value">ETB 1.2M</span>
-            </div>
-            <div class="property-status">
-              <span class="status-badge in-progress">In Progress</span>
-            </div>
-          </div>
-          
-          <div class="property-item">
-            <div class="property-icon">
-              <i class="pi pi-home"></i>
-            </div>
-            <div class="property-info">
-              <h4>Mekelle Office Complex</h4>
-              <p>Mekelle • Mixed Use</p>
-              <span class="property-value">ETB 850,000</span>
-            </div>
-            <div class="property-status">
-              <span class="status-badge pending">Pending</span>
+              <span :class="['status-badge', property.status]">{{ property.statusLabel }}</span>
             </div>
           </div>
         </div>
@@ -171,45 +138,25 @@
           </button>
         </div>
         <div class="recent-vehicles">
-          <div class="vehicle-item">
+          <div v-if="recentVehicles.length === 0" class="empty-state">
+            <i class="pi pi-inbox"></i>
+            <p>No vehicles yet</p>
+          </div>
+          <div
+            v-for="vehicle in recentVehicles"
+            :key="vehicle.id"
+            class="vehicle-item"
+          >
             <div class="vehicle-icon">
               <i class="pi pi-car"></i>
             </div>
             <div class="vehicle-info">
-              <h4>Toyota Corolla 2020</h4>
-              <p>Addis Ababa • Sedan • AA-123-BC</p>
-              <span class="vehicle-value">ETB 850,000</span>
+              <h4>{{ vehicle.name }}</h4>
+              <p>{{ vehicle.location }} • {{ vehicle.type }} • {{ vehicle.plate }}</p>
+              <span class="vehicle-value">{{ formatCurrency(vehicle.value) }}</span>
             </div>
             <div class="vehicle-status">
-              <span class="status-badge completed">Approved</span>
-            </div>
-          </div>
-          
-          <div class="vehicle-item">
-            <div class="vehicle-icon">
-              <i class="pi pi-car"></i>
-            </div>
-            <div class="vehicle-info">
-              <h4>Hyundai Tucson 2021</h4>
-              <p>Oromia • SUV • BB-456-DE</p>
-              <span class="vehicle-value">ETB 1.2M</span>
-            </div>
-            <div class="vehicle-status">
-              <span class="status-badge in-progress">Pending</span>
-            </div>
-          </div>
-          
-          <div class="vehicle-item">
-            <div class="vehicle-icon">
-              <i class="pi pi-truck"></i>
-            </div>
-            <div class="vehicle-info">
-              <h4>Isuzu NPR 2019</h4>
-              <p>Amhara • Truck • CC-789-FG</p>
-              <span class="vehicle-value">ETB 1.5M</span>
-            </div>
-            <div class="vehicle-status">
-              <span class="status-badge pending">Draft</span>
+              <span :class="['status-badge', vehicle.status]">{{ vehicle.statusLabel }}</span>
             </div>
           </div>
         </div>
@@ -234,15 +181,15 @@
         <div class="activity-summary">
           <div class="summary-item">
             <span class="summary-label">Completed Today</span>
-            <span class="summary-value">12</span>
+            <span class="summary-value">—</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">In Progress</span>
-            <span class="summary-value">5</span>
+            <span class="summary-value">—</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">Pending Review</span>
-            <span class="summary-value">3</span>
+            <span class="summary-value">{{ stats.pendingValuations + vehicleStats.pendingValuations }}</span>
           </div>
         </div>
       </div>
@@ -263,7 +210,7 @@
             <span class="status-badge compliant">Fully Compliant</span>
           </div>
         </div>
-        
+
         <div class="compliance-metrics">
           <div class="metric-item">
             <div class="metric-value">25%</div>
@@ -307,12 +254,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRuntimeConfig } from '#app'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ middleware: 'auth' })
 
 const router = useRouter()
+const config = useRuntimeConfig()
+const authStore = useAuthStore()
+
+const userName = computed(() => authStore.user?.name || 'User')
 
 const stats = ref({
   totalProperties: 0,
@@ -329,24 +282,24 @@ const vehicleStats = ref({
   pendingValuations: 0
 })
 
+const recentProperties = ref([])
+const recentVehicles = ref([])
+
 onMounted(async () => {
-  await loadStats()
-  await loadVehicleStats()
+  await Promise.all([loadStats(), loadVehicleStats()])
 })
 
 async function loadStats() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/properties/stats', {
+    const response = await fetch(`${config.public.apiBaseUrl}/api/v1/properties/stats`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    
-    if (response.ok) {
-      const data = await response.json()
-      stats.value = data
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = await response.json()
+    stats.value = data
   } catch (error) {
     console.error('Failed to load stats:', error)
     stats.value = {
@@ -362,16 +315,14 @@ async function loadStats() {
 async function loadVehicleStats() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/vehicles/statistics/summary', {
+    const response = await fetch(`${config.public.apiBaseUrl}/api/v1/vehicles/statistics/summary`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-    
-    if (response.ok) {
-      const data = await response.json()
-      vehicleStats.value = data
-    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = await response.json()
+    vehicleStats.value = data
   } catch (error) {
     console.error('Failed to load vehicle stats:', error)
     vehicleStats.value = {
@@ -390,13 +341,6 @@ function formatCurrency(value) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(value)
-}
-
-function calculateComplianceRate() {
-  const totalItems = stats.value.totalProperties + vehicleStats.value.totalVehicles
-  if (totalItems === 0) return 0
-  // This will be calculated from real data when valuations are loaded
-  return 0
 }
 </script>
 
@@ -600,6 +544,26 @@ function calculateComplianceRate() {
 .view-all-btn:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #94a3b8;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 /* Recent Properties */
@@ -932,17 +896,17 @@ function calculateComplianceRate() {
   .content-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .compliance-section {
     grid-template-columns: 1fr;
   }
-  
+
   .welcome-header {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
   }
-  
+
   .welcome-actions {
     justify-content: center;
   }
@@ -952,16 +916,16 @@ function calculateComplianceRate() {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .quick-actions-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .compliance-metrics {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .activity-summary {
     flex-direction: column;
     gap: 1rem;

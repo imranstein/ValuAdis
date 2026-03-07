@@ -48,7 +48,7 @@
           :disabled="authStore.loading"
         />
 
-        <p class="login-hint">Test: admin@valuadis.com / password123</p>
+        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / password123</p>
       </form>
     </div>
   </div>
@@ -63,6 +63,8 @@ definePageMeta({ middleware: 'guest', layout: 'landing' })
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const isDev = process.env.NODE_ENV === 'development'
 
 const credentials = ref({ email: '', password: '' })
 const errorMessage = ref<string | null>(null)
