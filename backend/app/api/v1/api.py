@@ -8,7 +8,7 @@ from fastapi import APIRouter
 
 # Import all endpoint routers
 from app.api.v1.endpoints import auth, properties, health, valuations, audit, analytics, scrapers, users
-from app.api.v1.endpoints import valuation_feedback
+from app.api.v1.endpoints import valuation_feedback, feedback
 # from app.modules.vehicle.routes import router as vehicle_router  # Temporarily disabled
 
 # Create main API router
@@ -67,6 +67,12 @@ api_router.include_router(
     valuation_feedback.router,
     prefix="/valuation-feedback",
     tags=["Valuation Feedback"],
+)
+
+api_router.include_router(
+    feedback.router,
+    prefix="/feedback",
+    tags=["Feedback"],
 )
 
 # Temporarily disabled vehicle module

@@ -18,7 +18,7 @@ Sprint 6 is the next work batch after Sprint 5 finalization. Jira may not have a
 
 | Task | Description | Status |
 |------|-------------|--------|
-| VA-95 | Setup automated notifications (email/SMS) | To Do |
+| VA-95 | Setup automated notifications (email/SMS) | Done |
 | VA-106 | Setup DB schema validation | Done |
 | VA-107 | Optimize PostGIS spatial indexes | Done |
 | VA-109 | Create external API integration tests | Done |
@@ -27,15 +27,15 @@ Sprint 6 is the next work batch after Sprint 5 finalization. Jira may not have a
 
 ### Lower Priority
 
-| Task | Description |
-|------|-------------|
-| VA-111 | Generate technical documentation |
-| VA-112 | Create user training materials |
-| VA-113 | Implement zero-downtime migrations |
-| VA-115 | Create data migration scripts |
-| VA-116 | Optimize data caching strategy |
-| VA-119 | Create user feedback system |
-| VA-120 | Verify regulatory compliance |
+| Task | Description | Status |
+|------|-------------|--------|
+| VA-111 | Generate technical documentation | Done |
+| VA-112 | Create user training materials | To Do |
+| VA-113 | Implement zero-downtime migrations | To Do |
+| VA-115 | Create data migration scripts | Done |
+| VA-116 | Optimize data caching strategy | Done |
+| VA-119 | Create user feedback system | Done |
+| VA-120 | Verify regulatory compliance | To Do |
 
 ## Mobile Tasks (Sprint 4 / Future)
 

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import logging
 
 from app.core.database import get_db
+from app.core.performance import cache_manager
 from app.data.models.property import Property
 from app.data.models.valuation import Valuation
 from app.data.models.user import User
@@ -20,6 +21,7 @@ from app.core.security import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+CACHE_TTL_ANALYTICS = 300  # 5 minutes (VA-116)
 
 @router.get("/dashboard")
 async def get_dashboard_stats(
@@ -38,6 +40,10 @@ async def get_dashboard_stats(
     - Municipality breakdowns
     - Compliance metrics
     """
+    cache_key = f"analytics:dashboard:{current_user_id}:{period}:{municipality or ''}:{property_type or ''}"
+    cached = cache_manager.get(cache_key)
+    if cached is not None:
+        return cached
     try:
         # Calculate date range based on period
         end_date = datetime.now()
@@ -122,8 +128,8 @@ async def get_dashboard_stats(
         # Ethiopian compliance metrics
         compliant_valuations = len([v for v in valuations if v.status == 'approved'])
         compliance_rate = (compliant_valuations / total_valuations * 100) if total_valuations > 0 else 0
-        
-        return {
+
+        result = {
             "period": period,
             "date_range": {
                 "start": start_date.isoformat(),
@@ -157,7 +163,9 @@ async def get_dashboard_stats(
                 "market_stability": "moderate"
             }
         }
-        
+        cache_manager.set(cache_key, result, CACHE_TTL_ANALYTICS)
+        return result
+
     except Exception as e:
         logger.error(f"Error in dashboard stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard statistics")

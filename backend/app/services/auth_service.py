@@ -33,7 +33,13 @@ class AuthService:
         # Hash password
         user_data["password_hash"] = get_password_hash(user_data.pop("password"))
         user_data["is_approved"] = False  # VA-118: New registrations require admin approval
-        return self.user_repo.create_user(user_data)
+        user = self.user_repo.create_user(user_data)
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService().notify_user_registration_pending(user.email, user.full_name)
+        except Exception:
+            pass
+        return user
     
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Authenticate user with email and password"""

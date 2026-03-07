@@ -174,6 +174,12 @@ async def approve_user(
     user.is_approved = approved
     db.commit()
     db.refresh(user)
+    if approved:
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService().notify_user_approved(user.email, user.full_name)
+        except Exception:
+            pass
     roles = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
     return UserResponse(
         id=user.id,

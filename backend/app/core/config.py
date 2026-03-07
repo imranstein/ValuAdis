@@ -64,7 +64,17 @@ class Settings(BaseSettings):
     
     # Monitoring
     SENTRY_DSN: Optional[str] = None
-    
+
+    # Notifications (VA-95)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@valuadis.et"
+    SMTP_USE_TLS: bool = True
+    NOTIFICATIONS_ENABLED: bool = False
+    SMS_PROVIDER: str = ""  # e.g. twilio, ethiopian-telecom - placeholder for future
+
     # Ethiopian Compliance
     DATA_SOVEREIGNTY_REQUIRED: bool = True
     PROCLAMATION_COMPLIANCE: bool = True
