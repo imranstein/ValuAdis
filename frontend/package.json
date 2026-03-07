@@ -16,7 +16,6 @@
     "test:e2e:codegen": "playwright codegen http://localhost:3000"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^1.15.2",
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.3.3",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
