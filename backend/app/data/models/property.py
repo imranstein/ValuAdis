@@ -113,6 +113,8 @@ class Property(Base):
             "property_subtype": self.property_subtype,
             "area_sqm": self.area_sqm,
             "building_area_sqm": self.building_area_sqm,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
             "condition": self.condition,
             "market_value": self.market_value,
             "taxable_value": self.taxable_value,

@@ -68,6 +68,7 @@
         height="600px"
         :zoom="6"
         :center="[9.0116, 38.7616]"
+        :properties="mapProperties"
         @property-selected="onPropertySelected"
         @property-view="onPropertyView"
       />
@@ -166,28 +167,46 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { seedProperties } from '~/data/seedProperties.js'
 import PropertyMap from '~/components/map/PropertyMap.vue'
 
-// Router
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl || 'http://localhost:8020'
 
-// Reactive state
 const selectedProperty = ref(null)
+const mapProperties = ref([])
 
-// Computed properties
-const totalProperties = computed(() => seedProperties.length)
-const availableProperties = computed(() => 
-  seedProperties.filter(p => p.status === 'available').length
-)
-const commercialProperties = computed(() => 
-  seedProperties.filter(p => p.type === 'commercial').length
-)
-const residentialProperties = computed(() => 
-  seedProperties.filter(p => p.type === 'residential').length
-)
+const totalProperties = computed(() => mapProperties.value.length || seedProperties.length)
+const availableProperties = computed(() => {
+  const list = mapProperties.value.length ? mapProperties.value : seedProperties
+  return list.filter(p => (p.status || '') === 'available').length
+})
+const commercialProperties = computed(() => {
+  const list = mapProperties.value.length ? mapProperties.value : seedProperties
+  return list.filter(p => (p.property_type || p.type || '') === 'commercial').length
+})
+const residentialProperties = computed(() => {
+  const list = mapProperties.value.length ? mapProperties.value : seedProperties
+  return list.filter(p => (p.property_type || p.type || '') === 'residential').length
+})
+
+onMounted(async () => {
+  try {
+    const token = localStorage.getItem('valuadis_token')
+    const res = await fetch(`${apiBase}/api/v1/properties?limit=500`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      mapProperties.value = data.data || []
+    }
+  } catch {
+    mapProperties.value = []
+  }
+})
 
 // Methods
 const onPropertySelected = (property) => {

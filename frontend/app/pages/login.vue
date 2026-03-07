@@ -64,7 +64,7 @@ definePageMeta({ middleware: 'guest', layout: 'landing' })
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isDev = process.env.NODE_ENV === 'development'
+const isDev = import.meta.dev
 
 const credentials = ref({ email: '', password: '' })
 const errorMessage = ref<string | null>(null)

@@ -97,6 +97,7 @@
 | python-multipart | 0.0.20 | DoS via malformed boundary (CVE-2024-53981); Path traversal (CVE-2026-24486) in non-default config | 0.0.21+ (requires Python ≥3.10; kept at 0.0.20 for Python 3.9 compatibility) |
 | python-jose | 3.3.0 | Algorithm confusion (CVE-2024-33664, CVE-2024-33663); Weak key material (CVE-2024-29370) | 3.4.0+ |
 | sentry-sdk | 1.39.2 | Env var exposure to subprocesses (GHSA-g92j-qhmh-64v2) | 1.45.1+ or 2.8.0+ |
+| python-jose | 3.3.0 | CVE-2024-33664, CVE-2024-33663, CVE-2024-29370 | 3.4.0+ |
 
 ### Other Packages (Patch Updates Recommended)
 - **pydantic:** 2.5.3 → 2.10+ (security patches)
@@ -110,13 +111,14 @@
 ### Phase 1: High-Confidence, Low-Risk ✅ APPLIED
 
 #### Frontend (`frontend/`)
-- Nuxt ^3.21.1, serialize-javascript override, .npmrc (legacy-peer-deps)
-- **Result:** 0 vulnerabilities, build OK
+- Nuxt ^3.21.1, serialize-javascript override (^6.0.1 for compatibility)
+- **Result:** Build OK. Use `npm install --legacy-peer-deps` in CI if peer conflicts occur.
 
 #### Frontend App (`frontend/app/`)
-- Nuxt ^3.21.1, postcss ^8.5.8, serialize-javascript override, .npmrc (legacy-peer-deps)
+- Nuxt ^3.21.1, postcss ^8.5.8, serialize-javascript override (^6.0.1)
 - **Result:** Build OK; 11 vulns remain (minimatch, esbuild, vue-tsc — require breaking upgrades)
 - *Deferred:* @pinia/nuxt 0.11 (needs Pinia 3), @nuxt/eslint-config 1.15 (needs ESLint 9+)
+- Use `npm install --legacy-peer-deps` in CI for @nuxt/devtools peer deps.
 
 #### Backend
 ```diff
@@ -127,21 +129,25 @@
 +psycopg2-binary==2.9.9
 -sentry-sdk[fastapi]==1.39.2
 +sentry-sdk[fastapi]==1.45.1
+-python-jose[cryptography]==3.3.0
++python-jose[cryptography]==3.4.0
 ```
+
+**Recommended next steps for backend:** Run `pip-audit` after applying changes. Explicitly upgrade `python-jose` to 3.4.0+ to address CVE-2024-33664, CVE-2024-33663, CVE-2024-29370.
 
 ### Phase 2: Override for serialize-javascript (Both Frontends)
 
-Add to `package.json` in both `frontend/` and `frontend/app/`:
+Use `^6.0.1` for compatibility with @rollup/plugin-terser. For CI, use `npm install --legacy-peer-deps` if needed.
 
 ```json
 {
   "overrides": {
-    "serialize-javascript": ">=7.0.3"
+    "serialize-javascript": "^6.0.1"
   }
 }
 ```
 
-Then run `npm install`. **Verify build and tests** — overrides can cause compatibility issues.
+**Note:** `>=7.0.3` fixes the RCE vulnerability but may be incompatible with @rollup/plugin-terser ^6.x. Use CI-only `--legacy-peer-deps` if upgrading.
 
 ### Phase 3: Deferred (Breaking Changes)
 

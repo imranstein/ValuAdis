@@ -463,6 +463,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
 
 // Reactive data
 const searchQuery = ref('')
@@ -699,7 +701,7 @@ async function saveUser() {
     let response
     if (showEditModal.value && editingUser.value) {
       // Update existing user
-      response = await fetch(`http://localhost:8020/api/v1/users/${editingUser.value.id}`, {
+      response = await fetch(`${apiBase}/api/v1/users/${editingUser.value.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -709,7 +711,7 @@ async function saveUser() {
       })
     } else {
       // Create new user
-      response = await fetch('http://localhost:8020/api/v1/users', {
+      response = await fetch(`${apiBase}/api/v1/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -756,7 +758,7 @@ async function toggleUserStatus(user) {
 
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/users/${user.id}/status`, {
+    const response = await fetch(`${apiBase}/api/v1/users/${user.id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -785,7 +787,7 @@ async function deleteUser(user) {
 
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`http://localhost:8020/api/v1/users/${user.id}`, {
+    const response = await fetch(`${apiBase}/api/v1/users/${user.id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -817,7 +819,7 @@ onMounted(async () => {
   // Load users from API
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch('http://localhost:8020/api/v1/users', {
+    const response = await fetch(`${apiBase}/api/v1/users`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -825,7 +827,14 @@ onMounted(async () => {
 
     if (response.ok) {
       const data = await response.json()
-      users.value = data.data || []
+      const raw = data.data || []
+      users.value = raw.map(u => ({
+        ...u,
+        name: u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+        status: u.is_active === false ? 'inactive' : (u.status || 'active'),
+        role: u.roles?.[0]?.name || u.role || 'viewer',
+        last_login: u.last_login || u.updated_at
+      }))
     } else {
       console.error('Failed to load users from API')
       users.value = []
