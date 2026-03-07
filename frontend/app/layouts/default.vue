@@ -21,8 +21,8 @@
         <div class="nav-section">
           <h3>Main Menu</h3>
           <ul class="nav-list">
-            <li class="nav-item" :class="{ active: $route.path === '/' }">
-              <a href="/" @click.prevent="$router.push('/')" class="nav-link">
+            <li class="nav-item" :class="{ active: $route.path === '/dashboard' }">
+              <a href="/dashboard" @click.prevent="$router.push('/dashboard')" class="nav-link">
                 <i class="pi pi-home"></i>
                 <span>Dashboard</span>
               </a>
@@ -355,7 +355,7 @@ const userInitials = computed(() => {
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
-    '/': 'Dashboard',
+    '/dashboard': 'Dashboard',
     '/properties': 'Properties',
     '/valuations': 'Valuations',
     '/valuations/quick': 'Quick Valuation',
@@ -370,7 +370,7 @@ const pageTitle = computed(() => {
 
 const pageSubtitle = computed(() => {
   const subtitles: Record<string, string> = {
-    '/': 'Property valuation overview and statistics',
+    '/dashboard': 'Property valuation overview and statistics',
     '/properties': 'Manage and track property records',
     '/valuations': 'Property valuation history and reports',
     '/valuations/quick': 'Fast property valuation calculator',
@@ -454,7 +454,7 @@ function navigateToQuickLink(path: string) {
 
 function handleLogout() {
   localStorage.removeItem('valuadis_token')
-  router.push('/login')
+  router.push('/')
 }
 
 // Close dropdowns when clicking outside - using lifecycle hooks instead of watcher
