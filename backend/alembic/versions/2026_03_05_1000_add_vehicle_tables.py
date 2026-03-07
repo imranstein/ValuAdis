@@ -19,14 +19,34 @@ depends_on = None
 def upgrade():
     """Create vehicle and vehicle valuation tables"""
     
-    # Create vehicle_types enum
-    op.execute("CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'hatchback', 'pickup', 'truck', 'van', 'coupe', 'convertible', 'station_wagon')")
-    
+    # Create vehicle_types enum (idempotent — silently skips if already exists)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE vehicle_type AS ENUM (
+                'sedan', 'suv', 'hatchback', 'pickup', 'truck',
+                'van', 'coupe', 'convertible', 'station_wagon'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+
     # Create fuel_types enum
-    op.execute("CREATE TYPE fuel_type AS ENUM ('gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng')")
-    
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE fuel_type AS ENUM (
+                'gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+
     # Create transmission_types enum
-    op.execute("CREATE TYPE transmission_type AS ENUM ('manual', 'automatic', 'cvt')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE transmission_type AS ENUM ('manual', 'automatic', 'cvt');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
     
     # Create vehicles table
     op.create_table('vehicles',
@@ -78,7 +98,14 @@ def upgrade():
     op.create_index(op.f('ix_vehicles_custom_duty_paid'), 'vehicles', ['custom_duty_paid'], unique=False)
     
     # Create vehicle_valuation_status enum
-    op.execute("CREATE TYPE vehicle_valuation_status AS ENUM ('draft', 'pending', 'approved', 'rejected', 'expired', 'under_review')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE vehicle_valuation_status AS ENUM (
+                'draft', 'pending', 'approved', 'rejected', 'expired', 'under_review'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
     
     # Create vehicle_valuations table
     op.create_table('vehicle_valuations',
