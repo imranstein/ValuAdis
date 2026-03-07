@@ -5,10 +5,12 @@ export interface User {
   email: string
   full_name: string
   phone: string
-  role: 'valuer' | 'reviewer' | 'firm_admin' | 'municipal_admin' | 'system_admin'
-  is_active: boolean
+  role?: 'valuer' | 'reviewer' | 'firm_admin' | 'municipal_admin' | 'system_admin'
+  is_admin?: boolean
+  roles?: string[]
+  is_active?: boolean
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 export interface AuthTokens {

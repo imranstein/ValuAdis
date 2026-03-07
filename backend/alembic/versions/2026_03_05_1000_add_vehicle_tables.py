@@ -19,14 +19,34 @@ depends_on = None
 def upgrade():
     """Create vehicle and vehicle valuation tables"""
     
-    # Create vehicle_types enum
-    op.execute("CREATE TYPE vehicle_type AS ENUM ('sedan', 'suv', 'hatchback', 'pickup', 'truck', 'van', 'coupe', 'convertible', 'station_wagon')")
-    
+    # Create vehicle_types enum (idempotent — silently skips if already exists)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE vehicle_type AS ENUM (
+                'sedan', 'suv', 'hatchback', 'pickup', 'truck',
+                'van', 'coupe', 'convertible', 'station_wagon'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+
     # Create fuel_types enum
-    op.execute("CREATE TYPE fuel_type AS ENUM ('gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng')")
-    
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE fuel_type AS ENUM (
+                'gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+
     # Create transmission_types enum
-    op.execute("CREATE TYPE transmission_type AS ENUM ('manual', 'automatic', 'cvt')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE transmission_type AS ENUM ('manual', 'automatic', 'cvt');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
     
     # Create vehicles table
     op.create_table('vehicles',
@@ -37,9 +57,9 @@ def upgrade():
         sa.Column('year', sa.Integer(), nullable=False),
         sa.Column('vin', sa.String(length=17), nullable=False),
         sa.Column('plate_number', sa.String(length=20), nullable=False),
-        sa.Column('body_type', sa.Enum('sedan', 'suv', 'hatchback', 'pickup', 'truck', 'van', 'coupe', 'convertible', 'station_wagon', name='vehicle_type'), nullable=True),
-        sa.Column('fuel_type', sa.Enum('gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng', name='fuel_type'), nullable=True),
-        sa.Column('transmission', sa.Enum('manual', 'automatic', 'cvt', name='transmission_type'), nullable=True),
+        sa.Column('body_type', postgresql.ENUM('sedan', 'suv', 'hatchback', 'pickup', 'truck', 'van', 'coupe', 'convertible', 'station_wagon', name='vehicle_type', create_type=False), nullable=True),
+        sa.Column('fuel_type', postgresql.ENUM('gasoline', 'diesel', 'hybrid', 'electric', 'lpg', 'cng', name='fuel_type', create_type=False), nullable=True),
+        sa.Column('transmission', postgresql.ENUM('manual', 'automatic', 'cvt', name='transmission_type', create_type=False), nullable=True),
         sa.Column('engine_capacity', sa.Integer(), nullable=True),
         sa.Column('mileage', sa.Integer(), nullable=True),
         sa.Column('color', sa.String(length=50), nullable=True),
@@ -78,7 +98,14 @@ def upgrade():
     op.create_index(op.f('ix_vehicles_custom_duty_paid'), 'vehicles', ['custom_duty_paid'], unique=False)
     
     # Create vehicle_valuation_status enum
-    op.execute("CREATE TYPE vehicle_valuation_status AS ENUM ('draft', 'pending', 'approved', 'rejected', 'expired', 'under_review')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE vehicle_valuation_status AS ENUM (
+                'draft', 'pending', 'approved', 'rejected', 'expired', 'under_review'
+            );
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
     
     # Create vehicle_valuations table
     op.create_table('vehicle_valuations',
@@ -109,7 +136,7 @@ def upgrade():
         sa.Column('condition_rating', sa.String(length=20), nullable=False),
         sa.Column('age_depreciation', sa.Float(), nullable=False),
         sa.Column('mileage_depreciation', sa.Float(), nullable=False),
-        sa.Column('status', sa.Enum('draft', 'pending', 'approved', 'rejected', 'expired', 'under_review', name='vehicle_valuation_status'), nullable=False),
+        sa.Column('status', postgresql.ENUM('draft', 'pending', 'approved', 'rejected', 'expired', 'under_review', name='vehicle_valuation_status', create_type=False), nullable=False),
         sa.Column('reviewed_by', sa.Integer(), nullable=True),
         sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('review_notes', sa.Text(), nullable=True),

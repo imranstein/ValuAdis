@@ -37,15 +37,20 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_raw_market_listings_id'), 'raw_market_listings', ['id'], unique=False)
     op.create_index(op.f('ix_raw_market_listings_listing_url'), 'raw_market_listings', ['listing_url'], unique=True)
-    op.drop_table('compliance_reports')
-    op.drop_table('spatial_ref_sys')
-    op.drop_table('layer')
-    op.drop_table('topology')
-    op.drop_index('idx_audit_logs_timestamp', table_name='audit_logs')
-    op.drop_table('audit_logs')
-    op.drop_index('idx_municipalities_region', table_name='ethiopian_municipalities')
-    op.drop_table('ethiopian_municipalities')
-    op.drop_table('property_types')
+
+    # Drop tables/indexes that may not exist in a clean migration from 001.
+    # This migration was originally auto-generated against a different database
+    # state; using IF EXISTS guards ensures idempotent behaviour on a fresh DB.
+    op.execute('DROP TABLE IF EXISTS compliance_reports CASCADE')
+    # spatial_ref_sys, layer, topology are owned by the PostGIS/postgis_topology
+    # extensions installed in 001 — skip dropping them to avoid extension errors.
+    op.execute('DROP INDEX IF EXISTS idx_audit_logs_timestamp')
+    op.execute('DROP TABLE IF EXISTS audit_logs CASCADE')
+    op.execute('DROP INDEX IF EXISTS idx_municipalities_region')
+    op.execute('DROP TABLE IF EXISTS ethiopian_municipalities CASCADE')
+    op.execute('DROP TABLE IF EXISTS property_types CASCADE')
+
+    # The following objects ARE created by 001_initial_migration.py.
     op.alter_column('properties', 'created_at',
                existing_type=postgresql.TIMESTAMP(timezone=True),
                nullable=True,

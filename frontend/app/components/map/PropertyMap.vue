@@ -151,7 +151,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { seedProperties, propertyTypeColors } from '~/data/seedProperties.js'
 
 // Import CSS for plugins
@@ -214,7 +214,35 @@ const loading = ref(true)
 const isFullscreen = ref(false)
 const selectedType = ref('all')
 const selectedStatus = ref('all')
-const filteredProperties = ref(seedProperties)
+// Use props.properties when provided and mappable, else seed data
+const sourceProperties = computed(() => {
+  const fromApi = props.properties || []
+  if (fromApi.length === 0) return seedProperties
+  return fromApi
+    .filter(p => (p.latitude != null && p.longitude != null) || (p.coordinates && p.coordinates.length >= 2))
+    .map(p => ({
+      id: p.id,
+      title: p.address || p.property_ref || `Property #${p.id}`,
+      address: p.address || '',
+      type: p.property_type || 'residential',
+      area: p.area_sqm || 0,
+      price: p.market_value || 0,
+      coordinates: p.latitude != null && p.longitude != null
+        ? [p.latitude, p.longitude]
+        : (p.coordinates && p.coordinates[0] ? [p.coordinates[0][1], p.coordinates[0][0]] : null),
+      bedrooms: p.number_of_bedrooms,
+      status: p.status || 'available'
+    }))
+    .filter(p => p.coordinates)
+})
+const filteredProperties = computed(() => {
+  const src = sourceProperties.value
+  return src.filter(property => {
+    const typeMatch = selectedType.value === 'all' || property.type === selectedType.value
+    const statusMatch = selectedStatus.value === 'all' || property.status === selectedStatus.value
+    return typeMatch && statusMatch
+  })
+})
 const searchQuery = ref('')
 const searchResults = ref([])
 const clusteringEnabled = ref(true)
@@ -238,6 +266,11 @@ const props = defineProps({
   center: {
     type: Array,
     default: () => [9.0116, 38.7616] // Addis Ababa
+  },
+  /** Properties to display (API format). Falls back to seed data when empty. */
+  properties: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -407,14 +440,8 @@ const addPropertyMarkers = () => {
   }
 }
 
-// Filter properties based on selected criteria
+// Filter properties based on selected criteria (filteredProperties is computed; just refresh markers)
 const filterProperties = () => {
-  filteredProperties.value = seedProperties.filter(property => {
-    const typeMatch = selectedType.value === 'all' || property.type === selectedType.value
-    const statusMatch = selectedStatus.value === 'all' || property.status === selectedStatus.value
-    return typeMatch && statusMatch
-  })
-  
   addPropertyMarkers()
 }
 
@@ -887,6 +914,11 @@ window.navigateToProperty = (propertyId) => {
 }
 
 // Lifecycle hooks
+// Refresh markers when properties data changes
+watch(filteredProperties, () => {
+  if (map.value && !loading.value) addPropertyMarkers()
+}, { deep: true })
+
 onMounted(async () => {
   if (isClient) {
     // Wait for Leaflet to load

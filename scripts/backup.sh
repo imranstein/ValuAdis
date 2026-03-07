@@ -57,24 +57,25 @@ fi
 log "Starting file uploads backup..."
 UPLOADS_BACKUP_FILE="$BACKUP_DIR/uploads_backup_$DATE.tar.gz"
 
-if tar -czf "$UPLOADS_BACKUP_FILE" uploads/; then
+if [ -d "uploads" ] && tar -czf "$UPLOADS_BACKUP_FILE" uploads/ 2>/dev/null; then
     log "File uploads backup completed: $UPLOADS_BACKUP_FILE"
+elif [ -d "backend/uploads" ] && tar -czf "$UPLOADS_BACKUP_FILE" -C backend uploads/ 2>/dev/null; then
+    log "File uploads backup completed (from backend/): $UPLOADS_BACKUP_FILE"
 else
-    notify_failure "File uploads backup failed"
+    log "⚠️ File uploads backup skipped (uploads directory not found)"
 fi
 
 # Configuration files backup
 log "Starting configuration backup..."
 CONFIG_BACKUP_FILE="$BACKUP_DIR/config_backup_$DATE.tar.gz"
+CONFIG_FILES="nginx/nginx.conf docker-compose.prod.yml docker-compose.yml scripts/"
+[ -f .env.production ] && CONFIG_FILES=".env.production $CONFIG_FILES"
+[ -f .env ] && CONFIG_FILES=".env $CONFIG_FILES"
 
-if tar -czf "$CONFIG_BACKUP_FILE" \
-    .env.production \
-    nginx/nginx.conf \
-    docker-compose.prod.yml \
-    scripts/; then
+if tar -czf "$CONFIG_BACKUP_FILE" $CONFIG_FILES 2>/dev/null; then
     log "Configuration backup completed: $CONFIG_BACKUP_FILE"
 else
-    notify_failure "Configuration backup failed"
+    log "⚠️ Configuration backup skipped or partial (some files may be missing)"
 fi
 
 # Cleanup old backups

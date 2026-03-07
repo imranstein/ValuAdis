@@ -12,17 +12,17 @@
             <p>Property Valuation Platform</p>
           </div>
         </div>
-        <button class="sidebar-toggle" @click="toggleSidebar">
-          <i class="pi pi-bars"></i>
+        <button class="sidebar-toggle" @click="toggleSidebar" aria-label="Toggle sidebar menu">
+          <i class="pi pi-bars" aria-hidden="true"></i>
         </button>
       </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" aria-label="Main navigation">
         <div class="nav-section">
           <h3>Main Menu</h3>
           <ul class="nav-list">
-            <li class="nav-item" :class="{ active: $route.path === '/' }">
-              <a href="/" @click.prevent="$router.push('/')" class="nav-link">
+            <li class="nav-item" :class="{ active: $route.path === '/dashboard' }">
+              <a href="/dashboard" @click.prevent="$router.push('/dashboard')" class="nav-link">
                 <i class="pi pi-home"></i>
                 <span>Dashboard</span>
               </a>
@@ -72,7 +72,7 @@
           </ul>
         </div>
 
-        <div class="nav-section">
+        <div v-if="canAccessAdmin" class="nav-section">
           <h3>Admin</h3>
           <ul class="nav-list">
             <li class="nav-item" :class="{ active: $route.path === '/users' }">
@@ -107,8 +107,8 @@
             <p class="user-role">{{ userRole || 'Administrator' }}</p>
           </div>
         </div>
-        <button class="logout-btn" @click="handleLogout">
-          <i class="pi pi-sign-out"></i>
+        <button class="logout-btn" @click="handleLogout" aria-label="Log out of your account">
+          <i class="pi pi-sign-out" aria-hidden="true"></i>
           <span>Logout</span>
         </button>
       </div>
@@ -118,12 +118,12 @@
     <div class="mobile-overlay" :class="{ active: sidebarOpen }" @click="toggleSidebar"></div>
 
     <!-- Main Content Area -->
-    <div class="main-content">
+    <main class="main-content" role="main" id="main-content">
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-left">
-          <button class="mobile-menu-toggle" @click="toggleSidebar">
-            <i class="pi pi-bars"></i>
+          <button class="mobile-menu-toggle" @click="toggleSidebar" aria-label="Open menu">
+            <i class="pi pi-bars" aria-hidden="true"></i>
           </button>
           <div class="header-title">
             <h1>{{ pageTitle }}</h1>
@@ -133,12 +133,12 @@
         
         <div class="header-right">
           <div class="header-actions">
-            <button class="action-btn" @click="toggleNotifications" title="Notifications">
-              <i class="pi pi-bell"></i>
+            <button class="action-btn" @click="toggleNotifications" title="Notifications" aria-label="View notifications">
+              <i class="pi pi-bell" aria-hidden="true"></i>
               <span class="notification-badge" v-if="notificationCount > 0">{{ notificationCount }}</span>
             </button>
-            <button class="action-btn" @click="toggleSearch" title="Search">
-              <i class="pi pi-search"></i>
+            <button class="action-btn" @click="toggleSearch" title="Search" aria-label="Search">
+              <i class="pi pi-search" aria-hidden="true"></i>
             </button>
             <div class="user-menu" @click="toggleProfileMenu">
               <div class="user-avatar-small">
@@ -245,19 +245,30 @@
       </header>
 
       <!-- Page Content -->
-      <main class="page-content">
+      <div class="page-content">
         <slot />
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '~/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
+
+const ADMIN_ROLES = ['system_admin', 'firm_admin', 'municipal_admin']
+const canAccessAdmin = computed(() => {
+  const u = authStore.user
+  if (!u) return false
+  if ((u as any).is_admin) return true
+  const role = (u as any).role || (u as any).user_type
+  return role && ADMIN_ROLES.includes(role)
+})
 
 const sidebarOpen = ref(false)
 const showNotifications = ref(false)
@@ -355,7 +366,7 @@ const userInitials = computed(() => {
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
-    '/': 'Dashboard',
+    '/dashboard': 'Dashboard',
     '/properties': 'Properties',
     '/valuations': 'Valuations',
     '/valuations/quick': 'Quick Valuation',
@@ -370,7 +381,7 @@ const pageTitle = computed(() => {
 
 const pageSubtitle = computed(() => {
   const subtitles: Record<string, string> = {
-    '/': 'Property valuation overview and statistics',
+    '/dashboard': 'Property valuation overview and statistics',
     '/properties': 'Manage and track property records',
     '/valuations': 'Property valuation history and reports',
     '/valuations/quick': 'Fast property valuation calculator',
@@ -454,7 +465,7 @@ function navigateToQuickLink(path: string) {
 
 function handleLogout() {
   localStorage.removeItem('valuadis_token')
-  router.push('/login')
+  router.push('/')
 }
 
 // Close dropdowns when clicking outside - using lifecycle hooks instead of watcher

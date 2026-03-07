@@ -327,7 +327,16 @@ body {
   }
 }
 
-/* Responsive Design */
+/* Responsive Design - Tablet & Mobile */
+@media (max-width: 1024px) {
+  .modern-form {
+    padding: 1.5rem;
+  }
+  .stats-card {
+    padding: 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
   .modern-form {
     padding: 1.5rem;
@@ -345,6 +354,23 @@ body {
   .btn-primary,
   .btn-secondary {
     width: 100%;
+  }
+
+  /* Tables: horizontal scroll on mobile */
+  .modern-table,
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 1.5rem 0.75rem;
+  }
+  .stats-number {
+    font-size: 1.75rem;
   }
 }
 
