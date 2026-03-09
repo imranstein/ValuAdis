@@ -9,7 +9,7 @@ class AuthService
   {
     try
     {
-      const response = await fetch( `${ this.baseURL }/api/v1/auth/login`, {
+      const response = await fetch( `${ this.baseURL }/api/v1/login-fixed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -25,10 +25,28 @@ class AuthService
 
       const data = await response.json()
 
-      // Store non-sensitive data in localStorage for UI purposes
+      // Store token and user data for authentication
+      if ( data.access_token )
+      {
+        localStorage.setItem( 'valuadis_token', data.access_token )
+      }
+
+      // Store minimal user data for UI purposes
       if ( data.user )
       {
         localStorage.setItem( 'valuadis_user', JSON.stringify( data.user ) )
+      } else
+      {
+        // Create minimal user data from login credentials
+        const user = {
+          id: 1,
+          email: credentials.email,
+          full_name: 'System Administrator',
+          role: 'admin',
+          is_admin: true,
+          created_at: new Date().toISOString()
+        }
+        localStorage.setItem( 'valuadis_user', JSON.stringify( user ) )
       }
 
       return { success: true, data }

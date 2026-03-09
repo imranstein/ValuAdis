@@ -99,7 +99,7 @@ class Property(Base):
     # Relationships
     user = relationship("User", back_populates="properties")
     valuations = relationship("Valuation", back_populates="property")
-    feedback = relationship("ValuationFeedback", back_populates="property")
+    # feedback = relationship("ValuationFeedback", back_populates="property")  # Temporarily disabled
 
     def to_dict(self):
         return {

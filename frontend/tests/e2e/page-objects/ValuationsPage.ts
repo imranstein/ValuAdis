@@ -12,11 +12,11 @@ export class ValuationsPage {
   constructor(page: Page) {
     this.page = page;
     this.pageTitle = page.locator('h1');
-    this.newValuationButton = page.locator('button:has-text("New Valuation")');
+    this.newValuationButton = page.locator('button:has-text("Quick Valuation")');
     this.searchInput = page.locator('input[placeholder*="Search"]');
     this.valuationsTable = page.locator('table');
     this.valuationRows = page.locator('tbody tr');
-    this.statusFilter = page.locator('select[name="status"]');
+    this.statusFilter = page.locator('select.filter-dropdown');
   }
 
   async goto() {

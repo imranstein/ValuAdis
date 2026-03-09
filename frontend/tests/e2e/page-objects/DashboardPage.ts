@@ -11,8 +11,8 @@ export class DashboardPage {
     this.page = page;
     this.pageTitle = page.locator('h1');
     this.statsCards = page.locator('.stat-card');
-    this.recentActivities = page.locator('.recent-activities');
-    this.quickActions = page.locator('.quick-actions');
+    this.recentActivities = page.locator('.content-card');
+    this.quickActions = page.locator('.welcome-actions');
   }
 
   async goto() {

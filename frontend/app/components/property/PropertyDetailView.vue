@@ -1,172 +1,242 @@
 <template>
   <div class="property-detail-view">
-    <!-- Header Actions -->
-    <div class="detail-header">
-      <div class="header-info">
-        <Button
-          icon="pi pi-arrow-left"
-          label="Back"
-          severity="secondary"
-          @click="$emit('back')"
-        />
-        <div class="property-title">
-          <h1>{{ property.address }}</h1>
-          <p v-if="property.property_id">ID: {{ property.property_id }}</p>
+    <!-- Premium Header with Enhanced Design -->
+    <div class="detail-header bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl shadow-2xl overflow-hidden relative">
+      <div class="absolute inset-0 bg-black opacity-10"></div>
+      <div class="absolute top-0 right-0 w-48 h-48 bg-white opacity-5 rounded-full -mr-24 -mt-24"></div>
+      <div class="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-5 rounded-full -ml-20 -mb-20"></div>
+      
+      <div class="relative z-10 p-8">
+        <div class="header-info flex items-center gap-6 mb-6">
+          <Button
+            icon="pi pi-arrow-left"
+            label="Back"
+            severity="secondary"
+            outlined
+            @click="$emit('back')"
+            class="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+          />
+          <div class="property-title flex-1">
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">{{ property.address }}</h1>
+            <p v-if="property.property_id" class="text-emerald-100 text-lg font-medium">ID: {{ property.property_id }}</p>
+          </div>
+        </div>
+        
+        <div class="header-actions flex gap-3 flex-wrap">
+          <Button
+            icon="pi pi-pencil"
+            label="Edit"
+            severity="secondary"
+            @click="$emit('edit', property.id)"
+            :disabled="readonly"
+            class="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+          />
+          <Button
+            icon="pi pi-calculator"
+            label="Create Valuation"
+            @click="$emit('create-valuation', property.id)"
+            class="bg-white text-emerald-600 hover:bg-emerald-50 border-white font-semibold"
+          />
+          <Button
+            icon="pi pi-download"
+            label="Export"
+            severity="info"
+            @click="exportProperty"
+            class="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+          />
         </div>
       </div>
-      <div class="header-actions">
-        <Button
-          icon="pi pi-pencil"
-          label="Edit"
-          severity="secondary"
-          @click="$emit('edit', property.id)"
-          :disabled="readonly"
-        />
-        <Button
-          icon="pi pi-calculator"
-          label="Create Valuation"
-          @click="$emit('create-valuation', property.id)"
-        />
-        <Button
-          icon="pi pi-download"
-          label="Export"
-          severity="info"
-          @click="exportProperty"
-        />
+    </div>
+
+    <!-- Enhanced Status Banner -->
+    <div class="status-banner rounded-2xl shadow-lg overflow-hidden" :class="property.status || 'pending'">
+      <div class="flex justify-between items-center p-6">
+        <div class="status-content flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center" :class="getStatusIconClass(property.status)">
+            <i :class="getStatusIcon(property.status)" class="text-white text-xl"></i>
+          </div>
+          <div>
+            <span class="text-xl font-bold">{{ formatStatus(property.status) }}</span>
+            <div class="text-sm opacity-80 mt-1">Property Status</div>
+          </div>
+        </div>
+        <div class="status-meta text-right">
+          <span v-if="property.last_valuation_date" class="block text-sm font-medium">
+            <i class="pi pi-calendar mr-2"></i>
+            Last valued: {{ formatDate(property.last_valuation_date) }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- Status Banner -->
-    <div class="status-banner" :class="property.status || 'pending'">
-      <div class="status-content">
-        <i :class="getStatusIcon(property.status)"></i>
-        <span>{{ formatStatus(property.status) }}</span>
-      </div>
-      <div class="status-meta">
-        <span v-if="property.last_valuation_date">
-          Last valued: {{ formatDate(property.last_valuation_date) }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="detail-grid">
-      <!-- Property Overview -->
-      <Card class="overview-card">
+    <!-- Professional Content Grid -->
+    <div class="detail-grid grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+      <!-- Enhanced Property Overview -->
+      <Card class="overview-card bg-white rounded-2xl shadow-xl overflow-hidden border-0 hover:shadow-2xl transition-all duration-300">
         <template #header>
-          <div class="card-header">
-            <i class="pi pi-home"></i>
-            <h3>Property Overview</h3>
+          <div class="card-header bg-gradient-to-r from-emerald-50 to-teal-50 p-6 border-b border-emerald-100">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+                <i class="pi pi-home text-white text-xl"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-800">Property Overview</h3>
+            </div>
           </div>
         </template>
         <template #content>
-          <div class="overview-content">
-            <div class="overview-item">
-              <span class="label">Type</span>
-              <span class="value">{{ property.property_type }}</span>
+          <div class="overview-content p-6 space-y-4">
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-tag text-emerald-500"></i>
+                  Type
+                </span>
+                <span class="font-bold text-gray-800 bg-emerald-100 px-3 py-1 rounded-full">{{ property.property_type }}</span>
+              </div>
             </div>
-            <div class="overview-item">
-              <span class="label">Municipality</span>
-              <span class="value">{{ property.municipality }}</span>
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-building text-emerald-500"></i>
+                  Municipality
+                </span>
+                <span class="font-bold text-gray-800">{{ property.municipality }}</span>
+              </div>
             </div>
-            <div class="overview-item">
-              <span class="label">Zone/Block</span>
-              <span class="value">{{ property.zone || 'N/A' }}</span>
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-th-large text-emerald-500"></i>
+                  Zone/Block
+                </span>
+                <span class="font-bold text-gray-800">{{ property.zone || 'N/A' }}</span>
+              </div>
             </div>
-            <div class="overview-item">
-              <span class="label">Neighborhood</span>
-              <span class="value">{{ property.neighborhood || 'N/A' }}</span>
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-users text-emerald-500"></i>
+                  Neighborhood
+                </span>
+                <span class="font-bold text-gray-800">{{ property.neighborhood || 'N/A' }}</span>
+              </div>
             </div>
-            <div class="overview-item">
-              <span class="label">Parcel Number</span>
-              <span class="value">{{ property.parcel_number || 'N/A' }}</span>
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-hashtag text-emerald-500"></i>
+                  Parcel Number
+                </span>
+                <span class="font-bold text-gray-800 font-mono">{{ property.parcel_number || 'N/A' }}</span>
+              </div>
             </div>
-            <div class="overview-item">
-              <span class="label">Ownership Type</span>
-              <span class="value">{{ formatOwnership(property.ownership_type) }}</span>
+            <div class="overview-item bg-gray-50 rounded-xl p-4 hover:bg-emerald-50 transition-colors">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <i class="pi pi-id-card text-emerald-500"></i>
+                  Ownership Type
+                </span>
+                <span class="font-bold text-gray-800 bg-blue-100 px-3 py-1 rounded-full">{{ formatOwnership(property.ownership_type) }}</span>
+              </div>
             </div>
           </div>
         </template>
       </Card>
 
-      <!-- Physical Characteristics -->
-      <Card class="characteristics-card">
+      <!-- Enhanced Physical Characteristics -->
+      <Card class="characteristics-card bg-white rounded-2xl shadow-xl overflow-hidden border-0 hover:shadow-2xl transition-all duration-300">
         <template #header>
-          <div class="card-header">
-            <i class="pi pi-th-large"></i>
-            <h3>Physical Characteristics</h3>
+          <div class="card-header bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-100">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                <i class="pi pi-th-large text-white text-xl"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-800">Physical Characteristics</h3>
+            </div>
           </div>
         </template>
         <template #content>
-          <div class="characteristics-grid">
-            <div class="char-item primary">
-              <div class="char-icon">
-                <i class="pi pi-map"></i>
+          <div class="p-6 space-y-6">
+            <div class="characteristics-grid grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div class="char-item bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div class="char-icon text-3xl mb-3">
+                  <i class="pi pi-map"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold block">{{ formatNumber(property.area_sqm) }} m²</span>
+                  <span class="char-label text-sm opacity-90">Land Area</span>
+                </div>
               </div>
-              <div class="char-content">
-                <span class="char-value">{{ formatNumber(property.area_sqm) }} m²</span>
-                <span class="char-label">Land Area</span>
+              <div class="char-item bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div class="char-icon text-3xl mb-3">
+                  <i class="pi pi-building"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold block">{{ formatNumber(property.building_area_sqm) }} m²</span>
+                  <span class="char-label text-sm opacity-90">Building Area</span>
+                </div>
+              </div>
+              <div class="char-item bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
+                <div class="char-icon text-3xl mb-3 text-gray-600">
+                  <i class="pi pi-sort-numeric-up"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold text-gray-800 block">{{ property.number_of_floors || 'N/A' }}</span>
+                  <span class="char-label text-sm text-gray-600">Floors</span>
+                </div>
+              </div>
+              <div class="char-item bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
+                <div class="char-icon text-3xl mb-3 text-gray-600">
+                  <i class="pi pi-door-open"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold text-gray-800 block">{{ property.number_of_rooms || 'N/A' }}</span>
+                  <span class="char-label text-sm text-gray-600">Rooms</span>
+                </div>
+              </div>
+              <div class="char-item bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
+                <div class="char-icon text-3xl mb-3 text-gray-600">
+                  <i class="pi pi-car"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold text-gray-800 block">{{ property.parking_spaces || 'N/A' }}</span>
+                  <span class="char-label text-sm text-gray-600">Parking</span>
+                </div>
+              </div>
+              <div class="char-item bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
+                <div class="char-icon text-3xl mb-3 text-gray-600">
+                  <i class="pi pi-calendar"></i>
+                </div>
+                <div class="char-content">
+                  <span class="char-value text-2xl font-bold text-gray-800 block">{{ property.year_built || 'N/A' }}</span>
+                  <span class="char-label text-sm text-gray-600">Year Built</span>
+                </div>
               </div>
             </div>
-            <div class="char-item secondary">
-              <div class="char-icon">
-                <i class="pi pi-building"></i>
+            
+            <div class="quality-section grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="quality-item bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <i class="pi pi-star text-yellow-500"></i>
+                    Construction Quality
+                  </span>
+                  <span class="quality-badge px-3 py-1 rounded-full text-sm font-semibold" :class="property.construction_quality">
+                    {{ formatQuality(property.construction_quality) }}
+                  </span>
+                </div>
               </div>
-              <div class="char-content">
-                <span class="char-value">{{ formatNumber(property.building_area_sqm) }} m²</span>
-                <span class="char-label">Building Area</span>
+              <div class="quality-item bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <i class="pi pi-shield text-blue-500"></i>
+                    Property Condition
+                  </span>
+                  <span class="condition-badge px-3 py-1 rounded-full text-sm font-semibold" :class="property.condition">
+                    {{ formatCondition(property.condition) }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="char-item">
-              <div class="char-icon">
-                <i class="pi pi-sort-numeric-up"></i>
-              </div>
-              <div class="char-content">
-                <span class="char-value">{{ property.number_of_floors || 'N/A' }}</span>
-                <span class="char-label">Floors</span>
-              </div>
-            </div>
-            <div class="char-item">
-              <div class="char-icon">
-                <i class="pi pi-door-open"></i>
-              </div>
-              <div class="char-content">
-                <span class="char-value">{{ property.number_of_rooms || 'N/A' }}</span>
-                <span class="char-label">Rooms</span>
-              </div>
-            </div>
-            <div class="char-item">
-              <div class="char-icon">
-                <i class="pi pi-car"></i>
-              </div>
-              <div class="char-content">
-                <span class="char-value">{{ property.parking_spaces || 'N/A' }}</span>
-                <span class="char-label">Parking</span>
-              </div>
-            </div>
-            <div class="char-item">
-              <div class="char-icon">
-                <i class="pi pi-calendar"></i>
-              </div>
-              <div class="char-content">
-                <span class="char-value">{{ property.year_built || 'N/A' }}</span>
-                <span class="char-label">Year Built</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="quality-section">
-            <div class="quality-item">
-              <span class="label">Construction Quality</span>
-              <span class="quality-badge" :class="property.construction_quality">
-                {{ formatQuality(property.construction_quality) }}
-              </span>
-            </div>
-            <div class="quality-item">
-              <span class="label">Property Condition</span>
-              <span class="condition-badge" :class="property.condition">
-                {{ formatCondition(property.condition) }}
-              </span>
             </div>
           </div>
         </template>
@@ -417,6 +487,16 @@ function getStatusIcon(status) {
   return iconMap[status] || 'pi pi-clock'
 }
 
+function getStatusIconClass(status) {
+  const classMap = {
+    'pending': 'bg-gray-500',
+    'in_progress': 'bg-amber-500',
+    'completed': 'bg-emerald-500',
+    'cancelled': 'bg-red-500'
+  }
+  return classMap[status] || 'bg-gray-500'
+}
+
 function formatOwnership(type) {
   const typeMap = {
     'private': 'Private',
@@ -479,459 +559,314 @@ function downloadDocument(doc) {
 </script>
 
 <style scoped>
+/* Professional Property Detail Styles */
 .property-detail-view {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
 }
 
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-radius: 16px;
-  color: white;
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.property-title h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
-
-.property-title p {
-  font-size: 1rem;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.status-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-}
-
+/* Status Banner Styles */
 .status-banner.pending {
-  background: #f1f5f9;
-  color: #475569;
+  @apply bg-gray-100 text-gray-700;
 }
 
 .status-banner.in_progress {
-  background: #fef3c7;
-  color: #92400e;
+  @apply bg-amber-100 text-amber-700;
 }
 
 .status-banner.completed {
-  background: #dcfce7;
-  color: #166534;
+  @apply bg-emerald-100 text-emerald-700;
 }
 
-.status-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
+.status-banner.cancelled {
+  @apply bg-red-100 text-red-700;
 }
 
-.status-meta {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.card-header i {
-  font-size: 1.25rem;
-  color: #059669;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.overview-content {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.overview-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.overview-item:last-child {
-  border-bottom: none;
-}
-
-.overview-item .label {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.overview-item .value {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.characteristics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
-}
-
-.char-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.char-item.primary {
-  background: linear-gradient(135deg, #059669, #047857);
-  color: white;
-}
-
-.char-item.secondary {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-}
-
-.char-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.char-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.char-label {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-.quality-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  padding: 0 1.5rem 1.5rem;
-}
-
-.quality-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.quality-badge, .condition-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
+/* Quality and Condition Badge Styles */
 .quality-badge.premium, .condition-badge.excellent {
-  background: #fef3c7;
-  color: #92400e;
+  @apply bg-amber-100 text-amber-700;
 }
 
 .quality-badge.good, .condition-badge.good {
-  background: #dcfce7;
-  color: #166534;
+  @apply bg-emerald-100 text-emerald-700;
 }
 
 .quality-badge.average, .condition-badge.fair {
-  background: #dbeafe;
-  color: #1e40af;
+  @apply bg-blue-100 text-blue-700;
 }
 
 .quality-badge.poor, .condition-badge.poor {
-  background: #fed7aa;
-  color: #92400e;
+  @apply bg-orange-100 text-orange-700;
 }
 
 .quality-badge.very_poor, .condition-badge.very_poor {
-  background: #fee2e2;
-  color: #991b1b;
+  @apply bg-red-100 text-red-700;
 }
 
+/* Enhanced Map Styles */
 .map-container {
-  padding: 1.5rem;
+  @apply p-6;
 }
 
 .map {
-  height: 300px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  @apply h-80 rounded-2xl border-2 border-gray-200 overflow-hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .location-info {
-  display: flex;
-  gap: 2rem;
-  padding: 0 1.5rem 1.5rem;
-  font-size: 0.875rem;
+  @apply flex gap-8 p-6 text-sm bg-gray-50 rounded-xl;
 }
 
 .coord-item {
-  display: flex;
-  gap: 0.5rem;
+  @apply flex gap-2;
 }
 
 .coord-item .label {
-  color: #64748b;
+  @apply text-gray-600 font-semibold;
 }
 
 .coord-item .value {
-  font-family: monospace;
-  color: #1e293b;
+  @apply font-mono text-gray-800 font-bold;
 }
 
+/* Enhanced Ownership Styles */
 .ownership-content {
-  padding: 1.5rem;
+  @apply p-6 space-y-6;
 }
 
 .owner-info {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  @apply flex gap-4 p-4 bg-gray-50 rounded-2xl;
 }
 
 .owner-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: #64748b;
+  @apply w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white text-2xl shadow-lg;
 }
 
 .owner-details h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
+  @apply text-xl font-bold text-gray-800 mb-2;
 }
 
 .owner-details p {
-  margin: 0.25rem 0;
-  color: #64748b;
-  font-size: 0.875rem;
+  @apply text-gray-600 text-sm mb-1;
+}
+
+.legal-section {
+  @apply p-4 bg-blue-50 rounded-2xl;
 }
 
 .legal-section h5 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #475569;
+  @apply text-lg font-bold text-gray-800 mb-3;
 }
 
 .legal-section p {
-  color: #64748b;
-  line-height: 1.6;
+  @apply text-gray-700 leading-relaxed;
 }
 
+/* Enhanced Valuation Styles */
 .valuation-content {
-  padding: 1.5rem;
+  @apply p-6;
 }
 
 .empty-valuations {
-  text-align: center;
-  padding: 2rem;
-  color: #64748b;
+  @apply text-center p-8 text-gray-600;
 }
 
 .empty-valuations i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
+  @apply text-5xl mb-4 opacity-50 text-gray-400;
 }
 
 .valuation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  @apply flex flex-col gap-4;
 }
 
 .valuation-item {
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  @apply p-6 bg-gradient-to-r from-gray-50 to-emerald-50 rounded-2xl border border-emerald-200 hover:shadow-lg transition-all duration-300;
 }
 
 .valuation-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  @apply flex justify-between items-center mb-3;
 }
 
 .valuation-date {
-  font-weight: 600;
-  color: #1e293b;
+  @apply font-bold text-gray-800;
 }
 
 .valuation-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #059669;
+  @apply text-2xl font-bold text-emerald-600;
 }
 
 .valuation-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
+  @apply flex gap-4 text-sm;
 }
 
 .valuation-type {
-  color: #64748b;
+  @apply text-gray-600 font-medium;
 }
 
 .valuation-status {
-  padding: 0.125rem 0.5rem;
-  border-radius: 999px;
-  font-weight: 600;
+  @apply px-3 py-1 rounded-full font-semibold text-xs;
 }
 
+.valuation-status.pending {
+  @apply bg-gray-100 text-gray-700;
+}
+
+.valuation-status.in_progress {
+  @apply bg-amber-100 text-amber-700;
+}
+
+.valuation-status.completed {
+  @apply bg-emerald-100 text-emerald-700;
+}
+
+/* Enhanced Document Styles */
 .documents-content {
-  padding: 1.5rem;
-}
-
-.document-section {
-  margin-bottom: 2rem;
-}
-
-.document-section:last-child {
-  margin-bottom: 0;
+  @apply p-6 space-y-8;
 }
 
 .document-section h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #475569;
+  @apply text-lg font-bold text-gray-800 mb-4 flex items-center gap-2;
 }
 
 .photo-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
 }
 
 .photo-item img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  @apply w-full h-48 object-cover rounded-2xl border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg;
 }
 
 .document-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  @apply flex flex-col gap-3;
 }
 
 .document-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: #f8fafc;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  @apply flex items-center gap-3 p-4 bg-gray-50 rounded-2xl hover:bg-emerald-50 transition-all duration-300 border border-gray-200 hover:border-emerald-300;
 }
 
 .document-item i {
-  color: #dc2626;
-  font-size: 1.25rem;
+  @apply text-red-500 text-xl;
 }
 
 .document-item span {
-  flex: 1;
-  color: #475569;
+  @apply flex-1 text-gray-700 font-medium;
+}
+
+/* Professional Responsive Design */
+@media (max-width: 1024px) {
+  .detail-grid {
+    @apply grid-cols-1 lg:grid-cols-2;
+  }
 }
 
 @media (max-width: 768px) {
   .detail-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
+    @apply p-6;
   }
   
   .header-info {
-    flex-direction: column;
-    text-align: center;
+    @apply flex-col text-center gap-4;
   }
   
   .header-actions {
-    justify-content: center;
+    @apply justify-center;
   }
   
   .detail-grid {
-    grid-template-columns: 1fr;
+    @apply grid-cols-1 gap-6;
   }
   
   .characteristics-grid {
-    grid-template-columns: repeat(2, 1fr);
+    @apply grid-cols-1;
   }
   
   .quality-section {
-    grid-template-columns: 1fr;
+    @apply grid-cols-1;
   }
   
   .location-info {
-    flex-direction: column;
-    gap: 0.5rem;
+    @apply flex-col gap-2;
   }
+  
+  .status-banner {
+    @apply flex-col gap-4 text-center;
+  }
+}
+
+/* Professional Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overview-card,
+.characteristics-card,
+.map-card,
+.ownership-card,
+.valuation-card,
+.documents-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.overview-card {
+  animation-delay: 0.1s;
+}
+
+.characteristics-card {
+  animation-delay: 0.2s;
+}
+
+.map-card {
+  animation-delay: 0.3s;
+}
+
+.ownership-card {
+  animation-delay: 0.4s;
+}
+
+.valuation-card {
+  animation-delay: 0.5s;
+}
+
+.documents-card {
+  animation-delay: 0.6s;
+}
+
+/* Enhanced Hover Effects */
+.overview-card:hover,
+.characteristics-card:hover,
+.map-card:hover,
+.ownership-card:hover,
+.valuation-card:hover,
+.documents-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Professional Typography */
+.property-title h1 {
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+}
+
+.card-header h3 {
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Enhanced Button Styles */
+.header-actions button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-actions button:hover {
+  transform: translateY(-2px);
 }
 </style>

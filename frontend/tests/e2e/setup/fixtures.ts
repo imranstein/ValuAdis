@@ -4,6 +4,7 @@ import { DashboardPage } from '../page-objects/DashboardPage';
 import { PropertiesPage } from '../page-objects/PropertiesPage';
 import { ValuationsPage } from '../page-objects/ValuationsPage';
 import { SettingsPage } from '../page-objects/SettingsPage';
+import { UsersPage } from '../page-objects/UsersPage';
 
 type MyFixtures = {
   loginPage: LoginPage;
@@ -11,6 +12,7 @@ type MyFixtures = {
   propertiesPage: PropertiesPage;
   valuationsPage: ValuationsPage;
   settingsPage: SettingsPage;
+  usersPage: UsersPage;
 };
 
 export const test = base.extend<MyFixtures>({
@@ -28,6 +30,9 @@ export const test = base.extend<MyFixtures>({
   },
   settingsPage: async ({ page }, use) => {
     await use(new SettingsPage(page));
+  },
+  usersPage: async ({ page }, use) => {
+    await use(new UsersPage(page));
   },
 });
 

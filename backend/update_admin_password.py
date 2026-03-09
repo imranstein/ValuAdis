@@ -22,7 +22,7 @@ async def update_admin_password():
         
         if admin:
             # Update password
-            admin.password_hash = get_password_hash("admin123")
+            admin.password_hash = get_password_hash("Admin123!")
             admin.is_admin = True
             admin.is_valuer = True
             admin.updated_at = datetime.utcnow()
@@ -32,7 +32,7 @@ async def update_admin_password():
             
             print(f"✅ Updated admin user:")
             print(f"   Email: admin@valuadis.com")
-            print(f"   Password: admin123")
+            print(f"   Password: Admin123!")
             print(f"   ID: {admin.id}")
             print(f"   Is Admin: {admin.is_admin}")
             print(f"   Is Valuer: {admin.is_valuer}")

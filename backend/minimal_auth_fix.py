@@ -4,7 +4,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-import jwt
+from jose import jwt
 import sqlite3
 from app.core.config import settings
 from app.core.security import verify_password

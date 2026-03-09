@@ -1,30 +1,33 @@
 <template>
-  <div class="wizard-step bg-white rounded-2xl shadow-xl overflow-hidden">
-    <!-- Modern Header with Gradient -->
-    <div class="step-header bg-gradient-to-r from-emerald-600 to-teal-600 p-6 relative overflow-hidden">
-      <div class="absolute inset-0 bg-black opacity-5"></div>
-      <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-      <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+  <div class="wizard-step bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <!-- Premium Header with Gradient -->
+    <div class="step-header bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-8 relative overflow-hidden">
+      <div class="absolute inset-0 bg-black opacity-10"></div>
+      <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-5 rounded-full -mr-20 -mt-20"></div>
+      <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-5 rounded-full -ml-16 -mb-16"></div>
       
-      <div class="relative z-10 flex items-center gap-4">
-        <div class="step-icon-wrap bg-white/20 backdrop-blur-sm p-3 rounded-2xl border border-white/30">
-          <i class="pi pi-home text-3xl text-white"></i>
+      <div class="relative z-10 flex items-center gap-6">
+        <div class="step-icon-wrap bg-white/20 backdrop-blur-sm p-4 rounded-2xl border border-white/30 shadow-lg">
+          <i class="pi pi-home text-4xl text-white"></i>
         </div>
-        <div>
-          <h2 class="step-title text-2xl font-bold text-white mb-1">Basic Property Information</h2>
-          <p class="step-subtitle text-emerald-100 text-sm">Start with the essential details about this property</p>
+        <div class="flex-1">
+          <h2 class="step-title text-3xl font-bold text-white mb-2 tracking-tight">Basic Property Information</h2>
+          <p class="step-subtitle text-emerald-50 text-lg font-medium">Start with the essential details about this property</p>
         </div>
       </div>
     </div>
 
-    <div class="step-body p-8 space-y-8">
+    <div class="step-body p-10 space-y-10">
       <!-- Property Classification Section -->
-      <section class="form-section bg-gray-50 rounded-xl p-6 border border-gray-200">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <i class="pi pi-tag text-emerald-600 text-lg"></i>
+      <section class="form-section bg-gradient-to-br from-gray-50 to-emerald-50 rounded-2xl p-8 border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="pi pi-tag text-white text-xl"></i>
           </div>
-          <h3 class="section-title text-lg font-semibold text-gray-800">Property Classification</h3>
+          <div>
+            <h3 class="section-title text-xl font-bold text-gray-800">Property Classification</h3>
+            <p class="text-gray-600 text-sm mt-1">Select the primary category of your property</p>
+          </div>
         </div>
         
         <div class="space-y-6">
@@ -33,36 +36,42 @@
             <label class="block text-sm font-semibold text-gray-700 mb-3">
               Property Type <span class="required text-red-500">*</span>
             </label>
-            <div class="type-cards grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="type-cards grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <button
                 v-for="t in propertyTypes"
                 :key="t.value"
                 type="button"
-                class="type-card group relative overflow-hidden transition-all duration-300 transform hover:scale-105"
+                class="type-card group relative overflow-hidden transition-all duration-500 transform hover:scale-105 hover:shadow-xl"
                 :class="{ 
                   'selected': form.property_type === t.value,
-                  'ring-2 ring-emerald-500 ring-offset-2': form.property_type === t.value
+                  'ring-4 ring-emerald-500 ring-offset-4': form.property_type === t.value
                 }"
                 @click="selectType(t.value)"
               >
-                <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="relative p-4 text-center">
-                  <i :class="t.icon" class="type-icon text-2xl mb-2 transition-colors duration-300"
-                     :class="form.property_type === t.value ? 'text-emerald-600' : 'text-gray-500 group-hover:text-emerald-600'"></i>
-                  <span class="block text-sm font-medium transition-colors duration-300"
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="relative p-6 text-center">
+                  <i :class="[
+                    t.icon,
+                    'type-icon text-3xl mb-3 transition-all duration-500',
+                    form.property_type === t.value ? 'text-emerald-600 scale-110' : 'text-gray-500 group-hover:text-emerald-600 group-hover:scale-105'
+                  ]"></i>
+                  <span class="block text-sm font-semibold transition-all duration-500"
                         :class="form.property_type === t.value ? 'text-emerald-700' : 'text-gray-700 group-hover:text-emerald-700'">{{ t.label }}</span>
                 </div>
               </button>
             </div>
-            <div x-show="errors.property_type" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
-              <i class="pi pi-exclamation-triangle"></i>
-              <span>{{ errors.property_type }}</span>
+            <div v-if="errors.property_type" class="error-msg mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <i class="pi pi-exclamation-triangle text-red-500"></i>
+              <span class="font-medium">{{ errors.property_type }}</span>
             </div>
           </div>
 
           <!-- Property Subtype -->
-          <div x-show="form.property_type" x-transition class="field">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Property Subtype</label>
+          <div v-if="form.property_type" class="field animate-fadeIn">
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-list text-emerald-500"></i>
+              Property Subtype
+            </label>
             <div class="relative">
               <Dropdown
                 v-model="form.property_subtype"
@@ -71,6 +80,7 @@
                 optionValue="value"
                 placeholder="Select subtype"
                 class="w-full"
+                :class="{ 'border-red-500 ring-red-500': errors.property_subtype }"
               />
             </div>
           </div>
@@ -78,146 +88,167 @@
       </section>
 
       <!-- Location Details Section -->
-      <section class="form-section bg-gray-50 rounded-xl p-6 border border-gray-200">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <i class="pi pi-map-marker text-blue-600 text-lg"></i>
+      <section class="form-section bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200 shadow-sm">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="pi pi-map-marker text-white text-xl"></i>
           </div>
-          <h3 class="section-title text-lg font-semibold text-gray-800">Location Details</h3>
+          <div>
+            <h3 class="section-title text-xl font-bold text-gray-800">Location Details</h3>
+            <p class="text-gray-600 text-sm mt-1">Provide the complete address information</p>
+          </div>
         </div>
         
         <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Full Address Field -->
           <div class="field md:col-span-2" :class="{ 'has-error': errors.address }">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              Full Address <span class="required text-red-500">*</span>
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-home text-blue-500"></i>
+              Full Address <span class="required text-red-500 ml-1">*</span>
             </label>
-            <div class="relative">
+            <div class="relative group">
               <InputText
                 v-model="form.address"
                 placeholder="e.g., Bole Road, Near Atlas Hotel, Addis Ababa"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                :class="{ 'border-red-500 ring-red-500': errors.address }"
+                class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
+                :class="{ 'border-red-500 ring-red-500/20': errors.address }"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-map-marker text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-map-marker text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
-            <div x-show="errors.address" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
-              <i class="pi pi-exclamation-circle"></i>
-              <span>{{ errors.address }}</span>
+            <div v-if="errors.address" class="error-msg mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <i class="pi pi-exclamation-circle text-red-500"></i>
+              <span class="font-medium">{{ errors.address }}</span>
             </div>
           </div>
 
           <!-- Region Field -->
           <div class="field" :class="{ 'has-error': errors.region }">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              Region <span class="required text-red-500">*</span>
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-globe text-blue-500"></i>
+              Region <span class="required text-red-500 ml-1">*</span>
             </label>
-            <div class="relative">
+            <div class="relative group">
               <Dropdown
                 v-model="form.region"
                 :options="ethiopianRegions"
                 placeholder="Select region"
                 class="w-full"
-                :class="{ 'border-red-500 ring-red-500': errors.region }"
+                :class="{ 'border-red-500 ring-red-500/20': errors.region }"
                 filter
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-chevron-down text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-chevron-down text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
-            <div x-show="errors.region" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
-              <i class="pi pi-exclamation-circle"></i>
-              <span>{{ errors.region }}</span>
+            <div v-if="errors.region" class="error-msg mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <i class="pi pi-exclamation-circle text-red-500"></i>
+              <span class="font-medium">{{ errors.region }}</span>
             </div>
           </div>
 
           <!-- Municipality Field -->
           <div class="field" :class="{ 'has-error': errors.municipality }">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-              Municipality / City <span class="required text-red-500">*</span>
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-building text-blue-500"></i>
+              Municipality / City <span class="required text-red-500 ml-1">*</span>
             </label>
-            <div class="relative">
+            <div class="relative group">
               <Dropdown
                 v-model="form.municipality"
                 :options="municipalities"
                 placeholder="Select municipality"
                 class="w-full"
-                :class="{ 'border-red-500 ring-red-500': errors.municipality }"
+                :class="{ 'border-red-500 ring-red-500/20': errors.municipality }"
                 filter
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-building text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-building text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
-            <div x-show="errors.municipality" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
-              <i class="pi pi-exclamation-circle"></i>
-              <span>{{ errors.municipality }}</span>
+            <div v-if="errors.municipality" class="error-msg mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <i class="pi pi-exclamation-circle text-red-500"></i>
+              <span class="font-medium">{{ errors.municipality }}</span>
             </div>
           </div>
 
           <!-- Subcity Field -->
           <div class="field">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Subcity</label>
-            <div class="relative">
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-home text-blue-500"></i>
+              Subcity
+            </label>
+            <div class="relative group">
               <InputText 
                 v-model="form.subcity" 
                 placeholder="e.g., Bole" 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-home text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-home text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
           </div>
 
           <div class="field">
-            <label>Woreda</label>
-            <InputText v-model="form.woreda" placeholder="e.g., Woreda 03" class="w-full" />
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-map text-blue-500"></i>
+              Woreda
+            </label>
+            <InputText v-model="form.woreda" placeholder="e.g., Woreda 03" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg" />
           </div>
 
           <!-- Kebele Field -->
           <div class="field">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Kebele</label>
-            <div class="relative">
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-map text-blue-500"></i>
+              Kebele
+            </label>
+            <div class="relative group">
               <InputText 
                 v-model="form.kebele" 
                 placeholder="e.g., Kebele 01" 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-map text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-map text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
           </div>
 
           <!-- Zone / Block Field -->
           <div class="field">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Zone / Block</label>
-            <div class="relative">
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-th-large text-blue-500"></i>
+              Zone / Block
+            </label>
+            <div class="relative group">
               <InputText 
                 v-model="form.zone" 
                 placeholder="e.g., Zone 4, Block 12" 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-map text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-th-large text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
           </div>
 
           <!-- Neighborhood Field -->
           <div class="field">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Neighborhood</label>
-            <div class="relative">
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-users text-blue-500"></i>
+              Neighborhood
+            </label>
+            <div class="relative group">
               <InputText 
                 v-model="form.neighborhood" 
                 placeholder="e.g., CMC, Sarbet" 
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i class="pi pi-map text-gray-400"></i>
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <i class="pi pi-users text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
               </div>
             </div>
           </div>
@@ -225,50 +256,68 @@
       </section>
 
       <!-- Property Reference Section -->
-      <section class="form-section bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <i class="pi pi-hashtag text-emerald-600 text-lg"></i>
+      <section class="form-section bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-8 border border-emerald-200 shadow-sm">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="pi pi-hashtag text-white text-xl"></i>
           </div>
-          <h3 class="section-title text-lg font-semibold text-gray-800">Property Reference</h3>
+          <div>
+            <h3 class="section-title text-xl font-bold text-gray-800">Property Reference</h3>
+            <p class="text-gray-600 text-sm mt-1">Unique identifier for your property</p>
+          </div>
         </div>
         
-        <div class="ref-badge bg-white rounded-lg p-4 border border-emerald-200 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <i class="pi pi-info-circle text-emerald-600 text-sm"></i>
+        <div class="ref-badge bg-white rounded-2xl p-6 border border-emerald-200 shadow-lg">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="pi pi-info-circle text-white text-xl"></i>
             </div>
             <div class="flex-1">
-              <p class="text-sm font-medium text-gray-700">
+              <p class="text-lg font-semibold text-gray-700 mb-2">
                 Reference: 
-                <span :class="form.property_ref ? 'text-emerald-600 font-semibold' : 'text-gray-500 italic'">
+                <span :class="form.property_ref ? 'text-emerald-600 font-bold text-xl' : 'text-gray-500 italic'">
                   {{ form.property_ref || 'Will be auto-generated when you save' }}
                 </span>
               </p>
-              <p class="text-xs text-gray-500 mt-1">Format: ADD-YYYY-XXXXX (Ethiopian Property ID)</p>
+              <p class="text-sm text-gray-600 bg-emerald-50 px-3 py-1 rounded-lg inline-block">Format: ADD-YYYY-XXXXX (Ethiopian Property ID)</p>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Identity & Registration -->
-      <section class="form-section">
-        <h3 class="section-title">
-          <i class="pi pi-id-card text-emerald-600" /> Identity & Registration
-        </h3>
-        <div class="form-grid">
+      <section class="form-section bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-200 shadow-sm">
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="pi pi-id-card text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="section-title text-xl font-bold text-gray-800">Identity & Registration</h3>
+            <p class="text-gray-600 text-sm mt-1">Legal and registration information</p>
+          </div>
+        </div>
+        <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="field">
-            <label>Parcel Number</label>
-            <InputText v-model="form.parcel_number" placeholder="e.g., 123/456" class="w-full" />
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-file text-purple-500"></i>
+              Parcel Number
+            </label>
+            <InputText v-model="form.parcel_number" placeholder="e.g., 123/456" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 text-lg" />
           </div>
 
           <div class="field">
-            <label>Title Deed Number</label>
-            <InputText v-model="form.title_deed_number" placeholder="e.g., TD-2024-001" class="w-full" />
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-certificate text-purple-500"></i>
+              Title Deed Number
+            </label>
+            <InputText v-model="form.title_deed_number" placeholder="e.g., TD-2024-001" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300 text-lg" />
           </div>
 
           <div class="field">
-            <label>Registration Date</label>
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-calendar text-purple-500"></i>
+              Registration Date
+            </label>
             <Calendar
               v-model="registrationDateObj"
               dateFormat="yy-mm-dd"
@@ -280,11 +329,16 @@
           </div>
 
           <div class="field" v-if="form.property_ref">
-            <label>Property Reference</label>
-            <div class="ref-badge">
-              <i class="pi pi-hashtag text-emerald-600" />
-              <span class="font-mono font-semibold text-emerald-700">{{ form.property_ref }}</span>
-              <span class="text-xs text-slate-400 ml-1">(auto-generated)</span>
+            <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-hashtag text-purple-500"></i>
+              Property Reference
+            </label>
+            <div class="ref-badge bg-gradient-to-r from-purple-100 to-indigo-100 rounded-2xl p-4 border border-purple-200 shadow-lg">
+              <div class="flex items-center gap-3">
+                <i class="pi pi-hashtag text-purple-600 text-xl" />
+                <span class="font-mono font-bold text-purple-700 text-lg">{{ form.property_ref }}</span>
+                <span class="text-xs text-purple-500 ml-2 bg-purple-200 px-2 py-1 rounded-full">auto-generated</span>
+              </div>
             </div>
           </div>
         </div>
@@ -402,38 +456,98 @@ const municipalities = [
 </script>
 
 <style scoped>
-/* Modern Tailwind-based styles with enhanced interactivity */
+/* Professional Modern Styles with Enhanced Interactivity */
 
-/* Type card animations */
+/* Type card animations and styling */
 .type-card {
-  @apply bg-white border-2 border-gray-200 rounded-xl cursor-pointer transition-all duration-300;
-  min-width: 80px;
+  @apply bg-white border-2 border-gray-200 rounded-2xl cursor-pointer;
+  min-width: 100px;
+  min-height: 120px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.type-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.type-card:hover::before {
+  opacity: 1;
 }
 
 .type-card:hover {
-  @apply border-emerald-500 shadow-lg transform scale-105;
+  @apply border-emerald-500 shadow-2xl transform scale-105;
+  box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.1);
 }
 
 .type-card.selected {
-  @apply border-emerald-500 bg-emerald-50 shadow-md ring-2 ring-emerald-500 ring-offset-2;
+  @apply border-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-xl;
+  box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.2), 0 10px 10px -5px rgba(16, 185, 129, 0.15);
 }
 
-/* Error states */
+.type-card.selected::before {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
+}
+
+/* Enhanced form sections */
+.form-section {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gradient-start, #10b981) 0%, var(--gradient-end, #059669) 100%);
+}
+
+.form-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Professional error states */
 .has-error :deep(.p-inputtext) {
-  @apply border-red-500 ring-red-500;
+  @apply border-red-500 ring-red-500/20;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .has-error :deep(.p-dropdown) {
-  @apply border-red-500 ring-red-500;
+  @apply border-red-500 ring-red-500/20;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-msg {
+  animation: slideInUp 0.3s ease-out;
+  border-left: 4px solid #ef4444;
 }
 
 /* Enhanced focus states */
 .field :deep(.p-inputtext:focus) {
-  @apply ring-2 ring-blue-500 border-transparent;
+  @apply ring-4 border-transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .field :deep(.p-dropdown:focus) {
-  @apply ring-2 ring-blue-500 border-transparent;
+  @apply ring-4 border-transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Smooth transitions for all interactive elements */
@@ -443,38 +557,33 @@ const municipalities = [
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Loading states */
+/* Professional loading states */
 .field :deep(.p-inputtext:disabled),
 .field :deep(.p-dropdown:disabled) {
   @apply bg-gray-100 cursor-not-allowed opacity-60;
 }
 
-/* Mobile responsive improvements */
-@media (max-width: 640px) {
+/* Enhanced mobile responsiveness */
+@media (max-width: 768px) {
   .type-cards {
-    @apply grid-cols-2 gap-2;
+    @apply grid-cols-2 gap-4;
   }
   
   .type-card {
-    @apply min-w-[70px] p-3;
+    @apply min-w-[80px] p-4;
+    min-height: 100px;
+  }
+  
+  .form-section {
+    @apply p-6;
   }
 }
 
-/* Enhanced hover effects for property type cards */
-.type-card::before {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 transition-opacity duration-300;
-}
-
-.type-card:hover::before {
-  @apply opacity-100;
-}
-
-/* Custom animations */
-@keyframes slideIn {
+/* Professional animations */
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -482,23 +591,111 @@ const municipalities = [
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
 .form-section {
-  animation: slideIn 0.5s ease-out;
+  animation: slideInUp 0.6s ease-out;
 }
 
-/* Enhanced error message styling */
-.error-msg {
-  @apply flex items-center gap-2 text-sm text-red-600 mt-2;
-  animation: slideIn 0.3s ease-out;
-}
-
-/* Reference badge enhancements */
+/* Enhanced reference badge styling */
 .ref-badge {
-  @apply bg-white rounded-lg border border-emerald-200 shadow-sm;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ref-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.ref-badge:hover::before {
+  left: 100%;
 }
 
 .ref-badge:hover {
-  @apply shadow-md border-emerald-300;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Professional input field enhancements */
+.field {
+  position: relative;
+}
+
+.field label {
+  transition: all 0.2s ease;
+}
+
+.field:hover label {
+  color: #374151;
+}
+
+/* Gradient definitions for different sections */
+.form-section:nth-child(1) {
+  --gradient-start: #10b981;
+  --gradient-end: #059669;
+}
+
+.form-section:nth-child(2) {
+  --gradient-start: #3b82f6;
+  --gradient-end: #1d4ed8;
+}
+
+.form-section:nth-child(3) {
+  --gradient-start: #10b981;
+  --gradient-end: #059669;
+}
+
+.form-section:nth-child(4) {
+  --gradient-start: #8b5cf6;
+  --gradient-end: #7c3aed;
+}
+
+/* Icon enhancements */
+.step-icon-wrap {
+  transition: all 0.3s ease;
+}
+
+.step-icon-wrap:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.3);
+}
+
+/* Professional typography */
+.section-title {
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.step-title {
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+}
+
+/* Enhanced shadow system */
+.shadow-professional {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-professional-lg {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 </style>

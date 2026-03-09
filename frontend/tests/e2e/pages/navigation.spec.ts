@@ -2,7 +2,7 @@ import { test, expect } from '../setup/fixtures';
 
 test.describe('Basic Navigation - Phase 1 Foundation', () => {
   const VALID_EMAIL = 'admin@valuadis.com';
-  const VALID_PASSWORD = 'password123';
+  const VALID_PASSWORD = 'admin123';
 
   test.beforeEach(async ({ loginPage, page }) => {
     // Login before each navigation test

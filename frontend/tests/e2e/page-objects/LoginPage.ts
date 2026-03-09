@@ -16,7 +16,7 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/login');
   }
 
   async login(email: string, password: string) {
@@ -26,6 +26,6 @@ export class LoginPage {
   }
 
   async isLoggedIn() {
-    return this.page.url().includes('/dashboard') || this.page.url() === 'http://localhost:3000/';
+    return this.page.url().includes('/dashboard') || this.page.url() === 'http://localhost:3020/';
   }
 }

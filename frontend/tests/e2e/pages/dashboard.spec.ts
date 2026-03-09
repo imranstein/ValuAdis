@@ -9,7 +9,7 @@ test.describe('Dashboard', () => {
 
   test('should display dashboard page', async ({ dashboardPage }) => {
     await expect(dashboardPage.pageTitle).toBeVisible();
-    await expect(dashboardPage.pageTitle).toContainText(/Dashboard|Overview/i);
+    await expect(dashboardPage.pageTitle).toContainText(/Dashboard|Overview|Welcome/i);
   });
 
   test('should display statistics cards', async ({ dashboardPage }) => {

@@ -99,13 +99,18 @@ async def create_property(
     property_service = PropertyService(db)
     
     try:
+        print(f"DEBUG: Received property data: {property_data.dict()}")
         property = await property_service.create_property(
             property_data.dict(),
             user_id=current_user_id
         )
         return PropertyResponse(success=True, data=property.to_dict())
     except ValueError as e:
+        print(f"DEBUG: ValueError: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"DEBUG: Unexpected error: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.get("/export", tags=["Properties"])

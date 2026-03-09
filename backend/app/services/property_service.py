@@ -10,6 +10,8 @@ from app.core.exceptions import ValidationException, SpatialOperationException
 from app.data.repositories.property_repository import PropertyRepository
 from app.services.spatial_service import SpatialService
 from app.data.models.property import Property
+import random
+import datetime
 
 
 class PropertyService:
@@ -19,10 +21,28 @@ class PropertyService:
     
     async def create_property(self, property_data: dict, user_id: int) -> Property:
         """Create new property with boundary validation and area calculation"""
-        # Validate coordinates
-        coordinates = property_data.get("coordinates")
+        # Generate property reference if not provided
+        if not property_data.get("property_ref"):
+            property_data["property_ref"] = self._generate_property_ref(property_data.get("municipality", "ADD"))
+        
+        # Handle coordinates - either from boundaries/coordinates field or generate from lat/lng
+        coordinates = property_data.get("coordinates") or property_data.get("boundaries")
+        
+        # If no coordinates but lat/lng are provided, generate a small polygon
+        if not coordinates and property_data.get("latitude") and property_data.get("longitude"):
+            lat = property_data["latitude"]
+            lng = property_data["longitude"]
+            DELTA = 0.0002  # ~22 m bounding box at equator
+            coordinates = [
+                [lng - DELTA, lat - DELTA],
+                [lng + DELTA, lat - DELTA],
+                [lng + DELTA, lat + DELTA],
+                [lng - DELTA, lat + DELTA],
+                [lng - DELTA, lat - DELTA],  # closed ring
+            ]
+        
         if not coordinates:
-            raise ValidationException("Coordinates are required")
+            raise ValidationException("Coordinates are required (either polygon boundaries or latitude/longitude)")
         
         if not self.spatial_service.validate_polygon(coordinates):
             raise ValidationException("Invalid polygon: must have minimum 3 vertices and be closed")
@@ -43,10 +63,24 @@ class PropertyService:
             "boundary": boundary_wkt
         }
         
-        # Remove coordinates as they're now stored in boundary
+        # Remove coordinates and boundaries as they're now stored in boundary
         property_data.pop("coordinates", None)
+        property_data.pop("boundaries", None)
         
         return self.property_repo.create_property(property_data)
+    
+    def _generate_property_ref(self, municipality: str) -> str:
+        """Generate unique property reference number"""
+        # Get municipality code (first 3 letters, uppercase)
+        muni_code = (municipality[:3] or "ADD").upper()
+        
+        # Get current year
+        year = datetime.datetime.now().year
+        
+        # Generate random 4-digit number
+        random_num = random.randint(1000, 9999)
+        
+        return f"{muni_code}-{year}-{random_num}"
     
     async def get_property_by_id(self, property_id: int, user_id: int) -> Optional[Property]:
         """Get property by ID (user must be owner)"""

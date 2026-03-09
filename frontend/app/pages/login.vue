@@ -48,14 +48,14 @@
           :disabled="authStore.loading"
         />
 
-        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / admin123</p>
+        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / Admin123!</p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
@@ -71,6 +71,18 @@ const errorMessage = ref<string | null>(null)
 
 async function handleLogin() {
   errorMessage.value = null
+  
+  // Client-side validation
+  if (!credentials.value.email || !credentials.value.password) {
+    errorMessage.value = 'Please fill in all fields'
+    return
+  }
+  
+  if (!credentials.value.email.includes('@')) {
+    errorMessage.value = 'Please enter a valid email address'
+    return
+  }
+  
   try {
     await authStore.login(credentials.value)
     router.push('/dashboard')
@@ -165,14 +177,135 @@ async function handleLogin() {
 
 .login-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
   color: #fffff5 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.875rem 1rem !important;
+  transition: all 0.3s ease !important;
+}
+
+/* PrimeVue components - base styling */
+.login-input :deep(.p-inputtext) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  color: #fffff5 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.875rem 1rem !important;
+  transition: all 0.3s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Password component container - make it look like email field */
+.login-input :deep(.p-password) {
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Password input field - match email field exactly */
+.login-input :deep(.p-password-input) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  color: #fffff5 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.875rem 1rem !important;
+  transition: all 0.3s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+}
+
+/* Remove nested input styling completely */
+.login-input :deep(.p-password .p-inputtext) {
+  background: transparent !important;
+  border: none !important;
+  color: #fffff5 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  width: calc(100% - 40px) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin: 0 !important;
+}
+
+/* Password toggle button - style to match theme */
+.login-input :deep(.p-password .p-password-panel-open) {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(212, 175, 55, 0.7) !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.login-input :deep(.p-password .p-password-panel-open:hover) {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.1) !important;
+}
+
+/* Focus states - make both fields identical */
+.login-input:focus,
+.login-input :deep(.p-inputtext:focus),
+.login-input :deep(.p-password-input:focus) {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  outline: none !important;
+}
+
+/* Hover states - make both fields identical */
+.login-input:hover,
+.login-input :deep(.p-inputtext:hover),
+.login-input :deep(.p-password-input:hover) {
+  border-color: rgba(212, 175, 55, 0.6) !important;
+}
+
+.login-input::placeholder {
+  color: rgba(245, 240, 232, 0.5) !important;
+}
+
+.login-input :deep(.p-inputtext::placeholder) {
+  color: rgba(245, 240, 232, 0.5) !important;
+}
+
+.login-input :deep(.p-password-input::placeholder) {
+  color: rgba(245, 240, 232, 0.5) !important;
 }
 
 .login-input:focus {
   border-color: #d4af37 !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-input :deep(.p-inputtext:focus) {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-input :deep(.p-password-input:focus) {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-input:hover {
+  border-color: rgba(212, 175, 55, 0.6) !important;
+}
+
+.login-input :deep(.p-inputtext:hover) {
+  border-color: rgba(212, 175, 55, 0.6) !important;
+}
+
+.login-input :deep(.p-password-input:hover) {
+  border-color: rgba(212, 175, 55, 0.6) !important;
 }
 
 .login-error {

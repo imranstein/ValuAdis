@@ -15,7 +15,7 @@ async def main():
         from app.core.security import get_password_hash
         user = User(
             email="admin@valuadis.com",
-            password_hash=get_password_hash("password123"),
+            password_hash=get_password_hash("Admin123!"),
             full_name="System Admin",
             phone="+251911000000",
             municipality="Addis Ababa",

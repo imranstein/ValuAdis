@@ -22,7 +22,7 @@ export class SettingsPage {
     this.backupTab = page.locator('button:has-text("Backup")');
     this.apiTab = page.locator('button:has-text("API")');
     this.scraperTab = page.locator('button:has-text("Web Scraper")');
-    this.saveButton = page.locator('button:has-text("Save All")');
+    this.saveButton = page.locator('button:has-text("Save Changes")');
   }
 
   async goto() {
