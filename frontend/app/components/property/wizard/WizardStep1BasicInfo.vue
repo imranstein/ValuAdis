@@ -1,100 +1,175 @@
 <template>
-  <div class="wizard-step">
-    <div class="step-header">
-      <div class="step-icon-wrap">
-        <i class="pi pi-home text-2xl text-white" />
-      </div>
-      <div>
-        <h2 class="step-title">Basic Property Information</h2>
-        <p class="step-subtitle">Start with the essential details about this property</p>
+  <div class="wizard-step bg-white rounded-2xl shadow-xl overflow-hidden">
+    <!-- Modern Header with Gradient -->
+    <div class="step-header bg-gradient-to-r from-emerald-600 to-teal-600 p-6 relative overflow-hidden">
+      <div class="absolute inset-0 bg-black opacity-5"></div>
+      <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+      <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+      
+      <div class="relative z-10 flex items-center gap-4">
+        <div class="step-icon-wrap bg-white/20 backdrop-blur-sm p-3 rounded-2xl border border-white/30">
+          <i class="pi pi-home text-3xl text-white"></i>
+        </div>
+        <div>
+          <h2 class="step-title text-2xl font-bold text-white mb-1">Basic Property Information</h2>
+          <p class="step-subtitle text-emerald-100 text-sm">Start with the essential details about this property</p>
+        </div>
       </div>
     </div>
 
-    <div class="step-body">
-      <!-- Property Classification -->
-      <section class="form-section">
-        <h3 class="section-title">
-          <i class="pi pi-tag text-emerald-600" /> Classification
-        </h3>
-        <div class="form-grid">
+    <div class="step-body p-8 space-y-8">
+      <!-- Property Classification Section -->
+      <section class="form-section bg-gray-50 rounded-xl p-6 border border-gray-200">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <i class="pi pi-tag text-emerald-600 text-lg"></i>
+          </div>
+          <h3 class="section-title text-lg font-semibold text-gray-800">Property Classification</h3>
+        </div>
+        
+        <div class="space-y-6">
+          <!-- Property Type Cards -->
           <div class="field" :class="{ 'has-error': errors.property_type }">
-            <label>Property Type <span class="required">*</span></label>
-            <div class="type-cards">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">
+              Property Type <span class="required text-red-500">*</span>
+            </label>
+            <div class="type-cards grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <button
                 v-for="t in propertyTypes"
                 :key="t.value"
                 type="button"
-                class="type-card"
-                :class="{ selected: form.property_type === t.value }"
+                class="type-card group relative overflow-hidden transition-all duration-300 transform hover:scale-105"
+                :class="{ 
+                  'selected': form.property_type === t.value,
+                  'ring-2 ring-emerald-500 ring-offset-2': form.property_type === t.value
+                }"
                 @click="selectType(t.value)"
               >
-                <i :class="t.icon" class="type-icon" />
-                <span>{{ t.label }}</span>
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div class="relative p-4 text-center">
+                  <i :class="t.icon" class="type-icon text-2xl mb-2 transition-colors duration-300"
+                     :class="form.property_type === t.value ? 'text-emerald-600' : 'text-gray-500 group-hover:text-emerald-600'"></i>
+                  <span class="block text-sm font-medium transition-colors duration-300"
+                        :class="form.property_type === t.value ? 'text-emerald-700' : 'text-gray-700 group-hover:text-emerald-700'">{{ t.label }}</span>
+                </div>
               </button>
             </div>
-            <small class="error-msg" v-if="errors.property_type">{{ errors.property_type }}</small>
+            <div x-show="errors.property_type" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ errors.property_type }}</span>
+            </div>
           </div>
 
-          <div class="field" v-if="form.property_type">
-            <label>Property Subtype</label>
-            <Dropdown
-              v-model="form.property_subtype"
-              :options="subtypes"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select subtype"
-              class="w-full"
-            />
+          <!-- Property Subtype -->
+          <div x-show="form.property_type" x-transition class="field">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Property Subtype</label>
+            <div class="relative">
+              <Dropdown
+                v-model="form.property_subtype"
+                :options="subtypes"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select subtype"
+                class="w-full"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Location Details -->
-      <section class="form-section">
-        <h3 class="section-title">
-          <i class="pi pi-map-marker text-emerald-600" /> Location Details
-        </h3>
-        <div class="form-grid">
-          <div class="field full-width" :class="{ 'has-error': errors.address }">
-            <label>Full Address <span class="required">*</span></label>
-            <InputText
-              v-model="form.address"
-              placeholder="e.g., Bole Road, Near Atlas Hotel, Addis Ababa"
-              class="w-full"
-              :class="{ 'p-invalid': errors.address }"
-            />
-            <small class="error-msg" v-if="errors.address">{{ errors.address }}</small>
+      <!-- Location Details Section -->
+      <section class="form-section bg-gray-50 rounded-xl p-6 border border-gray-200">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="pi pi-map-marker text-blue-600 text-lg"></i>
+          </div>
+          <h3 class="section-title text-lg font-semibold text-gray-800">Location Details</h3>
+        </div>
+        
+        <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Full Address Field -->
+          <div class="field md:col-span-2" :class="{ 'has-error': errors.address }">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Full Address <span class="required text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <InputText
+                v-model="form.address"
+                placeholder="e.g., Bole Road, Near Atlas Hotel, Addis Ababa"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                :class="{ 'border-red-500 ring-red-500': errors.address }"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-map-marker text-gray-400"></i>
+              </div>
+            </div>
+            <div x-show="errors.address" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ errors.address }}</span>
+            </div>
           </div>
 
+          <!-- Region Field -->
           <div class="field" :class="{ 'has-error': errors.region }">
-            <label>Region <span class="required">*</span></label>
-            <Dropdown
-              v-model="form.region"
-              :options="ethiopianRegions"
-              placeholder="Select region"
-              class="w-full"
-              :class="{ 'p-invalid': errors.region }"
-              filter
-            />
-            <small class="error-msg" v-if="errors.region">{{ errors.region }}</small>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Region <span class="required text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <Dropdown
+                v-model="form.region"
+                :options="ethiopianRegions"
+                placeholder="Select region"
+                class="w-full"
+                :class="{ 'border-red-500 ring-red-500': errors.region }"
+                filter
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-chevron-down text-gray-400"></i>
+              </div>
+            </div>
+            <div x-show="errors.region" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ errors.region }}</span>
+            </div>
           </div>
 
+          <!-- Municipality Field -->
           <div class="field" :class="{ 'has-error': errors.municipality }">
-            <label>Municipality / City <span class="required">*</span></label>
-            <Dropdown
-              v-model="form.municipality"
-              :options="municipalities"
-              placeholder="Select municipality"
-              class="w-full"
-              :class="{ 'p-invalid': errors.municipality }"
-              filter
-            />
-            <small class="error-msg" v-if="errors.municipality">{{ errors.municipality }}</small>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Municipality / City <span class="required text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <Dropdown
+                v-model="form.municipality"
+                :options="municipalities"
+                placeholder="Select municipality"
+                class="w-full"
+                :class="{ 'border-red-500 ring-red-500': errors.municipality }"
+                filter
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-building text-gray-400"></i>
+              </div>
+            </div>
+            <div x-show="errors.municipality" x-transition class="error-msg mt-2 text-sm text-red-600 flex items-center gap-2">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ errors.municipality }}</span>
+            </div>
           </div>
 
+          <!-- Subcity Field -->
           <div class="field">
-            <label>Subcity</label>
-            <InputText v-model="form.subcity" placeholder="e.g., Bole" class="w-full" />
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Subcity</label>
+            <div class="relative">
+              <InputText 
+                v-model="form.subcity" 
+                placeholder="e.g., Bole" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-home text-gray-400"></i>
+              </div>
+            </div>
           </div>
 
           <div class="field">
@@ -102,19 +177,76 @@
             <InputText v-model="form.woreda" placeholder="e.g., Woreda 03" class="w-full" />
           </div>
 
+          <!-- Kebele Field -->
           <div class="field">
-            <label>Kebele</label>
-            <InputText v-model="form.kebele" placeholder="e.g., Kebele 01" class="w-full" />
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Kebele</label>
+            <div class="relative">
+              <InputText 
+                v-model="form.kebele" 
+                placeholder="e.g., Kebele 01" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-map text-gray-400"></i>
+              </div>
+            </div>
           </div>
 
+          <!-- Zone / Block Field -->
           <div class="field">
-            <label>Zone / Block</label>
-            <InputText v-model="form.zone" placeholder="e.g., Zone 4, Block 12" class="w-full" />
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Zone / Block</label>
+            <div class="relative">
+              <InputText 
+                v-model="form.zone" 
+                placeholder="e.g., Zone 4, Block 12" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-map text-gray-400"></i>
+              </div>
+            </div>
           </div>
 
+          <!-- Neighborhood Field -->
           <div class="field">
-            <label>Neighborhood</label>
-            <InputText v-model="form.neighborhood" placeholder="e.g., CMC, Sarbet" class="w-full" />
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Neighborhood</label>
+            <div class="relative">
+              <InputText 
+                v-model="form.neighborhood" 
+                placeholder="e.g., CMC, Sarbet" 
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="pi pi-map text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Property Reference Section -->
+      <section class="form-section bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <i class="pi pi-hashtag text-emerald-600 text-lg"></i>
+          </div>
+          <h3 class="section-title text-lg font-semibold text-gray-800">Property Reference</h3>
+        </div>
+        
+        <div class="ref-badge bg-white rounded-lg p-4 border border-emerald-200 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <i class="pi pi-info-circle text-emerald-600 text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-700">
+                Reference: 
+                <span :class="form.property_ref ? 'text-emerald-600 font-semibold' : 'text-gray-500 italic'">
+                  {{ form.property_ref || 'Will be auto-generated when you save' }}
+                </span>
+              </p>
+              <p class="text-xs text-gray-500 mt-1">Format: ADD-YYYY-XXXXX (Ethiopian Property ID)</p>
+            </div>
           </div>
         </div>
       </section>
@@ -163,39 +295,50 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { usePropertyWizardStore } from '~/stores/propertyWizard'
 
 const store = usePropertyWizardStore()
-const form = store.formData
+const { formData: form } = storeToRefs(store)
 const errors = computed(() => store.stepErrors[1] || {})
 
 // Auto-generate property ref from municipality + address
 watch(
-  () => [form.municipality, form.address],
+  () => [form.value.municipality, form.value.address],
   ([muni, addr]) => {
-    if (muni && addr && !form.property_ref) {
+    if (muni && addr && !form.value.property_ref) {
       const prefix = muni.substring(0, 3).toUpperCase()
       const year = new Date().getFullYear()
       const rand = Math.floor(10000 + Math.random() * 90000)
-      form.property_ref = `${prefix}-${year}-${rand}`
+      form.value.property_ref = `${prefix}-${year}-${rand}`
     }
   }
 )
 
+// Trigger validation when required fields change
+watch(
+  () => [form.value.property_type, form.value.address, form.value.municipality, form.value.region],
+  () => {
+    // Re-validate step 1 when any required field changes
+    store.validateStep(1)
+  },
+  { deep: true }
+)
+
 const registrationDateObj = ref<Date | null>(
-  form.registration_date ? new Date(form.registration_date) : null
+  form.value.registration_date ? new Date(form.value.registration_date) : null
 )
 
 function onDateSelect(date: Date) {
   // Use toLocaleDateString('sv') to get YYYY-MM-DD in the *local* timezone.
   // toISOString() converts to UTC first which shifts the date by -1 day for
   // users east of UTC+0 when the picker fires at midnight local time.
-  form.registration_date = date.toLocaleDateString('sv')
+  form.value.registration_date = date.toLocaleDateString('sv')
 }
 
 function selectType(value: string) {
-  form.property_type = value
-  form.property_subtype = ''
+  form.value.property_type = value
+  form.value.property_subtype = ''
   if (store.stepErrors[1]) delete store.stepErrors[1].property_type
 }
 
@@ -242,7 +385,7 @@ const subtypeMap: Record<string, Array<{ label: string; value: string }>> = {
   ],
 }
 
-const subtypes = computed(() => subtypeMap[form.property_type] || [])
+const subtypes = computed(() => subtypeMap[form.value.property_type] || [])
 
 const ethiopianRegions = [
   'Addis Ababa', 'Dire Dawa', 'Oromia', 'Amhara', 'Tigray',
@@ -259,88 +402,103 @@ const municipalities = [
 </script>
 
 <style scoped>
-.wizard-step { display: flex; flex-direction: column; gap: 0; }
+/* Modern Tailwind-based styles with enhanced interactivity */
 
-.step-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
-}
-
-.step-icon-wrap {
-  width: 48px; height: 48px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-.step-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.2rem; }
-.step-subtitle { font-size: 0.875rem; opacity: 0.85; margin: 0; }
-
-.step-body { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
-
-.form-section { display: flex; flex-direction: column; gap: 1rem; }
-
-.section-title {
-  display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.95rem; font-weight: 600; color: #334155;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  margin: 0;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.25rem;
-}
-
-.field { display: flex; flex-direction: column; gap: 0.4rem; }
-.field.full-width { grid-column: 1 / -1; }
-.field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
-.required { color: #dc2626; }
-.error-msg { color: #dc2626; font-size: 0.75rem; }
-.has-error label { color: #dc2626; }
-
-.type-cards {
-  display: flex; flex-wrap: wrap; gap: 0.5rem;
-}
-
+/* Type card animations */
 .type-card {
-  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-  padding: 0.6rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #64748b;
+  @apply bg-white border-2 border-gray-200 rounded-xl cursor-pointer transition-all duration-300;
   min-width: 80px;
 }
-.type-card:hover { border-color: #059669; color: #059669; }
-.type-card.selected { border-color: #059669; background: #f0fdf4; color: #059669; font-weight: 700; }
-.type-icon { font-size: 1.2rem; }
 
-.ref-badge {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  font-size: 0.875rem;
+.type-card:hover {
+  @apply border-emerald-500 shadow-lg transform scale-105;
 }
 
+.type-card.selected {
+  @apply border-emerald-500 bg-emerald-50 shadow-md ring-2 ring-emerald-500 ring-offset-2;
+}
+
+/* Error states */
+.has-error :deep(.p-inputtext) {
+  @apply border-red-500 ring-red-500;
+}
+
+.has-error :deep(.p-dropdown) {
+  @apply border-red-500 ring-red-500;
+}
+
+/* Enhanced focus states */
+.field :deep(.p-inputtext:focus) {
+  @apply ring-2 ring-blue-500 border-transparent;
+}
+
+.field :deep(.p-dropdown:focus) {
+  @apply ring-2 ring-blue-500 border-transparent;
+}
+
+/* Smooth transitions for all interactive elements */
+.field :deep(.p-inputtext),
+.field :deep(.p-dropdown),
+.type-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading states */
+.field :deep(.p-inputtext:disabled),
+.field :deep(.p-dropdown:disabled) {
+  @apply bg-gray-100 cursor-not-allowed opacity-60;
+}
+
+/* Mobile responsive improvements */
 @media (max-width: 640px) {
-  .step-body { padding: 1rem; }
-  .form-grid { grid-template-columns: 1fr; }
-  .type-cards { gap: 0.35rem; }
-  .type-card { min-width: 70px; padding: 0.5rem 0.6rem; }
+  .type-cards {
+    @apply grid-cols-2 gap-2;
+  }
+  
+  .type-card {
+    @apply min-w-[70px] p-3;
+  }
+}
+
+/* Enhanced hover effects for property type cards */
+.type-card::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 transition-opacity duration-300;
+}
+
+.type-card:hover::before {
+  @apply opacity-100;
+}
+
+/* Custom animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-section {
+  animation: slideIn 0.5s ease-out;
+}
+
+/* Enhanced error message styling */
+.error-msg {
+  @apply flex items-center gap-2 text-sm text-red-600 mt-2;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Reference badge enhancements */
+.ref-badge {
+  @apply bg-white rounded-lg border border-emerald-200 shadow-sm;
+  transition: all 0.3s ease;
+}
+
+.ref-badge:hover {
+  @apply shadow-md border-emerald-300;
 }
 </style>

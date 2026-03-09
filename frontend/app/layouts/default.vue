@@ -75,7 +75,13 @@
         <div v-if="canAccessAdmin" class="nav-section">
           <h3>Admin</h3>
           <ul class="nav-list">
-            <li class="nav-item" :class="{ active: $route.path === '/users' }">
+            <li v-if="canManageScrapers" class="nav-item" :class="{ active: $route.path === '/scrapers' }">
+              <a href="/scrapers" @click.prevent="$router.push('/scrapers')" class="nav-link">
+                <i class="pi pi-globe"></i>
+                <span>Web Scrapers</span>
+              </a>
+            </li>
+            <li v-if="canManageUsers" class="nav-item" :class="{ active: $route.path === '/users' }">
               <a href="/users" @click.prevent="$router.push('/users')" class="nav-link">
                 <i class="pi pi-users"></i>
                 <span>Users</span>
@@ -87,7 +93,7 @@
                 <span>Settings</span>
               </a>
             </li>
-            <li class="nav-item" :class="{ active: $route.path === '/audit' }">
+            <li v-if="hasPermission('system:audit')" class="nav-item" :class="{ active: $route.path === '/audit' }">
               <a href="/audit" @click.prevent="$router.push('/audit')" class="nav-link">
                 <i class="pi pi-shield"></i>
                 <span>Audit Log</span>
@@ -256,19 +262,17 @@
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
+import { usePermissions } from '~/composables/usePermissions.js'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-
-const ADMIN_ROLES = ['system_admin', 'firm_admin', 'municipal_admin']
-const canAccessAdmin = computed(() => {
-  const u = authStore.user
-  if (!u) return false
-  if ((u as any).is_admin) return true
-  const role = (u as any).role || (u as any).user_type
-  return role && ADMIN_ROLES.includes(role)
-})
+const { 
+  canAccessAdmin, 
+  canManageUsers, 
+  canManageScrapers, 
+  hasPermission 
+} = usePermissions()
 
 const sidebarOpen = ref(false)
 const showNotifications = ref(false)

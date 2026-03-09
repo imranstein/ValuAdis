@@ -214,7 +214,7 @@ async def run_scraper(
         scraper_script = os.path.join(backend_path, "scraper", "run_scraper.py")
 
         # Build command
-        cmd = ["python", scraper_script, "--scraper-id", str(scraper_id)]
+        cmd = ["python3", scraper_script, "--scraper-id", str(scraper_id)]
         if run_data and run_data.max_pages:
             cmd.extend(["--max-pages", str(run_data.max_pages)])
         if run_data and run_data.target_items:

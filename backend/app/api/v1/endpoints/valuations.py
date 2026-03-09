@@ -434,6 +434,72 @@ async def override_valuation(
         )
 
 
+@router.post("/quick", response_model=ValuationCalculation, tags=["Valuations"])
+async def quick_valuation(
+    valuation_data: dict,
+    valuation_service: ValuationService = Depends(get_valuation_service)
+):
+    """
+    Quick valuation without requiring existing property
+    
+    Useful for standalone valuation calculations
+    """
+    try:
+        logger.info(
+            "Quick valuation calculation",
+            property_type=valuation_data.get("property_type"),
+            municipality=valuation_data.get("municipality"),
+            area_sqm=valuation_data.get("area_sqm")
+        )
+        
+        # Add default coordinates if not provided
+        if "coordinates" not in valuation_data:
+            # Default to Addis Ababa coordinates as closed polygon [longitude, latitude]
+            valuation_data["coordinates"] = [
+                [38.7000, 9.0000],
+                [38.7500, 9.0500],
+                [38.7500, 9.0000],
+                [38.7000, 9.0000]
+            ]
+        
+        # Add default property_id if not provided
+        if "property_id" not in valuation_data:
+            valuation_data["property_id"] = 0  # Use 0 for quick valuations
+        
+        # Calculate market value
+        market_value = valuation_service.calculate_market_value(valuation_data)
+        
+        # Calculate taxable value (25% per Proclamation 1365/2025)
+        taxable_value = valuation_service.calculate_taxable_value(market_value)
+        
+        calculation_result = ValuationCalculation(
+            market_value=float(market_value),
+            taxable_value=float(taxable_value),
+            base_rate=float(valuation_service._base_rates.get(valuation_data.get("municipality"), 0)),
+            multiplier=float(valuation_service._property_type_multipliers.get(valuation_data.get("property_type"), 1.0))
+        )
+        
+        logger.info(
+            "Quick valuation calculation completed",
+            market_value=float(market_value),
+            taxable_value=float(taxable_value)
+        )
+        
+        return calculation_result
+        
+    except (PropertyValidationError, ValuAdisException) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error("Error in quick valuation", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+
 @router.post("/calculate", response_model=ValuationCalculation, tags=["Valuations"])
 async def calculate_valuation_only(
     valuation_data: ValuationCreate,

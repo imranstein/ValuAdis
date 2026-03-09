@@ -1,13 +1,14 @@
 <template>
-  <div class="property-wizard">
-    <!-- Step Indicator -->
-    <WizardStepIndicator
-      :current="store.currentStep"
-      :completed="store.completedSteps"
-      :progress-percent="store.progressPercent"
-      @go-to="store.goToStep"
-    />
-
+  <EnhancedWizardUI
+    :current-step="store.currentStep"
+    :completed-steps="store.completedSteps"
+    :can-proceed="canProceedToNext"
+    @go-to-step="store.goToStep"
+    @previous-step="previousStep"
+    @next-step="nextStep"
+    @save-draft="handleSaveDraft"
+    @submit-property="handleSubmit"
+  >
     <!-- Draft restored banner -->
     <div v-if="draftRestored" class="draft-banner">
       <i class="pi pi-history text-amber-600" />
@@ -15,87 +16,28 @@
       <Button label="Discard Draft" severity="warning" text size="small" @click="discardDraft" />
     </div>
 
-    <!-- Wizard body -->
-    <div class="wizard-body">
-      <!-- Active step with slide transition -->
-      <div class="wizard-main">
-        <Transition name="slide-fade" mode="out-in">
-          <component :is="currentStepComponent" :key="store.currentStep" class="step-component" />
-        </Transition>
-
-        <!-- Navigation bar -->
-        <div class="wizard-nav">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            text
-            icon="pi pi-times"
-            :disabled="store.isSubmitting"
-            @click="handleCancel"
-          />
-          <Button
-            label="Save Draft"
-            severity="info"
-            outlined
-            icon="pi pi-save"
-            size="small"
-            :disabled="store.isSubmitting"
-            @click="handleSaveDraft"
-          />
-          <span class="step-counter">
-            {{ store.currentStep <= 7 ? `Step ${store.currentStep} of 7` : 'Review & Submit' }}
-          </span>
-          <div class="nav-actions">
-            <Button
-              v-if="store.currentStep > 1"
-              label="Previous"
-              icon="pi pi-arrow-left"
-              severity="secondary"
-              outlined
-              :disabled="store.isSubmitting"
-              @click="store.prevStep()"
-            />
-            <!-- Steps 1–6: plain Next -->
-            <Button
-              v-if="store.currentStep < 7"
-              label="Next"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              severity="success"
-              :disabled="store.isSubmitting"
-              @click="store.nextStep()"
-            />
-            <!-- Step 7: advance into Review & Submit -->
-            <Button
-              v-if="store.currentStep === 7"
-              label="Review & Submit"
-              icon="pi pi-check-circle"
-              icon-pos="right"
-              severity="success"
-              :disabled="store.isSubmitting"
-              @click="store.nextStep()"
-            />
-            <!-- Step 8 (review): submit handled inside WizardReviewSummary -->
-          </div>
-        </div>
-      </div>
+    <!-- Active step with slide transition -->
+    <div class="wizard-main">
+      <Transition name="slide-fade" mode="out-in">
+        <component :is="currentStepComponent" :key="store.currentStep" class="step-component" />
+      </Transition>
     </div>
-  </div>
+  </EnhancedWizardUI>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePropertyWizardStore } from '~/stores/propertyWizard'
-import WizardStepIndicator from '~/components/property/wizard/WizardStepIndicator.vue'
-import WizardStep1BasicInfo from '~/components/property/wizard/WizardStep1BasicInfo.vue'
-import WizardStep2Location from '~/components/property/wizard/WizardStep2Location.vue'
-import WizardStep3Physical from '~/components/property/wizard/WizardStep3Physical.vue'
-import WizardStep4Amenities from '~/components/property/wizard/WizardStep4Amenities.vue'
-import WizardStep5Valuation from '~/components/property/wizard/WizardStep5Valuation.vue'
-import WizardStep6Ownership from '~/components/property/wizard/WizardStep6Ownership.vue'
-import WizardStep7Documents from '~/components/property/wizard/WizardStep7Documents.vue'
-import WizardReviewSummary from '~/components/property/wizard/WizardReviewSummary.vue'
+import EnhancedWizardUI from './wizard/EnhancedWizardUI.vue'
+import WizardStep1BasicInfo from './wizard/WizardStep1BasicInfo.vue'
+import WizardStep2Location from './wizard/WizardStep2Location.vue'
+import WizardStep3Physical from './wizard/WizardStep3Physical.vue'
+import WizardStep4Amenities from './wizard/WizardStep4Amenities.vue'
+import WizardStep5Valuation from './wizard/WizardStep5Valuation.vue'
+import WizardStep6Ownership from './wizard/WizardStep6Ownership.vue'
+import WizardStep7Documents from './wizard/WizardStep7Documents.vue'
+import WizardReviewSummary from './wizard/WizardReviewSummary.vue'
 
 const store = usePropertyWizardStore()
 const router = useRouter()
@@ -152,6 +94,22 @@ function handleCancel() {
 function handleSaveDraft() {
   store.saveDraft()
 }
+
+function previousStep() {
+  store.previousStep()
+}
+
+function nextStep() {
+  store.nextStep()
+}
+
+function handleSubmit() {
+  store.submitProperty()
+}
+
+const canProceedToNext = computed(() => {
+  return !store.stepErrors[store.currentStep] || Object.keys(store.stepErrors[store.currentStep] || {}).length === 0
+})
 </script>
 
 <style scoped>

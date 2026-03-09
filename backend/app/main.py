@@ -98,10 +98,17 @@ app = FastAPI(
 
 # CORS — environment-aware configuration
 if settings.ENVIRONMENT == "development":
-    # Development: allow all origins with credentials
+    # Development: allow specific origins with credentials
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "http://localhost:3020",
+            "http://127.0.0.1:3020",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8020",
+            "http://127.0.0.1:8020",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -134,6 +141,10 @@ if settings.ENVIRONMENT != "development":
 # ---------------------------------------------------------------------------
 
 app.include_router(api_router, prefix="/api/v1")
+
+# Add minimal auth router for testing
+from minimal_auth_fix import router as minimal_auth_router
+app.include_router(minimal_auth_router, prefix="/api/v1")
 
 
 # ---------------------------------------------------------------------------

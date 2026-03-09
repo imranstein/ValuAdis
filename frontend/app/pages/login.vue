@@ -48,7 +48,7 @@
           :disabled="authStore.loading"
         />
 
-        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / password123</p>
+        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / admin123</p>
       </form>
     </div>
   </div>

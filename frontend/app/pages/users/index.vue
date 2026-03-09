@@ -462,6 +462,7 @@
 definePageMeta({ middleware: ['admin'] })
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { userService } from '~/services/userService.js'
 
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -688,59 +689,39 @@ async function saveUser() {
   isSubmitting.value = true
 
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const userData = {
-      first_name: userForm.value.first_name,
-      last_name: userForm.value.last_name,
+    const userData = userService.formatUserData({
+      full_name: `${userForm.value.first_name} ${userForm.value.last_name}`.trim(),
       email: userForm.value.email,
       phone: userForm.value.phone,
-      role: userForm.value.role,
       municipality: userForm.value.municipality,
       ...(userForm.value.password && { password: userForm.value.password })
-    }
+    })
 
-    let response
+    let result
     if (showEditModal.value && editingUser.value) {
       // Update existing user
-      response = await fetch(`${apiBase}/api/v1/users/${editingUser.value.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userData)
-      })
+      result = await userService.updateUser(editingUser.value.id, userData)
     } else {
       // Create new user
-      response = await fetch(`${apiBase}/api/v1/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userData)
-      })
+      result = await userService.createUser(userData)
     }
 
-    if (response.ok) {
-      const data = await response.json()
-      
+    if (result.success) {
       if (showEditModal.value) {
         // Update user in local array
         const index = users.value.findIndex(u => u.id === editingUser.value.id)
         if (index > -1) {
-          users.value[index] = { ...users.value[index], ...data.data }
+          users.value[index] = { ...users.value[index], ...result.data }
         }
       } else {
         // Add new user to local array
-        users.value.push(data.data)
+        users.value.push(result.data)
       }
       
       closeModal()
       alert(showEditModal.value ? 'User updated successfully!' : 'User created successfully!')
     } else {
-      const error = await response.json()
-      alert(error.detail || 'Failed to save user')
+      alert(result.error || 'Failed to save user')
     }
   } catch (error) {
     console.error('Error saving user:', error)
@@ -751,29 +732,19 @@ async function saveUser() {
 }
 
 async function toggleUserStatus(user) {
-  const newStatus = user.status === 'active' ? 'inactive' : 'active'
+  const newStatus = user.status === 'active' ? false : true
   
-  if (!confirm(`Are you sure you want to ${newStatus === 'active' ? 'activate' : 'deactivate'} this user?`)) {
+  if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this user?`)) {
     return
   }
 
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`${apiBase}/api/v1/users/${user.id}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
-
-    if (response.ok) {
-      user.status = newStatus
-      alert(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`)
+    const result = await userService.toggleUserStatus(user.id, newStatus)
+    if (result.success) {
+      user.status = newStatus ? 'active' : 'inactive'
+      alert(`User ${newStatus ? 'activated' : 'deactivated'} successfully!`)
     } else {
-      const error = await response.json()
-      alert(error.detail || 'Failed to update user status')
+      alert(result.error || 'Failed to update user status')
     }
   } catch (error) {
     console.error('Error updating user status:', error)
@@ -787,23 +758,15 @@ async function deleteUser(user) {
   }
 
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`${apiBase}/api/v1/users/${user.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
+    const result = await userService.deleteUser(user.id)
+    if (result.success) {
       const index = users.value.findIndex(u => u.id === user.id)
       if (index > -1) {
         users.value.splice(index, 1)
       }
       alert('User deleted successfully!')
     } else {
-      const error = await response.json()
-      alert(error.detail || 'Failed to delete user')
+      alert(result.error || 'Failed to delete user')
     }
   } catch (error) {
     console.error('Error deleting user:', error)
@@ -811,24 +774,42 @@ async function deleteUser(user) {
   }
 }
 
-function exportUsers() {
-  console.log('Exporting users...')
-  // Implement export functionality
+async function exportUsers() {
+  try {
+    const result = await userService.exportUsers({
+      format: 'csv',
+      municipality: selectedMunicipality.value || undefined,
+      role: selectedRole.value || undefined
+    })
+    
+    if (result.success) {
+      // Create download link
+      const blob = new Blob([result.data], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      
+      alert('Users exported successfully!')
+    } else {
+      alert(result.error || 'Failed to export users')
+    }
+  } catch (error) {
+    console.error('Error exporting users:', error)
+    alert('Network error. Please try again.')
+  }
 }
 
 onMounted(async () => {
   // Load users from API
   try {
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`${apiBase}/api/v1/users`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      const raw = data.data || []
+    const result = await userService.getUsers()
+    if (result.success) {
+      const raw = result.data || []
       users.value = raw.map(u => ({
         ...u,
         name: u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
@@ -837,7 +818,7 @@ onMounted(async () => {
         last_login: u.last_login || u.updated_at
       }))
     } else {
-      console.error('Failed to load users from API')
+      console.error('Failed to load users from API:', result.error)
       users.value = []
     }
   } catch (error) {

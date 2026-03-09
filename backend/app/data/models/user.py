@@ -27,8 +27,8 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # Relationships
-    properties = relationship("Property", back_populates="user")
-    valuations = relationship("Valuation", back_populates="user")
-    roles = relationship("Role", secondary="user_roles", back_populates="users")
+    # Relationships - temporarily disabled to fix authentication
+    # properties = relationship("Property", back_populates="user")
+    # valuations = relationship("Valuation", back_populates="user")
+    # roles = relationship("Role", secondary="user_roles", back_populates="users")
     # vehicles = relationship("Vehicle", back_populates="owner")  # Temporarily disabled

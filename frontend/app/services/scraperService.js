@@ -15,14 +15,14 @@ class ScraperService
 
   getAuthHeaders ()
   {
-    // With httpOnly cookies, we don't need to send Authorization header
-    // The browser automatically includes the httpOnly cookie
-    return {}
+    // Get JWT token from localStorage
+    const token = localStorage.getItem( 'valuadis_token' )
+    return token ? { 'Authorization': `Bearer ${ token }` } : {}
   }
 
   getAuthCredentials ()
   {
-    // Include credentials for httpOnly cookie support
+    // Include credentials for API calls
     return { credentials: 'include' }
   }
 

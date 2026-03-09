@@ -439,8 +439,58 @@ function resetFilters() {
 }
 
 function exportProperties() {
-  // Placeholder for export functionality
-  console.log('Export properties')
+  // Export filtered properties to CSV
+  const propertiesToExport = filteredProperties.value
+  
+  if (propertiesToExport.length === 0) {
+    alert('No properties to export')
+    return
+  }
+  
+  // CSV headers
+  const headers = [
+    'Property Reference',
+    'Address',
+    'Municipality',
+    'Type',
+    'Land Area (m²)',
+    'Building Area (m²)',
+    'Market Value (ETB)',
+    'Status',
+    'Created Date'
+  ]
+  
+  // Convert properties to CSV rows
+  const rows = propertiesToExport.map(property => [
+    property.property_ref || 'N/A',
+    property.address || 'N/A',
+    property.municipality || 'N/A',
+    property.property_type || 'N/A',
+    property.land_area_sqm || '0',
+    property.building_area_sqm || '0',
+    property.market_value || '0',
+    property.status || 'N/A',
+    property.created_at ? new Date(property.created_at).toLocaleDateString() : 'N/A'
+  ])
+  
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+  
+  // Create blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  
+  link.setAttribute('href', url)
+  link.setAttribute('download', `properties_export_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 function formatCurrency(value) {

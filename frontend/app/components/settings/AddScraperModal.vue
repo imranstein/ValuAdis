@@ -1,29 +1,14 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
+  <div v-if="showAddScraperModal" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
-        <h2>{{ editMode ? 'Edit Scraper' : 'Add New Scraper' }}</h2>
+        <h2>{{ props.isEditMode ? 'Edit Scraper' : 'Add New Scraper' }}</h2>
         <button class="close-btn" @click="$emit('close')">
           <i class="pi pi-times"></i>
         </button>
       </div>
 
       <div class="modal-body">
-        <!-- Scraper Type Selection -->
-        <div class="form-group">
-          <label>Scraper Type *</label>
-          <div style="display: flex; gap: 10px; margin: 10px 0;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="radio" v-model="formData.scraper_type" value="property" style="margin-right: 8px;">
-              🏠 Property
-            </label>
-            <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="radio" v-model="formData.scraper_type" value="vehicle" style="margin-right: 8px;">
-              🚗 Vehicle
-            </label>
-          </div>
-        </div>
-
         <form @submit.prevent="handleSubmit">
           <!-- Basic Configuration -->
           <div class="form-section">
@@ -34,9 +19,10 @@
               <input 
                 type="text" 
                 v-model="formData.domain" 
-                placeholder="e.g., livingethio.com"
+                placeholder="e.g., mekelleproperty.com"
                 required
               />
+              <small>Domain name of the Ethiopian property website</small>
             </div>
 
             <div class="form-group">
@@ -44,10 +30,10 @@
               <input 
                 type="text" 
                 v-model="formData.url_template" 
-                placeholder="https://livingethio.com/properties?page={page}"
+                placeholder="https://mekelleproperty.com/properties?page={page}"
                 required
               />
-              <small>Use {page} as placeholder for page number</small>
+              <small>Must include {page} placeholder for pagination</small>
             </div>
 
             <div class="form-row">
@@ -67,82 +53,17 @@
                   type="number" 
                   v-model.number="formData.max_pages" 
                   min="1" 
-                  max="1000"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Advanced Configuration -->
-          <div class="form-section">
-            <h3>⚙️ Advanced Configuration</h3>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label>Request Delay (seconds)</label>
-                <input 
-                  type="number" 
-                  v-model.number="formData.request_delay" 
-                  min="0" 
-                  max="60"
-                  placeholder="2"
-                />
-                <small>Delay between requests to avoid rate limiting</small>
-              </div>
-
-              <div class="form-group">
-                <label>Timeout (seconds)</label>
-                <input 
-                  type="number" 
-                  v-model.number="formData.timeout" 
-                  min="5" 
-                  max="300"
-                  placeholder="30"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Custom Headers (JSON)</label>
-              <textarea 
-                v-model="formData.custom_headers_json"
-                rows="3"
-                placeholder='{"User-Agent": "Mozilla/5.0...", "Accept-Language": "en-US,en"}'
-              ></textarea>
-              <small>Enter valid JSON format for custom HTTP headers</small>
-            </div>
-
-            <div class="form-group">
-              <label>Pagination Type</label>
-              <select v-model="formData.pagination_type">
-                <option value="page_param">Page Parameter (?page=)</option>
-                <option value="offset">Offset Parameter (?offset=)</option>
-                <option value="infinite_scroll">Infinite Scroll</option>
-                <option value="load_more">Load More Button</option>
-                <option value="none">No Pagination</option>
-              </select>
-            </div>
-
-            <div class="form-row" v-if="formData.pagination_type !== 'none'">
-              <div class="form-group">
-                <label>Max Items per Page</label>
-                <input 
-                  type="number" 
-                  v-model.number="formData.items_per_page" 
-                  min="1" 
                   max="100"
-                  placeholder="20"
                 />
               </div>
+            </div>
 
-              <div class="form-group">
-                <label>Pagination Selector</label>
-                <input 
-                  type="text" 
-                  v-model="formData.pagination_selector" 
-                  placeholder=".next-page, .load-more"
-                />
-              </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" v-model="formData.enabled">
+                Enable scraper
+              </label>
+              <small>Scraping will only run when enabled</small>
             </div>
           </div>
 
@@ -174,56 +95,56 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label>{{ formData.scraper_type === 'property' ? 'Location' : 'Make' }} Selector</label>
+                <label>Location Selector *</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.location" 
-                  placeholder=".location, .make"
+                  placeholder=".location, .address"
                 />
               </div>
 
               <div class="form-group">
-                <label>{{ formData.scraper_type === 'property' ? 'Area/Size' : 'Model' }} Selector</label>
+                <label>Area/Size Selector</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.area" 
-                  placeholder=".area, .model"
+                  placeholder=".area, .size"
                 />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>{{ formData.scraper_type === 'property' ? 'Property Type' : 'Year' }} Selector</label>
+                <label>Property Type Selector</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.property_type" 
-                  placeholder=".property-type, .year"
+                  placeholder=".property-type, .type"
                 />
               </div>
 
               <div class="form-group">
-                <label>{{ formData.scraper_type === 'property' ? 'Bedrooms' : 'Mileage' }} Selector</label>
+                <label>Bedrooms Selector</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.bedrooms" 
-                  placeholder=".bedrooms, .mileage"
+                  placeholder=".bedrooms, .rooms"
                 />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>{{ formData.scraper_type === 'property' ? 'Bathrooms' : 'Fuel Type' }} Selector</label>
+                <label>Bathrooms Selector</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.bathrooms" 
-                  placeholder=".bathrooms, .fuel-type"
+                  placeholder=".bathrooms, .baths"
                 />
               </div>
 
               <div class="form-group">
-                <label>Listing URL Selector</label>
+                <label>Listing URL Selector *</label>
                 <input 
                   type="text" 
                   v-model="formData.selectors.listing_url" 
@@ -237,8 +158,8 @@
             <button type="button" class="btn-secondary" @click="$emit('close')">
               Cancel
             </button>
-            <button type="submit" class="btn-primary" :disabled="isSubmitting">
-              {{ isSubmitting ? 'Saving...' : (editMode ? 'Update Scraper' : 'Add Scraper') }}
+            <button type="submit" class="btn-primary" :disabled="isSaving">
+              {{ isSaving ? 'Saving...' : (props.isEditMode ? 'Update Scraper' : 'Add Scraper') }}
             </button>
           </div>
         </form>
@@ -251,9 +172,8 @@
 import { ref, watch, defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  isOpen: Boolean,
   scraper: Object,
-  editMode: Boolean
+  isEditMode: Boolean
 })
 
 const emit = defineEmits(['close', 'save'])
@@ -261,18 +181,11 @@ const emit = defineEmits(['close', 'save'])
 const isSaving = ref(false)
 
 const formData = ref({
-  scraper_type: 'property',
   domain: '',
   url_template: '',
   enabled: true,
   schedule: 'daily',
   max_pages: 50,
-  request_delay: 2,
-  timeout: 30,
-  custom_headers_json: '{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}',
-  pagination_type: 'page_param',
-  items_per_page: 20,
-  pagination_selector: '',
   selectors: {
     title: '',
     price: '',
@@ -286,7 +199,7 @@ const formData = ref({
 })
 
 watch(() => props.scraper, (newScraper) => {
-  if (newScraper && props.editMode) {
+  if (newScraper && props.isEditMode) {
     formData.value = {
       domain: newScraper.domain,
       url_template: newScraper.url_template,
@@ -299,6 +212,19 @@ watch(() => props.scraper, (newScraper) => {
 }, { immediate: true })
 
 const handleSubmit = async () => {
+  // Validate required fields
+  if (!formData.value.url_template.includes('{page}')) {
+    alert('URL template must contain {page} placeholder')
+    return
+  }
+  
+  const requiredSelectors = ['title', 'price', 'location', 'listing_url']
+  const missingSelectors = requiredSelectors.filter(selector => !formData.value.selectors[selector])
+  if (missingSelectors.length > 0) {
+    alert(`Missing required selectors: ${missingSelectors.join(', ')}`)
+    return
+  }
+  
   isSaving.value = true
   try {
     await emit('save', formData.value)

@@ -779,6 +779,21 @@ function resetForm() {
   }
 }
 
+function getPropertyTypeLabel(type) {
+  const labels = {
+    'residential': 'Residential',
+    'commercial': 'Commercial',
+    'industrial': 'Industrial',
+    'agricultural': 'Agricultural',
+    'mixed_use': 'Mixed Use',
+    'government': 'Government',
+    'religious': 'Religious',
+    'educational': 'Educational',
+    'healthcare': 'Healthcare'
+  }
+  return labels[type] || type
+}
+
 function saveDraft() {
   // Save form data to localStorage
   localStorage.setItem('valuation_draft', JSON.stringify(formData.value))

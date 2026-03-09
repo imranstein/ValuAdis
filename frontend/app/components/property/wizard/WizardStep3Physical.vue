@@ -208,16 +208,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { usePropertyWizardStore } from '~/stores/propertyWizard'
 
 const store = usePropertyWizardStore()
-const form = store.formData
+const { formData: form } = storeToRefs(store)
 const errors = computed(() => store.stepErrors[3] || {})
 
 const currentYear = new Date().getFullYear()
 
 const buildingAge = computed(() =>
-  form.year_built ? currentYear - form.year_built : null
+  form.value.year_built ? currentYear - form.value.year_built : null
 )
 
 function onAreaChange() {
@@ -225,11 +226,11 @@ function onAreaChange() {
 }
 
 function selectQuality(value: string) {
-  form.construction_quality = value
+  form.value.construction_quality = value
 }
 
 function selectCondition(value: string) {
-  form.condition = value
+  form.value.condition = value
   if (store.stepErrors[3]) delete store.stepErrors[3].condition
 }
 

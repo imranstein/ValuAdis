@@ -94,7 +94,7 @@ class AuthService {
   }
 
   setToken(token: string): void {
-    if (process.client) localStorage.setItem('valuadis_token', token)
+    if (process.client || typeof window !== 'undefined') localStorage.setItem('valuadis_token', token)
   }
 
   getToken(): string | null {
@@ -107,7 +107,7 @@ class AuthService {
   }
 
   setRefreshToken(token: string): void {
-    if (process.client) localStorage.setItem('valuadis_refresh_token', token)
+    if (process.client || typeof window !== 'undefined') localStorage.setItem('valuadis_refresh_token', token)
   }
 
   getRefreshToken(): string | null {

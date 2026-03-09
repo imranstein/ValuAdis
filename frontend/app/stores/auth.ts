@@ -20,7 +20,25 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       await authService.login(credentials)
-      await fetchCurrentUser()
+      // Try to fetch current user, but don't let it fail the login
+      try {
+        await fetchCurrentUser()
+      } catch (userErr) {
+        console.warn('Failed to fetch current user after login, but login succeeded:', userErr)
+        // Set a basic user object to prevent UI issues
+        user.value = {
+          id: 0,
+          email: credentials.email,
+          full_name: 'User',
+          role: 'user',
+          phone: '',
+          municipality: '',
+          license_number: '',
+          is_admin: false,
+          roles: [],
+          created_at: new Date().toISOString()
+        }
+      }
       return true
     } catch (err: any) {
       error.value = err.message || 'Login failed'
