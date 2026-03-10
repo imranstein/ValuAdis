@@ -1,7 +1,8 @@
 # ValuAdis E2E Testing Plan - Implementation Status
 
 **Last Updated:** March 10, 2026  
-**Test Run Prerequisites:** Backend on port 8020, Frontend on port 3020
+**Test Run Prerequisites:** Frontend on port 3020. API mocking enables tests without backend.  
+**Current Status:** 68+ passed, 20 skipped (properties-crud skipped; auth login/invalid-credentials skipped)
 
 ## Phase 1: Foundation & Core Authentication (Week 1)
 

@@ -5,6 +5,7 @@ import { PropertiesPage } from '../page-objects/PropertiesPage';
 import { ValuationsPage } from '../page-objects/ValuationsPage';
 import { SettingsPage } from '../page-objects/SettingsPage';
 import { UsersPage } from '../page-objects/UsersPage';
+import { setupApiMock } from './api-mock';
 
 type MyFixtures = {
   loginPage: LoginPage;
@@ -16,6 +17,10 @@ type MyFixtures = {
 };
 
 export const test = base.extend<MyFixtures>({
+  page: async ({ page }, use) => {
+    await setupApiMock(page);
+    await use(page);
+  },
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
   },

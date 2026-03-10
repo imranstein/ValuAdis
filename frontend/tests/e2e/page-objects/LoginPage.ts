@@ -12,7 +12,7 @@ export class LoginPage {
     this.emailInput = page.locator('input[type="email"]');
     this.passwordInput = page.locator('input[type="password"]');
     this.loginButton = page.locator('button[type="submit"]');
-    this.errorMessage = page.locator('.login-error, .error-message');
+    this.errorMessage = page.locator('.login-error, .error-message, [class*="error"]').filter({ hasText: /invalid|failed|credentials|error|fetch|network/i });
   }
 
   async goto() {

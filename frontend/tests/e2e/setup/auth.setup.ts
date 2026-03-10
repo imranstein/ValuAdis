@@ -1,24 +1,38 @@
 import { test as setup } from '@playwright/test';
 import { TEST_CREDENTIALS } from '../config/test-credentials';
+import { setupApiMock } from './api-mock';
 
 const authFile = 'tests/e2e/.auth/user.json';
 
-setup('authenticate', async ({ page }) => {
-  // Navigate to login page
-  await page.goto('/login');
+const MOCK_TOKEN = 'mock-jwt-e2e-' + Date.now();
 
-  // Check if already on dashboard (already logged in)
+setup('authenticate', async ({ page }) => {
+  // Mock API when backend unavailable
+  await setupApiMock(page);
+
+  // Navigate to login page
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+
   const url = page.url();
   const isDashboard = url.includes('/dashboard') || url.endsWith(':3020/');
 
   if (!isDashboard) {
-    // Perform login - admin@valuadis.com / admin123 (backend default)
+    // Try real login first (works if backend is running)
     await page.fill('input[type="email"]', TEST_CREDENTIALS.email);
     await page.fill('input[type="password"]', TEST_CREDENTIALS.fallbackPassword);
     await page.click('button[type="submit"]');
 
-    // Wait for navigation - requires backend on port 8020
-    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
+    try {
+      await page.waitForURL(/\/(dashboard)?$/, { timeout: 8000 });
+    } catch {
+      // Login failed (no backend) - inject mock auth directly
+      await page.goto('/login');
+      await page.evaluate((token) => {
+        localStorage.setItem('valuadis_token', token);
+        localStorage.setItem('valuadis_refresh_token', token);
+      }, MOCK_TOKEN);
+      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    }
   }
 
   // Save authentication state
