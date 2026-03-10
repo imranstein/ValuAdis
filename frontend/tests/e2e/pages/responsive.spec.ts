@@ -1,8 +1,7 @@
 import { test, expect } from '../setup/fixtures';
 import { LoginPage } from '../page-objects/LoginPage';
 
-const VALID_EMAIL = 'admin@valuadis.com';
-const VALID_PASSWORD = 'admin123';
+import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Responsive Design', () => {
   test('should display login page correctly on desktop viewport', async ({ page }) => {
@@ -36,7 +35,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 1024, height: 768 });
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
     await page.waitForTimeout(2000);
@@ -47,7 +46,7 @@ test.describe('Responsive Design', () => {
   test('should handle viewport resizing', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
     const viewports = [{ width: 1024, height: 768 }, { width: 375, height: 667 }];
@@ -63,7 +62,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
     await page.goto('/properties');

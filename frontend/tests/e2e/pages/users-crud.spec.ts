@@ -1,13 +1,11 @@
 import { test, expect } from '../setup/fixtures';
+import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Users CRUD - Phase 2 Core Operations', () => {
-  const VALID_EMAIL = 'admin@valuadis.com';
-  const VALID_PASSWORD = 'password123';
-
   test.beforeEach(async ({ loginPage, page }) => {
     // Login before each test
     await loginPage.goto();
-    await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     
     // Wait for successful login
     const isLoggedIn = await loginPage.isLoggedIn();

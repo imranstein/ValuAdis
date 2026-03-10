@@ -1,13 +1,12 @@
 import { test, expect } from '../setup/fixtures';
+import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Basic Navigation - Phase 1 Foundation', () => {
-  const VALID_EMAIL = 'admin@valuadis.com';
-  const VALID_PASSWORD = 'admin123';
 
   test.beforeEach(async ({ loginPage, page }) => {
     // Login before each navigation test
     await loginPage.goto();
-    await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     
     // Wait for successful login
     const isLoggedIn = await loginPage.isLoggedIn();
