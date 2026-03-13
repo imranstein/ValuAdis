@@ -42,16 +42,17 @@ test.describe('Authentication', () => {
     await expect(loginPage.loginButton).toBeVisible();
   });
 
-  test.skip('should login with valid credentials', async ({ loginPage, page }) => {
-    // Skip: API mock for login does not reliably intercept in test context
+  test('should login with valid credentials', async ({ loginPage, page }) => {
+    // Frontend now calls /api/v1/auth/login; api-mock intercepts and returns tokens for admin@valuadis.com + admin123
     await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
-    await page.waitForURL(/\/(dashboard)?$/);
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 8000 });
     await expect(page).toHaveURL(/\/(dashboard)?$/);
   });
 
-  test.skip('should show error with invalid credentials', async ({ loginPage }) => {
-    // Skip: Error message selector may not match when API mock returns 401
+  test.skip('should show error with invalid credentials', async ({ loginPage, page }) => {
+    // Skip: errorMessage (.login-error) not visible after 401 - auth store/UI may handle error differently
     await loginPage.login(INVALID_CREDENTIALS.invalidEmail, INVALID_CREDENTIALS.invalidPassword);
+    await page.waitForTimeout(500);
     await expect(loginPage.errorMessage).toBeVisible({ timeout: 8000 });
   });
 

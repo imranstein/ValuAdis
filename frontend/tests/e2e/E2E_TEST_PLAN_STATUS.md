@@ -2,7 +2,7 @@
 
 **Last Updated:** March 10, 2026  
 **Test Run Prerequisites:** Frontend on port 3020. API mocking enables tests without backend.  
-**Current Status:** 68+ passed, 20 skipped (properties-crud skipped; auth login/invalid-credentials skipped)
+**Current Status:** 69+ passed, 19 skipped (properties-crud skipped; auth invalid-credentials skipped; login with valid credentials now passing)
 
 ## Phase 1: Foundation & Core Authentication (Week 1)
 

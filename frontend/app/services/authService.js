@@ -9,7 +9,7 @@ class AuthService
   {
     try
     {
-      const response = await fetch( `${ this.baseURL }/api/v1/login-fixed`, {
+      const response = await fetch( `${ this.baseURL }/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
