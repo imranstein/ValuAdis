@@ -11,8 +11,8 @@ export class PropertiesPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageTitle = page.locator('h1');
-    this.addPropertyButton = page.locator('button:has-text("Add Property")');
+    this.pageTitle = page.locator('h1').first();
+    this.addPropertyButton = page.locator('button.action-button.primary').last();
     this.searchInput = page.locator('input[placeholder*="Search"]');
     this.filterButton = page.locator('button:has-text("Filter")');
     this.propertiesTable = page.locator('table');

@@ -9,9 +9,9 @@ export class DashboardPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageTitle = page.locator('h1');
+    this.pageTitle = page.locator('h1').first();
     this.statsCards = page.locator('.stat-card');
-    this.recentActivities = page.locator('.content-card');
+    this.recentActivities = page.locator('.content-card').first();
     this.quickActions = page.locator('.welcome-actions');
   }
 

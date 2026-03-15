@@ -1,8 +1,8 @@
 import { test, expect } from '../setup/fixtures';
 
 test.describe('Authentication', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+  test.beforeEach(async ({ loginPage }) => {
+    await loginPage.goto();
   });
 
   test('should display login page', async ({ loginPage }) => {
@@ -12,7 +12,7 @@ test.describe('Authentication', () => {
   });
 
   test('should login with valid credentials', async ({ loginPage, page }) => {
-    await loginPage.login('admin@valuadis.gov.et', 'admin123');
+    await loginPage.login('admin@valuadis.com', 'Admin123!');
     await page.waitForURL(/\/(dashboard)?$/);
     await expect(page).toHaveURL(/\/(dashboard)?$/);
   });
@@ -23,18 +23,18 @@ test.describe('Authentication', () => {
   });
 
   test('should show error with empty email', async ({ loginPage }) => {
-    await loginPage.login('', 'password123');
+    await loginPage.login('', 'Admin123!');
     await expect(loginPage.emailInput).toHaveAttribute('required');
   });
 
   test('should show error with empty password', async ({ loginPage }) => {
-    await loginPage.login('admin@valuadis.gov.et', '');
+    await loginPage.login('admin@valuadis.com', '');
     await expect(loginPage.passwordInput).toHaveAttribute('required');
   });
 
   test('should validate email format', async ({ loginPage, page }) => {
     await loginPage.emailInput.fill('invalid-email');
-    await loginPage.passwordInput.fill('password123');
+    await loginPage.passwordInput.fill('Admin123!');
     await loginPage.loginButton.click();
     
     const validationMessage = await loginPage.emailInput.evaluate((el: HTMLInputElement) => el.validationMessage);
@@ -42,7 +42,7 @@ test.describe('Authentication', () => {
   });
 
   test('should logout successfully', async ({ loginPage, page }) => {
-    await loginPage.login('admin@valuadis.gov.et', 'admin123');
+    await loginPage.login('admin@valuadis.com', 'Admin123!');
     await page.waitForURL(/\/(dashboard)?$/);
     
     const logoutButton = page.locator('button:has-text("Logout"), a:has-text("Logout")');
@@ -52,7 +52,7 @@ test.describe('Authentication', () => {
   });
 
   test('should redirect to dashboard when already logged in', async ({ loginPage, page }) => {
-    await loginPage.login('admin@valuadis.gov.et', 'admin123');
+    await loginPage.login('admin@valuadis.com', 'Admin123!');
     await page.waitForURL(/\/(dashboard)?$/);
     
     await page.goto('/');

@@ -12,7 +12,7 @@ setup('authenticate', async ({ page }) => {
   if (!isDashboard) {
     // Perform login
     await page.fill('input[type="email"]', 'admin@valuadis.com');
-    await page.fill('input[type="password"]', 'admin123');
+    await page.fill('input[type="password"]', 'Admin123!');
     await page.click('button[type="submit"]');
 
     // Wait for navigation to complete

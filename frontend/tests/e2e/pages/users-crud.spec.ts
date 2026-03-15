@@ -2,7 +2,7 @@ import { test, expect } from '../setup/fixtures';
 
 test.describe('Users CRUD - Phase 2 Core Operations', () => {
   const VALID_EMAIL = 'admin@valuadis.com';
-  const VALID_PASSWORD = 'password123';
+  const VALID_PASSWORD = 'Admin123!';
 
   test.beforeEach(async ({ loginPage, page }) => {
     // Login before each test

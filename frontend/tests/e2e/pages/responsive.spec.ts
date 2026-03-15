@@ -2,7 +2,7 @@ import { test, expect } from '../setup/fixtures';
 import { LoginPage } from '../page-objects/LoginPage';
 
 const VALID_EMAIL = 'admin@valuadis.com';
-const VALID_PASSWORD = 'admin123';
+const VALID_PASSWORD = 'Admin123!';
 
 test.describe('Responsive Design', () => {
   test('should display login page correctly on desktop viewport', async ({ page }) => {
