@@ -2,8 +2,9 @@
 
 ## What was implemented
 
-1. **Unified auth and config**
-   - Single credentials: `admin@valuadis.com` / `password123` in `auth.setup.ts`, `auth.spec.ts`, and all specs that login (navigation, properties-crud, valuations-crud, users-crud, responsive).
+1. **Unified auth and config** (Updated March 10, 2026)
+   - Single credentials: `admin@valuadis.com` / `admin123` in `tests/e2e/config/test-credentials.ts`
+   - All specs import from test-credentials: auth, navigation, properties-crud, valuations-crud, users-crud, responsive.
    - Logged-in detection: `LoginPage.isLoggedIn()` uses path `/` or `/dashboard` or "Welcome back"; auth setup uses the same.
    - Playwright setup project runs `auth.setup.ts` before dependent projects so `tests/e2e/.auth/user.json` exists.
 

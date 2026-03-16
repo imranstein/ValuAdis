@@ -21,10 +21,10 @@ export class PropertiesPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageTitle = page.locator('h1').first();
-    this.addPropertyButton = page.locator('button.action-button.primary').last();
+    this.pageTitle = page.getByRole('heading', { name: /properties/i }).first();
+    this.addPropertyButton = page.getByRole('button', { name: /create property/i }).first();
     this.searchInput = page.locator('input[placeholder*="Search"]');
-    this.filterButton = page.locator('button:has-text("Filter")');
+    this.filterButton = page.locator('button:has-text("Reset")');
     this.propertiesTable = page.locator('table');
     this.propertyRows = page.locator('tbody tr');
     this.municipalitySelect = page.locator('select').first();
@@ -35,8 +35,8 @@ export class PropertiesPage {
     this.saveButton = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Add")');
     this.cancelButton = page.locator('button:has-text("Cancel")');
     this.confirmDeleteButton = page.locator('button:has-text("Delete"), button:has-text("Confirm")');
-    this.deleteButton = page.locator('button[title*="Delete"], button.delete-btn');
-    this.addressInput = page.locator('input[name*="address"], input[placeholder*="address"]');
+    this.deleteButton = page.locator('button[title*="Delete" i], button.delete-btn, .action-btn.delete');
+    this.addressInput = page.locator('input[name*="address"], input[placeholder*="address" i]');
   }
 
   async goto() {
@@ -67,7 +67,7 @@ export class PropertiesPage {
 
   async createProperty(data: Record<string, string>) {
     await this.clickAddProperty();
-    await this.page.waitForURL(/\/properties\/(create|new|add)/);
+    await this.page.waitForURL(/\/properties\/(create|new|add)/, { timeout: 5000 });
     for (const [name, value] of Object.entries(data)) {
       const input = this.page.locator(`input[name="${name}"], select[name="${name}"]`);
       if (await input.count() > 0) {
@@ -92,6 +92,8 @@ export class PropertiesPage {
     const delBtn = this.deleteButton.nth(index);
     if (await delBtn.count() > 0) {
       await delBtn.click();
+      await this.page.waitForTimeout(300);
+      await this.confirmDeleteButton.click();
     }
   }
 
@@ -120,7 +122,7 @@ export class PropertiesPage {
     }
   }
 
-  async exportProperties(format: string = 'csv') {
+  async exportProperties(_format: string = 'csv') {
     if (await this.exportButton.count() > 0) {
       await this.exportButton.first().click();
     }
