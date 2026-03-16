@@ -14,7 +14,7 @@ export class SettingsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageTitle = page.locator('h1');
+    this.pageTitle = page.locator('h1').first();
     this.generalTab = page.locator('button:has-text("General")');
     this.valuationTab = page.locator('button:has-text("Valuation")');
     this.notificationsTab = page.locator('button:has-text("Notifications")');

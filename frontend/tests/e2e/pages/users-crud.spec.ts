@@ -8,8 +8,7 @@ test.describe('Users CRUD - Phase 2 Core Operations', () => {
     // Login before each test
     await loginPage.goto();
     await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
-    
-    // Wait for successful login
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
   });

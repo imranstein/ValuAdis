@@ -42,12 +42,10 @@ test.describe('Valuations Management', () => {
     }
   });
 
-  test('should open new valuation modal', async ({ valuationsPage, page }) => {
+  test('should open new valuation page', async ({ valuationsPage, page }) => {
     await valuationsPage.clickNewValuation();
-    await page.waitForTimeout(300);
-    
-    const modal = page.locator('.modal, [role="dialog"]');
-    await expect(modal).toBeVisible();
+    await page.waitForURL(/\/valuations\/(quick|create|new|\d+)/);
+    await expect(page).toHaveURL(/\/valuations/);
   });
 
   test('should display valuation methods', async ({ valuationsPage, page }) => {

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showAddScraperModal" class="modal-overlay" @click.self="$emit('close')">
+<div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
         <h2>{{ props.isEditMode ? 'Edit Scraper' : 'Add New Scraper' }}</h2>

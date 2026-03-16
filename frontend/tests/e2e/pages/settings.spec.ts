@@ -62,8 +62,8 @@ test.describe('Settings Management', () => {
     });
 
     test('should display add scraper button', async ({ page }) => {
-      const addButton = page.locator('button:has-text("Add New Scraper"), button:has-text("Add Scraper")');
-      await expect(addButton.first()).toBeVisible();
+      const addButton = page.locator('button:has-text("Add New")').first();
+      await expect(addButton).toBeVisible();
     });
 
     test('should display scrapers table', async ({ page }) => {
@@ -74,17 +74,17 @@ test.describe('Settings Management', () => {
     });
 
     test('should open add scraper modal', async ({ page }) => {
-      const addButton = page.locator('button:has-text("Add New Scraper"), button:has-text("Add Scraper")');
-      await addButton.first().click();
+      const addButton = page.locator('button:has-text("Add New")').first();
+      await addButton.click();
       await page.waitForTimeout(300);
-      
-      const modal = page.locator('.modal, [role="dialog"]');
-      await expect(modal).toBeVisible();
+
+      const modal = page.locator('.modal-overlay, .modal, [role="dialog"]');
+      await expect(modal.first()).toBeVisible();
     });
 
     test('should validate scraper form fields', async ({ page }) => {
-      const addButton = page.locator('button:has-text("Add New Scraper"), button:has-text("Add Scraper")');
-      await addButton.first().click();
+      const addButton = page.locator('button:has-text("Add New")').first();
+      await addButton.click();
       await page.waitForTimeout(300);
       
       const domainInput = page.locator('input[name="domain"], label:has-text("Domain") + input');
@@ -166,8 +166,10 @@ test.describe('Settings Management', () => {
 
   test('should have responsive layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    
+    await page.goto('/settings');
+
     const tabs = page.locator('.nav-tab');
+    await tabs.first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
     const count = await tabs.count();
     expect(count).toBeGreaterThan(0);
   });

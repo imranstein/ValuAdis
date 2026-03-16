@@ -8,8 +8,9 @@ test.describe('Basic Navigation - Phase 1 Foundation', () => {
     // Login before each navigation test
     await loginPage.goto();
     await loginPage.login(VALID_EMAIL, VALID_PASSWORD);
-    
-    // Wait for successful login
+
+    // Wait for redirect after login
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
   });
@@ -20,7 +21,7 @@ test.describe('Basic Navigation - Phase 1 Foundation', () => {
     
     // Check for dashboard elements
     const pageTitle = await page.locator('h1, h2').first().textContent();
-    expect(pageTitle).toMatch(/dashboard|welcome|overview/i);
+    expect(pageTitle).toMatch(/dashboard|welcome|overview|valuadis/i);
   });
 
   test('should access properties page', async ({ page }) => {

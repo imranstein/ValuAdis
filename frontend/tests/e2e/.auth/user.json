@@ -10,11 +10,11 @@
         },
         {
           "name": "valuadis_user",
-          "value": "{\"id\":1,\"email\":\"admin@valuadis.com\",\"full_name\":\"System Administrator\",\"role\":\"admin\",\"is_admin\":true,\"created_at\":\"2026-03-15T19:52:18.224Z\"}"
+          "value": "{\"id\":1,\"email\":\"admin@valuadis.com\",\"full_name\":\"System Administrator\",\"role\":\"admin\",\"is_admin\":true,\"created_at\":\"2026-03-16T02:12:10.502Z\"}"
         },
         {
           "name": "valuadis_token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzczNjA2MTM4fQ.QWSnEWjBE0PEEPUadOnsJfkDw3AEdXeB9bWLdSi5oMM"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzczNjI4OTMwfQ.dx95JXXJ70Ut1TqQskTqjeZ-C7F_xsS_RwEaKplKUDA"
         }
       ]
     }

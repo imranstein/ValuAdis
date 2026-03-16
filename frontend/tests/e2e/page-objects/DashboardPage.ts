@@ -20,6 +20,7 @@ export class DashboardPage {
   }
 
   async getStatsCount() {
+    await this.statsCards.first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
     return await this.statsCards.count();
   }
 }

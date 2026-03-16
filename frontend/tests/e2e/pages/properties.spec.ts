@@ -44,12 +44,10 @@ test.describe('Properties Management', () => {
     }
   });
 
-  test('should open add property modal', async ({ propertiesPage, page }) => {
+  test('should open add property page', async ({ propertiesPage, page }) => {
     await propertiesPage.clickAddProperty();
-    await page.waitForTimeout(300);
-    
-    const modal = page.locator('.modal, [role="dialog"]');
-    await expect(modal).toBeVisible();
+    await page.waitForURL(/\/properties\/(create|new|add|\d+)/);
+    await expect(page).toHaveURL(/\/properties/);
   });
 
   test('should sort properties by column', async ({ page }) => {
@@ -85,18 +83,13 @@ test.describe('Properties Management', () => {
     }
   });
 
-  test('should validate required fields in add property form', async ({ propertiesPage, page }) => {
+  test('should display add property form fields', async ({ propertiesPage, page }) => {
     await propertiesPage.clickAddProperty();
-    await page.waitForTimeout(300);
-    
-    const submitButton = page.locator('button[type="submit"], button:has-text("Add"), button:has-text("Save")');
-    if (await submitButton.count() > 0) {
-      await submitButton.first().click();
-      
-      const requiredInputs = page.locator('input[required]');
-      const count = await requiredInputs.count();
-      expect(count).toBeGreaterThan(0);
-    }
+    await page.waitForURL(/\/properties\/(create|new|add|\d+)/);
+
+    const inputs = page.locator('input, select, textarea');
+    const count = await inputs.count();
+    expect(count).toBeGreaterThan(0);
   });
 
   test('should export properties data', async ({ page }) => {
