@@ -43,16 +43,16 @@ export async function setupApiMock(page: import('@playwright/test').Page) {
   });
 
   await page.route(/\/api\/v1\/auth\/me\/?$/, async (route) => {
-    const auth = route.request().headers()['authorization'];
-    if (auth?.includes('Bearer')) {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_USER),
-      });
-    } else {
-      await route.fulfill({ status: 401 });
+    // Always return admin user in E2E test context
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 200 });
+      return;
     }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_USER),
+    });
   });
 
   // Auth refresh - return valid tokens

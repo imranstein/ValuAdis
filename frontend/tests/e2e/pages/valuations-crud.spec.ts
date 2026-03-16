@@ -1,13 +1,11 @@
 import { test, expect } from '../setup/fixtures';
-import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Valuations CRUD - Phase 2 Core Operations', () => {
-  test.beforeEach(async ({ loginPage, page }) => {
-    await loginPage.goto();
-    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
-    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
-    const isLoggedIn = await loginPage.isLoggedIn();
-    expect(isLoggedIn).toBe(true);
+  test.use({ storageState: 'tests/e2e/.auth/user.json' });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test.describe('Create Valuation', () => {

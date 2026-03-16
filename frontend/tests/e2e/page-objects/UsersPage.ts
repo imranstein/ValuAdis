@@ -52,7 +52,8 @@ export class UsersPage {
   }
 
   async goto() {
-    await this.page.goto('/users');
+    await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/users', { waitUntil: 'domcontentloaded' });
   }
 
   async searchUser(query: string) {

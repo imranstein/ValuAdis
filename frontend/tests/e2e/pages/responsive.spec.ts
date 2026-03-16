@@ -35,9 +35,9 @@ test.describe('Responsive Design', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
-    await page.waitForTimeout(2000);
     const pageContent = await page.locator('body').textContent();
     expect(pageContent?.length).toBeGreaterThan(0);
   });
@@ -46,6 +46,7 @@ test.describe('Responsive Design', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
     const viewports = [{ width: 1024, height: 768 }, { width: 375, height: 667 }];
@@ -62,10 +63,11 @@ test.describe('Responsive Design', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
     await page.goto('/properties');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
     const formElements = page.locator('input, select, textarea');
     const formCount = await formElements.count();
     if (formCount > 0) {

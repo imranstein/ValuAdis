@@ -1,15 +1,11 @@
 import { test, expect } from '../setup/fixtures';
-import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Basic Navigation - Phase 1 Foundation', () => {
-  test.beforeEach(async ({ loginPage, page }) => {
-    await loginPage.goto();
-    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+  test.use({ storageState: 'tests/e2e/.auth/user.json' });
 
-    // Wait for redirect after login
-    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
-    const isLoggedIn = await loginPage.isLoggedIn();
-    expect(isLoggedIn).toBe(true);
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should access dashboard page', async ({ page }) => {

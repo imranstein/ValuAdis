@@ -26,11 +26,16 @@ export class SettingsPage {
   }
 
   async goto() {
+    // Navigate to dashboard first (full load) so auth.client.ts plugin fully populates
+    // the user store before admin middleware checks is_admin on /settings
+    await this.page.goto('/dashboard');
     await this.page.goto('/settings');
+    await this.page.locator('.nav-tab').first().waitFor({ state: 'visible', timeout: 10000 });
   }
 
   async switchToTab(tabName: string) {
     const tab = this.page.locator(`button:has-text("${tabName}")`);
+    await tab.waitFor({ state: 'visible', timeout: 10000 });
     await tab.click();
   }
 

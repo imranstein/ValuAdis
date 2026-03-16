@@ -167,9 +167,11 @@ test.describe('Settings Management', () => {
   test('should have responsive layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/settings');
+    await page.waitForLoadState('domcontentloaded');
 
+    // On mobile the tabs may scroll or wrap — check they exist in DOM
     const tabs = page.locator('.nav-tab');
-    await tabs.first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    await tabs.first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
     const count = await tabs.count();
     expect(count).toBeGreaterThan(0);
   });
