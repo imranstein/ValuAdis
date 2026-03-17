@@ -469,7 +469,7 @@ function navigateToQuickLink(path: string) {
 
 function handleLogout() {
   localStorage.removeItem('valuadis_token')
-  router.push('/')
+  router.push('/login')
 }
 
 // Close dropdowns when clicking outside - using lifecycle hooks instead of watcher

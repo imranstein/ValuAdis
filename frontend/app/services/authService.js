@@ -53,7 +53,7 @@ class AuthService
     } catch ( error )
     {
       console.error( 'Login error:', error )
-      return { success: false, error: error.message }
+      throw error
     }
   }
 

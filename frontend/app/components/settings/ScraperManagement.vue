@@ -40,11 +40,6 @@
       </button>
     </div>
 
-    <!-- Debug Info -->
-    <div class="debug-info">
-      🔍 Debug: Type={{ scraperType }}, activeTab="scraper", scrapers={{ scrapers.length }}, stats loaded={{ !!scraperStats }}
-    </div>
-
     <!-- Scraper Stats -->
     <ScraperStats 
       :stats="scraperStats" 

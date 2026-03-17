@@ -155,8 +155,21 @@ export function usePermissions() {
   
   // Get user roles and permissions
   const userRoles = computed(() => {
-    if (!authStore.user?.roles) return []
-    return authStore.user.roles.map(role => role.name)
+    const roles = []
+    // Roles array from backend (full user object)
+    if (authStore.user?.roles?.length) {
+      roles.push(...authStore.user.roles.map(role => role.name))
+    }
+    // Flat role string from JWT fallback (e.g. 'system_admin', 'admin')
+    const flatRole = authStore.user?.role
+    if (flatRole && !roles.includes(flatRole)) {
+      roles.push(flatRole)
+      // Map legacy 'admin' to system_admin
+      if (flatRole === 'admin' && !roles.includes('system_admin')) {
+        roles.push('system_admin')
+      }
+    }
+    return roles
   })
   
   const userPermissions = computed(() => {
