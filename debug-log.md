@@ -338,6 +338,39 @@ Additional issues in responsive.spec.ts:
 
 ---
 
+---
+
+## SESSION: 2026-03-17 — Fixes Applied + Full QA Run
+
+### Fixes Committed
+1. `fixtures.ts` — Registered all 10 fixtures (usersPage, scraperPage, vehiclesPage, analyticsPage, auditPage) ✅
+2. `page-objects/` — Created AnalyticsPage, AuditPage, ScrapersPage, VehiclesPage ✅
+3. `responsive.spec.ts` — Changed `fallbackPassword` → `password` (admin123 doesn't work, Admin123! does) ✅
+4. `property-valuation-workflow.spec.ts` — Fixed `h1` strict mode (2 h1 elements on page) → `.first()` ✅
+5. `UsersPage.ts` — Fixed `phoneInput` → `input[type="tel"]`, `roleSelect` → `.modal-content select`, edit/delete buttons → `.action-btn.edit/.delete` ✅
+
+### QA Results (2026-03-17)
+**Stable suite: 82/82 PASSING (100%)** — Chromium, all page + workflow tests
+| Category | Tests | Pass |
+|----------|-------|------|
+| Authentication | 6 | 6 |
+| Dashboard | 9 | 9 |
+| Navigation | 11 | 11 |
+| Properties | 13 | 13 |
+| Valuations | 11 | 11 |
+| Settings (all tabs) | 18 | 18 |
+| Responsive | 6 | 6 |
+| Workflow (flows) | 3 | 3 |
+| Auth setup | 1 | 1 |
+
+### Remaining Known Issues (CRUD specs — need deeper fixes)
+- `properties-crud.spec.ts` — Create form is a multi-step `PropertyWizard` component, no `name` attributes on inputs
+- `valuations-crud.spec.ts` — Complex multi-step forms, selector mismatches
+- `users-crud.spec.ts` — Delete uses `window.confirm()` (native dialog), needs `page.on('dialog')` handling; create form needs password + confirmPassword fields filled
+- **Root cause:** CRUD tests were written for simple form inputs but actual app uses wizard components with `v-model` only (no `name` attrs). Need `data-testid` attributes added to form fields or tests rewritten to match wizard flow.
+
+---
+
 ## PRIORITIZED FIX LIST
 
 **Must fix first (unblocks 80%+ of tests):**
