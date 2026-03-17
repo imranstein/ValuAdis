@@ -407,7 +407,7 @@ async function loadRecentProperties() {
 async function loadRecentVehicles() {
   try {
     const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`${apiBase}/api/v1/vehicles?limit=5`, {
+    const response = await fetch(`${apiBase}/api/v1/vehicles/?limit=5`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (!response.ok) return
