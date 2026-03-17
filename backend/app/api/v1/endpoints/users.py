@@ -5,12 +5,12 @@ RESTful API endpoints for user management with role-based access control
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import get_current_user_id, get_password_hash
 from app.data.models.user import User
-from app.data.models.role import Role, Permission, UserRole, user_roles, role_permissions
+from app.data.models.role import Role, Permission, user_roles, role_permissions
 from app.schemas.user import UserResponse, UserCreate, UserUpdate, RoleResponse, PermissionResponse
 import structlog
 
@@ -113,7 +113,7 @@ async def get_users(
     try:
         
         # Query users with filters
-        query = db.query(User)
+        query = db.query(User).options(selectinload(User.roles))
         
         if municipality:
             query = query.filter(User.municipality == municipality)
@@ -127,7 +127,6 @@ async def get_users(
         # Build response with roles
         user_responses = []
         for user in users:
-            user_role_objs = db.query(Role).join(user_roles).filter(user_roles.c.user_id == user.id).all()
             user_responses.append(UserResponse(
                 id=user.id,
                 email=user.email,
@@ -141,7 +140,7 @@ async def get_users(
                 is_valuer=user.is_valuer,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
-                roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user_role_objs],
+                roles=[RoleResponse(id=role.id, name=role.name, display_name=role.display_name, description=role.description) for role in user.roles],
                 permissions=[]  # Not including permissions in list view for performance
             ))
         
