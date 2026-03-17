@@ -371,6 +371,32 @@ Additional issues in responsive.spec.ts:
 
 ---
 
+---
+
+## 2026-03-17 UAT Bug Fixes & Session Handoff
+
+### BUG-04 Fix (commit 026ac2c) — Vehicle API 404 on dashboard
+- `backend/app/api/v1/api.py` — re-enabled vehicles router (was commented out)
+- `backend/app/api/v1/endpoints/vehicles.py` — fixed imports: `app.core.auth` → `app.core.security`, `get_current_user` → `get_current_user_id`, `app.models.*` → `app.data.models.*`
+- `backend/app/services/vehicle_valuation_service.py` — fixed relative imports + added `List` to typing imports
+
+### BUG-06 Fix (commit 026ac2c) — Audit log 500 error
+- `backend/app/api/v1/endpoints/audit.py` — fixed SQLite-incompatible SQL: `OFFSET :skip LIMIT :limit` → `LIMIT :limit OFFSET :skip`
+
+### BUG-04 STILL FAILING — Vehicles API returning 401 on Docker
+- Root cause not yet confirmed: PostgreSQL DB in Docker may NOT have `vehicles` table migrated
+- `frontend/app/pages/dashboard.vue` — fixed trailing slash: `/api/v1/vehicles?limit=5` → `/api/v1/vehicles/?limit=5` (307 redirect was dropping auth header)
+- **Next step: run `docker compose exec backend alembic upgrade head` to migrate vehicles table**
+- After migration, re-test `/api/v1/vehicles/` and `/api/v1/vehicles/statistics/summary`
+
+### UAT Status at session end
+- Phase 1 & 2: Done (results in `docs/uat/phase1-phase2-results.md`)
+- BUG-02 (login error display), BUG-03 (logout redirect), BUG-05 (sidebar), BUG-07 (debug text): FIXED in commit 325cf22
+- BUG-04 (vehicles): backend code fixed, Docker DB migration pending
+- BUG-06 (audit SQL): fixed in code, needs re-test after Docker restart
+- **Next: verify BUG-04/BUG-06 via Playwright, update UAT doc, run Phase 3 (Dashboard) tests**
+- UAT test plan: `docs/plans/finaluat-testing.md` (16 phases total, Phase 3 = Dashboard is next)
+
 ## PRIORITIZED FIX LIST
 
 **Must fix first (unblocks 80%+ of tests):**
@@ -389,3 +415,44 @@ Additional issues in responsive.spec.ts:
 9. `tests/e2e/pages/ethiopian-compliance.spec.ts`
 10. `tests/e2e/pages/scrapers.spec.ts`, `vehicles.spec.ts`, `analytics.spec.ts`, `audit.spec.ts`
 11. `tests/e2e/flows/vehicle-valuation-workflow.spec.ts`, `performance.spec.ts`
+
+## 2026-03-17 UAT Testing Resume — Session Continuation
+
+**Time:** 10:13 AM GMT+3
+
+### Findings from Fresh Test Run
+
+**Dashboard Status:** ✅ Loads successfully, user authenticated  
+**BUG-04 (Vehicles API):** ❌ Still failing - confirmed missing `vehicles` table in database  
+**BUG-06 (Audit API):** ⚠️ Likely also failing (needs audit logs table)
+
+### Database Schema Analysis
+
+**Existing tables:** users, properties, valuations, roles, permissions, scraper tables, etc.  
+**Missing tables:** vehicles, vehicle_valuations, audit_logs
+
+**Root cause:** Migration file exists (`2026_03_05_1000_add_vehicle_tables.py`) but was never successfully applied to PostgreSQL database.
+
+**Previous migration attempt:** Failed with "relation 'users' already exists" when running `alembic upgrade head` because initial migration tried to recreate tables already in DB.
+
+### Next Steps
+
+1. Manually create vehicles table via direct SQL or targeted migration
+2. Apply vehicle migrations to PostgreSQL container
+3. Re-test dashboard vehicles endpoints + audit page
+4. Verify BUG-04/BUG-06 are resolved
+5. Continue Phase 3 UAT (Dashboard) testing
+
+**Context remaining:** ~35% — need focused execution on database migration fix
+
+
+### Database Migration Applied — BUG-04 Partially Fixed
+
+✅ **vehicles table created successfully** via direct SQL  
+✅ **Dashboard vehicles API error FIXED** — no longer seeing `/api/v1/vehicles/?limit=5` 401 errors  
+⚠️ **Statistics endpoint still failing** — `/api/v1/vehicles/statistics/summary` needs investigation
+
+**Result:** Dashboard now loads cleanly. "Total Vehicles" shows 0 (no data yet) but API is functional.
+
+**Remaining work:** Create vehicle_valuations table if needed, verify audit endpoints, run Phase 3 UAT tests.
+
