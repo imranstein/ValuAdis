@@ -6,11 +6,11 @@ including regional demand, import adjustments, and customs duties.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 import statistics
-from ..models.vehicle import Vehicle
-from ..models.vehicle_valuation import VehicleValuation
+from app.data.models.vehicle import Vehicle
+from app.data.models.vehicle_valuation import VehicleValuation
 
 logger = logging.getLogger(__name__)
 

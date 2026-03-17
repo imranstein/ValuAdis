@@ -67,7 +67,7 @@ async def get_audit_logs(
         FROM audit_logs al
         WHERE {where_clause}
         ORDER BY al.timestamp DESC
-        OFFSET :skip LIMIT :limit
+        LIMIT :limit OFFSET :skip
     """
     count_sql = f"SELECT COUNT(*) FROM audit_logs al WHERE {where_clause}"
 

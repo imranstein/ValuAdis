@@ -13,10 +13,9 @@ from datetime import datetime, timedelta
 import logging
 
 from app.core.database import get_db
-from app.core.auth import get_current_user
-from app.models.user import User
-from app.models.vehicle import Vehicle
-from app.models.vehicle_valuation import VehicleValuation, VehicleValuationStatus
+from app.core.security import get_current_user_id
+from app.data.models.vehicle import Vehicle
+from app.data.models.vehicle_valuation import VehicleValuation, VehicleValuationStatus
 from app.services.vehicle_valuation_service import vehicle_valuation_service
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleResponse
 from app.schemas.vehicle_valuation import VehicleValuationCreate, VehicleValuationResponse
@@ -29,7 +28,7 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 @router.post("/", response_model=VehicleResponse)
 async def create_vehicle(
     vehicle_data: VehicleCreate,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -59,15 +58,15 @@ async def create_vehicle(
         
         # Create vehicle object
         vehicle = Vehicle(
-            user_id=current_user.id,
+            user_id=current_user_id,
             **vehicle_data.dict()
         )
-        
+
         db.add(vehicle)
         db.commit()
         db.refresh(vehicle)
-        
-        logger.info(f"User {current_user.id} created vehicle: {vehicle.vin}")
+
+        logger.info(f"User {current_user_id} created vehicle: {vehicle.vin}")
         return vehicle
         
     except HTTPException:
@@ -90,7 +89,7 @@ async def get_user_vehicles(
     year: Optional[int] = Query(None, description="Filter by vehicle year"),
     region: Optional[str] = Query(None, description="Filter by region"),
     status: Optional[str] = Query(None, description="Filter by valuation status"),
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -99,8 +98,8 @@ async def get_user_vehicles(
     Returns a list of vehicles belonging to the current user with optional filters.
     """
     try:
-        query = db.query(Vehicle).filter(Vehicle.user_id == current_user.id)
-        
+        query = db.query(Vehicle).filter(Vehicle.user_id == current_user_id)
+
         # Apply filters
         if make:
             query = query.filter(Vehicle.make.ilike(f"%{make}%"))
@@ -117,7 +116,7 @@ async def get_user_vehicles(
         # Apply pagination
         vehicles = query.offset(skip).limit(limit).all()
         
-        logger.info(f"User {current_user.id} retrieved {len(vehicles)} vehicles")
+        logger.info(f"User {current_user_id} retrieved {len(vehicles)} vehicles")
         return vehicles
         
     except Exception as e:
@@ -131,7 +130,7 @@ async def get_user_vehicles(
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(
     vehicle_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -144,16 +143,16 @@ async def get_vehicle(
     """
     try:
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
-        logger.info(f"User {current_user.id} retrieved vehicle: {vehicle_id}")
+
+        logger.info(f"User {current_user_id} retrieved vehicle: {vehicle_id}")
         return vehicle
         
     except HTTPException:
@@ -170,7 +169,7 @@ async def get_vehicle(
 async def update_vehicle(
     vehicle_id: int,
     vehicle_data: VehicleUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -184,15 +183,15 @@ async def update_vehicle(
     """
     try:
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
+
         # Check if VIN is being changed and if it already exists
         if vehicle_data.vin and vehicle_data.vin != vehicle.vin:
             existing_vin = db.query(Vehicle).filter(
@@ -223,7 +222,7 @@ async def update_vehicle(
         db.commit()
         db.refresh(vehicle)
         
-        logger.info(f"User {current_user.id} updated vehicle: {vehicle_id}")
+        logger.info(f"User {current_user_id} updated vehicle: {vehicle_id}")
         return vehicle
         
     except HTTPException:
@@ -240,7 +239,7 @@ async def update_vehicle(
 @router.delete("/{vehicle_id}")
 async def delete_vehicle(
     vehicle_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -253,19 +252,19 @@ async def delete_vehicle(
     """
     try:
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
+
         db.delete(vehicle)
         db.commit()
-        
-        logger.info(f"User {current_user.id} deleted vehicle: {vehicle_id}")
+
+        logger.info(f"User {current_user_id} deleted vehicle: {vehicle_id}")
         return {"message": "Vehicle deleted successfully"}
         
     except HTTPException:
@@ -283,7 +282,7 @@ async def delete_vehicle(
 async def create_vehicle_valuation(
     vehicle_id: int,
     valuation_data: Optional[VehicleValuationCreate] = None,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -297,15 +296,15 @@ async def create_vehicle_valuation(
     """
     try:
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
+
         # Check if vehicle can be valued
         if not vehicle.can_be_valued():
             raise HTTPException(
@@ -319,7 +318,7 @@ async def create_vehicle_valuation(
         # Create valuation record
         valuation = VehicleValuation(
             vehicle_id=vehicle_id,
-            user_id=current_user.id,
+            user_id=current_user_id,
             vehicle_make=vehicle.make,
             vehicle_model=vehicle.model,
             vehicle_year=vehicle.year,
@@ -355,7 +354,7 @@ async def create_vehicle_valuation(
         db.commit()
         db.refresh(valuation)
         
-        logger.info(f"User {current_user.id} created valuation for vehicle {vehicle_id}: ETB {valuation.market_value}")
+        logger.info(f"User {current_user_id} created valuation for vehicle {vehicle_id}: ETB {valuation.market_value}")
         return valuation
         
     except HTTPException:
@@ -372,7 +371,7 @@ async def create_vehicle_valuation(
 @router.get("/{vehicle_id}/valuations", response_model=List[VehicleValuationResponse])
 async def get_vehicle_valuations(
     vehicle_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -386,20 +385,20 @@ async def get_vehicle_valuations(
     try:
         # Verify vehicle belongs to user
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
+
         valuations = db.query(VehicleValuation).filter(
             VehicleValuation.vehicle_id == vehicle_id
         ).order_by(VehicleValuation.created_at.desc()).all()
         
-        logger.info(f"User {current_user.id} retrieved {len(valuations)} valuations for vehicle {vehicle_id}")
+        logger.info(f"User {current_user_id} retrieved {len(valuations)} valuations for vehicle {vehicle_id}")
         return valuations
         
     except HTTPException:
@@ -415,7 +414,7 @@ async def get_vehicle_valuations(
 @router.get("/{vehicle_id}/latest-valuation", response_model=VehicleValuationResponse)
 async def get_latest_vehicle_valuation(
     vehicle_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -429,15 +428,15 @@ async def get_latest_vehicle_valuation(
     try:
         # Verify vehicle belongs to user
         vehicle = db.query(Vehicle).filter(
-            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user.id)
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
         ).first()
-        
+
         if not vehicle:
             raise HTTPException(
                 status_code=404,
                 detail="Vehicle not found"
             )
-        
+
         valuation = db.query(VehicleValuation).filter(
             VehicleValuation.vehicle_id == vehicle_id
         ).order_by(VehicleValuation.created_at.desc()).first()
@@ -448,7 +447,7 @@ async def get_latest_vehicle_valuation(
                 detail="No valuation found for this vehicle"
             )
         
-        logger.info(f"User {current_user.id} retrieved latest valuation for vehicle {vehicle_id}")
+        logger.info(f"User {current_user_id} retrieved latest valuation for vehicle {vehicle_id}")
         return valuation
         
     except HTTPException:
@@ -463,7 +462,7 @@ async def get_latest_vehicle_valuation(
 
 @router.get("/statistics/summary")
 async def get_vehicle_statistics(
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -473,11 +472,11 @@ async def get_vehicle_statistics(
     """
     try:
         # Get user's vehicles
-        vehicles = db.query(Vehicle).filter(Vehicle.user_id == current_user.id).all()
-        
+        vehicles = db.query(Vehicle).filter(Vehicle.user_id == current_user_id).all()
+
         # Get user's valuations
         valuations = db.query(VehicleValuation).filter(
-            VehicleValuation.user_id == current_user.id
+            VehicleValuation.user_id == current_user_id
         ).all()
         
         # Calculate statistics
@@ -528,7 +527,7 @@ async def get_vehicle_statistics(
             "status_breakdown": status_breakdown
         }
         
-        logger.info(f"User {current_user.id} retrieved vehicle statistics")
+        logger.info(f"User {current_user_id} retrieved vehicle statistics")
         return statistics
         
     except Exception as e:
