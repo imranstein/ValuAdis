@@ -511,16 +511,17 @@ function getStatusClass(status) {
   --surface:       rgba(15, 15, 26, 0.8);
   --surface-hover: rgba(20, 20, 38, 0.9);
   --cyan:          #00d4ff;
-  --gold:          #e8a020;
-  --violet:        #7b2fff;
+  --gold:          #F59E0B;
+  --violet:        #1E3A8A;
   --success:       #00e676;
   --text:          #e2e8f0;
   --muted:         #94a3b8;
-  --border:        rgba(0, 212, 255, 0.12);
-  --border-hover:  rgba(0, 212, 255, 0.35);
+  --primary:       #078160;
+  --border:        rgba(7, 129, 96, 0.12);
+  --border-hover:  rgba(7, 129, 96, 0.35);
   --glow-cyan:     0 0 20px rgba(0, 212, 255, 0.25);
-  --glow-gold:     0 0 20px rgba(232, 160, 32, 0.25);
-  --glow-violet:   0 0 20px rgba(123, 47, 255, 0.25);
+  --glow-gold:     0 0 20px rgba(245, 158, 11, 0.25);
+  --glow-primary:  0 0 20px rgba(7, 129, 96, 0.25);
 
   max-width: 1400px;
   margin: 0 auto;
@@ -552,10 +553,11 @@ function getStatusClass(status) {
   align-items: flex-start;
   margin-bottom: 2rem;
   padding: 2rem 2.5rem;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(123, 47, 255, 0.08));
-  border: 1px solid rgba(0, 212, 255, 0.2);
+  background: linear-gradient(135deg, rgba(7, 129, 96, 0.08), rgba(30, 58, 138, 0.08));
+  border: 1px solid rgba(7, 129, 96, 0.2);
   border-radius: 16px;
   backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(7, 129, 96, 0.08);
   position: relative;
   overflow: hidden;
 }
@@ -706,9 +708,10 @@ function getStatusClass(status) {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   border-radius: 14px 14px 0 0;
-  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  background: linear-gradient(90deg, var(--primary), var(--gold), var(--cyan));
+  box-shadow: var(--glow-primary);
 }
 
 .stat-icon {
@@ -1106,8 +1109,9 @@ function getStatusClass(status) {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--gold), var(--violet), var(--cyan));
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--gold));
+  box-shadow: var(--glow-primary);
 }
 
 .compliance-card:hover {
