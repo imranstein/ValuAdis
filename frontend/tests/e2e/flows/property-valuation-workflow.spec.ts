@@ -6,7 +6,7 @@ test.describe('Property Valuation Workflow', () => {
   test('should complete full property valuation workflow', async ({ page }) => {
     // Step 1: Navigate to Properties
     await page.goto('/properties');
-    await expect(page.locator('h1')).toContainText(/Properties/i);
+    await expect(page.locator('h1').first()).toContainText(/Properties/i);
 
     // Step 2: Add new property
     const addButton = page.locator('button:has-text("Add Property")');
@@ -34,7 +34,7 @@ test.describe('Property Valuation Workflow', () => {
 
     // Step 3: Navigate to Valuations
     await page.goto('/valuations');
-    await expect(page.locator('h1')).toContainText(/Valuations/i);
+    await expect(page.locator('h1').first()).toContainText(/Valuations/i);
 
     // Step 4: Create new valuation
     const newValuationButton = page.locator('button:has-text("New Valuation")');

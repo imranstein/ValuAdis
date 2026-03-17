@@ -38,15 +38,15 @@ export class UsersPage {
     this.firstNameInput = page.locator('input[name*="first_name"], input[placeholder*="first"]');
     this.lastNameInput = page.locator('input[name*="last_name"], input[placeholder*="last"]');
     this.emailInput = page.locator('input[name*="email"], input[type="email"]');
-    this.phoneInput = page.locator('input[name*="phone"], input[placeholder*="phone"]');
-    this.roleSelect = page.locator('select[name*="role"], [data-testid="role"]');
-    this.licenseNumberInput = page.locator('input[name*="license"], input[placeholder*="license"]');
-    this.statusSelect = page.locator('select[name*="status"], [data-testid="status"]');
+    this.phoneInput = page.locator('input[type="tel"]');
+    this.roleSelect = page.locator('.modal-content select').first();
+    this.licenseNumberInput = page.locator('input[placeholder*="license" i], input[placeholder*="EV-"]');
+    this.statusSelect = page.locator('.modal-content select').nth(1);
     this.saveButton = page.locator('button:has-text("Save"), button:has-text("Submit"), button[type="submit"]');
     this.cancelButton = page.locator('button:has-text("Cancel"), button:has-text("Back")');
-    this.deleteButton = page.locator('button:has-text("Delete"), [data-testid="delete"]');
-    this.confirmDeleteButton = page.locator('button:has-text("Confirm"), button:has-text("Delete Forever")');
-    this.editButton = page.locator('button:has-text("Edit"), [data-testid="edit"]');
+    this.deleteButton = page.locator('button.action-btn.delete, button[title="Delete"]');
+    this.confirmDeleteButton = page.locator('button:has-text("Delete"), button:has-text("Confirm")').last();
+    this.editButton = page.locator('button.action-btn.edit, button[title="Edit"]');
     this.deactivateButton = page.locator('button:has-text("Deactivate"), [data-testid="deactivate"]');
     this.activateButton = page.locator('button:has-text("Activate"), [data-testid="activate"]');
   }

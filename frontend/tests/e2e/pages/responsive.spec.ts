@@ -34,7 +34,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 1024, height: 768 });
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.password);
     await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
@@ -45,7 +45,7 @@ test.describe('Responsive Design', () => {
   test('should handle viewport resizing', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.password);
     await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
@@ -62,7 +62,7 @@ test.describe('Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
+    await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.password);
     await page.waitForURL(/\/(dashboard)?$/, { timeout: 10000 }).catch(() => {});
     const isLoggedIn = await loginPage.isLoggedIn();
     expect(isLoggedIn).toBe(true);
