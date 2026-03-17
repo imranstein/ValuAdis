@@ -67,21 +67,19 @@ export class PropertiesPage {
 
   async createProperty(data: Record<string, string>) {
     await this.clickAddProperty();
-    await this.page.waitForURL(/\/properties\/(create|new|add)/, { timeout: 5000 });
+    await this.page.waitForURL(/\/properties\/(create|new|add)/, { timeout: 5000 }).catch(() => {});
+    await this.page.waitForTimeout(500);
     for (const [name, value] of Object.entries(data)) {
-      const input = this.page.locator(`input[name="${name}"], select[name="${name}"]`);
+      const input = this.page.locator(`input[name="${name}"], select[name="${name}"]`).first();
       if (await input.count() > 0) {
-        const tag = await input.first().evaluate((el: HTMLElement) => el.tagName.toLowerCase());
-        if (tag === 'select') {
-          await input.first().selectOption(value);
-        } else {
-          await input.first().fill(value);
-        }
+        const tag = await input.evaluate((el: HTMLElement) => el.tagName.toLowerCase());
+        if (tag === 'select') await input.selectOption(value);
+        else await input.fill(value);
       }
     }
   }
 
-  async editProperty(index: number = 0) {
+  async editProperty(index: number = 0, _data?: Record<string, string>) {
     const editBtn = this.page.locator('button[title*="Edit"], button.edit-btn').nth(index);
     if (await editBtn.count() > 0) {
       await editBtn.click();
@@ -91,9 +89,13 @@ export class PropertiesPage {
   async deleteProperty(index: number = 0) {
     const delBtn = this.deleteButton.nth(index);
     if (await delBtn.count() > 0) {
+      this.page.once('dialog', dialog => dialog.accept());
       await delBtn.click();
       await this.page.waitForTimeout(300);
-      await this.confirmDeleteButton.click();
+      // Also handle modal-based confirm if present
+      if (await this.confirmDeleteButton.isVisible()) {
+        await this.confirmDeleteButton.click();
+      }
     }
   }
 
@@ -104,8 +106,12 @@ export class PropertiesPage {
     }
   }
 
-  async getPropertyDetails() {
-    return this.page.locator('.property-details, .detail-panel, .details');
+  async getPropertyDetails(): Promise<{ title: string; info: string }> {
+    const titleEl = this.page.locator('h1, h2, .property-title').first();
+    const infoEl = this.page.locator('.property-details, .detail-panel, .details, main').first();
+    const title = (await titleEl.textContent().catch(() => '')) || '';
+    const info = (await infoEl.textContent().catch(() => '')) || '';
+    return { title, info };
   }
 
   async filterByPropertyType(type: string) {

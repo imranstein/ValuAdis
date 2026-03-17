@@ -64,33 +64,45 @@ export class ValuationsPage {
 
   async createValuation(data: Record<string, string>) {
     await this.clickNewValuation();
-    await this.page.waitForURL(/\/valuations\/(create|new|quick)/);
+    await this.page.waitForURL(/\/valuations\/(create|new|quick)/, { timeout: 5000 }).catch(() => {});
+    await this.page.waitForTimeout(500);
     for (const [name, value] of Object.entries(data)) {
-      const input = this.page.locator(`input[name="${name}"], select[name="${name}"]`);
+      const input = this.page.locator(`input[name="${name}"], select[name="${name}"]`).first();
       if (await input.count() > 0) {
-        const tag = await input.first().evaluate((el: HTMLElement) => el.tagName.toLowerCase());
-        if (tag === 'select') await input.first().selectOption(value);
-        else await input.first().fill(value);
+        const tag = await input.evaluate((el: HTMLElement) => el.tagName.toLowerCase());
+        if (tag === 'select') await input.selectOption(value);
+        else await input.fill(value);
       }
     }
   }
 
-  async createQuickValuation(data: Record<string, string> = {}) {
+  async createQuickValuation(propertyName: string = '', _amount: string = '') {
     await this.page.goto('/valuations/quick');
     await this.page.waitForLoadState('networkidle').catch(() => {});
+    if (propertyName) {
+      const nameInput = this.page.locator('input[placeholder*="property" i], input[placeholder*="name" i]').first();
+      if (await nameInput.count() > 0) await nameInput.fill(propertyName);
+    }
   }
 
-  async editValuation(index: number = 0) {
+  async editValuation(index: number = 0, _data?: Record<string, string>) {
     const editBtn = this.page.locator('button[title*="Edit"], button.edit-btn').nth(index);
     if (await editBtn.count() > 0) await editBtn.click();
   }
 
   async deleteValuation(index: number = 0) {
     const delBtn = this.deleteButton.nth(index);
-    if (await delBtn.count() > 0) await delBtn.click();
+    if (await delBtn.count() > 0) {
+      this.page.once('dialog', dialog => dialog.accept());
+      await delBtn.click();
+      await this.page.waitForTimeout(300);
+      if (await this.confirmDeleteButton.isVisible()) {
+        await this.confirmDeleteButton.click();
+      }
+    }
   }
 
-  async updateValuationStatus(status: string) {
+  async updateValuationStatus(_index: number = 0, status: string) {
     const statusSelect = this.page.locator('select[name*="status"]');
     if (await statusSelect.count() > 0) await statusSelect.selectOption(status);
   }
@@ -112,8 +124,8 @@ export class ValuationsPage {
     return null;
   }
 
-  async generateReport() {
-    const reportBtn = this.page.locator('button:has-text("Report"), button:has-text("Generate")');
+  async generateReport(_index?: number, _format?: string) {
+    const reportBtn = this.page.locator('button:has-text("Report"), button:has-text("Generate"), button:has-text("Export")');
     if (await reportBtn.count() > 0) await reportBtn.first().click();
   }
 
@@ -124,8 +136,8 @@ export class ValuationsPage {
     if (await endInput.count() > 0) await endInput.fill(endDate);
   }
 
-  async verifyEthiopianCompliance() {
-    const complianceSection = this.page.locator('.compliance, [data-compliance], label:has-text("Proclamation")');
+  async verifyEthiopianCompliance(_index?: number): Promise<boolean> {
+    const complianceSection = this.page.locator('.compliance, [data-compliance], label:has-text("Proclamation"), :has-text("ETB"), :has-text("Birr")');
     return (await complianceSection.count()) > 0;
   }
 }

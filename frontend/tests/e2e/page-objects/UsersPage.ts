@@ -162,10 +162,12 @@ export class UsersPage {
     // Click delete button for the specified user
     const deleteButtons = this.deleteButton;
     if (await deleteButtons.nth(index).isVisible()) {
+      // Handle both window.confirm() dialogs and modal-based confirmations
+      this.page.once('dialog', dialog => dialog.accept());
       await deleteButtons.nth(index).click();
       await this.page.waitForTimeout(1000);
-      
-      // Confirm deletion if confirmation dialog appears
+
+      // Also handle modal-based confirm if present
       if (await this.confirmDeleteButton.isVisible()) {
         await this.confirmDeleteButton.click();
         await this.page.waitForTimeout(2000);
