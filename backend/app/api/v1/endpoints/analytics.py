@@ -6,6 +6,7 @@ Provides comprehensive analytics, insights, and ML-powered predictions.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -95,16 +96,26 @@ async def get_dashboard_stats(
         # Municipality breakdown
         municipality_stats = {}
         if not municipality:  # Only show breakdown if not filtered
-            for prop in property_query.all():
-                mun = prop.municipality or 'Unknown'
-                if mun not in municipality_stats:
-                    municipality_stats[mun] = {
+            agg_results = property_query.with_entities(
+                Property.municipality,
+                func.count(Property.id).label('count'),
+                func.sum(Property.market_value).label('total_value')
+            ).group_by(Property.municipality).all()
+
+            for mun, count, total_value in agg_results:
+                mun_key = mun or 'Unknown'
+                tot_val = total_value or 0
+
+                # If 'Unknown' was already added by a previous loop iteration, we add to it
+                if mun_key not in municipality_stats:
+                    municipality_stats[mun_key] = {
                         'properties': 0,
                         'total_value': 0,
                         'avg_value': 0
                     }
-                municipality_stats[mun]['properties'] += 1
-                municipality_stats[mun]['total_value'] += prop.market_value or 0
+
+                municipality_stats[mun_key]['properties'] += count
+                municipality_stats[mun_key]['total_value'] += tot_val
             
             # Calculate averages
             for stats in municipality_stats.values():
