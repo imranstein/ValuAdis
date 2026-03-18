@@ -563,7 +563,7 @@ function getStatusClass(status) {
   border: 1px solid rgba(7, 129, 96, 0.2);
   border-radius: 16px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(7, 129, 96, 0.08);
+  box-shadow: 0 4px 16px rgba(7, 129, 96, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
 }
@@ -692,6 +692,7 @@ function getStatusClass(status) {
   backdrop-filter: blur(12px);
   transition: all 0.3s ease;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .stat-card::after {
@@ -707,6 +708,7 @@ function getStatusClass(status) {
   animation: card-glow 0.3s forwards;
   transform: translateY(-3px);
   border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 212, 255, 0.25);
 }
 
 .stat-top-border {
