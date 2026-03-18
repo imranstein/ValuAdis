@@ -232,60 +232,138 @@ const closeHelp = () => {
 </script>
 
 <style scoped>
+/* Design System Integration */
 .enhanced-wizard-container {
+  /* Colors */
+  --primary: #078160;
+  --primary-dark: #065043;
+  --primary-light: #10b981;
+  --cyan: #00d4ff;
+  --gold: #F59E0B;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-light: #e2e8f0;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --border: rgba(7, 129, 96, 0.12);
+  --border-light: rgba(0, 0, 0, 0.06);
+
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-display: 'Syne', 'Inter', sans-serif;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Spacing */
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border);
+  --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.25);
+
+  /* Animations */
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.35s ease;
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  font-family: var(--font-family-base);
 }
 
 /* Progress Section */
 .progress-section {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
-  padding: 2rem;
-  margin: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-2xl);
+  margin: var(--spacing-xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at -30% 120%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .progress-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
+  position: relative;
+  z-index: 1;
 }
 
 .progress-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.5rem;
+  font-size: 2.25rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.5px;
+  font-family: var(--font-family-display);
 }
 
 .progress-subtitle {
-  font-size: 1rem;
-  color: #64748b;
+  font-size: 1.05rem;
+  color: var(--text-secondary);
   margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 .progress-bar-container {
   width: 100%;
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
+  height: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
   overflow: hidden;
-  margin: 2rem 0;
+  margin: var(--spacing-2xl) 0;
+  position: relative;
+  border: 1px solid var(--border);
 }
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
-  border-radius: 4px;
-  transition: width 0.5s ease;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 8px;
+  transition: width var(--transition-slow);
+  box-shadow: var(--shadow-glow);
 }
 
+/* Steps Indicator */
 .steps-indicator {
   display: flex;
   justify-content: space-between;
   position: relative;
+  gap: var(--spacing-md);
+}
+
+.steps-indicator::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 4%;
+  right: 4%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .step-item {
@@ -294,69 +372,85 @@ const closeHelp = () => {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
   position: relative;
+  z-index: 1;
 }
 
-.step-item:hover {
-  transform: translateY(-2px);
+.step-item:hover .step-circle {
+  transform: scale(1.08);
 }
 
 .step-circle {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  transition: all 0.3s ease;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  transition: all var(--transition-base);
   position: relative;
-  z-index: 2;
+  border: 2px solid transparent;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
 }
 
+/* Upcoming Steps */
 .step-item.upcoming .step-circle {
-  background: #e2e8f0;
-  color: #64748b;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border-color: var(--border);
 }
 
+/* Active Step */
 .step-item.active .step-circle {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: white;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 8px rgba(7, 129, 96, 0.12), var(--shadow-glow);
+  border-color: var(--primary);
+  transform: scale(1.1);
 }
 
+/* Completed Steps */
 .step-item.completed .step-circle {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: white;
+  border-color: var(--primary);
 }
 
 .step-info {
   text-align: center;
-  max-width: 100px;
+  max-width: 110px;
 }
 
 .step-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #1e293b;
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.95rem;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
+  letter-spacing: 0.2px;
 }
 
 .step-description {
-  font-size: 0.75rem;
-  color: #64748b;
-  line-height: 1.2;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 .step-item.upcoming .step-name {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .step-item.upcoming .step-description {
   color: #cbd5e1;
+}
+
+.step-item.active .step-name,
+.step-item.completed .step-name {
+  color: var(--primary);
 }
 
 /* Content Area */
@@ -364,32 +458,38 @@ const closeHelp = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin: 0 2rem 2rem;
+  margin: 0 var(--spacing-xl) var(--spacing-xl);
+  gap: 0;
 }
 
 .content-header {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px 16px 0 0;
-  padding: 2rem;
+  padding: var(--spacing-2xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  gap: var(--spacing-lg);
 }
 
 .step-icon-container {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(7, 129, 96, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .step-icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: white;
 }
 
@@ -398,116 +498,140 @@ const closeHelp = () => {
 }
 
 .step-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 0.375rem;
+  letter-spacing: -0.3px;
+  font-family: var(--font-family-display);
 }
 
 .step-subtitle {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
+  font-weight: 500;
 }
 
 .step-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .draft-btn, .help-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
-  background: white;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
   border-radius: 8px;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .draft-btn:hover, .help-btn:hover {
-  border-color: #059669;
-  color: #059669;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(7, 129, 96, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .step-content {
-  background: white;
-  padding: 2rem;
+  background: var(--bg-primary);
+  padding: var(--spacing-2xl);
   flex: 1;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-bottom: none;
 }
 
 /* Navigation */
 .navigation-section {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 0 0 16px 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  border-top: none;
 }
 
 .nav-buttons {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .nav-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.75rem;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
 .nav-btn.secondary {
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .nav-btn.secondary:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .nav-btn.primary {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(7, 129, 96, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn.primary:hover:not(.disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(7, 129, 96, 0.3), var(--shadow-glow);
 }
 
 .nav-btn.primary.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .nav-btn.success {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(7, 129, 96, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn.success:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(7, 129, 96, 0.3), var(--shadow-glow);
 }
 
 .step-info-text {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* Help Modal */
@@ -517,93 +641,116 @@ const closeHelp = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(2px);
 }
 
 .help-modal {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
-  padding: 2rem;
+  padding: var(--spacing-2xl);
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  animation: slideUp var(--transition-slow) ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .help-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .help-header h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.25rem;
-  color: #64748b;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0;
+  transition: color var(--transition-base);
 }
 
 .close-btn:hover {
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .help-content {
-  color: #475569;
-  line-height: 1.6;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-weight: 500;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .progress-section {
-    margin: 1rem;
-    padding: 1.5rem;
+    margin: var(--spacing-lg);
+    padding: var(--spacing-xl);
   }
-  
+
+  .progress-title {
+    font-size: 1.75rem;
+  }
+
   .steps-indicator {
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.5rem;
   }
-  
+
   .step-item {
-    flex: 0 0 calc(50% - 0.5rem);
+    flex: 0 0 calc(50% - 0.75rem);
   }
-  
+
   .content-area {
-    margin: 0 1rem 1rem;
+    margin: 0 var(--spacing-lg) var(--spacing-lg);
   }
-  
+
   .content-header {
     flex-direction: column;
     text-align: center;
-    gap: 1rem;
+    padding: var(--spacing-xl);
   }
-  
+
   .step-icon-container {
     margin-right: 0;
   }
-  
+
   .nav-buttons {
     flex-direction: column;
-    gap: 1rem;
   }
-  
+
   .nav-btn {
     width: 100%;
-    justify-content: center;
+  }
+
+  .step-title {
+    font-size: 1.5rem;
   }
 }
 
@@ -611,13 +758,18 @@ const closeHelp = () => {
   .step-item {
     flex: 0 0 100%;
   }
-  
+
   .progress-title {
     font-size: 1.5rem;
   }
-  
+
   .step-title {
     font-size: 1.25rem;
+  }
+
+  .steps-indicator::before {
+    left: 2%;
+    right: 2%;
   }
 }
 </style>
