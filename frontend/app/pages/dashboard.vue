@@ -503,7 +503,7 @@ function getStatusClass(status) {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* ─── Custom Properties ─────────────────────────────────────── */
 .dashboard-container {
@@ -526,7 +526,7 @@ function getStatusClass(status) {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0.5rem 0 2rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   color: var(--text);
 }
 
@@ -617,7 +617,7 @@ function getStatusClass(status) {
 }
 
 .welcome-content p {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1rem;
   color: var(--muted);
   margin: 0;
