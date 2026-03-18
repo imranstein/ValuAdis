@@ -522,10 +522,16 @@ function getStatusClass(status) {
   --glow-cyan:     0 0 20px rgba(0, 212, 255, 0.25);
   --glow-gold:     0 0 20px rgba(245, 158, 11, 0.25);
   --glow-primary:  0 0 20px rgba(7, 129, 96, 0.25);
+  --spacing-xs:    0.25rem;
+  --spacing-sm:    0.5rem;
+  --spacing-md:    1rem;
+  --spacing-lg:    1.5rem;
+  --spacing-xl:    2rem;
+  --spacing-2xl:   3rem;
 
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0.5rem 0 2rem;
+  padding: 1rem 1.5rem 2.5rem;
   font-family: 'Inter', sans-serif;
   color: var(--text);
 }
@@ -552,7 +558,7 @@ function getStatusClass(status) {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
-  padding: 2rem 2.5rem;
+  padding: 2.5rem 3rem;
   background: linear-gradient(135deg, rgba(7, 129, 96, 0.08), rgba(30, 58, 138, 0.08));
   border: 1px solid rgba(7, 129, 96, 0.2);
   border-radius: 16px;
@@ -674,7 +680,7 @@ function getStatusClass(status) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .stat-card {
@@ -778,7 +784,7 @@ function getStatusClass(status) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .content-card {
