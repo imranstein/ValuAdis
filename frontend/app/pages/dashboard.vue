@@ -1103,9 +1103,9 @@ function getStatusClass(status) {
   background: var(--surface);
   border-radius: 14px;
   padding: 2rem;
-  border: 1px solid rgba(232, 160, 32, 0.2);
+  border: 1px solid rgba(232, 160, 32, 0.15);
   backdrop-filter: blur(12px);
-  box-shadow: 0 0 30px rgba(232, 160, 32, 0.06), inset 0 1px 0 rgba(232, 160, 32, 0.1);
+  box-shadow: 0 4px 16px rgba(232, 160, 32, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
   transition: border-color 0.3s ease;
@@ -1123,8 +1123,8 @@ function getStatusClass(status) {
 }
 
 .compliance-card:hover {
-  border-color: rgba(232, 160, 32, 0.35);
-  box-shadow: 0 0 40px rgba(232, 160, 32, 0.1), var(--glow-gold);
+  border-color: rgba(232, 160, 32, 0.2);
+  box-shadow: 0 8px 24px rgba(232, 160, 32, 0.12), 0 0 0 1px rgba(232, 160, 32, 0.2);
 }
 
 .compliance-header {
@@ -1234,12 +1234,12 @@ function getStatusClass(status) {
   gap: 0.5rem;
   padding: 1rem 0.75rem;
   background: rgba(0, 212, 255, 0.04);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 212, 255, 0.12);
   border-radius: 10px;
   color: var(--muted);
   cursor: pointer;
   transition: all 0.25s ease;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   font-weight: 500;
 }
@@ -1252,9 +1252,10 @@ function getStatusClass(status) {
 
 .quick-action-btn:hover {
   background: rgba(0, 212, 255, 0.08);
-  border-color: rgba(0, 212, 255, 0.3);
+  border-color: rgba(0, 212, 255, 0.25);
   color: var(--cyan);
-  box-shadow: var(--glow-cyan);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.12);
+  transform: translateY(-1px);
   transform: translateY(-2px);
 }
 
