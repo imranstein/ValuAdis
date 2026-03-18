@@ -653,26 +653,26 @@ function getStatusClass(status) {
   background: var(--cyan);
   color: #08080f;
   border: 1px solid var(--cyan);
-  box-shadow: 0 0 16px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
 }
 
 .action-button.primary:hover {
   background: #1ad9ff;
-  box-shadow: 0 0 28px rgba(0, 212, 255, 0.5);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.35);
+  transform: translateY(-1px);
 }
 
 .action-button.secondary {
-  background: rgba(0, 212, 255, 0.06);
+  background: rgba(7, 129, 96, 0.08);
   color: var(--cyan);
-  border: 1px solid rgba(0, 212, 255, 0.3);
+  border: 1px solid rgba(7, 129, 96, 0.2);
 }
 
 .action-button.secondary:hover {
-  background: rgba(0, 212, 255, 0.12);
-  border-color: var(--cyan);
-  box-shadow: var(--glow-cyan);
-  transform: translateY(-2px);
+  background: rgba(7, 129, 96, 0.15);
+  border-color: rgba(7, 129, 96, 0.3);
+  box-shadow: 0 4px 12px rgba(7, 129, 96, 0.15);
+  transform: translateY(-1px);
 }
 
 /* ─── Stats Grid ─────────────────────────────────────────────── */
