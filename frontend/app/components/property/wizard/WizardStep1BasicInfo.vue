@@ -499,11 +499,12 @@ const municipalities = [
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
 }
 
-/* Enhanced form sections */
+/* Enhanced form sections with design system */
 .form-section {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border-color: var(--border);
 }
 
 .form-section::before {
@@ -521,33 +522,47 @@ const municipalities = [
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Professional error states */
+/* Professional error states with design system */
 .has-error :deep(.p-inputtext) {
-  @apply border-red-500 ring-red-500/20;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15);
 }
 
 .has-error :deep(.p-dropdown) {
-  @apply border-red-500 ring-red-500/20;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15);
 }
 
 .error-msg {
-  animation: slideInUp 0.3s ease-out;
-  border-left: 4px solid #ef4444;
+  animation: slideInUp var(--transition-base);
+  border-left: 4px solid var(--error);
+  color: var(--error);
+  background: rgba(255, 68, 68, 0.08);
 }
 
-/* Enhanced focus states */
+/* Enhanced focus states with design system glow */
+.field :deep(.p-inputtext) {
+  min-height: 44px !important;
+  font-family: var(--font-family-base);
+  transition: all var(--transition-base);
+}
+
 .field :deep(.p-inputtext:focus) {
-  @apply ring-4 border-transparent;
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 0 4px var(--cyan-dim), var(--shadow-glow);
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.field :deep(.p-dropdown) {
+  min-height: 44px !important;
+  font-family: var(--font-family-base);
+  transition: all var(--transition-base);
 }
 
 .field :deep(.p-dropdown:focus) {
-  @apply ring-4 border-transparent;
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 0 4px var(--cyan-dim), var(--shadow-glow);
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Smooth transitions for all interactive elements */
@@ -635,17 +650,25 @@ const municipalities = [
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Professional input field enhancements */
+/* Professional input field enhancements with design system */
 .field {
   position: relative;
 }
 
 .field label {
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-base);
+}
+
+.field label .required {
+  color: var(--error);
+  margin: 0 var(--spacing-xs);
 }
 
 .field:hover label {
-  color: #374151;
+  color: var(--primary);
 }
 
 /* Gradient definitions for different sections */
