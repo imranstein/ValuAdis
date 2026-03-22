@@ -297,3 +297,6 @@ class VehicleValuation(Base):
                 errors.append(f"{name} out of reasonable range: {factor}")
         
         return errors
+
+# Add to VehicleValuation model:
+# status = Column(String(50), default="draft")  # draft, pending, approved, archived

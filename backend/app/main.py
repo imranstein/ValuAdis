@@ -116,6 +116,8 @@ if settings.ENVIRONMENT == "development":
 else:
     # Production: use explicit origins
     allowed_origins = [
+        "https://valuadis.vulcanig.net",
+        "http://valuadis.vulcanig.net",
         "http://localhost:3000",
         "http://localhost:3001", 
         "http://127.0.0.1:3000",

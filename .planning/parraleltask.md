@@ -391,9 +391,9 @@ WAVE 3 (Parallel)
 - [ ] Task 09: 8 web scraper E2E scenarios passing
 
 ### Wave 2C (License)
-- [ ] Task 10: License validation utility created
-- [ ] Task 11: License validation endpoint created
-- [ ] Task 12: License validation E2E test passes
+- [x] Task 10: License validation utility created
+- [x] Task 11: License validation endpoint created
+- [x] Task 12: License validation E2E test passes
 
 ### Wave 3A (Reports)
 - [ ] Task 13: Report generation service created
