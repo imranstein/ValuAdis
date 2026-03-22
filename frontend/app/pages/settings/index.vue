@@ -1,650 +1,252 @@
 <template>
-  <div class="settings-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Settings</h1>
-        <p>Configure system settings, preferences, and platform configurations</p>
+  <div class="settings-modern min-h-screen bg-[#f7f9fb] font-['Inter']">
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/80 backdrop-blur-xl flex flex-col p-4 space-y-2 shadow-xl shadow-emerald-900/5">
+      <div class="px-4 py-6 mb-4">
+        <h1 class="font-['Syne'] font-extrabold text-emerald-800 text-2xl tracking-tight leading-tight">ValuAdis</h1>
+        <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-emerald-600/60 mt-1">Federal Valuation Dept</p>
       </div>
-    </div>
-
-    <!-- Settings Navigation -->
-    <div class="settings-nav">
-      <div class="nav-tabs">
-        <button 
-          v-for="tab in settingsTabs" 
-          :key="tab.id"
-          class="nav-tab"
-          :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          <i :class="tab.icon"></i>
-          {{ tab.label }}
+      <nav class="flex-1 space-y-1">
+        <NuxtLink to="/dashboard" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:view-dashboard" class="w-5 h-5" />
+          <span class="text-sm font-medium">Dashboard</span>
+        </NuxtLink>
+        <NuxtLink to="/properties" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:domain" class="w-5 h-5" />
+          <span class="text-sm font-medium">Properties</span>
+        </NuxtLink>
+        <NuxtLink to="/vehicles" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:car" class="w-5 h-5" />
+          <span class="text-sm font-medium">Vehicles</span>
+        </NuxtLink>
+        <NuxtLink to="/valuations" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:chart-line" class="w-5 h-5" />
+          <span class="text-sm font-medium">Valuations</span>
+        </NuxtLink>
+        <NuxtLink to="/map" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:map" class="w-5 h-5" />
+          <span class="text-sm font-medium">Maps</span>
+        </NuxtLink>
+        <NuxtLink to="/reports" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
+          <Icon name="mdi:file-document" class="w-5 h-5" />
+          <span class="text-sm font-medium">Reports</span>
+        </NuxtLink>
+      </nav>
+      <div class="pt-4 border-t border-emerald-900/5 mt-auto space-y-1">
+        <NuxtLink to="/settings" class="flex items-center gap-3 px-4 py-3 bg-emerald-100/50 text-emerald-700 rounded-xl font-bold transition-all duration-200 group">
+          <Icon name="mdi:cog" class="w-5 h-5" />
+          <span class="text-sm font-medium">Settings</span>
+        </NuxtLink>
+        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group w-full text-left">
+          <Icon name="mdi:logout" class="w-5 h-5" />
+          <span class="text-sm font-medium">Logout</span>
         </button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Settings Content -->
-    <div class="settings-content">
-      <!-- General Settings -->
-      <GeneralSettings v-if="activeTab === 'general'" />
+    <!-- Main Content -->
+    <main class="ml-64 p-8 min-h-screen">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-10">
+        <div>
+          <h2 class="font-['Syne'] font-extrabold text-4xl text-[#191c1e] tracking-tighter">System Settings</h2>
+          <p class="text-[#3d4a42] font-medium mt-1">Manage your administrative profile and global system configurations.</p>
+        </div>
+      </header>
 
-      <!-- Valuation Settings -->
-      <div v-if="activeTab === 'valuation'" class="settings-section">
-        <div class="section-header">
-          <h2>Valuation Settings</h2>
-          <p>Property valuation methods and calculation parameters</p>
-        </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Valuation settings coming soon...</span>
-        </div>
+      <!-- Bento Grid Layout -->
+      <div class="grid grid-cols-12 gap-6">
+        <!-- Administrative Profile -->
+        <section class="col-span-12 lg:col-span-8 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+                <Icon name="mdi:account" class="w-6 h-6" />
+              </div>
+              <h3 class="text-xl font-bold font-['Syne']">Administrative Profile</h3>
+            </div>
+            <button class="text-sm font-semibold text-emerald-700 hover:underline">Edit Details</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Name</label>
+              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.fullName }}</p>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email Address</label>
+              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.email }}</p>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Department</label>
+              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.department }}</p>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Role Access</label>
+              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.role }}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- System Preferences -->
+        <section class="col-span-12 lg:col-span-4 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm flex flex-col">
+          <div class="flex items-center gap-4 mb-8">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700">
+              <Icon name="mdi:tune" class="w-6 h-6" />
+            </div>
+            <h3 class="text-xl font-bold font-['Syne']">System Preferences</h3>
+          </div>
+          <div class="space-y-6 flex-1">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold">Dark Mode</p>
+                <p class="text-xs text-slate-500">Toggle system-wide theme</p>
+              </div>
+              <button @click="toggleDarkMode" :class="darkMode ? 'bg-emerald-600' : 'bg-slate-200'" class="w-12 h-6 rounded-full relative transition-colors p-1">
+                <div :class="darkMode ? 'translate-x-6' : 'translate-x-0'" class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform"></div>
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold">Data Density</p>
+                <p class="text-xs text-slate-500">Compact or Spacious UI</p>
+              </div>
+              <div class="flex bg-slate-100 p-1 rounded-lg">
+                <button @click="dataDensity = 'compact'" :class="dataDensity === 'compact' ? 'bg-white shadow-sm' : 'text-slate-500'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">Compact</button>
+                <button @click="dataDensity = 'spacious'" :class="dataDensity === 'spacious' ? 'bg-white shadow-sm' : 'text-slate-500'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">Spacious</button>
+              </div>
+            </div>
+            <div class="space-y-2 pt-2">
+              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">System Language</label>
+              <select v-model="systemLanguage" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm py-2 px-3 border">
+                <option>English (International)</option>
+                <option>Amharic (አማርኛ)</option>
+                <option>French</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Security & API Integration -->
+        <section class="col-span-12 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm">
+          <div class="flex items-center gap-4 mb-10">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+              <Icon name="mdi:shield" class="w-6 h-6" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold font-['Syne']">Security & API Integration</h3>
+              <p class="text-xs text-slate-500">Manage sensitive access tokens and authentication layers</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- Security -->
+            <div class="space-y-6">
+              <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="flex items-start justify-between">
+                  <div class="flex gap-4">
+                    <Icon name="mdi:shield-check" class="w-6 h-6 text-emerald-600" />
+                    <div>
+                      <p class="font-bold text-sm">Two-Factor Authentication</p>
+                      <p class="text-xs text-slate-500 mt-1">Status: <span class="text-emerald-600 font-bold uppercase">Active</span></p>
+                    </div>
+                  </div>
+                  <button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Configure</button>
+                </div>
+              </div>
+              <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="flex items-start justify-between">
+                  <div class="flex gap-4">
+                    <Icon name="mdi:lock" class="w-6 h-6 text-slate-400" />
+                    <div>
+                      <p class="font-bold text-sm">Update Password</p>
+                      <p class="text-xs text-slate-500 mt-1">Last updated {{ daysSincePasswordChange }} days ago</p>
+                    </div>
+                  </div>
+                  <button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Update</button>
+                </div>
+              </div>
+            </div>
+            <!-- API Keys -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active API Keys</h4>
+                <button class="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                  <Icon name="mdi:plus" class="w-4 h-4" /> GENERATE KEY
+                </button>
+              </div>
+              <div class="space-y-2">
+                <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                  <div>
+                    <p class="text-xs font-bold">{{ key.name }}</p>
+                    <p class="text-[10px] font-mono text-slate-400">{{ maskApiKey(key.key) }}</p>
+                  </div>
+                  <div class="flex gap-2">
+                    <button @click="copyApiKey(key.key)" class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors">
+                      <Icon name="mdi:content-copy" class="w-4 h-4" />
+                    </button>
+                    <button @click="deleteApiKey(key.id)" class="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
+                      <Icon name="mdi:delete" class="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-
-      <!-- Notification Settings -->
-      <div v-if="activeTab === 'notifications'" class="settings-section">
-        <div class="section-header">
-          <h2>Notification Settings</h2>
-          <p>Configure system notifications and alerts</p>
-        </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Notification settings coming soon...</span>
-        </div>
-      </div>
-
-      <!-- Security Settings -->
-      <div v-if="activeTab === 'security'" class="settings-section">
-        <div class="section-header">
-          <h2>Security Settings</h2>
-          <p>Security policies and access control</p>
-        </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Security settings coming soon...</span>
-        </div>
-      </div>
-
-      <!-- Backup Settings -->
-      <div v-if="activeTab === 'backup'" class="settings-section">
-        <div class="section-header">
-          <h2>Backup Settings</h2>
-          <p>Data backup and recovery configuration</p>
-        </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>Backup settings coming soon...</span>
-        </div>
-      </div>
-
-      <!-- API Settings -->
-      <div v-if="activeTab === 'api'" class="settings-section">
-        <div class="section-header">
-          <h2>API Settings</h2>
-          <p>API configuration and integration settings</p>
-        </div>
-        <div class="coming-soon">
-          <i class="pi pi-info-circle"></i>
-          <span>API settings coming soon...</span>
-        </div>
-      </div>
-      
-      <!-- Web Scraper Settings -->
-      <ScraperManagement v-if="activeTab === 'scraper'" />
-    </div>
-
-    <!-- Save Status -->
-    <div v-if="saveStatus" class="save-status" :class="saveStatus.type">
-      <i :class="saveStatus.icon"></i>
-      <span>{{ saveStatus.message }}</span>
-    </div>
-    
-    <!-- Notification Toast -->
-    <NotificationToast 
-      v-for="notification in notifications" 
-      :key="notification.id"
-      :notification="notification"
-    />
+    </main>
   </div>
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['admin'] })
-import { ref, onMounted } from 'vue'
-import GeneralSettings from '~/components/settings/GeneralSettings.vue'
-import ScraperManagement from '~/components/settings/ScraperManagement.vue'
-import NotificationToast from '~/components/ui/NotificationToast.vue'
-import { useNotifications } from '~/composables/useNotifications.js'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '~/stores/auth'
 
-// Reactive data
-const activeTab = ref('general')
-const isSaving = ref(false)
-const saveStatus = ref(null)
+definePageMeta({ middleware: 'auth' })
 
-// Notifications
-const { notifications } = useNotifications()
+const router = useRouter()
+const authStore = useAuthStore()
 
-const settingsTabs = [
-  { id: 'general', label: 'General', icon: 'pi pi-cog' },
-  { id: 'valuation', label: 'Valuation', icon: 'pi pi-calculator' },
-  { id: 'notifications', label: 'Notifications', icon: 'pi pi-envelope' },
-  { id: 'security', label: 'Security', icon: 'pi pi-shield' },
-  { id: 'backup', label: 'Backup', icon: 'pi pi-database' },
-  { id: 'api', label: 'API', icon: 'pi pi-code' },
-  { id: 'scraper', label: 'Web Scraper', icon: 'pi pi-globe' }
-]
+const darkMode = ref(false)
+const dataDensity = ref('compact')
+const systemLanguage = ref('English (International)')
+const daysSincePasswordChange = ref(42)
 
-const settings = ref({
-  general: {
-    platform_name: 'ValuAdis',
-    platform_description: 'Ethiopian Property Valuation Platform',
-    organization_name: 'Ethiopian Valuation Authority',
-    contact_email: 'info@valuadis.gov.et',
-    default_language: 'en',
-    timezone: 'Africa/Addis_Ababa',
-    date_format: 'DD/MM/YYYY',
-    currency: 'ETB'
-  },
-  valuation: {
-    default_method: 'comparative',
-    market_adjustment_factor: 5.0,
-    depreciation_rate: 2.5,
-    min_property_value: 10000,
-    proclamation_compliance: true,
-    validity_period: 365,
-    required_docs: {
-      title_deed: true,
-      tax_clearance: true,
-      land_use_permit: true,
-      building_permit: false
-    }
-  },
-  notifications: {
-    email_enabled: true,
-    smtp_server: 'smtp.gmail.com',
-    smtp_port: 587,
-    smtp_username: '',
-    smtp_password: '',
-    types: {
-      valuation_completed: true,
-      user_registration: true,
-      system_alerts: true,
-      backup_completed: true
-    }
-  },
-  security: {
-    min_password_length: 8,
-    require_uppercase: true,
-    require_numbers: true,
-    require_special_chars: true,
-    password_expiry: 90,
-    session_timeout: 120,
-    max_concurrent_sessions: 3,
-    enable_2fa: false,
-    login_attempts: 5,
-    lockout_duration: 30
-  },
-  backup: {
-    enabled: true,
-    frequency: 'daily',
-    time: '02:00',
-    retention: 30,
-    storage: {
-      location: 'both',
-      provider: 'aws'
-    },
-    encryption: true,
-    compression: true
-  },
-  api: {
-    base_url: 'http://localhost:8020/api',
-    version: 'v1',
-    rate_limit: 100,
-    enable_docs: true,
-    integrations: {
-      box: true,
-      sacra: false,
-      caplight: false,
-      pitchbook: false
-    }
-  }
+const userProfile = ref({
+  fullName: 'Abebe Kebede',
+  email: 'a.kebede@mof.gov.et',
+  department: 'National Property Registry',
+  role: 'System Administrator'
 })
 
+const apiKeys = ref([
+  { id: 1, name: 'PROD_REGISTRY_V4', key: 'sk_live_xxxxxxxxxxxxxxxx4e21' },
+  { id: 2, name: 'STAGING_VALUATION_SERVICE', key: 'sk_test_xxxxxxxxxxxxxxxx92a3' }
+])
 
-// Methods
-// Settings endpoint not implemented yet
-/*
-async function loadSettings() {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/settings`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      if (data.data) {
-        settings.value = { ...settings.value, ...data.data }
-      }
-    } else {
-      console.error('Failed to load settings from API')
-    }
-  } catch (error) {
-    console.error('Error loading settings:', error)
-  }
-}
-*/
-
-/*
-async function saveAllSettings() {
-  isSaving.value = true
-  saveStatus.value = null
-
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const API_BASE = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
-    const response = await fetch(`${API_BASE}/api/v1/settings`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(settings.value)
-    })
-
-    if (response.ok) {
-      saveStatus.value = {
-        type: 'success',
-        icon: 'pi pi-check-circle',
-        message: 'Settings saved successfully!'
-      }
-    } else {
-      const error = await response.json()
-      saveStatus.value = {
-        type: 'error',
-        icon: 'pi pi-exclamation-circle',
-        message: error.detail || 'Failed to save settings'
-      }
-    }
-  } catch (error) {
-    console.error('Error saving settings:', error)
-    saveStatus.value = {
-      type: 'error',
-      icon: 'pi pi-exclamation-circle',
-      message: 'Network error. Please try again.'
-    }
-  } finally {
-    isSaving.value = false
-    setTimeout(() => {
-      saveStatus.value = null
-    }, 5000)
-  }
-}
-*/
-
-function exportSettings() {
-  const dataStr = JSON.stringify(settings.value, null, 2)
-  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
-  
-  const exportFileDefaultName = `valuadis-settings-${new Date().toISOString().split('T')[0]}.json`
-  
-  const linkElement = document.createElement('a')
-  linkElement.setAttribute('href', dataUri)
-  linkElement.setAttribute('download', exportFileDefaultName)
-  linkElement.click()
+function toggleDarkMode() {
+  darkMode.value = !darkMode.value
 }
 
-onMounted(() => {
-  // Settings page mounted - components handle their own data loading
-})
+function maskApiKey(key) {
+  return key.substring(0, 7) + '••••••••••••' + key.substring(key.length - 4)
+}
+
+function copyApiKey(key) {
+  navigator.clipboard.writeText(key)
+  // Could add toast notification here
+}
+
+function deleteApiKey(id) {
+  apiKeys.value = apiKeys.value.filter(k => k.id !== id)
+}
+
+function logout() {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
-<style scoped>
-/* Settings Container */
-.settings-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0;
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-radius: 16px;
-  color: white;
-  box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
-}
-
-.header-content h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
-
-.header-content p {
-  font-size: 1.125rem;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-button.primary {
-  background: white;
-  color: #059669;
-}
-
-.action-button.primary:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
-}
-
-.action-button.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.action-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Settings Navigation */
-.settings-nav {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-  overflow: hidden;
-}
-
-.nav-tabs {
-  display: flex;
-  overflow-x: auto;
-}
-
-.nav-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border: none;
-  background: none;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  border-bottom: 3px solid transparent;
-}
-
-.nav-tab:hover {
-  color: #059669;
-  background: #f8fafc;
-}
-
-.nav-tab.active {
-  color: #059669;
-  border-bottom-color: #059669;
-  background: #f0fdf4;
-}
-
-/* Settings Content */
-.settings-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.settings-section {
-  padding: 2rem;
-}
-
-.section-header {
-  margin-bottom: 2rem;
-}
-
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.section-header p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-}
-
-.setting-group {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.setting-group h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 1.5rem 0;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.form-field {
-  margin-bottom: 1.5rem;
-}
-
-.form-field:last-child {
-  margin-bottom: 0;
-}
-
-.form-field label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.5rem;
-}
-
-.form-field input,
-.form-field select,
-.form-field textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-  transition: all 0.2s;
-}
-
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-  outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-}
-
-.form-field textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-/* Switch Toggle */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
-  margin-left: 0.5rem;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #059669;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-/* Checkbox Group */
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: #374151;
-}
-
-.checkbox-item input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  accent-color: #059669;
-}
-
-/* Save Status */
-.save-status {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-
-.save-status.success {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.save-status.error {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-/* Scraper Actions */
-.scraper-actions {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .nav-tabs {
-    flex-direction: column;
-  }
-  
-  .nav-tab {
-    border-bottom: none;
-    border-right: 3px solid transparent;
-  }
-  
-  .nav-tab.active {
-    border-right-color: #059669;
-  }
-  
-  .settings-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .save-status {
-    bottom: 1rem;
-    right: 1rem;
-    left: 1rem;
-  }
-}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
 </style>

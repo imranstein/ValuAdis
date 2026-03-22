@@ -140,3 +140,46 @@ def sanitize_input(input_string: str) -> str:
 def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
     """Get current user ID from JWT token - alias for get_current_user_id"""
     return get_current_user_id(token)
+
+
+def validate_ethiopian_license(license: str) -> dict:
+    """
+    Validate Ethiopian business license number format
+
+    Expected format: XXX-NNNNNNNNNN (e.g., AA-1234567890)
+    - 2-4 uppercase letters (prefix indicating region/authority)
+    - Hyphen separator
+    - 6-10 digits
+
+    Returns:
+        dict: {"valid": bool, "error": str|None}
+    """
+    import re
+
+    # Check if license is provided
+    if not license or not isinstance(license, str):
+        return {"valid": False, "error": "License number is required"}
+
+    # Trim whitespace
+    trimmed = license.strip()
+
+    # Check length
+    if len(trimmed) < 9:
+        return {"valid": False, "error": "License number must be at least 9 characters"}
+
+    if len(trimmed) > 20:
+        return {"valid": False, "error": "License number must not exceed 20 characters"}
+
+    # Ethiopian license format: XXX-NNNNNNNNNN
+    # - 2-4 uppercase letters (prefix)
+    # - hyphen separator
+    # - 6-10 digits
+    ethiopian_license_regex = re.compile(r'^[A-Z]{2,4}-\d{6,10}$')
+
+    if not ethiopian_license_regex.match(trimmed):
+        return {
+            "valid": False,
+            "error": "Invalid Ethiopian license format. Expected format: XXX-NNNNNNNNNN (e.g., AA-1234567890)"
+        }
+
+    return {"valid": True, "error": None}

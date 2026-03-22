@@ -764,3 +764,40 @@ Typography: Inter (base) + Syne (display)
 Spacing: xs 0.25rem → 2xl 3rem
 Shadows: sm-xl levels + glow effect
 Radius: 8-20px scale
+
+---
+
+## Session: Wave 1 - Token Expiry Implementation
+**Date:** 2026-03-22
+**Status:** COMPLETED ✅
+
+### Tasks Completed
+1. ✅ **Task 01:** Created useAuth.ts composable with token validation
+   - `isTokenValid()` - checks JWT exp claim
+   - `getTokenPayload()` - decodes JWT without verification
+   - `validateAndRefresh()` - auto-logout on expiry
+
+2. ✅ **Task 02:** Updated auth.ts middleware with expiry check
+   - Validates token on every route navigation
+   - Clears localStorage on expiry
+   - Redirects to /login?reason=token-expired
+
+3. ✅ **Task 03:** Created E2E test phase1-foundation.spec.ts
+   - Tests expired token logout scenario
+   - Tests valid token allows access
+   - Ready for runner
+
+### Files Created/Modified
+- `frontend/app/composables/useAuth.ts` (NEW)
+- `frontend/app/middleware/auth.ts` (UPDATED)
+- `tests/e2e/phase1-foundation.spec.ts` (NEW)
+
+### Commit
+- Commit: 87555f4
+- Branch: main
+- Push: SUCCESS
+
+### Next Steps
+- Run E2E tests to verify token expiry works
+- Once passing, start Wave 2 (Parallel Groups 2A, 2B, 2C)
+
