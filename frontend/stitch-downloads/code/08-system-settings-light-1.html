@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Pulse - System Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&amp;family=Inter:wght@400;500;600&amp;family=Epilogue:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-container": "#a36700",
+              "on-error": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#6d7a72",
+              "on-tertiary-fixed-variant": "#653e00",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#2d3133",
+              "surface-container-highest": "#e0e3e5",
+              "surface-variant": "#e0e3e5",
+              "on-primary-fixed": "#002114",
+              "on-surface": "#191c1e",
+              "primary": "#006948",
+              "on-secondary-fixed-variant": "#3323cc",
+              "on-primary-fixed-variant": "#005137",
+              "on-tertiary-fixed": "#2a1700",
+              "on-surface-variant": "#3d4a42",
+              "primary-container": "#00855d",
+              "surface-bright": "#f7f9fb",
+              "inverse-on-surface": "#eff1f3",
+              "on-secondary-container": "#fffbff",
+              "primary-fixed-dim": "#68dba9",
+              "on-tertiary-container": "#fffbff",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed-dim": "#ffb95f",
+              "surface-container-low": "#f2f4f6",
+              "on-secondary-fixed": "#0f0069",
+              "error": "#ba1a1a",
+              "on-primary-container": "#f5fff7",
+              "inverse-primary": "#68dba9",
+              "secondary": "#4b41e1",
+              "surface-tint": "#006c4a",
+              "on-error-container": "#93000a",
+              "surface": "#f7f9fb",
+              "on-background": "#191c1e",
+              "background": "#f7f9fb",
+              "tertiary-fixed": "#ffddb8",
+              "outline-variant": "#bccac0",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#c3c0ff",
+              "surface-container": "#eceef0",
+              "surface-container-high": "#e6e8ea",
+              "surface-dim": "#d8dadc",
+              "tertiary": "#825100",
+              "secondary-container": "#645efb",
+              "error-container": "#ffdad6",
+              "primary-fixed": "#85f8c4",
+              "secondary-fixed": "#e2dfff"
+            },
+            fontFamily: {
+              "syne": ["Syne", "sans-serif"],
+              "headline": ["Epilogue", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f7f9fb;
+      }
+      h1, h2, h3, .brand-font {
+        font-family: 'Syne', sans-serif;
+      }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-slate-200/20 bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold font-syne text-emerald-800 dark:text-emerald-400">Sovereign Pulse</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-inter mt-1">Property Valuation</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span class="text-sm font-medium">Properties</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
+<span class="text-sm font-medium">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="text-sm font-medium">Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-sm font-medium">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-emerald-700 dark:text-emerald-400 font-semibold border-r-4 border-emerald-600 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-l-xl" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-2 pt-6 border-t border-slate-200/20 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="User Profile Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8538Pl9yxq7C7LjNPS3kttACgzjEkgbN5iJWNIB3B4FjGxbMGlwjzv6EGC7-5Q1paY5rg0zSvlRUKQRAcWKMJUuIQsCsOoCLL8-jDKhaDFFPN4epfdUyj64YjhxPJErjHZiChVwOeKhkI85_MKhCIHJLFCBOiu4RR-NpoVvMCGmMu376dLUGyrlmpUg62HDFlirVXWPmQrIlKWrTjUip62bJ1QNTqs6rqZ31Tsohm88Ak-BZUB406Upd-UEYI4shBAEOsuBYXHQ0-"/>
+<div>
+<p class="text-xs font-bold font-syne text-on-surface">Abebe Kebede</p>
+<p class="text-[10px] text-slate-500">Chief Registrar</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-8">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20" placeholder="Search system settings..." type="text"/>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-slate-500 font-medium hover:text-emerald-600 text-sm" href="#">Dashboard</a>
+<a class="text-slate-500 font-medium hover:text-emerald-600 text-sm" href="#">Market Insights</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<button class="ml-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary-container transition-all active:scale-95 shadow-sm">
+                    New Valuation
+                </button>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="pt-24 pb-12 px-12 flex-1">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-400 font-inter mb-6">
+<a class="hover:text-emerald-600 transition-colors" href="#">Home</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-slate-900 font-bold">Settings</span>
+</nav>
+<header class="mb-10">
+<h2 class="text-4xl font-extrabold font-syne text-on-surface tracking-tight">System Settings</h2>
+<p class="text-slate-500 font-inter mt-2">Manage your administrative profile and global system configurations.</p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Administrative Profile -->
+<section class="col-span-12 lg:col-span-8 glass-card rounded-3xl p-8 border border-white/40 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<h3 class="text-xl font-bold font-syne">Administrative Profile</h3>
+</div>
+<button class="text-sm font-semibold text-emerald-700 hover:underline">Edit Details</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Name</label>
+<p class="text-on-surface font-medium border-b border-slate-100 pb-2">Abebe Kebede</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email Address</label>
+<p class="text-on-surface font-medium border-b border-slate-100 pb-2">a.kebede@mof.gov.et</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Department</label>
+<p class="text-on-surface font-medium border-b border-slate-100 pb-2">National Property Registry</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Role Access</label>
+<p class="text-on-surface font-medium border-b border-slate-100 pb-2">System Administrator</p>
+</div>
+</div>
+</section>
+<!-- System Preferences -->
+<section class="col-span-12 lg:col-span-4 glass-card rounded-3xl p-8 border border-white/40 shadow-sm flex flex-col">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">tune</span>
+</div>
+<h3 class="text-xl font-bold font-syne">System Preferences</h3>
+</div>
+<div class="space-y-6 flex-1">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-bold">Dark Mode</p>
+<p class="text-xs text-slate-500">Toggle system-wide theme</p>
+</div>
+<button class="w-12 h-6 bg-slate-200 rounded-full relative transition-colors p-1">
+<div class="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+</button>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-bold">Data Density</p>
+<p class="text-xs text-slate-500">Compact or Spacious UI</p>
+</div>
+<div class="flex bg-slate-100 p-1 rounded-lg">
+<button class="px-3 py-1 text-[10px] font-bold bg-white rounded-md shadow-sm">Compact</button>
+<button class="px-3 py-1 text-[10px] font-bold text-slate-500">Spacious</button>
+</div>
+</div>
+<div class="space-y-2 pt-2">
+<label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">System Language</label>
+<select class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm py-2">
+<option>English (International)</option>
+<option>Amharic (አማርኛ)</option>
+<option>French</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Security & API Integration -->
+<section class="col-span-12 glass-card rounded-3xl p-8 border border-white/40 shadow-sm">
+<div class="flex items-center gap-4 mb-10">
+<div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h3 class="text-xl font-bold font-syne">Security &amp; API Integration</h3>
+<p class="text-xs text-slate-500">Manage sensitive access tokens and authentication layers</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<!-- Security -->
+<div class="space-y-6">
+<div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-emerald-600">verified_user</span>
+<div>
+<p class="font-bold text-sm">Two-Factor Authentication</p>
+<p class="text-xs text-slate-500 mt-1">Status: <span class="text-emerald-600 font-bold uppercase">Active</span></p>
+</div>
+</div>
+<button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Configure</button>
+</div>
+</div>
+<div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-400">password</span>
+<div>
+<p class="font-bold text-sm">Update Password</p>
+<p class="text-xs text-slate-500 mt-1">Last updated 42 days ago</p>
+</div>
+</div>
+<button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Update</button>
+</div>
+</div>
+</div>
+<!-- API Keys -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active API Keys</h4>
+<button class="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">add</span> GENERATE KEY
+                                </button>
+</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+<div>
+<p class="text-xs font-bold">PROD_REGISTRY_V4</p>
+<p class="text-[10px] font-mono text-slate-400">sk_live_••••••••••••4e21</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+<div>
+<p class="text-xs font-bold">STAGING_VALUATION_SERVICE</p>
+<p class="text-[10px] font-mono text-slate-400">sk_test_••••••••••••92a3</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-8 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row justify-between items-center px-12 mt-auto">
+<div class="mb-4 md:mb-0">
+<span class="text-sm font-syne font-bold text-slate-400">SOVEREIGN PULSE</span>
+<p class="font-inter text-[10px] tracking-wide uppercase text-slate-400 mt-1">© 2024 The Digital Heritage. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity cursor-pointer" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity cursor-pointer" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity cursor-pointer" href="#">Contact Support</a>
+</div>
+</footer>
+</main>
+</body></html>

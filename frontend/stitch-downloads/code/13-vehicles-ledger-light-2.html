@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vehicles Ledger | The Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed": "#002114",
+                        "tertiary-container": "#a36700",
+                        "secondary-container": "#645efb",
+                        "background": "#f7f9fb",
+                        "tertiary": "#825100",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#f5fff7",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container": "#eceef0",
+                        "on-secondary-container": "#fffbff",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#85f8c4",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-secondary-fixed": "#0f0069",
+                        "primary-container": "#00855d",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#3d4a42",
+                        "surface-dim": "#d8dadc",
+                        "primary-fixed-dim": "#68dba9",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "outline-variant": "#bccac0",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-fixed": "#2a1700",
+                        "secondary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-tint": "#006c4a",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "inverse-primary": "#68dba9",
+                        "outline": "#6d7a72",
+                        "primary": "#006948",
+                        "secondary": "#4b41e1"
+                    },
+                    fontFamily: {
+                        "headline": ["Syne", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased min-h-screen flex">
+<!-- SideNavBar (Authority: JSON & Design System) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/50 bg-slate-50 flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h1 class="font-headline font-extrabold text-emerald-800 leading-none">Federal Registry</h1>
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Government Portal</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span class="font-label text-sm font-medium">Properties</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-50 text-emerald-700 border-r-4 border-emerald-600 rounded-r-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
+<span class="font-label text-sm font-medium">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label text-sm font-medium">Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-label text-sm font-medium">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label text-sm font-medium">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar (Authority: JSON) -->
+<header class="w-full sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-emerald-100/20 shadow-sm flex justify-between items-center px-8 py-4">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-sm" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Global asset search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:text-emerald-700 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-500 hover:text-emerald-700 transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200"></div>
+<div class="flex items-center gap-3">
+<img alt="User profile avatar" class="w-8 h-8 rounded-full border border-emerald-100" data-alt="Close up of professional user profile portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtK7wJ4l7dtJ6yJRFqwS7ktfgVtQjRMS2j8e_jkUs3-aLVw0rtlv5JBmSi9hvpDBmd-KXrwRxQ3wPXm0ZKEEByzIytOUdOp4w3IYCwZeHFS_VjwCB4uoJEKzCK3xnplAAHMW-HFpYjX-lq5lyPudpLVAtKy8z1Up_LyaznXLyyTi-yooPJjc-Vj7lNC1tK6qZ1zANDmnSogqwpMzFNR8L0VotoTOCoVxIT2YaVjLIVDp8bYaD5nYAZzFd-TLmla-TbAKHPNw0JdGp4"/>
+<div class="hidden lg:block text-right">
+<p class="text-xs font-bold text-on-surface leading-none">Abebe Selassie</p>
+<p class="text-[10px] text-slate-500">Registry Officer</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Body -->
+<div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+<!-- Breadcrumbs & Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav aria-label="Breadcrumb" class="flex mb-2">
+<ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-medium text-slate-500">
+<li class="inline-flex items-center">
+<a class="hover:text-emerald-600" href="#">Federal Registry</a>
+</li>
+<li>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-xs mx-1" data-icon="chevron_right">chevron_right</span>
+<a class="hover:text-emerald-600" href="#">Assets</a>
+</div>
+</li>
+<li aria-current="page">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-xs mx-1" data-icon="chevron_right">chevron_right</span>
+<span class="text-emerald-700">Vehicles Ledger</span>
+</div>
+</li>
+</ol>
+</nav>
+<h2 class="font-headline text-4xl font-extrabold text-emerald-900 tracking-tight">Vehicles Ledger</h2>
+<p class="text-slate-500 mt-1">Manage and audit federal vehicle valuations and ownership records.</p>
+</div>
+<button class="bg-primary hover:bg-primary-container text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                    Register New Vehicle
+                </button>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Stat Card 1 -->
+<div class="glass-card p-6 rounded-3xl border border-white shadow-sm ring-1 ring-emerald-100/50">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-primary/10 text-primary rounded-2xl">
+<span class="material-symbols-outlined" data-icon="minor_crash">minor_crash</span>
+</div>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+4.2%</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Vehicle Assets</p>
+<h3 class="text-3xl font-headline font-bold text-emerald-950">14,282</h3>
+</div>
+<!-- Stat Card 2 -->
+<div class="glass-card p-6 rounded-3xl border border-white shadow-sm ring-1 ring-emerald-100/50">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-secondary/10 text-secondary rounded-2xl">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+</div>
+<span class="text-[10px] font-bold text-secondary-container bg-secondary-fixed px-2 py-1 rounded-full">Active</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Valuations</p>
+<h3 class="text-3xl font-headline font-bold text-emerald-950">842</h3>
+</div>
+<!-- Stat Card 3 -->
+<div class="glass-card p-6 rounded-3xl border border-white shadow-sm ring-1 ring-emerald-100/50">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-tertiary/10 text-tertiary rounded-2xl">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+</div>
+<span class="text-[10px] font-bold text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded-full">High</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registry Accuracy</p>
+<h3 class="text-3xl font-headline font-bold text-emerald-950">99.4%</h3>
+</div>
+<!-- Stat Card 4 -->
+<div class="glass-card p-6 rounded-3xl border border-white shadow-sm ring-1 ring-emerald-100/50">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-emerald-900/10 text-emerald-900 rounded-2xl">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</div>
+<span class="text-[10px] font-bold text-slate-500 px-2 py-1">2 mins ago</span>
+</div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Sync Status</p>
+<h3 class="text-3xl font-headline font-bold text-emerald-950">Optimal</h3>
+</div>
+</div>
+<!-- Vehicle Inventory Table -->
+<div class="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/40">
+<div class="px-8 py-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h4 class="font-headline font-bold text-xl text-emerald-900">Vehicle Inventory</h4>
+<p class="text-xs text-slate-400">Totaling 14,282 entries recorded in the federal ledger.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                            Filter
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50">
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">VIN Number</th>
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Vehicle Model</th>
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Registered Owner</th>
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Last Valuation</th>
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Status</th>
+<th class="px-8 py-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-emerald-50/20 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs font-semibold text-slate-600">ETH-V8-2024-9921</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Black luxury SUV in studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjsTYjwoNv_YVY59WGWagnebD0EVvYzNL5CEgFCLSEmPGjCdSFLYzgVOEobnnEQpvuiaFpmK5DW4MN1lvD7Zv_dxMzjH9ICPOper8mYWASjt2u64hyLWdZx8dd7OYLv532c7f5O4bdalpc8OnMlJdEShVL5SDoLMcQpXmCSNVujMpAjQXF2YRYG-hF35ua0rXrMurt4tSX5PZyrcOqoXZIoDKyPWZQh8PZzKMBXqDXohNuXALRUkQtlFjPvt_wOS0qvMU8ISQrfB2a"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface leading-tight">Toyota Land Cruiser</p>
+<p class="text-[10px] text-slate-400">Model 2024 • White Pearl</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Min. of Agriculture</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Oct 12, 2023</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+<span class="w-1 h-1 rounded-full bg-emerald-600"></span>
+                                        Completed
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-emerald-50/20 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs font-semibold text-slate-600">ETH-TS-2023-4412</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Modern blue electric sedan car" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDttADvMbCKMdUarfB5khnHA1cuXCOr8cyzL8f0UfKUHC-mI4Xr9ocA5_bvn6FenPkADs3zfyTfuh-bdrDmS3GpuFBu1KD65o6_zVypgbb9KKENr8FFMV73bIjR2ztt8LiUvjw3whwZcFLMkyBb2EDNZ_7c8TIe7tdkR3gkr2Z7hS9uGQ0RcMfqU2DZxqpX-4VFi845TA_Cg6J9ajgnhMU5qEm5GA9A4DDpwcDbiZYNXlc90cPtbz0DwWD0qfRX6jmrKkE2mNyYbYKM"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface leading-tight">Tesla Model S</p>
+<p class="text-[10px] text-slate-400">Model 2023 • Deep Blue</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Min. of Innovation</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Jan 05, 2024</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-secondary-fixed text-on-secondary-fixed-variant">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+                                        In Progress
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-emerald-50/20 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs font-semibold text-slate-600">ETH-HD-2022-1108</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Heavy duty white industrial truck" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2w2vKlDVG2O1cOyXerqdttStrossZ_Ti7t508qhtEJ9oVsg-r5yJ5v5CeA-xcN__2KTzTP3zDtdw3YMLAM6Y06Qu6D0SJhK_YAh8y2h188AMhrW7ezDD-kvCJkP6sqCb5X1WzqzR_IUM9V6rIDKg5OlgoyeEamSlfhhQUi8QCKmsBoeww3jo-J3WX-nyegn2kUMLViGqchfFj78e6q_FxDAmmAzDYXUSwidOjgSMwZ1hfSfFaboE7XK-kqGtIGWoqKixb95GRHykk"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface leading-tight">Hino 500 Series</p>
+<p class="text-[10px] text-slate-400">Model 2022 • Arctic White</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant font-medium">Logistics Authority</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Pending</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant">
+<span class="w-1 h-1 rounded-full bg-tertiary"></span>
+                                        Pending
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 bg-slate-50/50 flex items-center justify-between">
+<p class="text-xs text-slate-500 font-medium">Showing 1 to 10 of 14,282 vehicles</p>
+<div class="flex items-center gap-1">
+<button class="p-2 text-slate-400 hover:text-emerald-700 transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-emerald-50 text-slate-600 font-bold text-xs transition-colors">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-emerald-50 text-slate-600 font-bold text-xs transition-colors">3</button>
+<span class="mx-1 text-slate-400">...</span>
+<button class="w-8 h-8 rounded-lg hover:bg-emerald-50 text-slate-600 font-bold text-xs transition-colors">1429</button>
+<button class="p-2 text-slate-400 hover:text-emerald-700 transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer (Authority: JSON) -->
+<footer class="mt-auto w-full border-t border-slate-100 bg-slate-50 px-8 py-4 flex justify-between items-center text-xs text-slate-500">
+<p>© 2024 The Sovereign Pulse. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-emerald-500 hover:underline underline-offset-4 transition-all" href="#">Privacy Policy</a>
+<a class="hover:text-emerald-500 hover:underline underline-offset-4 transition-all" href="#">Terms of Service</a>
+<a class="hover:text-emerald-500 hover:underline underline-offset-4 transition-all" href="#">Help Desk</a>
+</div>
+</footer>
+</main>
+</body></html>

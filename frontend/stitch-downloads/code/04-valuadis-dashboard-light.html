@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuAdis Dashboard | Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#006948",
+                        "primary-container": "#00855d",
+                        "on-primary": "#ffffff",
+                        "secondary": "#4b41e1",
+                        "secondary-container": "#645efb",
+                        "tertiary": "#825100",
+                        "background": "#f7f9fb",
+                        "surface": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline-variant": "rgba(0, 0, 0, 0.08)",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#3d4a42",
+                    },
+                    fontFamily: {
+                        "syne": ["Syne", "sans-serif"],
+                        "inter": ["Inter", "sans-serif"],
+                        "headline": ["Syne"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .sidebar-glass {
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(32px);
+            border-right: 1px solid rgba(0, 105, 72, 0.08);
+        }
+        .grid-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(0, 105, 72, 0.03) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .table-row-hover:hover {
+            background: rgba(0, 105, 72, 0.02);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-inter antialiased grid-bg min-h-screen overflow-x-hidden">
+<!-- Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 sidebar-glass flex flex-col p-6 space-y-2">
+<div class="mb-10 flex items-center space-x-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="font-syne font-bold text-on-surface text-lg leading-tight tracking-tight">Property Ledger</h1>
+<p class="text-[9px] uppercase tracking-widest text-primary/70 font-black">Digital Asset Node</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center space-x-3 px-4 py-3 bg-primary/10 text-primary rounded-xl font-bold transition-all" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-inter text-sm">Properties</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="font-inter text-sm">Vehicles</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-inter text-sm">Valuations</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-inter text-sm">GIS Maps</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-inter text-sm">Reports</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter text-sm">Settings</span>
+</a>
+</nav>
+<div class="pt-6 mt-6 border-t border-slate-200 space-y-1">
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:text-slate-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">help_outline</span>
+<span class="text-xs font-medium uppercase tracking-widest">Support Node</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:text-rose-500 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="text-xs font-medium uppercase tracking-widest">Disconnect</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 p-8 min-h-screen relative">
+<!-- Header -->
+<header class="flex justify-between items-end mb-12">
+<div>
+<nav class="flex text-[10px] font-black text-primary/50 tracking-[0.2em] uppercase mb-3">
+<span>Sovereign Pulse</span>
+<span class="mx-3 text-slate-300">|</span>
+<span class="text-primary">Ledger Dashboard</span>
+</nav>
+<h2 class="font-syne font-extrabold text-5xl text-on-surface tracking-tighter">Executive Overview</h2>
+<p class="text-on-surface-variant font-medium mt-1">Real-time asset valuation intelligence.</p>
+</div>
+<div class="flex items-center space-x-4">
+<button class="px-6 py-3 rounded-2xl bg-surface-container-highest text-primary font-bold text-sm transition-all hover:bg-surface-container-high flex items-center space-x-2">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>Registry</span>
+</button>
+<button class="px-8 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center space-x-2">
+<span class="material-symbols-outlined text-lg">analytics</span>
+<span>Initialize Valuation</span>
+</button>
+</div>
+</header>
+<!-- Stat Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Total Properties -->
+<div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 rounded-2xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">apartment</span>
+</div>
+<span class="text-[10px] font-black px-2 py-1 rounded-lg bg-emerald-100 text-primary border border-primary/10 tracking-widest">+12%</span>
+</div>
+<p class="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Registry Total</p>
+<h3 class="text-4xl font-syne font-extrabold text-on-surface mt-2">14,282</h3>
+</div>
+<!-- Vehicles Valued -->
+<div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 rounded-2xl bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">commute</span>
+</div>
+<span class="text-[10px] font-black px-2 py-1 rounded-lg bg-indigo-100 text-secondary border border-secondary/10 tracking-widest">+4.5%</span>
+</div>
+<p class="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Fleet Assets</p>
+<h3 class="text-4xl font-syne font-extrabold text-on-surface mt-2">8,941</h3>
+</div>
+<!-- Avg Confidence -->
+<div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 rounded-2xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-500 tracking-widest uppercase">Stable</span>
+</div>
+<p class="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Ledger Accuracy</p>
+<h3 class="text-4xl font-syne font-extrabold text-on-surface mt-2">94.8%</h3>
+</div>
+<!-- Pending Certs -->
+<div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 rounded-2xl bg-rose-100 text-rose-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<span class="text-[10px] font-black px-2 py-1 rounded-lg bg-rose-100 text-rose-600 tracking-widest uppercase">Urgent</span>
+</div>
+<p class="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Awaiting Sync</p>
+<h3 class="text-4xl font-syne font-extrabold text-on-surface mt-2">124</h3>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+<!-- Valuations Trend -->
+<div class="lg:col-span-2 glass-card p-8 rounded-3xl shadow-sm">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h4 class="font-syne font-bold text-2xl text-on-surface">Valuations Trend</h4>
+<p class="text-[10px] text-primary/60 uppercase tracking-widest font-black mt-1">Real-time Data Flow</p>
+</div>
+<select class="bg-surface-container-low border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-on-surface-variant outline-none">
+<option>Quarterly Analysis</option>
+<option>Annual Sync</option>
+</select>
+</div>
+<div class="h-64 w-full flex items-end justify-between gap-4 px-2">
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[40%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[55%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[45%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[70%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[85%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+<div class="flex-1 bg-primary/5 rounded-t-xl h-[65%] relative"><div class="absolute bottom-0 left-0 right-0 bg-primary h-[4px] rounded-full"></div></div>
+</div>
+<div class="flex justify-between mt-4 px-2">
+<span class="text-[10px] font-bold text-on-surface-variant">JAN</span>
+<span class="text-[10px] font-bold text-on-surface-variant">FEB</span>
+<span class="text-[10px] font-bold text-on-surface-variant">MAR</span>
+<span class="text-[10px] font-bold text-on-surface-variant">APR</span>
+<span class="text-[10px] font-bold text-on-surface-variant">MAY</span>
+<span class="text-[10px] font-bold text-on-surface-variant">JUN</span>
+</div>
+</div>
+<!-- Distribution -->
+<div class="glass-card p-8 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center">
+<h4 class="font-syne font-bold text-xl text-on-surface mb-6 w-full text-left">Asset Distribution</h4>
+<div class="relative w-48 h-48 mb-8">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="text-slate-100" cx="18" cy="18" fill="transparent" r="15.915" stroke="currentColor" stroke-width="4"></circle>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="68, 100" stroke-width="4"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="32, 100" stroke-dashoffset="-68" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Aggregate</span>
+<span class="text-2xl font-syne font-black text-on-surface">100%</span>
+</div>
+</div>
+<div class="space-y-3 w-full">
+<div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
+<div class="flex items-center space-x-3">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span>Residential</span>
+</div>
+<span class="text-on-surface">68%</span>
+</div>
+<div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
+<div class="flex items-center space-x-3">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span>Commercial</span>
+</div>
+<span class="text-on-surface">32%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Table Section -->
+<section class="glass-card rounded-3xl overflow-hidden shadow-sm">
+<div class="p-8 flex justify-between items-center bg-slate-50/50 border-b border-slate-100">
+<div>
+<h4 class="font-syne font-bold text-2xl text-on-surface">Registry Ledger</h4>
+<p class="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] mt-1">Immutable Transaction History</p>
+</div>
+<div class="flex space-x-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none w-72 transition-all placeholder-slate-400" placeholder="Query ledger hash..." type="text"/>
+</div>
+<button class="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50">
+<tr>
+<th class="px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registry ID</th>
+<th class="px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Node Location</th>
+<th class="px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Appraisal</th>
+<th class="px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">State</th>
+<th class="px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Validator</th>
+<th class="px-8 py-5"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr class="table-row-hover transition-all group">
+<td class="px-8 py-6">
+<span class="font-inter font-bold text-primary">#PROP-8821</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Addis Ababa, Bole</span>
+<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Commercial Sector 04</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="font-syne font-bold text-primary">12,450,000 ETB</span>
+</td>
+<td class="px-8 py-6">
+<span class="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-primary border border-primary/10">Completed</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center space-x-3">
+<img alt="Officer" class="w-8 h-8 rounded-lg border border-slate-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNH03yjFBuug7gu6xtQ2CPxurQAhzEQ0SxzWzv-r7ZhPnOkwMHSHhFoDlm0OqbF6kOppr3c-CYylilO3LEAMCwGx9fuOHfCvV3tUZQkHRGviTCzD4HAhQGU1_jwK2DxJIaF2mF2Kvs4HdNl4-cgf0iqRarDpbbv1k8MqTMUN9WNjEytpwRLYv7eOaxmVZqDBOXdbDH9go0m1h5-2o9_u7DLgnCI43KuDLiRgVxzZ5USyo8VRry-OdaAbLasSyPfqEmw8gultv0yCp9"/>
+<span class="text-sm font-semibold text-on-surface-variant">T. Belay</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="table-row-hover transition-all group">
+<td class="px-8 py-6">
+<span class="font-inter font-bold text-secondary">#PROP-9042</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Bahir Dar, Waterfront</span>
+<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Residential Zone B</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="font-syne font-bold text-secondary">4,820,000 ETB</span>
+</td>
+<td class="px-8 py-6">
+<span class="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-100 text-secondary border border-secondary/10">In Progress</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center space-x-3">
+<img alt="Officer" class="w-8 h-8 rounded-lg border border-slate-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrlUzpkg3qQPnzquyihPzKWuqX30snvhOqqulEsPTEYuLdT86StyxIeyPSdJrAYGHbTMevHPhLNnQT7L9nv-JdcBd1tDkc4ibSGKp-Ua5fz9bCJh0vyvaiFWBz7lqobV7uQdj3QRcRCsVoveiZF-JDg6d-FGupHOK8kahzm9oCn4O1doFiG8B-M7ADvErv-UOgQWObPqR4EqCQ8C3vr7QfMb5OEB-L8wK0fn3WSsVWU5f8LUR0RgUTitJUEhOLj8TBXr9xp3SggJSv"/>
+<span class="text-sm font-semibold text-on-surface-variant">M. Kebede</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-secondary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-8 bg-slate-50/50 flex justify-between items-center border-t border-slate-100">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Index: 001-010 of 14,282 Ledger Entries</p>
+<div class="flex space-x-3">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-on-surface-variant text-xs font-bold">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="ml-64 bg-slate-50 border-t border-slate-200">
+<div class="w-full py-12 px-8 flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto">
+<div class="mb-6 md:mb-0">
+<p class="font-syne font-bold text-slate-900 text-lg">Sovereign Pulse</p>
+<p class="font-inter text-xs tracking-wide text-slate-500 mt-1">© 2024 Sovereign Pulse GovTech. Digital Heritage Initiative.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-primary transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-primary transition-colors duration-200" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-primary transition-colors duration-200" href="#">Compliance</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-primary transition-colors duration-200" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>System Configuration - The Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&amp;family=Inter:wght@300;400;500;600&amp;family=Epilogue:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#653e00",
+              "on-primary-fixed": "#002114",
+              "tertiary-container": "#a36700",
+              "secondary-container": "#645efb",
+              "background": "#f7f9fb",
+              "tertiary": "#825100",
+              "on-error-container": "#93000a",
+              "surface-container-high": "#e6e8ea",
+              "on-primary-container": "#f5fff7",
+              "on-background": "#191c1e",
+              "error": "#ba1a1a",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#2d3133",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary-fixed-dim": "#ffb95f",
+              "surface-container": "#eceef0",
+              "on-secondary-container": "#fffbff",
+              "surface": "#f7f9fb",
+              "on-tertiary-container": "#fffbff",
+              "surface-container-low": "#f2f4f6",
+              "on-error": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "primary-fixed": "#85f8c4",
+              "tertiary-fixed": "#ffddb8",
+              "on-secondary-fixed": "#0f0069",
+              "primary-container": "#00855d",
+              "on-surface": "#191c1e",
+              "on-surface-variant": "#3d4a42",
+              "surface-dim": "#d8dadc",
+              "primary-fixed-dim": "#68dba9",
+              "on-secondary": "#ffffff",
+              "surface-variant": "#e0e3e5",
+              "outline-variant": "#bccac0",
+              "on-secondary-fixed-variant": "#3323cc",
+              "inverse-on-surface": "#eff1f3",
+              "surface-bright": "#f7f9fb",
+              "on-tertiary-fixed": "#2a1700",
+              "secondary-fixed": "#e2dfff",
+              "on-primary-fixed-variant": "#005137",
+              "surface-tint": "#006c4a",
+              "secondary-fixed-dim": "#c3c0ff",
+              "inverse-primary": "#68dba9",
+              "outline": "#6d7a72",
+              "primary": "#006948",
+              "secondary": "#4b41e1"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "syne": ["Syne"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(188, 202, 192, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/50 bg-slate-50 flex flex-col py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="font-syne font-extrabold text-emerald-800 leading-tight">Federal Registry</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Government Portal</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600">domain</span>
+<span class="font-medium text-sm">Properties</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600">directions_car</span>
+<span class="font-medium text-sm">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600">analytics</span>
+<span class="font-medium text-sm">Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600">map</span>
+<span class="font-medium text-sm">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-all rounded-lg group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600">description</span>
+<span class="font-medium text-sm">Reports</span>
+</a>
+<!-- Active State: Settings -->
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-50 text-emerald-700 border-r-4 border-emerald-600 rounded-r-lg group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-semibold text-sm">Settings</span>
+</a>
+</nav>
+<div class="px-3 mt-auto">
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-700 transition-all rounded-lg group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-red-600">logout</span>
+<span class="font-medium text-sm">Logout</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-emerald-100/20 px-8 py-4 flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+<span class="material-symbols-outlined text-lg">search</span>
+</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="Search system configs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-500 hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-tertiary rounded-full border-2 border-white"></span>
+</button>
+<button class="text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-[1px] bg-emerald-100/30"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-emerald-900 leading-none">Abebe Bikila</p>
+<p class="text-[10px] text-slate-500 font-medium">System Admin</p>
+</div>
+<img class="w-10 h-10 rounded-full border-2 border-emerald-100 object-cover" data-alt="User profile avatar of system administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADA-QNOZPgjD16_g0ZOJYLY06nftF2TfqVo0Z6lhsst3vAINnf34kJ7qzu0gWMMQAl2LCjdjfP6un041B5L3ARrP8q3tBHU9vTUX7FDuZdRgNlBwQodbo99YppsbJVNHCNp1ersOBvwzVAxk8vzEPpniw2copwhCnkPot9KcId8l72E-vWBgTwgRRlsO6CoYnHiul-7h6xoDZMvYQzz4a_o_5qFQ7NS9ih_ZzDfxc64rF5uCTsqlf4vX8EbQt0PduQBJm5elL9DmuT"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-10 max-w-7xl mx-auto w-full flex-1">
+<!-- Dashboard Header -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<h2 class="font-syne text-4xl font-extrabold text-emerald-900 tracking-tight">System Configuration</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Manage global parameters, administrative identity, and security protocols for the Federal Registry core engine.</p>
+</div>
+<button class="bg-primary hover:bg-primary-container text-white px-6 py-3 rounded-3xl font-bold flex items-center gap-2 shadow-lg shadow-primary/10 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">save</span>
+                    Publish Changes
+                </button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Administrative Profile Section (Larger Span) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<section class="glass-card rounded-3xl p-8 shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">badge</span>
+</div>
+<h3 class="font-syne text-xl font-bold text-emerald-950">Administrative Profile</h3>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Edit Details</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Display Name</label>
+<div class="px-4 py-3 bg-surface-container-low rounded-2xl text-on-surface font-medium border border-transparent focus-within:border-primary/30 transition-all">
+                                        Abebe Bikila
+                                    </div>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Department</label>
+<div class="px-4 py-3 bg-surface-container-low rounded-2xl text-on-surface font-medium border border-transparent">
+                                        Federal Land Management
+                                    </div>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Official Email</label>
+<div class="px-4 py-3 bg-surface-container-low rounded-2xl text-on-surface font-medium border border-transparent">
+                                        a.bikila@registry.gov.et
+                                    </div>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Admin Tier</label>
+<div class="px-4 py-3 bg-surface-container-low rounded-2xl flex items-center justify-between border border-transparent">
+<span class="font-bold text-primary">Level 4 (SuperAdmin)</span>
+<span class="material-symbols-outlined text-emerald-600 text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Security & API Integration Section -->
+<section class="glass-card rounded-3xl p-8 shadow-sm">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-3xl">security</span>
+</div>
+<h3 class="font-syne text-xl font-bold text-emerald-950">Security &amp; API Integration</h3>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">authenticator</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Two-Factor Authentication (2FA)</p>
+<p class="text-xs text-on-surface-variant">Enhanced protection for sensitive database queries.</p>
+</div>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<div class="w-12 h-6 bg-primary rounded-full"></div>
+<div class="absolute left-7 w-4 h-4 bg-white rounded-full transition-all"></div>
+</div>
+</div>
+<div class="p-6 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-bold text-secondary text-sm">System API Credentials</p>
+<p class="text-xs text-indigo-700/70">Last rotated: 14 Oct 2024</p>
+</div>
+<button class="bg-white px-4 py-2 rounded-xl text-xs font-bold text-secondary shadow-sm hover:shadow-md transition-all">Rotate Keys</button>
+</div>
+<div class="bg-white/80 backdrop-blur rounded-xl p-3 flex items-center justify-between">
+<code class="text-[10px] text-slate-600 font-mono tracking-widest">ET_PROD_9921_••••••••••••_X4Y7</code>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- System Preferences (Asymmetric Side Column) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<section class="bg-primary-container/10 rounded-3xl p-8 border border-primary/5 h-full">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-3xl">tune</span>
+</div>
+<h3 class="font-syne text-xl font-bold text-emerald-950">Preferences</h3>
+</div>
+<div class="space-y-8">
+<!-- Theme Selector -->
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Interface Theme</label>
+<div class="grid grid-cols-2 gap-3">
+<button class="p-4 bg-white rounded-2xl border-2 border-primary flex flex-col items-center gap-2 group">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">light_mode</span>
+<span class="text-xs font-bold text-primary">Light Ledger</span>
+</button>
+<button class="p-4 bg-slate-800 rounded-2xl border-2 border-transparent flex flex-col items-center gap-2 hover:border-slate-600 transition-all">
+<span class="material-symbols-outlined text-slate-400">dark_mode</span>
+<span class="text-xs font-bold text-slate-400">Deep Emerald</span>
+</button>
+</div>
+</div>
+<!-- Language -->
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Primary Language</label>
+<select class="w-full bg-white border-none rounded-2xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 shadow-sm">
+<option>English (International)</option>
+<option>Amharic (አማርኛ)</option>
+<option>Oromo (Afaan Oromoo)</option>
+<option>Tigrinya (ትግርኛ)</option>
+</select>
+</div>
+<!-- Data Density -->
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Data Density</label>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-slate-700">Compact Mode</span>
+<div class="relative w-10 h-5 bg-slate-200 rounded-full transition-colors cursor-pointer">
+<div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-slate-700">Detailed Visualizations</span>
+<div class="relative w-10 h-5 bg-primary rounded-full transition-colors cursor-pointer">
+<div class="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Visual Ornament (Ethiopian Motif) -->
+<div class="pt-8 opacity-20 flex justify-center">
+<div class="grid grid-cols-4 gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Footer Shell -->
+<footer class="mt-auto bg-slate-50 border-t border-slate-100 px-8 py-6 w-full ml-64 max-w-[calc(100%-16rem)] flex justify-between items-center">
+<p class="font-body text-xs text-slate-500">© 2024 The Sovereign Pulse. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-all" href="#">Privacy Policy</a>
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-all" href="#">Terms of Service</a>
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-all" href="#">Help Desk</a>
+</div>
+</footer>
+</main>
+</body></html>

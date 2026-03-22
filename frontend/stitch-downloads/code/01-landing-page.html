@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuAdis | Sovereign Pulse GovTech</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;family=Lora:ital,wght@0,400;0,500;1,400&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "earth-dark": "#2d2a26",
+              "earth-clay": "#7c6a58",
+              "earth-sand": "#d9d0c1",
+              "earth-mist": "#f2eee9",
+              "amber-glow": "#ffbf69",
+              "amber-deep": "#b07d4b",
+              "sage": "#8a9a5b"
+            },
+            fontFamily: {
+              "sans": ["Plus Jakarta Sans", "sans-serif"],
+              "serif": ["Lora", "serif"],
+              "display": ["Instrument Serif", "serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-earth-mist text-earth-dark scroll-smooth;
+            }
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 70% 30%, rgba(255, 191, 105, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 10% 80%, rgba(124, 106, 88, 0.1) 0%, transparent 40%);
+        }
+        .soft-mask {
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        .blend-section {
+            background: linear-gradient(to bottom, transparent, #f2eee9 15%);
+        }
+        .glass-warm {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .painterly-border {
+            border-radius: 60% 40% 70% 30% / 40% 50% 60% 70%;
+        }
+    </style>
+</head>
+<body class="font-serif leading-relaxed">
+<nav class="fixed top-0 w-full flex justify-between items-center px-12 h-24 z-50 transition-all duration-500">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-display italic tracking-tight text-earth-clay">Sovereign Pulse</span>
+</div>
+<div class="hidden md:flex items-center space-x-12 font-sans text-sm uppercase tracking-widest font-medium text-earth-clay/80">
+<a class="hover:text-amber-deep transition-colors" href="#">Properties</a>
+<a class="hover:text-amber-deep transition-colors" href="#">Valuations</a>
+<a class="hover:text-amber-deep transition-colors" href="#">GIS Maps</a>
+<a class="hover:text-amber-deep transition-colors" href="#">Reports</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-earth-clay hover:text-amber-glow transition-colors">notifications</button>
+<button class="bg-earth-dark text-earth-mist px-8 py-3 rounded-full font-sans text-xs uppercase tracking-widest font-bold transition-all hover:bg-amber-deep hover:shadow-2xl hover:shadow-amber-glow/20">New Valuation</button>
+</div>
+</nav>
+<main>
+<section class="relative min-h-screen flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Abstract Background" class="w-full h-full object-cover scale-110 blur-xl opacity-40 brightness-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzLm1pWY6pHFrpZad9WBG1CH_mDx_OkJgd5hQsivOIkFBRqNnu_3SVGQvkWXwZVhIdzhkXM6DkcIDZwe5_-l6IOpSn4I9zWm7FUsxrb1VlNVXGKXmOBHu1KzTpwhaX6s0NwhO-Ve7ZQV_Zl0S_MMO1v0xf1-UV6SKdjZ8ti8G2A73or1MP5IV17J80lABnixOu2FGNPGzD3ZAdmhUz0xnVWrFeZDRgWTnheCxtWN0Q534LRodVaIsvjy527R2F720MJrxsDmBARyE3"/>
+<div class="absolute inset-0 hero-gradient"></div>
+</div>
+<div class="relative z-10 max-w-7xl mx-auto px-8 w-full grid lg:grid-cols-2 gap-16 items-center">
+<div class="space-y-8">
+<div class="inline-block px-4 py-1.5 rounded-full border border-amber-deep/30 bg-amber-glow/5 text-amber-deep text-[10px] uppercase tracking-[0.2em] font-sans font-bold">
+                    B2G Certified Infrastructure
+                </div>
+<h1 class="font-display text-7xl lg:text-8xl leading-[0.9] text-earth-dark">
+                    Digital Property Valuation <br/>
+<span class="italic text-amber-deep">Made Simple</span>
+</h1>
+<p class="text-xl md:text-2xl text-earth-clay/80 max-w-xl italic font-light leading-relaxed">
+                    Transforming municipal asset management with Ethiopia's first editorial-grade property ledger. Accurate, transparent, and sovereign.
+                </p>
+<div class="flex flex-wrap gap-6 pt-4">
+<button class="bg-amber-deep text-white px-10 py-5 rounded-full font-sans font-bold text-sm uppercase tracking-widest shadow-xl shadow-amber-deep/20 hover:bg-earth-dark transition-all duration-500">
+                        Start Valuation
+                    </button>
+<button class="group flex items-center gap-4 text-earth-clay font-sans font-bold text-sm uppercase tracking-widest hover:text-amber-deep transition-all">
+<span class="w-14 h-14 rounded-full border border-earth-clay/30 flex items-center justify-center group-hover:bg-amber-glow/10 group-hover:border-amber-deep transition-all">
+<span class="material-symbols-outlined">play_arrow</span>
+</span>
+                        Watch Demo
+                    </button>
+</div>
+</div>
+<div class="relative hidden lg:block">
+<div class="painterly-border w-[500px] h-[500px] bg-gradient-to-tr from-amber-glow/20 to-sage/20 relative overflow-hidden flex items-center justify-center floating shadow-inner">
+<img alt="Generative Art" class="w-full h-full object-cover mix-blend-multiply opacity-50 contrast-125" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzLm1pWY6pHFrpZad9WBG1CH_mDx_OkJgd5hQsivOIkFBRqNnu_3SVGQvkWXwZVhIdzhkXM6DkcIDZwe5_-l6IOpSn4I9zWm7FUsxrb1VlNVXGKXmOBHu1KzTpwhaX6s0NwhO-Ve7ZQV_Zl0S_MMO1v0xf1-UV6SKdjZ8ti8G2A73or1MP5IV17J80lABnixOu2FGNPGzD3ZAdmhUz0xnVWrFeZDRgWTnheCxtWN0Q534LRodVaIsvjy527R2F720MJrxsDmBARyE3"/>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-amber-glow/5 to-earth-mist/80"></div>
+<div class="absolute top-1/4 right-0 glass-warm p-6 rounded-3xl translate-x-12 animate-pulse">
+<span class="material-symbols-outlined text-amber-deep block mb-2">domain</span>
+<p class="font-sans text-[10px] uppercase font-bold tracking-widest opacity-60">Properties</p>
+</div>
+<div class="absolute bottom-1/4 left-0 glass-warm p-6 rounded-3xl -translate-x-12 delay-700 animate-pulse">
+<span class="material-symbols-outlined text-sage block mb-2">directions_car</span>
+<p class="font-sans text-[10px] uppercase font-bold tracking-widest opacity-60">Vehicles</p>
+</div>
+</div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+<div class="w-16 h-16 bg-amber-glow/30 rounded-full blur-2xl animate-ping"></div>
+<div class="w-4 h-4 bg-amber-glow rounded-full shadow-[0_0_30px_#ffbf69]"></div>
+</div>
+</div>
+</div>
+</section>
+<section class="blend-section -mt-24 pt-48 pb-32">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-16">
+<div class="md:col-span-12 group">
+<div class="flex flex-col lg:flex-row items-center gap-16">
+<div class="lg:w-1/2 space-y-6">
+<span class="material-symbols-outlined text-5xl text-amber-deep">auto_awesome</span>
+<h3 class="font-display text-5xl text-earth-dark italic">Precision GIS Mapping</h3>
+<p class="text-xl text-earth-clay/80 font-light leading-relaxed">
+                                Seamlessly integrate cadastral data with high-resolution satellite imagery for millimeter-accurate property boundary definitions.
+                            </p>
+<div class="flex gap-8 font-sans text-xs uppercase tracking-[0.2em] text-earth-clay font-bold pt-4">
+<span class="flex items-center gap-2"><span class="w-1 h-1 bg-amber-glow rounded-full"></span> Topology validation</span>
+<span class="flex items-center gap-2"><span class="w-1 h-1 bg-amber-glow rounded-full"></span> Historical layering</span>
+</div>
+</div>
+<div class="lg:w-1/2 relative">
+<div class="painterly-border aspect-[4/3] bg-earth-sand overflow-hidden shadow-2xl">
+<img alt="Abstract GIS" class="w-full h-full object-cover grayscale opacity-60 mix-blend-overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaZuu3QF6wYLSoYKkzZEskGJS8DFDDICLcUTEmfulIF49L0vTzAgR2bQ_AgOdDp6ydRoouHsWWXw6eKi8DvYCagHf-4dYMJkt06Wdcl1UIsr7-tOhP51q-ehZA7wdxnEkUPokdf_JJR9Wx5V0nH2e8_3tC_Sjo9Cq3MFEcJvgvL-tHczcSIKt-SwZdMWaC9uZDoblCqxwDrTEmyEl_JAB-o-0e_6sZ2ehX2hWdJ5TEOF8MnbDowJMyETsn_xhMtg9f1cWn6l7I9sOF"/>
+<div class="absolute inset-0 bg-amber-deep/10"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="md:col-span-6 mt-12">
+<div class="p-12 rounded-[4rem] bg-gradient-to-br from-earth-clay/5 to-amber-glow/10 border border-white/40">
+<span class="material-symbols-outlined text-4xl text-amber-deep mb-8">verified_user</span>
+<h3 class="font-display text-4xl text-earth-dark mb-6">Real-Time Compliance</h3>
+<p class="text-lg text-earth-clay italic mb-8">
+                            Every valuation report is instantly cross-referenced against federal taxation guidelines and legal statutes.
+                        </p>
+<div class="pt-6 border-t border-earth-clay/10 flex justify-between items-center text-[10px] uppercase tracking-widest font-sans font-bold text-earth-clay/60">
+<span>Status: Certified</span>
+<span class="text-amber-deep">Shield Protocol</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-6 mt-12 lg:mt-32">
+<div class="p-12 rounded-[4rem] bg-white shadow-xl shadow-earth-clay/5 border border-earth-mist">
+<span class="material-symbols-outlined text-4xl text-sage mb-8">cell_tower</span>
+<h3 class="font-display text-4xl text-earth-dark mb-6">Mobile Offline Mode</h3>
+<p class="text-lg text-earth-clay italic mb-8">
+                            Field agents can perform full valuations in areas with zero connectivity. Data syncs automatically.
+                        </p>
+<div class="h-2 w-24 bg-sage/20 rounded-full relative">
+<div class="absolute left-0 top-0 h-full w-1/2 bg-sage rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="md:col-span-12 mt-24">
+<div class="relative overflow-hidden rounded-[5rem] bg-earth-dark text-earth-mist p-16 md:p-24 flex flex-col md:flex-row gap-16 items-center">
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<img alt="" class="w-full h-full object-cover blur-2xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaZuu3QF6wYLSoYKkzZEskGJS8DFDDICLcUTEmfulIF49L0vTzAgR2bQ_AgOdDp6ydRoouHsWWXw6eKi8DvYCagHf-4dYMJkt06Wdcl1UIsr7-tOhP51q-ehZA7wdxnEkUPokdf_JJR9Wx5V0nH2e8_3tC_Sjo9Cq3MFEcJvgvL-tHczcSIKt-SwZdMWaC9uZDoblCqxwDrTEmyEl_JAB-o-0e_6sZ2ehX2hWdJ5TEOF8MnbDowJMyETsn_xhMtg9f1cWn6l7I9sOF"/>
+</div>
+<div class="relative z-10 md:w-1/2 space-y-8">
+<h3 class="font-display text-6xl leading-tight italic">Transparent Asset Ledger</h3>
+<p class="text-xl text-earth-sand font-light leading-relaxed">
+                                A permanent, immutable record of all national assets, ensuring total accountability for government stakeholders.
+                            </p>
+<button class="px-12 py-5 border border-earth-sand/30 rounded-full font-sans text-xs uppercase tracking-widest hover:bg-amber-glow hover:text-earth-dark transition-all duration-700">View Demo Ledger</button>
+</div>
+<div class="relative z-10 md:w-1/2 grid grid-cols-1 gap-4 opacity-30">
+<div class="h-1 bg-amber-glow/50 w-full rounded-full"></div>
+<div class="h-1 bg-amber-glow/30 w-4/5 rounded-full"></div>
+<div class="h-1 bg-amber-glow/40 w-full rounded-full"></div>
+<div class="h-1 bg-amber-glow/20 w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="py-40 relative">
+<div class="max-w-5xl mx-auto px-8 text-center relative z-10">
+<h2 class="font-display text-7xl md:text-9xl text-earth-dark leading-[0.8] mb-12">
+                Ready to modernise your <br/>
+<span class="italic text-amber-deep">property ledger?</span>
+</h2>
+<div class="flex flex-col md:flex-row gap-8 justify-center items-center font-sans">
+<button class="bg-earth-dark text-earth-mist px-14 py-6 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-amber-deep hover:scale-105 transition-all duration-500 shadow-2xl">Get Started Now</button>
+<button class="text-earth-clay underline underline-offset-8 font-bold text-sm uppercase tracking-widest hover:text-amber-deep transition-all">Request Consultation</button>
+</div>
+</div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-t from-amber-glow/10 to-transparent blur-3xl rounded-t-full pointer-events-none"></div>
+</section>
+</main>
+<footer class="bg-earth-mist border-t border-earth-clay/10 py-24 px-12">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16">
+<div class="space-y-6">
+<span class="font-display text-4xl italic text-earth-clay">Sovereign Pulse</span>
+<p class="font-sans text-xs uppercase tracking-widest text-earth-clay/50">© 2024 Sovereign Pulse GovTech. <br/>Digital Heritage Initiative.</p>
+</div>
+<div class="grid grid-cols-2 gap-x-16 gap-y-4 font-sans text-xs uppercase tracking-widest font-bold text-earth-clay">
+<a class="hover:text-amber-deep transition-all" href="#">Privacy Policy</a>
+<a class="hover:text-amber-deep transition-all" href="#">Terms of Service</a>
+<a class="hover:text-amber-deep transition-all" href="#">Compliance</a>
+<a class="hover:text-amber-deep transition-all" href="#">Contact Support</a>
+</div>
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-full border border-earth-clay/20 flex items-center justify-center text-earth-clay hover:bg-amber-glow/10 transition-colors">
+<span class="material-symbols-outlined text-sm">public</span>
+</div>
+<div class="w-12 h-12 rounded-full border border-earth-clay/20 flex items-center justify-center text-earth-clay hover:bg-amber-glow/10 transition-colors">
+<span class="material-symbols-outlined text-sm">mail</span>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>

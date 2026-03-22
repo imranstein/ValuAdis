@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Syne:wght@700;800&amp;family=Epilogue:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed": "#002114",
+                        "tertiary-container": "#a36700",
+                        "secondary-container": "#4b41e1",
+                        "background": "#f7f9fb",
+                        "tertiary": "#825100",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#f5fff7",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container": "#eceef0",
+                        "on-secondary-container": "#fffbff",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#85f8c4",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-secondary-fixed": "#0f0069",
+                        "primary-container": "#00855d",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#3d4a42",
+                        "surface-dim": "#d8dadc",
+                        "primary-fixed-dim": "#68dba9",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "outline-variant": "#bccac0",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-fixed": "#2a1700",
+                        "secondary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-tint": "#006c4a",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "inverse-primary": "#68dba9",
+                        "outline": "#6d7a72",
+                        "primary": "#006948",
+                        "secondary": "#4b41e1"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .map-texture {
+            background-color: #f7f9fb;
+            background-image: radial-gradient(#bccac0 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<nav class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/50 bg-slate-50 flex flex-col py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="font-['Syne'] font-extrabold text-emerald-800 text-xl tracking-tight">Federal Registry</h1>
+<p class="text-[10px] uppercase tracking-widest text-emerald-700/60 font-bold">Government Portal</p>
+</div>
+<div class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg group" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-medium text-sm">Properties</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg group" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="font-medium text-sm">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg group" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium text-sm">Valuations</span>
+</a>
+<!-- Active Tab: Maps -->
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-50 text-emerald-700 border-r-4 border-emerald-600 rounded-r-lg transition-transform active:scale-100 scale-95 group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-medium text-sm">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg group" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-medium text-sm">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium text-sm">Settings</span>
+</a>
+</div>
+<div class="mt-auto px-3">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 transition-transform active:scale-100 scale-95 rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-medium text-sm">Logout</span>
+</a>
+</div>
+</nav>
+<main class="ml-64 min-h-screen flex flex-col relative overflow-hidden">
+<!-- TopNavBar (Shared Component) -->
+<header class="w-full sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-emerald-100/20 shadow-sm flex justify-between items-center px-8 py-3">
+<div class="flex items-center gap-8">
+<span class="font-['Syne'] text-xl font-bold text-emerald-900 tracking-tight">The Sovereign Pulse</span>
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+<span class="material-symbols-outlined text-lg">search</span>
+</span>
+<input class="bg-surface-container-high border-none rounded-xl pl-10 pr-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary transition-all" placeholder="Search coordinates or assets..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary hover:bg-primary-container text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition-all shadow-md">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+                    New Valuation
+                </button>
+<div class="flex items-center gap-3 ml-4 border-l border-emerald-100/30 pl-4">
+<button class="text-slate-500 hover:bg-slate-50 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:bg-slate-50 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border-2 border-white shadow-sm">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Professional male user profile portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUKxqVhLa-nh9EJ_m_FvDDiSzYSs_XA8qVxEs3eKnM2J65yGmIlflqShRJKGZ1X9BTi8a-6nRXKHtYHF5kwQ89IoxuSnIk6_Chl0Nd0idgWAtX-RL5s9T8xbmSv2QR3QxqWUWvJC1Ieq6z_LEYOZ_tKGLO-xBS7Vs1zMlbLj987jUpoLE7ORR4gzs-nXzra6ue63PQAmwNB-WKUkWzwcm7YP9viI1fTLh6DwXN4Gqd4PfhLv5_VByZNAvBP0-FD8x2bQd9W0G0x7ZP"/>
+</div>
+</div>
+</div>
+</header>
+<!-- GIS Map Canvas -->
+<div class="flex-1 relative w-full h-[calc(100vh-64px)] map-texture">
+<!-- Simulated Map Elements -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" data-alt="Abstract topographic map pattern with contour lines" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB48mvaMjDSUIG_vLEg0jXaPTV91tZR8N-vv2NlzePBYEJVMAUDY1lZW9Oy3LYYmQakJMJMM980x34TJbNlAULsALisLyGuA2tleFeijKWYmoQo7bDHd0eU2ihSnpHW9EinOGFFznM8omr6rE5cPFx1CS9sCylSbkxoLuXlEDZONtUHpR6D0Zt4i7XVIFWfGf5dhqkyN7qybIjYPEfS820UMC4NVqnX5NdhrO9ds5T0oprxpj2C5N-wRpQN5Y3rA41uB5t8j4NQeuGW'); background-size: cover; mix-blend-mode: multiply;"></div>
+<!-- Map UI Overlays: Layer Legend -->
+<div class="absolute top-6 left-6 w-72 bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-[0_20px_40px_rgba(25,28,30,0.06)] border border-white/50 z-20">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline text-on-surface font-bold text-lg">Layer Legend</h3>
+<span class="material-symbols-outlined text-emerald-600">layers</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-sm font-medium">Property Assets</span>
+</div>
+<input checked="" class="rounded-sm text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-sm font-medium">Mobile Logistics</span>
+</div>
+<input class="rounded-sm text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-tertiary"></div>
+<span class="text-sm font-medium">Territory Boundaries</span>
+</div>
+<input checked="" class="rounded-sm text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-slate-100">
+<button class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all uppercase tracking-wider">Configure GIS Data</button>
+</div>
+</div>
+<!-- Active Map Pins -->
+<button class="absolute top-[40%] left-[55%] group z-10">
+<div class="relative flex items-center justify-center">
+<div class="absolute w-12 h-12 bg-primary/20 rounded-full animate-ping"></div>
+<div class="relative w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white ring-4 ring-primary/10">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">domain</span>
+</div>
+</div>
+</button>
+<!-- Property Details Card (Selected State) -->
+<div class="absolute bottom-6 right-6 w-96 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white overflow-hidden z-20">
+<div class="h-40 relative">
+<img alt="Property asset thumbnail" class="w-full h-full object-cover" data-alt="High-end modern luxury real estate exterior" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqSDewF5mUBD9qv1K712FWRx0NIJ_nIrLPB_Xws5opo30wRVhBZT6sFzjUf4u8Bx98S-iqtc7lFamf5viXrx8b-XdtpLL7uHBW1qmKV98d6R5CMfBdh540dP5Doct0FHR7lOA77alRQ_lc8wR3Q-g5b35eAwqrIR58lkO1hF3DCqQvowAGhUMAsDqvb9vR7qxbT48TanJoEw5qXEw6Rdol94cFuAuRM_Gvtd2c4p-HnGZ8lHLwSmoPvjP0CvNxBE80cRjo0ZM4mogU"/>
+<div class="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter">Verified Asset</div>
+<button class="absolute top-3 right-3 bg-white/80 p-2 rounded-full hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-slate-700">close</span>
+</button>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h2 class="font-headline font-extrabold text-xl text-emerald-950 leading-tight">The Imperial Plaza</h2>
+<p class="text-slate-500 text-xs mt-1">Reg ID: ETH-9982-GIS</p>
+</div>
+<div class="text-right">
+<span class="text-emerald-700 font-bold text-lg">$12.4M</span>
+<p class="text-[10px] text-slate-400 font-medium">Market Valuation</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-3 rounded-xl border border-white/50">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Area</p>
+<p class="text-sm font-semibold text-emerald-900">14,200 sq.m</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-xl border border-white/50">
+<p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Compliance</p>
+<p class="text-sm font-semibold text-emerald-900">Tier A Gold</p>
+</div>
+</div>
+<div class="space-y-3">
+<button class="w-full bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-all">
+<span class="material-symbols-outlined text-lg">verified_user</span>
+                            Full Compliance Report
+                        </button>
+<button class="w-full bg-white border border-emerald-100 text-emerald-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all">
+<span class="material-symbols-outlined text-lg">edit</span>
+                            Update Valuation Data
+                        </button>
+</div>
+</div>
+</div>
+<!-- Floating Map Controls -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 backdrop-blur-xl p-2 rounded-2xl shadow-xl border border-white/40">
+<button class="p-3 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+<div class="h-6 w-px bg-slate-200"></div>
+<button class="p-3 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors">
+<span class="material-symbols-outlined">zoom_out</span>
+</button>
+<div class="h-6 w-px bg-slate-200"></div>
+<button class="p-3 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+<div class="h-6 w-px bg-slate-200"></div>
+<button class="p-3 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors">
+<span class="material-symbols-outlined">3d_rotation</span>
+</button>
+</div>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="w-full bg-slate-50 border-t border-slate-100 flex justify-between items-center px-8 py-4 z-40">
+<div class="text-xs text-slate-500 font-['Inter']">
+                © 2024 The Sovereign Pulse. All rights reserved.
+            </div>
+<div class="flex gap-6">
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-opacity" href="#">Privacy Policy</a>
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-opacity" href="#">Terms of Service</a>
+<a class="text-xs text-slate-400 hover:text-emerald-500 underline underline-offset-4 transition-opacity" href="#">Help Desk</a>
+</div>
+</footer>
+</main>
+<!-- Map Coordinate Watermark (Branding) -->
+<div class="fixed bottom-20 left-72 pointer-events-none opacity-10">
+<p class="font-['Syne'] text-6xl font-extrabold text-emerald-900 leading-none">9° 1' 48" N<br/>38° 44' 24" E</p>
+</div>
+</body></html>

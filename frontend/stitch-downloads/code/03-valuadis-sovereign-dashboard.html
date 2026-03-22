@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ValuAdis Dashboard | Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container": "#eceef0",
+                        "tertiary-container": "#a36700",
+                        "tertiary": "#825100",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "secondary-container": "#645efb",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#68dba9",
+                        "surface-container-high": "#e6e8ea",
+                        "surface": "#f7f9fb",
+                        "primary-fixed-dim": "#68dba9",
+                        "background": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary-container": "#fffbff",
+                        "primary-fixed": "#85f8c4",
+                        "outline-variant": "#bccac0",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#3d4a42",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#002114",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#f5fff7",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-container": "#00855d",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-fixed": "#0f0069",
+                        "secondary-fixed": "#e2dfff",
+                        "primary": "#006948",
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "secondary": "#4b41e1",
+                        "surface-bright": "#f7f9fb",
+                        "outline": "#6d7a72",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#006c4a"
+                    },
+                    fontFamily: {
+                        "syne": ["Syne", "sans-serif"],
+                        "inter": ["Inter", "sans-serif"],
+                        "headline": ["Syne"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+        }
+        .sidebar-glass {
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(24px);
+        }
+        .dark .sidebar-glass {
+            background: rgba(2, 6, 23, 0.8);
+        }
+        .grid-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(0, 105, 72, 0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+        .dark .grid-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(104, 219, 169, 0.05) 1px, transparent 0);
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 15px rgba(0, 105, 72, 0.3);
+        }
+        .neon-glow-secondary {
+            box-shadow: 0 0 15px rgba(75, 65, 225, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface dark:bg-slate-950 font-inter text-on-surface antialiased grid-bg min-h-screen">
+<!-- SideNavBar (Shared Component Authority) -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl flex flex-col p-4 space-y-2 shadow-xl shadow-emerald-900/5 border-r border-emerald-900/5 dark:border-emerald-100/5">
+<div class="mb-8 px-2 flex items-center space-x-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white neon-glow-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="font-syne font-extrabold text-emerald-800 dark:text-emerald-200 text-lg leading-tight">Property Ledger</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Federal Valuation Dept</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Properties (Active) -->
+<a class="flex items-center space-x-3 px-4 py-3 bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-xl font-bold transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-inter text-sm font-medium">Properties</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="font-inter text-sm font-medium">Vehicles</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-inter text-sm font-medium">Valuations</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-inter text-sm font-medium">Maps</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-inter text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="pt-4 mt-4 border-t border-emerald-900/5 dark:border-emerald-100/5 space-y-1">
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-inter text-sm font-medium">Help Center</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-xl transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-inter text-sm font-medium">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 p-8 min-h-screen">
+<!-- TopAppBar (Customized for Dashboard Context) -->
+<header class="flex justify-between items-end mb-10">
+<div>
+<nav class="flex text-xs font-bold text-emerald-600/60 dark:text-emerald-400/60 tracking-widest uppercase mb-2">
+<span>Sovereign Pulse</span>
+<span class="mx-2">/</span>
+<span class="text-emerald-700 dark:text-emerald-300">Valuation Dashboard</span>
+</nav>
+<h2 class="font-syne font-extrabold text-4xl text-emerald-900 dark:text-white tracking-tight">Executive Overview</h2>
+</div>
+<div class="flex items-center space-x-4">
+<button class="px-6 py-3 rounded-full bg-surface-container-highest dark:bg-slate-800 text-on-surface font-bold text-sm transition-all hover:bg-surface-container-high dark:hover:bg-slate-700 flex items-center space-x-2">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>New Property</span>
+</button>
+<button class="px-6 py-3 rounded-full bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center space-x-2 neon-glow-primary">
+<span class="material-symbols-outlined text-lg">analytics</span>
+<span>New Valuation</span>
+</button>
+</div>
+</header>
+<!-- Stat Cards Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Total Properties -->
+<div class="glass-card p-6 rounded-2xl border border-white/20 dark:border-slate-800/50 hover:-translate-y-1 transition-all duration-300 group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+</div>
+<span class="text-xs font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">+12%</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Properties</p>
+<h3 class="text-3xl font-syne font-bold text-emerald-900 dark:text-white mt-1">14,282</h3>
+</div>
+<!-- Vehicles Valued -->
+<div class="glass-card p-6 rounded-2xl border border-white/20 dark:border-slate-800/50 hover:-translate-y-1 transition-all duration-300 group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 rounded-xl bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<span class="text-xs font-bold px-2 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant dark:bg-indigo-900/40 dark:text-indigo-300">+4.5%</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Vehicles Valued</p>
+<h3 class="text-3xl font-syne font-bold text-emerald-900 dark:text-white mt-1">8,941</h3>
+</div>
+<!-- Avg Confidence -->
+<div class="glass-card p-6 rounded-2xl border border-white/20 dark:border-slate-800/50 hover:-translate-y-1 transition-all duration-300 group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 rounded-xl bg-tertiary/10 text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<span class="text-xs font-bold px-2 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant dark:bg-amber-900/40 dark:text-amber-300">Stable</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Avg. Confidence</p>
+<h3 class="text-3xl font-syne font-bold text-emerald-900 dark:text-white mt-1">94.8%</h3>
+</div>
+<!-- Pending Certs -->
+<div class="glass-card p-6 rounded-2xl border border-white/20 dark:border-slate-800/50 hover:-translate-y-1 transition-all duration-300 group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 rounded-xl bg-error/10 text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<span class="text-xs font-bold px-2 py-1 rounded-full bg-error-container text-on-error-container dark:bg-red-900/40 dark:text-red-300">Urgent</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Pending Certs</p>
+<h3 class="text-3xl font-syne font-bold text-emerald-900 dark:text-white mt-1">124</h3>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+<!-- Valuations Trend (Asymmetric Wide) -->
+<div class="lg:col-span-2 glass-card p-8 rounded-3xl border border-white/20 dark:border-slate-800/50">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h4 class="font-syne font-bold text-xl text-emerald-900 dark:text-white">Valuations Trend</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Quarterly growth analysis</p>
+</div>
+<select class="bg-surface-container-high dark:bg-slate-800 border-none rounded-lg text-sm font-bold text-emerald-800 dark:text-emerald-200">
+<option>Last 6 Months</option>
+<option>Last Year</option>
+</select>
+</div>
+<!-- Visual Placeholder for Line Chart -->
+<div class="h-64 w-full relative">
+<div class="absolute inset-0 flex items-end space-x-4 px-4 pb-2">
+<div class="flex-1 bg-emerald-500/10 rounded-t-lg relative group h-1/2">
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-emerald-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity">8.4k</div>
+</div>
+<div class="flex-1 bg-emerald-500/20 rounded-t-lg relative group h-2/3"></div>
+<div class="flex-1 bg-emerald-500/30 rounded-t-lg relative group h-1/2"></div>
+<div class="flex-1 bg-emerald-500/40 rounded-t-lg relative group h-3/4"></div>
+<div class="flex-1 bg-emerald-500/60 rounded-t-lg relative group h-4/5 border-t-2 border-emerald-400 shadow-[0_-10px_20px_rgba(52,211,153,0.1)]"></div>
+<div class="flex-1 bg-primary/80 rounded-t-lg relative group h-[95%] border-t-2 border-primary shadow-[0_-10px_20px_rgba(0,105,72,0.2)]"></div>
+</div>
+<div class="absolute bottom-0 w-full h-[1px] bg-slate-200 dark:bg-slate-800"></div>
+</div>
+</div>
+<!-- Distribution Chart -->
+<div class="glass-card p-8 rounded-3xl border border-white/20 dark:border-slate-800/50 flex flex-col items-center justify-center text-center">
+<h4 class="font-syne font-bold text-xl text-emerald-900 dark:text-white mb-2">Property Types</h4>
+<div class="relative w-48 h-48 mb-6">
+<!-- Donut Chart Aesthetic -->
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-slate-100 dark:text-slate-800" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="24"></circle>
+<circle class="text-primary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="150" stroke-width="24"></circle>
+<circle class="text-secondary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="400" stroke-width="24"></circle>
+<circle class="text-tertiary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="480" stroke-width="24"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total</span>
+<span class="text-2xl font-syne font-black text-emerald-900 dark:text-white">100%</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 w-full">
+<div class="flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span>Residential</span>
+</div>
+<div class="flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span>Commercial</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Table Section -->
+<section class="glass-card rounded-3xl border border-white/20 dark:border-slate-800/50 overflow-hidden">
+<div class="p-6 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+<h4 class="font-syne font-bold text-xl text-emerald-900 dark:text-white">Property Inventory Table</h4>
+<div class="flex space-x-2">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-high dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Search ledger..." type="text"/>
+</div>
+<button class="p-2 bg-surface-container-high dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low dark:bg-slate-900/50">
+<tr>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Property ID</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Valuation</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Officer</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-colors group">
+<td class="px-6 py-4">
+<span class="font-bold text-emerald-900 dark:text-emerald-100">#PROP-8821</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-semibold text-slate-900 dark:text-white">Addis Ababa, Bole</span>
+<span class="text-[10px] text-slate-500">Commercial Zone 4</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-syne font-bold text-emerald-700 dark:text-emerald-400">12,450,000 ETB</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Completed</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center space-x-2">
+<img alt="Officer Avatar" class="w-6 h-6 rounded-full" data-alt="Portrait of a government official" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNH03yjFBuug7gu6xtQ2CPxurQAhzEQ0SxzWzv-r7ZhPnOkwMHSHhFoDlm0OqbF6kOppr3c-CYylilO3LEAMCwGx9fuOHfCvV3tUZQkHRGviTCzD4HAhQGU1_jwK2DxJIaF2mF2Kvs4HdNl4-cgf0iqRarDpbbv1k8MqTMUN9WNjEytpwRLYv7eOaxmVZqDBOXdbDH9go0m1h5-2o9_u7DLgnCI43KuDLiRgVxzZ5USyo8VRry-OdaAbLasSyPfqEmw8gultv0yCp9"/>
+<span class="text-sm font-medium dark:text-slate-300">T. Belay</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-slate-400 hover:text-primary">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-colors group">
+<td class="px-6 py-4">
+<span class="font-bold text-emerald-900 dark:text-emerald-100">#PROP-9042</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-semibold text-slate-900 dark:text-white">Bahir Dar, Waterfront</span>
+<span class="text-[10px] text-slate-500">Residential Complex</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-syne font-bold text-emerald-700 dark:text-emerald-400">4,820,000 ETB</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-secondary-fixed text-on-secondary-fixed-variant dark:bg-indigo-900/40 dark:text-indigo-300">In Progress</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center space-x-2">
+<img alt="Officer Avatar" class="w-6 h-6 rounded-full" data-alt="Professional female officer portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrlUzpkg3qQPnzquyihPzKWuqX30snvhOqqulEsPTEYuLdT86StyxIeyPSdJrAYGHbTMevHPhLNnQT7L9nv-JdcBd1tDkc4ibSGKp-Ua5fz9bCJh0vyvaiFWBz7lqobV7uQdj3QRcRCsVoveiZF-JDg6d-FGupHOK8kahzm9oCn4O1doFiG8B-M7ADvErv-UOgQWObPqR4EqCQ8C3vr7QfMb5OEB-L8wK0fn3WSsVWU5f8LUR0RgUTitJUEhOLj8TBXr9xp3SggJSv"/>
+<span class="text-sm font-medium dark:text-slate-300">M. Kebede</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-slate-400 hover:text-primary">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-colors group">
+<td class="px-6 py-4">
+<span class="font-bold text-emerald-900 dark:text-emerald-100">#PROP-7731</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-semibold text-slate-900 dark:text-white">Mekele, Industrial Hub</span>
+<span class="text-[10px] text-slate-500">Warehouse Site A</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-syne font-bold text-emerald-700 dark:text-emerald-400">32,100,000 ETB</span>
+</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-surface-container-highest text-on-surface-variant dark:bg-slate-800 dark:text-slate-400">Pending</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+<span class="text-[10px] font-bold">UA</span>
+</div>
+<span class="text-sm font-medium dark:text-slate-300 italic">Unassigned</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-slate-400 hover:text-primary">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-surface-container-low dark:bg-slate-900/30 flex justify-between items-center">
+<p class="text-xs text-slate-500 font-medium">Showing 1-10 of 14,282 properties</p>
+<div class="flex space-x-2">
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold shadow-sm">Previous</button>
+<button class="px-3 py-1 bg-primary text-white rounded-lg text-xs font-bold shadow-md shadow-primary/20">1</button>
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold shadow-sm">2</button>
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold shadow-sm">Next</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component Authority) -->
+<footer class="ml-64 bg-slate-100 dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-800/50">
+<div class="w-full py-12 px-8 flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto">
+<div class="mb-6 md:mb-0">
+<span class="font-syne font-bold text-slate-900 dark:text-slate-100 block mb-2">Sovereign Pulse GovTech</span>
+<p class="font-inter text-xs tracking-wide text-slate-500">© 2024 Sovereign Pulse GovTech. Digital Heritage Initiative.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-emerald-600 transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-emerald-600 transition-colors duration-200" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-emerald-600 transition-colors duration-200" href="#">Compliance</a>
+<a class="font-inter text-xs tracking-wide text-slate-500 hover:text-emerald-600 transition-colors duration-200" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

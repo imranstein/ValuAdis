@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vehicles Ledger | Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;family=Epilogue:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#a36700",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#6d7a72",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-fixed": "#002114",
+                        "on-surface": "#191c1e",
+                        "primary": "#006948",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary-fixed-variant": "#005137",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface-variant": "#3d4a42",
+                        "primary-container": "#00855d",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-container": "#fffbff",
+                        "primary-fixed-dim": "#68dba9",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed": "#0f0069",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#f5fff7",
+                        "inverse-primary": "#68dba9",
+                        "secondary": "#4b41e1",
+                        "surface-tint": "#006c4a",
+                        "on-error-container": "#93000a",
+                        "surface": "#f7f9fb",
+                        "on-background": "#191c1e",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#ffddb8",
+                        "outline-variant": "#bccac0",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-dim": "#d8dadc",
+                        "tertiary": "#825100",
+                        "secondary-container": "#645efb",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#85f8c4",
+                        "secondary-fixed": "#e2dfff"
+                    },
+                    fontFamily: {
+                        "syne": ["Syne", "sans-serif"],
+                        "headline": ["Epilogue", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(188, 202, 192, 0.2);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-slate-200/20 bg-slate-50/70 backdrop-blur-xl flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<span class="text-xl font-bold font-syne text-emerald-800">Sovereign Pulse</span>
+<p class="text-[10px] font-inter uppercase tracking-widest text-slate-500 mt-1">Property Valuation</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-slate-100/50 transition-all" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="text-sm font-medium">Properties</span>
+</a>
+<!-- Active Tab: Vehicles -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-emerald-700 font-semibold border-r-4 border-emerald-600 bg-emerald-50/50 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="text-sm">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-slate-100/50 transition-all" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="text-sm font-medium">Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-slate-100/50 transition-all" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="text-sm font-medium">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-slate-100/50 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/10">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-slate-100/50 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<div class="flex items-center gap-3 px-3 py-4 mt-4 bg-white/40 rounded-2xl">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-syne font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">John Doe</p>
+<p class="text-[10px] text-slate-500 truncate">Federal Auditor</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 border-b border-transparent">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all" placeholder="Search vehicle VIN, owner or model..." type="text"/>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-slate-500 font-medium hover:text-emerald-600 text-sm" href="#">Dashboard</a>
+<a class="text-emerald-700 font-bold border-b-2 border-emerald-600 py-5 text-sm" href="#">Market Insights</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-tertiary rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="ml-2 px-4 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-primary-container transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Valuation
+                </button>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="mt-16 p-8 flex-1">
+<!-- Breadcrumbs & Header -->
+<div class="mb-8">
+<nav class="flex text-[10px] uppercase tracking-widest text-slate-400 mb-2 font-inter font-semibold">
+<span>Home</span>
+<span class="mx-2">/</span>
+<span class="text-emerald-700">Vehicles</span>
+</nav>
+<div class="flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-sy font-bold text-on-surface tracking-tight">Vehicles Ledger</h1>
+<p class="text-on-surface-variant mt-1">Official federal vehicle registration and valuation database.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-white border border-outline-variant/30 rounded-xl text-sm font-medium text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-all">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                            Filter
+                        </button>
+<button class="px-4 py-2 bg-white border border-outline-variant/30 rounded-xl text-sm font-medium text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bento Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- Stat Card 1 -->
+<div class="glass-card p-6 rounded-3xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl text-primary">directions_car</span>
+</div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Registered Assets</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-syne font-bold text-on-surface">142,890</h3>
+<span class="text-emerald-600 text-xs font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+                            12%
+                        </span>
+</div>
+<div class="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4 rounded-full"></div>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="glass-card p-6 rounded-3xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl text-secondary">analytics</span>
+</div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Active Valuations</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-syne font-bold text-on-surface">3,204</h3>
+<span class="text-secondary text-xs font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">sync</span>
+                            Active
+                        </span>
+</div>
+<div class="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-1/2 rounded-full"></div>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="glass-card p-6 rounded-3xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl text-tertiary">account_balance_wallet</span>
+</div>
+<p class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Portfolio Valuation</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-syne font-bold text-on-surface">$2.4B</h3>
+<span class="text-tertiary text-xs font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">arrow_upward</span>
+                            $12M
+                        </span>
+</div>
+<div class="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-2/3 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Main Ledger Table Section -->
+<div class="glass-card rounded-3xl overflow-hidden shadow-sm">
+<div class="p-6 border-b border-slate-100 flex justify-between items-center">
+<h2 class="text-lg font-syne font-bold text-on-surface">Vehicle Registry</h2>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-400 font-medium">Showing 10 of 142,890 entries</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 text-slate-500 uppercase text-[10px] tracking-widest font-bold">
+<th class="px-8 py-4">VIN</th>
+<th class="px-6 py-4">Model &amp; Year</th>
+<th class="px-6 py-4">Owner</th>
+<th class="px-6 py-4">Last Valuation</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-8 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-8 py-5 font-mono text-sm text-emerald-800">1HGBH41JXMN021XXX</td>
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface text-sm">Tesla Model S Plaid</div>
+<div class="text-[10px] text-slate-400 uppercase tracking-tighter">2023 • Electric</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">AS</div>
+<span class="text-sm font-medium">Abebe Selassie</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">$102,400</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">Completed</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-8 py-5 font-mono text-sm text-emerald-800">2T3WFREV7JW14XXXX</td>
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface text-sm">Toyota RAV4 Hybrid</div>
+<div class="text-[10px] text-slate-400 uppercase tracking-tighter">2022 • Hybrid</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-600">MK</div>
+<span class="text-sm font-medium">Marta Kebede</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">$34,200</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wider">In Progress</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-8 py-5 font-mono text-sm text-emerald-800">5UXWX9C57G0S2XXXX</td>
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface text-sm">BMW X5 xDrive40i</div>
+<div class="text-[10px] text-slate-400 uppercase tracking-tighter">2021 • ICE</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">TZ</div>
+<span class="text-sm font-medium">Tewodros Zewde</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">$58,900</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wider">Pending</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/80 transition-colors">
+<td class="px-8 py-5 font-mono text-sm text-emerald-800">WBA8E3C51KG6XXXXX</td>
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface text-sm">Mercedes-Benz G-Class</div>
+<div class="text-[10px] text-slate-400 uppercase tracking-tighter">2024 • Luxury</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-600">YL</div>
+<span class="text-sm font-medium">Yared Lemi</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">$185,000</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">Completed</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-xl">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-slate-50/30 flex justify-between items-center border-t border-slate-100">
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-600 transition-all">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-600 transition-all font-bold text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-600 transition-all font-bold text-xs">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-600 transition-all">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+<div class="text-xs text-slate-400 font-medium">
+                        Showing page 1 of 14,289
+                    </div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-8 border-t border-slate-200/10 bg-slate-50 flex flex-col md:flex-row justify-between items-center px-12">
+<span class="text-sm font-syne font-bold text-slate-400 uppercase tracking-widest">Sovereign Pulse</span>
+<p class="text-[10px] font-inter uppercase tracking-wide text-slate-400 mt-4 md:mt-0">© 2024 The Digital Heritage. All rights reserved.</p>
+<div class="flex gap-8 mt-4 md:mt-0">
+<a class="text-[10px] font-inter uppercase tracking-wide text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Privacy Policy</a>
+<a class="text-[10px] font-inter uppercase tracking-wide text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Terms of Service</a>
+<a class="text-[10px] font-inter uppercase tracking-wide text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Contact Support</a>
+</div>
+</footer>
+</main>
+</body></html>

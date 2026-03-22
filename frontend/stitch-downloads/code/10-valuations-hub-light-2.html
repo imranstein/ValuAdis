@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Valuations Hub | The Sovereign Pulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;family=Epilogue:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed": "#002114",
+                        "tertiary-container": "#a36700",
+                        "secondary-container": "#645efb",
+                        "background": "#f7f9fb",
+                        "tertiary": "#825100",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#f5fff7",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container": "#eceef0",
+                        "on-secondary-container": "#fffbff",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#85f8c4",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-secondary-fixed": "#0f0069",
+                        "primary-container": "#00855d",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#3d4a42",
+                        "surface-dim": "#d8dadc",
+                        "primary-fixed-dim": "#68dba9",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "outline-variant": "#bccac0",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-fixed": "#2a1700",
+                        "secondary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#005137",
+                        "surface-tint": "#006c4a",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "inverse-primary": "#68dba9",
+                        "outline": "#6d7a72",
+                        "primary": "#006948",
+                        "secondary": "#4b41e1"
+                    },
+                    fontFamily: {
+                        "headline": ["Syne", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(188, 202, 192, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar (The Anchor) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/50 bg-slate-50 flex flex-col py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline font-extrabold text-emerald-800 tracking-tight text-lg leading-none">Federal Registry</h2>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Government Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 font-medium rounded-xl hover:bg-emerald-50/50 hover:text-emerald-800 transition-all" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span>Properties</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 font-medium rounded-xl hover:bg-emerald-50/50 hover:text-emerald-800 transition-all" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span>Vehicles</span>
+</a>
+<!-- Active Tab: Valuations -->
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-50 text-emerald-700 font-semibold rounded-xl border-r-4 border-emerald-600 shadow-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span>Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 font-medium rounded-xl hover:bg-emerald-50/50 hover:text-emerald-800 transition-all" href="#">
+<span class="material-symbols-outlined">map</span>
+<span>Maps</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 font-medium rounded-xl hover:bg-emerald-50/50 hover:text-emerald-800 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 font-medium rounded-xl hover:bg-emerald-50/50 hover:text-emerald-800 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium rounded-xl hover:bg-red-50 hover:text-red-600 transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar (Content & Identity) -->
+<header class="w-full sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-emerald-100/20 shadow-sm px-8 py-4 flex justify-between items-center">
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="absolute inset-y-0 left-3 flex items-center text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined text-xl">search</span>
+</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" placeholder="Search registry..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-50 text-slate-500 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-tertiary rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-50 text-slate-500 transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-900 leading-none">Alemayehu K.</p>
+<p class="text-[10px] text-slate-500 mt-0.5">Senior Registrar</p>
+</div>
+<img class="w-10 h-10 rounded-full border-2 border-emerald-100 object-cover shadow-sm" data-alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjrvH1QzAQvFxomUpMC-ErC9G-sHYscSZbrrVNDjDLtYm4LqGq7OVw5oHZYK-vacGpEdCxK3HfU-kmM2pI8Jl9SIsYrR706qg9XdSNkl8nGjlsGDROalQPTt0zyv5bbeiZhC8JfxkFL9Xfl6n2q-Ly60IjTTB2oPMItiU3sOP3q8-RW5eEKqYkGcgEJFtuJgNYzD5-UGUlA_XKzsyhkp4G3HMZb2wOpfalKd_XNc6kk8-zHAaINZWVh9vkCBr_diNfaA7P7Afmpk9p"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-8 max-w-7xl w-full mx-auto space-y-8">
+<!-- Dashboard Header & Breadcrumbs -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav class="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2">
+<a class="hover:text-emerald-600" href="#">Federal Registry</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-emerald-700">Valuations Hub</span>
+</nav>
+<h1 class="font-headline text-4xl font-extrabold text-emerald-950 tracking-tight">Valuations Hub</h1>
+<p class="text-on-surface-variant mt-2 max-w-md">Comprehensive asset appraisal management and compliance monitoring for the sovereign digital ledger.</p>
+</div>
+<button class="bg-primary hover:bg-primary-container text-white px-6 py-3 rounded-full font-semibold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all active:scale-95">
+<span class="material-symbols-outlined">add_circle</span>
+                    Initialize New Valuation
+                </button>
+</div>
+<!-- Stats Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Stat 1 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between group hover:border-emerald-200 transition-all">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+<span class="material-symbols-outlined">description</span>
+</div>
+<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+12.5%</span>
+</div>
+<div class="mt-4">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Valuations</p>
+<h3 class="text-3xl font-headline font-bold text-slate-900 mt-1">14,282</h3>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between group hover:border-emerald-200 transition-all">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">Real-time</span>
+</div>
+<div class="mt-4">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg. Appraisal Value</p>
+<h3 class="text-3xl font-headline font-bold text-slate-900 mt-1">ETB 4.2M</h3>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between group hover:border-emerald-200 transition-all">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">99.2%</span>
+</div>
+<div class="mt-4">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Compliance Rate</p>
+<h3 class="text-3xl font-headline font-bold text-slate-900 mt-1">Optimal</h3>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col justify-between group hover:border-emerald-200 transition-all">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">pending_actions</span>
+</div>
+<span class="text-xs font-bold text-tertiary bg-tertiary/5 px-2 py-1 rounded-lg">High Priority</span>
+</div>
+<div class="mt-4">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Certifications</p>
+<h3 class="text-3xl font-headline font-bold text-slate-900 mt-1">84</h3>
+</div>
+</div>
+</div>
+<!-- Appraisal History Table -->
+<section class="bg-surface-container-lowest rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+<h2 class="font-headline font-bold text-xl text-emerald-950">Appraisal History</h2>
+<div class="flex gap-2">
+<button class="p-2 border border-slate-100 rounded-lg text-slate-500 hover:bg-slate-50">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+</button>
+<button class="p-2 border border-slate-100 rounded-lg text-slate-500 hover:bg-slate-50">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+<th class="px-8 py-4">Appraisal ID</th>
+<th class="px-6 py-4">Asset Type</th>
+<th class="px-6 py-4">Location</th>
+<th class="px-6 py-4">Market Value</th>
+<th class="px-6 py-4">Compliance Status</th>
+<th class="px-6 py-4">Validator</th>
+<th class="px-8 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs text-slate-600">VAL-2024-001</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-lg">apartment</span>
+<span class="font-semibold text-slate-800">Commercial Complex</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">Addis Ababa, Kirkos</td>
+<td class="px-6 py-5 font-bold text-emerald-800">ETB 145,000,000</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                        Certified
+                                    </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-slate-100" data-alt="Validator profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBivvQwH64VOfzoFB_U618UNSTOYA3aFPfef7mO7T76N0R1LF0nmlNlJ0SjtOZPhPWlhucqF7FY5ZXN_kyZ4R-jCzHPnrNI8U-DBJSXpYmncak6-337xOOwPTGCrknhLCdDKDHiUzN_o5zcQBELObl0sk9myoOiTfDbOt55YtZ9l-PgAnXA9WSV0StyulUzxANoH3umNRBk_FZ7BZhDpJsmoTlE9lMOhZKt8kGvTpkfVyLZyBuja-6AE_f4YpETqJbyIZ8WOjmbiFcn"/>
+<span class="text-sm font-medium text-slate-700">Dr. M. Tadesse</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs text-slate-600">VAL-2024-042</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-lg">factory</span>
+<span class="font-semibold text-slate-800">Industrial Plant B12</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">Adama, Free Zone</td>
+<td class="px-6 py-5 font-bold text-emerald-800">ETB 82,450,000</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-tertiary/10 text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                        Pending
+                                    </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-slate-100" data-alt="Validator profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA8SJH01bHbElMe5sQOWFLjoCAyXg3HFQhUrMsJmddYD2oDOH8TnpjfmPr8WlHqL1MYv-9Y6VHxHLhK-bnqtY7ObxsQmJWtkqGZqauQWrUqxpB6Od2tnHqdF-0wFEcc6kSmwNK4Bxd8_JwdkO9kW8Lwuht6erMGUuKMNklcGflWL3csMQvaqXL642DZc7D2Gy_z-TVOQECEg5-uHikz4FsrMJUUKYVBzEwL9Wj2EQiMtEZfdZ_KFFG1iIJNZiYsVnwM6xA98PI64U1"/>
+<span class="text-sm font-medium text-slate-700">Sarah J.</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs text-slate-600">VAL-2024-089</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-lg">agriculture</span>
+<span class="font-semibold text-slate-800">Agri-Estate North</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">Bahir Dar, Basin</td>
+<td class="px-6 py-5 font-bold text-emerald-800">ETB 28,100,000</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+<span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                        Flagged
+                                    </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-slate-100" data-alt="Validator profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjXZ356TL8BA0nlMZwypbasQoQht4Egj70tuvANx99IPYCz-znnJ_NVmaRHsVv1E5Xg1tQlwgJiJPTnoddRMS6DYSQd39LMHmQhZyssapy0KIp5rZnGLtYztUQDnYowRZulLiytWSuHTFfRWZ_CTjxMaHOr3Uhne1IUtcvXZ0gVLf3yXyrbqLvziifA0defQZTcXXP7oqcdp2h4thMpgCC7koNolvFjkxFQRzn1D0mMdkHg_OLVb82MNGTXsr81EsbRnZhSVvax9p9"/>
+<span class="text-sm font-medium text-slate-700">Desta A.</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-8 py-5 font-mono text-xs text-slate-600">VAL-2024-112</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-lg">house</span>
+<span class="font-semibold text-slate-800">Residential Portfolio</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">Addis Ababa, Bole</td>
+<td class="px-6 py-5 font-bold text-emerald-800">ETB 12,500,000</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                        Certified
+                                    </span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full border border-slate-100" data-alt="Validator profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2SDincxQVctgX9ZU6KFE7mHgpawXcvtyifCDuvz1HPksDaxKOE2IX5etBJFDBXe1Nt7UkApXG_K1a4oX1g_ZM5BXxs-Rpk2eX-4UDoG6QS0ARQ_HZNBrz242g6QLXv2Uu53GtytajWJ74Ge01-n0K6mVZehsVhA7zhSETy-vBnSk0Pl0j_RTkvPbFvp3J6sEvrLIUX9KQ7Qqp7GnlUAce0RG5n_OgyU3Ejqo9i0u7VQDrtt3EuPKd2MsfZIcwuZVTTTfIkxK96pqd"/>
+<span class="text-sm font-medium text-slate-700">Abebe B.</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 bg-slate-50/30 flex items-center justify-between border-t border-slate-50">
+<p class="text-xs text-slate-500 font-medium">Showing 1 to 4 of 1,284 entries</p>
+<div class="flex gap-1">
+<button class="p-2 text-slate-400 hover:text-emerald-600 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-emerald-600 text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 rounded-lg text-slate-500 hover:bg-slate-100 text-xs font-bold">2</button>
+<button class="w-8 h-8 rounded-lg text-slate-500 hover:bg-slate-100 text-xs font-bold">3</button>
+<button class="p-2 text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer (The Shield) -->
+<footer class="mt-auto bg-slate-50 border-t border-slate-100 px-8 py-6 w-full flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs font-medium text-slate-500">© 2024 The Sovereign Pulse. All rights reserved.</p>
+<div class="flex items-center gap-6">
+<a class="text-xs font-medium text-slate-400 hover:text-emerald-600 transition-colors underline underline-offset-4" href="#">Privacy Policy</a>
+<a class="text-xs font-medium text-slate-400 hover:text-emerald-600 transition-colors underline underline-offset-4" href="#">Terms of Service</a>
+<a class="text-xs font-medium text-slate-400 hover:text-emerald-600 transition-colors underline underline-offset-4" href="#">Help Desk</a>
+</div>
+</footer>
+</main>
+</body></html>

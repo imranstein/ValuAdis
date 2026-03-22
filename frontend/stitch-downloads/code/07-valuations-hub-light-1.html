@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sovereign Pulse | Valuations Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#a36700",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#6d7a72",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-fixed": "#002114",
+                        "on-surface": "#191c1e",
+                        "primary": "#006948",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary-fixed-variant": "#005137",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface-variant": "#3d4a42",
+                        "primary-container": "#00855d",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-container": "#fffbff",
+                        "primary-fixed-dim": "#68dba9",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed": "#0f0069",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#f5fff7",
+                        "inverse-primary": "#68dba9",
+                        "secondary": "#4b41e1",
+                        "surface-tint": "#006c4a",
+                        "on-error-container": "#93000a",
+                        "surface": "#f7f9fb",
+                        "on-background": "#191c1e",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#ffddb8",
+                        "outline-variant": "#bccac0",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-dim": "#d8dadc",
+                        "tertiary": "#825100",
+                        "secondary-container": "#645efb",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#85f8c4",
+                        "secondary-fixed": "#e2dfff"
+                    },
+                    fontFamily: {
+                        "syne": ["Syne", "sans-serif"],
+                        "inter": ["Inter", "sans-serif"],
+                        "headline": ["Syne", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .pattern-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(0, 105, 72, 0.03) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-inter text-on-surface antialiased pattern-bg min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-slate-200/20 bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-xl flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold font-syne text-emerald-800 dark:text-emerald-400">Sovereign Pulse</h1>
+<p class="text-xs font-inter text-slate-500 uppercase tracking-widest mt-1">Property Valuation</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-inter text-sm">Properties</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="font-inter text-sm">Vehicles</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-emerald-700 dark:text-emerald-400 font-semibold border-r-4 border-emerald-600 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-l-none rounded-xl group" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-inter text-sm">Valuations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-inter text-sm">Maps</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-inter text-sm">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors rounded-xl group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter text-sm">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 px-2 flex items-center gap-3 border-t border-slate-200/20">
+<div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Professional male profile headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaqUr-u5ePbM5Gg_98lzWXDPeUUGIA8SoA2xBSUfcsy3ZTPhr_rlhuSRzAmQocRfZ29iDh3mb2FjXKoGiDCj9Hc6kU0HoqxUQTznVadGU_Rr4cWT5WNjvES9d_MmnZKF3excl4ujIwu65EQ5Wk3YGffF_2kabt8ZN_MQZbScBcS3KhsYDMUeo6xyVVWukCfYi495KoSGthT2AUE3glq8x4fV8HeRDRPOoR1wH_i8ix9SZj-1VCZKHWHEgpGuIXeip9CXluVh7ifOPB"/>
+</div>
+<div>
+<p class="font-inter font-bold text-xs text-on-surface">Admin Panel</p>
+<p class="font-inter text-[10px] text-on-surface-variant">Verified Officer</p>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-8">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all" placeholder="Search valuations, assets, or IDs..." type="text"/>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-slate-500 font-medium hover:text-emerald-600 text-sm" href="#">Dashboard</a>
+<a class="text-emerald-700 font-bold border-b-2 border-emerald-600 text-sm" href="#">Market Insights</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<button class="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-emerald-900/20 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Valuation
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-20 px-12 max-w-[1600px] mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-xs font-inter text-slate-400 mb-8 uppercase tracking-widest">
+<a class="hover:text-emerald-600" href="#">Home</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-emerald-700 font-bold">Valuations</span>
+</nav>
+<!-- Hero Section & Stats -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div class="max-w-2xl">
+<h2 class="font-syne text-4xl font-extrabold text-on-surface mb-4 tracking-tight leading-tight">Valuations Hub</h2>
+<p class="text-on-surface-variant font-inter text-lg leading-relaxed">
+                        The definitive digital ledger for national asset appraisals. Monitoring $1.4B in active market valuations across all government sectors.
+                    </p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 border border-outline-variant text-primary font-bold rounded-xl hover:bg-emerald-50 transition-colors">Export Ledger</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-card p-8 rounded-3xl border border-white/40 shadow-sm relative overflow-hidden group transition-all hover:scale-[1.02]">
+<div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+<p class="text-sm font-inter text-on-surface-variant font-medium mb-1">Total Market Value</p>
+<h3 class="text-3xl font-syne font-extrabold text-emerald-900">$1,482,900,000</h3>
+<div class="mt-4 flex items-center gap-2 text-xs font-inter">
+<span class="text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">+12.4%</span>
+<span class="text-slate-400 italic">from last quarter</span>
+</div>
+</div>
+<div class="glass-card p-8 rounded-3xl border border-white/40 shadow-sm relative overflow-hidden group transition-all hover:scale-[1.02]">
+<div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+<p class="text-sm font-inter text-on-surface-variant font-medium mb-1">Compliance Rate</p>
+<h3 class="text-3xl font-syne font-extrabold text-secondary">98.4%</h3>
+<div class="mt-4 flex items-center gap-2 text-xs font-inter">
+<span class="text-secondary bg-indigo-50 px-2 py-0.5 rounded-full font-bold">OPTIMAL</span>
+<span class="text-slate-400 italic">against national benchmarks</span>
+</div>
+</div>
+<div class="glass-card p-8 rounded-3xl border border-white/40 shadow-sm relative overflow-hidden group transition-all hover:scale-[1.02]">
+<div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+<p class="text-sm font-inter text-on-surface-variant font-medium mb-1">Pending Appraisals</p>
+<h3 class="text-3xl font-syne font-extrabold text-tertiary">142</h3>
+<div class="mt-4 flex items-center gap-2 text-xs font-inter">
+<span class="text-tertiary-container bg-amber-50 px-2 py-0.5 rounded-full font-bold">ATTENTION</span>
+<span class="text-slate-400 italic">avg. 48h resolution time</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Appraisal History Table Section -->
+<section class="mb-12">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-syne text-xl font-bold text-on-surface">Appraisal History</h4>
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-emerald-600 transition-colors">
+<span class="material-symbols-outlined">sort</span>
+</button>
+</div>
+</div>
+<div class="bg-white/50 backdrop-blur-sm rounded-[2rem] overflow-hidden border border-slate-200/50 shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50">
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest">Valuation ID</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest">Asset Type</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest">Location</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest text-right">Market Value</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest text-center">Compliance Status</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest">Validator</th>
+<th class="px-8 py-5 text-xs font-syne font-extrabold text-slate-400 uppercase tracking-widest">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1 -->
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<span class="font-inter font-bold text-emerald-800">SP-2024-001</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">domain</span>
+<span class="text-sm font-medium">Commercial Land</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm text-slate-600">Addis Ababa, Piazza</span>
+</td>
+<td class="px-8 py-5 text-right font-inter font-bold">
+                                $4,200,000
+                            </td>
+<td class="px-8 py-5 text-center">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter bg-emerald-100 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                    Certified
+                                </span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Female validator headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAthJRAG26_cSGbmMTtiRepXwGhhkbiP1r0yzUKTue-OqmKZ-L162Ctsb_gdXGOKMcRk6tEPIJb84HRtoo82gtPlw2dfLiw3ho0Y0rt2ceggsnpPKHEvlft9xbDjL4SDYDjEdYmwDa6kmhjHxc9Jffh56_rYjnocHiV3I1H0d9qmMTZeptmx37dPKgUDob8bZnYaZjhnxzNtkFJ-oT6V6JUTvh7GejurkIZ1GEk2wVZeCD1XKimsSEJRCHSKtj5sohwqEtYP3MXS3t8"/>
+<span class="text-xs text-slate-600 font-medium">Dr. Selamawit K.</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<button class="text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<span class="font-inter font-bold text-emerald-800">SP-2024-002</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">factory</span>
+<span class="text-sm font-medium">Industrial Plant</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm text-slate-600">Bole Lemi Zone</span>
+</td>
+<td class="px-8 py-5 text-right font-inter font-bold">
+                                $12,850,000
+                            </td>
+<td class="px-8 py-5 text-center">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter bg-amber-100 text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                                    Pending
+                                </span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Male validator headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDznHu7HRlhEy29_EMTTaXkPIeyMRJq0WGHwdKNqA12WqxESInitCzAdCv7GfnlBR4Z9rhFc3oVuVW98HYlLbDLfvZprf1SbM6ClU7ettLpmBv02KA2nC5TQ83yltitRVABnDLaRQgnk9nTc2MlAa-Sf7vrvoMQKZZnlJ-nR97AmqnKwrp9s1iCIMacI0EhqhfxbBz2czdgLHsQYtpVZNrxgjLZ29evEv7ki_zGTzmU76oM_0TA3xZ9STT3JlHQRVkr2mZOwrhmSj_Y"/>
+<span class="text-xs text-slate-600 font-medium">Abebe B.</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<button class="text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<span class="font-inter font-bold text-emerald-800">SP-2024-003</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">apartment</span>
+<span class="text-sm font-medium">Govt HQ</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm text-slate-600">Arat Kilo District</span>
+</td>
+<td class="px-8 py-5 text-right font-inter font-bold text-error">
+                                $25,000,000
+                            </td>
+<td class="px-8 py-5 text-center">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter bg-red-100 text-error">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    Flagged
+                                </span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Female validator headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnypJoXhMheonBX0IFBAYLIIpZ5jF9A36VJhyO2K_vKSMpleRyuWPWuCAHFvRFG_YBvi-x0z5-WlCn79zmTyZVXA2zru9EssPMZ7lVPbtEj4bdtsYfL9TD0onTNo94-qn68xmIySOFf-lXKA9fWsfMFFpFrZjptkkDZ1x68DLUiAO7Ni39aU8V-mFLkmUFfyiLdI4nQIElDT-sLNj7J6Pm--xahgID9q1hL8gKhXch4CKMBYKOrFyoD6xAhmsol-0CL81husSFF0Xl"/>
+<span class="text-xs text-slate-600 font-medium">Hanna M.</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<button class="text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<span class="font-inter font-bold text-emerald-800">SP-2024-004</span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">directions_car</span>
+<span class="text-sm font-medium">Fleet Cluster A</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm text-slate-600">National Logistics Hub</span>
+</td>
+<td class="px-8 py-5 text-right font-inter font-bold">
+                                $1,120,000
+                            </td>
+<td class="px-8 py-5 text-center">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tighter bg-emerald-100 text-emerald-700">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                    Certified
+                                </span>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="Male validator headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnsy79A_ZeMkdvJ3mZ70EReIYCSRu_CFcCxvRSsjVnDcC8Xa6f2gSLzzvCQwFzAsiSIdIe4jHc2FMCa51EtFOwnFohAOVFiD7rbn1N5u_V1vnJQVlN0EsNF6sYlfHbH_NTmhWNhZsoqsMZ5hbslhyYIjIykBQY3-M9WXNH-xmkzWCW2cUbvX24-wGhRf3n_mDQClSxw95irw64Jklv2xcoNBiqiwIN3Rp6z1hHjHMr6iAfmmpQhsP4Q8v4dLV1yMZI9FGKeCrVoS5_"/>
+<span class="text-xs text-slate-600 font-medium">Yonas L.</span>
+</div>
+</td>
+<td class="px-8 py-5">
+<button class="text-slate-400 hover:text-emerald-600">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="px-8 py-6 border-t border-slate-100 flex items-center justify-between">
+<p class="text-xs font-inter text-slate-400 font-medium uppercase tracking-wider">Showing 1 to 4 of 1,248 active appraisals</p>
+<div class="flex gap-2">
+<button class="p-2 border border-slate-200 rounded-lg text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-2 border border-slate-200 rounded-lg text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Section: Insights & Activity -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Market Map Widget -->
+<div class="lg:col-span-2 glass-card rounded-[2rem] border border-white/40 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+<div class="p-8 border-b border-slate-200/30 flex items-center justify-between">
+<div>
+<h5 class="font-syne font-bold text-lg text-on-surface">Asset Density Map</h5>
+<p class="text-xs font-inter text-on-surface-variant uppercase tracking-wider mt-1">Real-time geographic distribution</p>
+</div>
+<button class="text-emerald-700 font-bold text-xs uppercase tracking-widest hover:underline">Expand View</button>
+</div>
+<div class="flex-1 relative bg-slate-200">
+<img class="w-full h-full object-cover opacity-50 grayscale mix-blend-multiply" data-alt="Stylized topographic map of Ethiopia region" data-location="Addis Ababa" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc2McuXDKy9sHrxn7CaIl8pyqCkzOCj_pNhi8GlFFvqL-TuLL64tsLkyXsY7FGgdvUrECbdc3N2W9TPxrPkxKK99W1mbh7f88DYdItK0ek0-TvuO19sp9MADs5laWZUk2Vz4CNElUoE2IAzU2YzynvY_6n84_8W9blXVfQhi89Idjy8b58FPzs9o_CG_AOHZSh7cZ7EViuY8W3zUqABPAbYaMk8wqZSAyb_1d0kByV-hqXGO4dk65f-hMv67znq3WRLh2bPCn486Mm"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<!-- Map Marker 1 -->
+<div class="absolute top-1/3 left-1/4 animate-pulse">
+<div class="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center">
+<div class="w-3 h-3 rounded-full bg-emerald-600 shadow-lg shadow-emerald-500/50"></div>
+</div>
+</div>
+<!-- Map Marker 2 -->
+<div class="absolute bottom-1/4 right-1/3 animate-pulse" style="animation-delay: 1s">
+<div class="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center">
+<div class="w-3 h-3 rounded-full bg-emerald-600 shadow-lg shadow-emerald-500/50"></div>
+</div>
+</div>
+<div class="bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-xl border border-white flex flex-col items-center">
+<p class="text-[10px] uppercase font-syne font-extrabold text-slate-400">Total Valuation</p>
+<p class="text-sm font-bold text-emerald-800">$480.2M in Focus Area</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Stream -->
+<div class="glass-card rounded-[2rem] border border-white/40 shadow-sm p-8 flex flex-col">
+<div class="mb-8">
+<h5 class="font-syne font-bold text-lg text-on-surface">Activity Stream</h5>
+<p class="text-xs font-inter text-on-surface-variant uppercase tracking-wider mt-1">Last updated 2m ago</p>
+</div>
+<div class="space-y-8 flex-1">
+<div class="relative pl-8 border-l-2 border-slate-100">
+<div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-600 border-4 border-white shadow-sm"></div>
+<p class="text-xs text-slate-400 font-syne font-extrabold uppercase mb-1">10:42 AM</p>
+<p class="text-sm font-inter text-on-surface leading-tight"><span class="font-bold">Appraisal Approved</span> for SP-2024-001 by <span class="text-emerald-700">Audit-Lead</span></p>
+</div>
+<div class="relative pl-8 border-l-2 border-slate-100">
+<div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-amber-500 border-4 border-white shadow-sm"></div>
+<p class="text-xs text-slate-400 font-syne font-extrabold uppercase mb-1">09:15 AM</p>
+<p class="text-sm font-inter text-on-surface leading-tight"><span class="font-bold">Verification Pending</span> for new asset submission in Bole Sector.</p>
+</div>
+<div class="relative pl-8 border-l-2 border-slate-100">
+<div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-secondary border-4 border-white shadow-sm"></div>
+<p class="text-xs text-slate-400 font-syne font-extrabold uppercase mb-1">Yesterday</p>
+<p class="text-sm font-inter text-on-surface leading-tight"><span class="font-bold">System Integrity Check</span> completed. 100% data fidelity confirmed.</p>
+</div>
+<div class="relative pl-8 border-l-2 border-slate-100">
+<div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white shadow-sm"></div>
+<p class="text-xs text-slate-400 font-syne font-extrabold uppercase mb-1">Yesterday</p>
+<p class="text-sm font-inter text-on-surface leading-tight"><span class="font-bold">Report Generated</span> for Ministry of Urban Development.</p>
+</div>
+</div>
+<button class="w-full mt-8 py-3 border-2 border-slate-100 text-slate-400 font-inter font-bold text-xs uppercase tracking-widest rounded-xl hover:border-emerald-600 hover:text-emerald-600 transition-all">
+                    View Full Audit Log
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-[calc(100%-16rem)] ml-64 py-8 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row justify-between items-center px-12">
+<div class="mb-4 md:mb-0">
+<span class="text-sm font-syne font-bold text-slate-400">SOVEREIGN PULSE</span>
+<span class="mx-4 text-slate-200">|</span>
+<span class="font-inter text-xs tracking-wide uppercase text-slate-400">© 2024 The Digital Heritage. All rights reserved.</span>
+</div>
+<div class="flex items-center gap-8">
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Privacy Policy</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Terms of Service</a>
+<a class="font-inter text-xs tracking-wide uppercase text-slate-400 hover:text-emerald-500 transition-opacity" href="#">Contact Support</a>
+</div>
+</footer>
+</body></html>
