@@ -1,1618 +1,362 @@
 <template>
-  <div class="users-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Users</h1>
-        <p>Manage user accounts, roles, and permissions for the ValuAdis platform</p>
-      </div>
-      <div class="header-actions">
-        <button class="action-button secondary" @click="exportUsers">
-          <i class="pi pi-download"></i>
-          Export
-        </button>
-        <button class="action-button primary" @click="showCreateModal = true">
-          <i class="pi pi-plus"></i>
-          Add User
-        </button>
-      </div>
-    </div>
+  <div class="app-shell">
 
-    <!-- Search and Filters -->
-    <div class="search-filters">
-      <div class="search-section">
-        <div class="search-bar">
-          <i class="pi pi-search"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Search users by name, email, or ID..."
-          />
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-title">ValuAdis</span>
+        <p class="brand-sub">Property Valuation</p>
+      </div>
+      <nav class="sidebar-nav">
+        <NuxtLink to="/properties" class="nav-item">
+          <span class="material-symbols-outlined">domain</span><span>Properties</span>
+        </NuxtLink>
+        <NuxtLink to="/vehicles" class="nav-item">
+          <span class="material-symbols-outlined">directions_car</span><span>Vehicles</span>
+        </NuxtLink>
+        <NuxtLink to="/valuations" class="nav-item">
+          <span class="material-symbols-outlined">assessment</span><span>Valuations</span>
+        </NuxtLink>
+        <NuxtLink to="/map" class="nav-item">
+          <span class="material-symbols-outlined">map</span><span>Maps</span>
+        </NuxtLink>
+        <NuxtLink to="/reports" class="nav-item">
+          <span class="material-symbols-outlined">analytics</span><span>Reports</span>
+        </NuxtLink>
+        <NuxtLink to="/settings" class="nav-item">
+          <span class="material-symbols-outlined">settings</span><span>Settings</span>
+        </NuxtLink>
+      </nav>
+      <div class="sidebar-user">
+        <div class="user-avatar">SA</div>
+        <div>
+          <p class="user-name">Super Admin</p>
+          <p class="user-role">System Administrator</p>
         </div>
       </div>
-      
-      <div class="filter-section">
-        <select v-model="selectedRole" class="filter-dropdown">
-          <option value="">All Roles</option>
-          <option value="admin">Administrator</option>
-          <option value="assessor">Property Assessor</option>
-          <option value="supervisor">Supervisor</option>
-          <option value="clerk">Data Clerk</option>
-          <option value="viewer">Viewer</option>
-        </select>
-        
-        <select v-model="selectedStatus" class="filter-dropdown">
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="suspended">Suspended</option>
-          <option value="pending">Pending</option>
-        </select>
-        
-        <select v-model="selectedMunicipality" class="filter-dropdown">
-          <option value="">All Municipalities</option>
-          <option value="addis_ababa">Addis Ababa</option>
-          <option value="dire_dawa">Dire Dawa</option>
-          <option value="mekelle">Mekelle</option>
-          <option value="gondar">Gondar</option>
-          <option value="bahir_dar">Bahir Dar</option>
-          <option value="hawassa">Hawassa</option>
-          <option value="adama">Adama</option>
-          <option value="jimma">Jimma</option>
-          <option value="dessie">Dessie</option>
-          <option value="harar">Harar</option>
-        </select>
-        
-        <button class="reset-button" @click="resetFilters">
-          <i class="pi pi-refresh"></i>
-          Reset
-        </button>
-      </div>
-    </div>
+    </aside>
 
-    <!-- User Statistics -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-users"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ totalUsers }}</h3>
-          <p>Total Users</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>+8% from last month</span>
-          </div>
-        </div>
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input class="search-input" type="text" v-model="searchQuery" placeholder="Search users by name, email or role..." />
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-user-check"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ activeUsers }}</h3>
-          <p>Active Users</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>+12% from last month</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-user-plus"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ newUsers }}</h3>
-          <p>New This Month</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>+25% from last month</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-clock"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ pendingUsers }}</h3>
-          <p>Pending Approval</p>
-          <div class="stat-trend neutral">
-            <i class="pi pi-minus"></i>
-            <span>No change</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Users Table -->
-    <div class="users-table-container">
-      <div class="table-header">
-        <h2>User Management</h2>
-        <div class="table-info">
-          <span>{{ filteredUsers.length }} users</span>
-          <div class="view-toggle">
-            <button 
-              class="view-btn" 
-              :class="{ active: viewMode === 'table' }"
-              @click="viewMode = 'table'"
-            >
-              <i class="pi pi-table"></i>
-            </button>
-            <button 
-              class="view-btn" 
-              :class="{ active: viewMode === 'grid' }"
-              @click="viewMode = 'grid'"
-            >
-              <i class="pi pi-th-large"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Table View -->
-      <div v-if="viewMode === 'table'" class="table-container">
-        <table class="users-table">
-          <thead>
-            <tr>
-              <th @click="sortBy('id')">
-                ID
-                <i class="pi" :class="getSortIcon('id')"></i>
-              </th>
-              <th @click="sortBy('name')">
-                Name
-                <i class="pi" :class="getSortIcon('name')"></i>
-              </th>
-              <th @click="sortBy('email')">
-                Email
-                <i class="pi" :class="getSortIcon('email')"></i>
-              </th>
-              <th @click="sortBy('role')">
-                Role
-                <i class="pi" :class="getSortIcon('role')"></i>
-              </th>
-              <th @click="sortBy('municipality')">
-                Municipality
-                <i class="pi" :class="getSortIcon('municipality')"></i>
-              </th>
-              <th @click="sortBy('status')">
-                Status
-                <i class="pi" :class="getSortIcon('status')"></i>
-              </th>
-              <th @click="sortBy('last_login')">
-                Last Login
-                <i class="pi" :class="getSortIcon('last_login')"></i>
-              </th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in paginatedUsers" :key="user.id">
-              <td>
-                <span class="user-id">#{{ user.id }}</span>
-              </td>
-              <td>
-                <div class="user-info">
-                  <div class="user-avatar">{{ getInitials(user.name) }}</div>
-                  <div class="user-details">
-                    <span class="user-name">{{ user.name }}</span>
-                    <span class="user-phone">{{ user.phone }}</span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="user-email">{{ user.email }}</span>
-              </td>
-              <td>
-                <span class="role-badge" :class="user.role">{{ getRoleLabel(user.role) }}</span>
-              </td>
-              <td>
-                <span class="municipality-badge">{{ getMunicipalityLabel(user.municipality) }}</span>
-              </td>
-              <td>
-                <span class="status-badge" :class="user.status">{{ getStatusLabel(user.status) }}</span>
-              </td>
-              <td>
-                <span class="last-login">{{ formatDate(user.last_login) }}</span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="action-btn view" @click="viewUser(user)" title="View">
-                    <i class="pi pi-eye"></i>
-                  </button>
-                  <button class="action-btn edit" @click="editUser(user)" title="Edit">
-                    <i class="pi pi-pencil"></i>
-                  </button>
-                  <button 
-                    class="action-btn" 
-                    :class="user.status === 'active' ? 'deactivate' : 'activate'"
-                    @click="toggleUserStatus(user)" 
-                    :title="user.status === 'active' ? 'Deactivate' : 'Activate'"
-                  >
-                    <i :class="user.status === 'active' ? 'pi pi-ban' : 'pi pi-check'"></i>
-                  </button>
-                  <button class="action-btn delete" @click="deleteUser(user)" title="Delete">
-                    <i class="pi pi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Grid View -->
-      <div v-else class="grid-container">
-        <div v-for="user in paginatedUsers" :key="user.id" class="user-card">
-          <div class="card-header">
-            <div class="user-avatar-large">{{ getInitials(user.name) }}</div>
-            <div class="user-info">
-              <h4>{{ user.name }}</h4>
-              <span class="role-badge" :class="user.role">{{ getRoleLabel(user.role) }}</span>
-            </div>
-            <div class="card-actions">
-              <button class="action-btn view" @click="viewUser(user)">
-                <i class="pi pi-eye"></i>
-              </button>
-            </div>
-          </div>
-          
-          <div class="card-content">
-            <div class="user-details">
-              <div class="detail-item">
-                <i class="pi pi-envelope"></i>
-                <span>{{ user.email }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="pi pi-phone"></i>
-                <span>{{ user.phone }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="pi pi-map-marker"></i>
-                <span>{{ getMunicipalityLabel(user.municipality) }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="pi pi-clock"></i>
-                <span>Last login: {{ formatDate(user.last_login) }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card-footer">
-            <span class="status-badge" :class="user.status">{{ getStatusLabel(user.status) }}</span>
-            <div class="card-actions">
-              <button class="action-btn edit" @click="editUser(user)">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button 
-                class="action-btn" 
-                :class="user.status === 'active' ? 'deactivate' : 'activate'"
-                @click="toggleUserStatus(user)"
-              >
-                <i :class="user.status === 'active' ? 'pi pi-ban' : 'pi pi-check'"></i>
-              </button>
-              <button class="action-btn delete" @click="deleteUser(user)">
-                <i class="pi pi-trash"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="filteredUsers.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="pi pi-users"></i>
-        </div>
-        <h3>No users found</h3>
-        <p>Create your first user account to get started</p>
-        <button class="action-button primary" @click="showCreateModal = true">
-          <i class="pi pi-plus"></i>
-          Add User
-        </button>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div v-if="filteredUsers.length > itemsPerPage" class="pagination">
-      <div class="pagination-info">
-        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} of {{ filteredUsers.length }} users</span>
-      </div>
-      <div class="pagination-controls">
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-        >
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-        >
-          <i class="pi pi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Create/Edit User Modal -->
-    <div v-if="showCreateModal || showEditModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>{{ showEditModal ? 'Edit User' : 'Create New User' }}</h3>
-          <button class="modal-close" @click="closeModal">
-            <i class="pi pi-times"></i>
+      <div class="header-right">
+        <nav class="header-links">
+          <NuxtLink to="/dashboard" class="hlink">Dashboard</NuxtLink>
+          <a href="#" class="hlink">Market Insights</a>
+        </nav>
+        <div class="header-actions">
+          <button class="icon-btn"><span class="material-symbols-outlined">notifications</span></button>
+          <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
+          <button class="btn-new" @click="showAddUserModal = true">
+            <span class="material-symbols-outlined">person_add</span> Add User
           </button>
         </div>
-        
-        <form @submit.prevent="saveUser" class="user-form">
-          <div class="form-grid">
-            <div class="form-field">
-              <label>First Name *</label>
-              <input 
-                type="text" 
-                v-model="userForm.first_name" 
-                required
-                placeholder="Enter first name"
-              />
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-wrap">
+
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+          <span>Home</span>
+          <span class="bc-sep">/</span>
+          <span class="bc-active">Users</span>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-hd">
+          <div>
+            <h1 class="page-title">User Management</h1>
+            <p class="page-desc">Manage system users, roles and permissions.</p>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">group</span></div>
+            <p class="stat-label">Total Users</p>
+            <h3 class="stat-value">247</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-green">↑ 12</span>
+              <span class="stat-sub">this month</span>
             </div>
-            
-            <div class="form-field">
-              <label>Last Name *</label>
-              <input 
-                type="text" 
-                v-model="userForm.last_name" 
-                required
-                placeholder="Enter last name"
-              />
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">admin_panel_settings</span></div>
+            <p class="stat-label">Administrators</p>
+            <h3 class="stat-value">18</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-indigo">7%</span>
+              <span class="stat-sub">of users</span>
             </div>
-            
-            <div class="form-field">
-              <label>Email Address *</label>
-              <input 
-                type="email" 
-                v-model="userForm.email" 
-                required
-                placeholder="Enter email address"
-              />
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">person_check</span></div>
+            <p class="stat-label">Active Now</p>
+            <h3 class="stat-value">42</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-amber">17%</span>
+              <span class="stat-sub">online</span>
             </div>
-            
-            <div class="form-field">
-              <label>Phone Number *</label>
-              <input 
-                type="tel" 
-                v-model="userForm.phone" 
-                required
-                placeholder="+251 9XX XXX XXX"
-              />
-            </div>
-            
-            <div class="form-field">
-              <label>Role *</label>
-              <select v-model="userForm.role" required>
-                <option value="">Select role</option>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="table-card glass-card">
+          <div class="table-header">
+            <h2 class="table-title">System Users</h2>
+            <div class="table-filters">
+              <select v-model="selectedRole" class="filter-select">
+                <option value="">All Roles</option>
                 <option value="admin">Administrator</option>
-                <option value="assessor">Property Assessor</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="clerk">Data Clerk</option>
+                <option value="auditor">Auditor</option>
+                <option value="appraiser">Appraiser</option>
                 <option value="viewer">Viewer</option>
               </select>
-            </div>
-            
-            <div class="form-field">
-              <label>Municipality</label>
-              <select v-model="userForm.municipality">
-                <option value="">Select municipality</option>
-                <option value="addis_ababa">Addis Ababa</option>
-                <option value="dire_dawa">Dire Dawa</option>
-                <option value="mekelle">Mekelle</option>
-                <option value="gondar">Gondar</option>
-                <option value="bahir_dar">Bahir Dar</option>
-                <option value="hawassa">Hawassa</option>
-                <option value="adama">Adama</option>
-                <option value="jimma">Jimma</option>
-                <option value="dessie">Dessie</option>
-                <option value="harar">Harar</option>
+              <select v-model="selectedStatus" class="filter-select">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="pending">Pending</option>
               </select>
-            </div>
-            
-            <div class="form-field">
-              <label>Password *</label>
-              <input 
-                type="password" 
-                v-model="userForm.password" 
-                :required="!showEditModal"
-                placeholder="Enter password"
-              />
-            </div>
-            
-            <div class="form-field">
-              <label>Confirm Password *</label>
-              <input 
-                type="password" 
-                v-model="userForm.confirm_password" 
-                :required="!showEditModal"
-                placeholder="Confirm password"
-              />
+              <button class="btn-reset" @click="resetFilters">
+                <span class="material-symbols-outlined">refresh</span>
+              </button>
             </div>
           </div>
-          
-          <div class="form-actions">
-            <button type="button" class="action-button secondary" @click="closeModal">
-              Cancel
-            </button>
-            <button type="submit" class="action-button primary" :disabled="isSubmitting">
-              <i v-if="isSubmitting" class="pi pi-spin pi-spinner"></i>
-              {{ showEditModal ? 'Update User' : 'Create User' }}
-            </button>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr class="table-head-row">
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Department</th>
+                  <th>Last Active</th>
+                  <th>Status</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row" v-for="u in filteredUsers" :key="u.id">
+                  <td>
+                    <div class="td-user">
+                      <div class="user-avatar-sm" :style="`background:${u.avatarBg}`">{{ u.initials }}</div>
+                      <span class="user-name-text">{{ u.name }}</span>
+                    </div>
+                  </td>
+                  <td><span class="td-email">{{ u.email }}</span></td>
+                  <td>
+                    <span class="role-badge" :class="u.roleClass">{{ u.role }}</span>
+                  </td>
+                  <td><span class="td-dept">{{ u.department }}</span></td>
+                  <td><span class="td-time">{{ u.lastActive }}</span></td>
+                  <td>
+                    <span class="status-badge" :class="u.statusClass">{{ u.status }}</span>
+                  </td>
+                  <td class="td-actions text-right">
+                    <button class="action-btn" @click="editUser(u)"><span class="material-symbols-outlined">edit</span></button>
+                    <button class="action-btn" @click="deleteUser(u)"><span class="material-symbols-outlined">delete</span></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </form>
+          <div class="pagination">
+            <span class="pag-info">Showing {{ filteredUsers.length }} of 247 users</span>
+            <div class="pag-btns">
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_left</span></button>
+              <button class="pag-btn pag-active">1</button>
+              <button class="pag-btn">2</button>
+              <button class="pag-btn">3</button>
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span class="footer-brand">ValuAdis</span>
+      <p class="footer-copy">© 2025 ValuAdis. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Contact Support</a>
+      </div>
+    </footer>
+
   </div>
 </template>
 
-<script setup>
-definePageMeta({ middleware: ['admin'] })
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { userService } from '~/services/userService.js'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 
-const router = useRouter()
-const config = useRuntimeConfig()
-const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
+definePageMeta({ middleware: 'auth' })
 
-// Reactive data
 const searchQuery = ref('')
 const selectedRole = ref('')
 const selectedStatus = ref('')
-const selectedMunicipality = ref('')
-const viewMode = ref('table')
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-const sortField = ref('id')
-const sortDirection = ref('desc')
+const showAddUserModal = ref(false)
 
-// Modal states
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
-const isSubmitting = ref(false)
-const editingUser = ref(null)
+const allUsers = [
+  { id: 1, name: 'John Doe', initials: 'JD', email: 'john.doe@valuadis.gov.et', role: 'Administrator', roleClass: 'role-admin', department: 'Federal Audit', lastActive: '2 mins ago', status: 'Active', statusClass: 'status-active', avatarBg: '#006948' },
+  { id: 2, name: 'Martha Kebede', initials: 'MK', email: 'martha.k@valuadis.gov.et', role: 'Auditor', roleClass: 'role-auditor', department: 'Property Valuation', lastActive: '1 hour ago', status: 'Active', statusClass: 'status-active', avatarBg: '#4b41e1' },
+  { id: 3, name: 'Abebe Bikila', initials: 'AB', email: 'abebe.b@valuadis.gov.et', role: 'Appraiser', roleClass: 'role-appraiser', department: 'Field Operations', lastActive: '3 hours ago', status: 'Active', statusClass: 'status-active', avatarBg: '#825100' },
+  { id: 4, name: 'Selamawit K.', initials: 'SK', email: 'selamawit@valuadis.gov.et', role: 'Auditor', roleClass: 'role-auditor', department: 'Compliance', lastActive: 'Yesterday', status: 'Inactive', statusClass: 'status-inactive', avatarBg: '#e0e7ff' },
+  { id: 5, name: 'Yonas Lemma', initials: 'YL', email: 'yonas.l@valuadis.gov.et', role: 'Viewer', roleClass: 'role-viewer', department: 'Records', lastActive: '2 days ago', status: 'Pending', statusClass: 'status-pending', avatarBg: '#fef3c7' },
+]
 
-// User form
-const userForm = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone: '',
-  role: '',
-  municipality: '',
-  password: '',
-  confirm_password: ''
-})
-
-// Real users data from API
-const users = ref([])
-
-// Computed properties
 const filteredUsers = computed(() => {
-  let filtered = users.value
-
+  let filtered = allUsers
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(user => 
-      user.name.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) ||
-      user.id.toString().includes(query)
-    )
+    const q = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
   }
-
   if (selectedRole.value) {
-    filtered = filtered.filter(user => user.role === selectedRole.value)
+    filtered = filtered.filter(u => u.roleClass === `role-${selectedRole.value}`)
   }
-
   if (selectedStatus.value) {
-    filtered = filtered.filter(user => user.status === selectedStatus.value)
+    filtered = filtered.filter(u => u.status.toLowerCase() === selectedStatus.value)
   }
-
-  if (selectedMunicipality.value) {
-    filtered = filtered.filter(user => user.municipality === selectedMunicipality.value)
-  }
-
-  // Sort
-  filtered.sort((a, b) => {
-    let aVal = a[sortField.value]
-    let bVal = b[sortField.value]
-    
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase()
-      bVal = bVal.toLowerCase()
-    }
-    
-    if (sortDirection.value === 'asc') {
-      return aVal > bVal ? 1 : -1
-    } else {
-      return aVal < bVal ? 1 : -1
-    }
-  })
-
   return filtered
 })
 
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredUsers.value.slice(start, end)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredUsers.value.length / itemsPerPage.value)
-})
-
-const totalUsers = computed(() => users.value.length)
-const activeUsers = computed(() => users.value.filter(u => u.status === 'active').length)
-const newUsers = computed(() => users.value.filter(u => {
-  const createdDate = new Date(u.created_at)
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  return createdDate >= thirtyDaysAgo
-}).length)
-const pendingUsers = computed(() => users.value.filter(u => u.status === 'pending').length)
-
-// Methods
-function sortBy(field) {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
-  }
-}
-
-function getSortIcon(field) {
-  if (sortField.value !== field) return 'pi-sort'
-  return sortDirection.value === 'asc' ? 'pi-sort-up' : 'pi-sort-down'
-}
-
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function getRoleLabel(role) {
-  const labels = {
-    admin: 'Administrator',
-    assessor: 'Property Assessor',
-    supervisor: 'Supervisor',
-    clerk: 'Data Clerk',
-    viewer: 'Viewer'
-  }
-  return labels[role] || role
-}
-
-function getStatusLabel(status) {
-  const labels = {
-    active: 'Active',
-    inactive: 'Inactive',
-    suspended: 'Suspended',
-    pending: 'Pending'
-  }
-  return labels[status] || status
-}
-
-function getMunicipalityLabel(municipality) {
-  const labels = {
-    addis_ababa: 'Addis Ababa',
-    dire_dawa: 'Dire Dawa',
-    mekelle: 'Mekelle',
-    gondar: 'Gondar',
-    bahir_dar: 'Bahir Dar',
-    hawassa: 'Hawassa',
-    adama: 'Adama',
-    jimma: 'Jimma',
-    dessie: 'Dessie',
-    harar: 'Harar'
-  }
-  return labels[municipality] || municipality
-}
-
-function formatDate(dateString) {
-  if (!dateString) return 'Never'
-  return new Date(dateString).toLocaleDateString('en-ET', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-function resetFilters() {
+const resetFilters = () => {
   searchQuery.value = ''
   selectedRole.value = ''
   selectedStatus.value = ''
-  selectedMunicipality.value = ''
-  currentPage.value = 1
 }
 
-function closeModal() {
-  showCreateModal.value = false
-  showEditModal.value = false
-  editingUser.value = null
-  resetUserForm()
-}
+const editUser = (u: any) => console.log('Edit user:', u.name)
+const deleteUser = (u: any) => confirm(`Delete user ${u.name}?`)
 
-function resetUserForm() {
-  userForm.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    role: '',
-    municipality: '',
-    password: '',
-    confirm_password: ''
-  }
-}
-
-function viewUser(user) {
-  console.log('View user:', user)
-  // Navigate to user details page or show modal
-}
-
-function editUser(user) {
-  editingUser.value = user
-  userForm.value = {
-    first_name: user.name.split(' ')[0],
-    last_name: user.name.split(' ').slice(1).join(' '),
-    email: user.email,
-    phone: user.phone,
-    role: user.role,
-    municipality: user.municipality,
-    password: '',
-    confirm_password: ''
-  }
-  showEditModal.value = true
-}
-
-async function saveUser() {
-  if (userForm.value.password !== userForm.value.confirm_password) {
-    alert('Passwords do not match')
-    return
-  }
-
-  isSubmitting.value = true
-
-  try {
-    const userData = userService.formatUserData({
-      full_name: `${userForm.value.first_name} ${userForm.value.last_name}`.trim(),
-      email: userForm.value.email,
-      phone: userForm.value.phone,
-      municipality: userForm.value.municipality,
-      ...(userForm.value.password && { password: userForm.value.password })
-    })
-
-    let result
-    if (showEditModal.value && editingUser.value) {
-      // Update existing user
-      result = await userService.updateUser(editingUser.value.id, userData)
-    } else {
-      // Create new user
-      result = await userService.createUser(userData)
-    }
-
-    if (result.success) {
-      if (showEditModal.value) {
-        // Update user in local array
-        const index = users.value.findIndex(u => u.id === editingUser.value.id)
-        if (index > -1) {
-          users.value[index] = { ...users.value[index], ...result.data }
-        }
-      } else {
-        // Add new user to local array
-        users.value.push(result.data)
-      }
-      
-      closeModal()
-      alert(showEditModal.value ? 'User updated successfully!' : 'User created successfully!')
-    } else {
-      alert(result.error || 'Failed to save user')
-    }
-  } catch (error) {
-    console.error('Error saving user:', error)
-    alert('Network error. Please try again.')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-async function toggleUserStatus(user) {
-  const newStatus = user.status === 'active' ? false : true
-  
-  if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this user?`)) {
-    return
-  }
-
-  try {
-    const result = await userService.toggleUserStatus(user.id, newStatus)
-    if (result.success) {
-      user.status = newStatus ? 'active' : 'inactive'
-      alert(`User ${newStatus ? 'activated' : 'deactivated'} successfully!`)
-    } else {
-      alert(result.error || 'Failed to update user status')
-    }
-  } catch (error) {
-    console.error('Error updating user status:', error)
-    alert('Network error. Please try again.')
-  }
-}
-
-async function deleteUser(user) {
-  if (!confirm(`Are you sure you want to delete user "${user.name}"? This action cannot be undone.`)) {
-    return
-  }
-
-  try {
-    const result = await userService.deleteUser(user.id)
-    if (result.success) {
-      const index = users.value.findIndex(u => u.id === user.id)
-      if (index > -1) {
-        users.value.splice(index, 1)
-      }
-      alert('User deleted successfully!')
-    } else {
-      alert(result.error || 'Failed to delete user')
-    }
-  } catch (error) {
-    console.error('Error deleting user:', error)
-    alert('Network error. Please try again.')
-  }
-}
-
-async function exportUsers() {
-  try {
-    const result = await userService.exportUsers({
-      format: 'csv',
-      municipality: selectedMunicipality.value || undefined,
-      role: selectedRole.value || undefined
-    })
-    
-    if (result.success) {
-      // Create download link
-      const blob = new Blob([result.data], { type: 'text/csv' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-      
-      alert('Users exported successfully!')
-    } else {
-      alert(result.error || 'Failed to export users')
-    }
-  } catch (error) {
-    console.error('Error exporting users:', error)
-    alert('Network error. Please try again.')
-  }
-}
-
-onMounted(async () => {
-  // Load users from API
-  try {
-    const result = await userService.getUsers()
-    if (result.success) {
-      const raw = result.data || []
-      users.value = raw.map(u => ({
-        ...u,
-        name: u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-        status: u.is_active === false ? 'inactive' : (u.status || 'active'),
-        role: u.roles?.[0]?.name || u.role || 'viewer',
-        last_login: u.last_login || u.updated_at
-      }))
-    } else {
-      console.error('Failed to load users from API:', result.error)
-      users.value = []
-    }
-  } catch (error) {
-    console.error('Error loading users:', error)
-    users.value = []
-  }
+useHead({
+  title: 'User Management — ValuAdis',
+  meta: [{ name: 'description', content: 'Manage system users and permissions.' }]
 })
 </script>
 
 <style scoped>
-/* Users Container */
-.users-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0;
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-radius: 16px;
-  color: white;
-  box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
-}
-
-.header-content h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
-
-.header-content p {
-  font-size: 1.125rem;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-button.primary {
-  background: white;
-  color: #059669;
-}
-
-.action-button.primary:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
-}
-
-.action-button.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.action-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Search and Filters */
-.search-filters {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-.search-section {
-  margin-bottom: 1.5rem;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  gap: 0.75rem;
-}
-
-.search-bar i {
-  color: #64748b;
-}
-
-.search-bar input {
-  flex: 1;
-  border: none;
-  background: none;
-  outline: none;
-  font-size: 0.875rem;
-}
-
-.filter-section {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-dropdown {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.875rem;
-  min-width: 150px;
-}
-
-.reset-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reset-button:hover {
-  background: #f8fafc;
-  border-color: #059669;
-  color: #059669;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #059669, #047857);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-}
-
-.stat-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.25rem 0;
-}
-
-.stat-content p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0 0 0.5rem 0;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.stat-trend.positive {
-  color: #10b981;
-}
-
-.stat-trend.neutral {
-  color: #6b7280;
-}
-
-.stat-trend.negative {
-  color: #ef4444;
-}
-
-/* Users Table */
-.users-table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.table-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.table-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.table-info span {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.view-btn {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.view-btn.active {
-  background: #059669;
-  color: white;
-  border-color: #059669;
-}
-
-/* Table Styles */
-.table-container {
-  overflow-x: auto;
-}
-
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.users-table th {
-  background: #f8fafc;
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.users-table th:hover {
-  background: #f1f5f9;
-}
-
-.users-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.user-id {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  color: #059669;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #059669;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.user-name {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.user-phone {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.user-email {
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.role-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.role-badge.admin {
-  background: #dcfce7;
-  color: #059669;
-}
-
-.role-badge.assessor {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.role-badge.supervisor {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.role-badge.clerk {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.role-badge.viewer {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.municipality-badge {
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.status-badge.inactive {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.status-badge.suspended {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.status-badge.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.last-login {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.action-btn.view {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.action-btn.view:hover {
-  background: #1e40af;
-  color: white;
-}
-
-.action-btn.edit {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.action-btn.edit:hover {
-  background: #6b7280;
-  color: white;
-}
-
-.action-btn.activate {
-  background: #dcfce7;
-  color: #059669;
-}
-
-.action-btn.activate:hover {
-  background: #059669;
-  color: white;
-}
-
-.action-btn.deactivate {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.action-btn.deactivate:hover {
-  background: #d97706;
-  color: white;
-}
-
-.action-btn.delete {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.action-btn.delete:hover {
-  background: #dc2626;
-  color: white;
-}
-
-/* Grid View */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-  padding: 2rem;
-}
-
-.user-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-
-.user-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.user-avatar-large {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #059669;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.user-info h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.card-content {
-  padding: 1.5rem;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.detail-item i {
-  color: #059669;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  background: #f8fafc;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 2rem;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.empty-state p {
-  color: #64748b;
-  margin: 0 0 2rem 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+.app-shell { display: flex; min-height: 100vh; background: #f7f9fb; font-family: 'Inter', sans-serif; color: #191c1e; }
+
+/* Sidebar */
+.sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 16rem; background: rgba(248,250,252,0.7); backdrop-filter: blur(20px); border-right: 1px solid rgba(226,232,240,0.2); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 50; }
+.sidebar-brand { padding: 0 0.5rem; margin-bottom: 2.5rem; }
+.brand-title { display: block; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #065f46; }
+.brand-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-top: 0.2rem; }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; color: #475569; text-decoration: none; transition: all 0.2s; }
+.nav-item:hover { color: #006948; background: rgba(248,250,252,0.6); }
+.nav-item.active { color: #005137; font-weight: 600; background: rgba(0,105,72,0.06); border-right: 3px solid #006948; }
+.nav-item .material-symbols-outlined { font-size: 1.25rem; }
+.sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(226,232,240,0.2); margin-top: auto; }
+.user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #00855d; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+.user-name { font-size: 0.8rem; font-weight: 700; margin: 0; }
+.user-role { font-size: 0.7rem; color: #94a3b8; margin: 0; }
+
+/* Header */
+.top-header { position: fixed; top: 0; right: 0; width: calc(100% - 16rem); height: 4rem; z-index: 40; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226,232,240,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+.search-wrap { position: relative; flex: 1; max-width: 28rem; }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
+.search-input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; background: #f1f5f9; border: none; border-radius: 9999px; font-size: 0.875rem; outline: none; }
+.header-right { display: flex; align-items: center; gap: 1.5rem; }
+.header-links { display: flex; gap: 1rem; }
+.hlink { font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: color 0.2s; }
+.hlink:hover { color: #006948; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.icon-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 0.5rem; border-radius: 50%; transition: background 0.2s; }
+.icon-btn:hover { background: #f1f5f9; }
+.btn-new { display: flex; align-items: center; gap: 0.35rem; background: #006948; color: #fff; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btn-new:hover { opacity: 0.9; }
+
+/* Main */
+.main-content { margin-left: 16rem; padding-top: 4rem; flex: 1; min-height: 100vh; }
+.content-wrap { padding: 2.5rem 2rem; }
+
+/* Breadcrumb */
+.breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-bottom: 1.5rem; }
+.bc-sep { margin: 0 0.2rem; }
+.bc-active { color: #065f46; }
+
+/* Page header */
+.page-hd { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 1rem; }
+.page-title { font-family: 'Syne', sans-serif; font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; color: #191c1e; margin: 0 0 0.4rem; }
+.page-desc { font-size: 0.95rem; color: #3d4a42; margin: 0; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(188,202,192,0.2); }
+.stat-card { padding: 1.5rem; border-radius: 1.5rem; position: relative; overflow: hidden; }
+.stat-bg-icon { position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; }
+.stat-bg-icon .material-symbols-outlined { font-size: 4rem; }
+.stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 0.5rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 800; color: #191c1e; margin: 0 0 1rem; }
+.stat-badge-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.stat-badge { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 9999px; }
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-indigo { background: #e0e7ff; color: #4b41e1; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.stat-sub { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
+
+/* Table */
+.table-card { border-radius: 1.5rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.table-header { padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.table-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #191c1e; margin: 0; }
+.table-filters { display: flex; gap: 0.75rem; align-items: center; }
+.filter-select { padding: 0.5rem 1rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.8rem; color: #475569; }
+.btn-reset { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.5rem; }
+.btn-reset:hover { color: #006948; }
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; text-align: left; border-collapse: collapse; }
+.table-head-row { background: rgba(248,250,252,0.5); }
+.table-head-row th { padding: 1rem 1.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #64748b; }
+.text-right { text-align: right; }
+.table-row { border-top: 1px solid #f1f5f9; transition: background 0.15s; }
+.table-row:hover { background: rgba(248,250,252,0.85); }
+.table-row td { padding: 1.25rem 1.5rem; }
+.td-user { display: flex; align-items: center; gap: 0.75rem; }
+.user-avatar-sm { width: 2rem; height: 2rem; border-radius: 50%; color: #fff; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.user-name-text { font-weight: 600; color: #191c1e; }
+.td-email { font-size: 0.875rem; color: #475569; }
+.td-dept { font-size: 0.875rem; color: #64748b; }
+.td-time { font-size: 0.875rem; color: #94a3b8; }
+.role-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.role-admin { background: #fecaca; color: #dc2626; }
+.role-auditor { background: #dbeafe; color: #1e40af; }
+.role-appraiser { background: #d1fae5; color: #065f46; }
+.role-viewer { background: #e2e8f0; color: #475569; }
+.status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.status-active { background: #d1fae5; color: #065f46; }
+.status-inactive { background: #e2e8f0; color: #64748b; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.td-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.action-btn { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.4rem; border-radius: 0.5rem; transition: all 0.15s; }
+.action-btn:hover { background: #fff; color: #006948; }
 
 /* Pagination */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: white;
-  border-top: 1px solid #f1f5f9;
-}
+.pagination { padding: 1.5rem 2rem; background: rgba(248,250,252,0.3); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.pag-btns { display: flex; gap: 0.4rem; }
+.pag-btn { width: 2rem; height: 2rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #fff; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.pag-btn:hover { color: #006948; border-color: #006948; }
+.pag-btn.pag-active { background: #006948; color: #fff; border-color: #006948; }
+.pag-btn .material-symbols-outlined { font-size: 0.9rem; }
+.pag-info { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
 
-.pagination-info {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.pagination-btn {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #f8fafc;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.modal-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.modal-close {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: #f3f4f6;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  background: #e5e7eb;
-}
-
-.user-form {
-  padding: 2rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-field label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.form-field input,
-.form-field select {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-}
-
-.form-field input:focus,
-.form-field select:focus {
-  outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .filter-section {
-    flex-direction: column;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .table-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .grid-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
+/* Footer */
+.app-footer { margin-left: 16rem; padding: 2rem 3rem; border-top: 1px solid rgba(226,232,240,0.15); background: #f8fafc; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.footer-brand { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; }
+.footer-copy { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0; }
+.footer-links { display: flex; gap: 2rem; }
+.footer-links a { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; text-decoration: none; }
+.footer-links a:hover { color: #006948; }
 </style>

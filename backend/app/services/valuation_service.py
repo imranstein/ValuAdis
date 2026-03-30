@@ -11,6 +11,9 @@ from app.services.spatial_service import SpatialService
 from app.core.exceptions import ValuAdisException, PropertyValidationError
 from app.schemas.valuation import ValuationCreate
 from sqlalchemy.orm import Session
+import structlog
+
+logger = structlog.get_logger()
 
 
 class ValuationService:
@@ -269,6 +272,85 @@ class ValuationService:
             self.db.commit()
             return True
         return False
+
+    # ------------------------------------------------------------------
+    # Status transition
+    # ------------------------------------------------------------------
+
+    # Valid state machine transitions
+    VALID_TRANSITIONS = {
+        "draft": ["pending"],
+        "pending": ["approved", "rejected"],
+        "approved": ["archived"],
+        "rejected": [],
+        "archived": [],
+        "expired": [],
+    }
+
+    def transition_status(
+        self, valuation_id: int, new_status: str, actor_user_id: int, reason: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Transition a valuation to a new status following the defined state machine.
+
+        Allowed transitions:
+            draft     → pending
+            pending   → approved | rejected
+            approved  → archived
+
+        Args:
+            valuation_id:   ID of the valuation to transition
+            new_status:     Target status string (draft/pending/approved/archived/rejected)
+            actor_user_id:  ID of the user performing the transition
+            reason:         Optional reason/note for the transition (stored in audit log)
+
+        Returns:
+            Updated valuation dict
+
+        Raises:
+            ValuAdisException: If valuation not found or transition is invalid
+        """
+        from app.data.models.valuation import ValuationStatus
+
+        valuation = self.valuation_repo.get_valuation_by_id(valuation_id)
+        if not valuation:
+            raise ValuAdisException(f"Valuation {valuation_id} not found")
+
+        current_status = (
+            valuation.status.value
+            if hasattr(valuation.status, "value")
+            else str(valuation.status)
+        )
+
+        allowed = self.VALID_TRANSITIONS.get(current_status, [])
+        if new_status not in allowed:
+            raise ValuAdisException(
+                f"Invalid transition: '{current_status}' → '{new_status}'. "
+                f"Allowed: {allowed if allowed else 'no transitions allowed from this status'}"
+            )
+
+        # Validate new_status is a valid enum value
+        try:
+            target_status = ValuationStatus(new_status)
+        except ValueError:
+            raise ValuAdisException(f"Unknown status value: '{new_status}'")
+
+        updated = self.valuation_repo.update(valuation, {"status": target_status})
+        self.db.commit()
+
+        logger.info(
+            "Valuation status transitioned",
+            valuation_id=valuation_id,
+            from_status=current_status,
+            to_status=new_status,
+            actor_user_id=actor_user_id,
+            reason=reason,
+        )
+
+        return updated.to_dict() if hasattr(updated, "to_dict") else {
+            "id": updated.id,
+            "status": updated.status.value if hasattr(updated.status, "value") else str(updated.status),
+        }
 
     def override_valuation(
         self,

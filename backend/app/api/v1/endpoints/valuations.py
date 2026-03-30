@@ -18,7 +18,7 @@ from app.services.auth_service import AuthService
 from app.schemas.valuation import (
     ValuationCreate, ValuationUpdate, ValuationResponse,
     ValuationListResponse, ValuationDetail, ValuationCalculation,
-    ValuationOverrideRequest,
+    ValuationOverrideRequest, ValuationStatusTransitionRequest,
 )
 from app.core.exceptions import ValuAdisException, PropertyValidationError
 from app.core.security import get_current_user_id
@@ -431,6 +431,62 @@ async def override_valuation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Valuation override failed",
+        )
+
+
+@router.patch("/{valuation_id}/status", response_model=ValuationResponse, tags=["Valuations"])
+async def transition_valuation_status(
+    valuation_id: int,
+    transition_data: ValuationStatusTransitionRequest,
+    user_id: int = Depends(get_current_user_id),
+    valuation_service: ValuationService = Depends(get_valuation_service),
+):
+    """
+    Transition a valuation to a new status.
+
+    Valid transitions:
+    - draft → pending
+    - pending → approved | rejected
+    - approved → archived
+
+    Invalid transitions are rejected with HTTP 400.
+    """
+    try:
+        logger.info(
+            "Transitioning valuation status",
+            valuation_id=valuation_id,
+            new_status=transition_data.status,
+            actor_user_id=user_id,
+        )
+
+        result = valuation_service.transition_status(
+            valuation_id=valuation_id,
+            new_status=transition_data.status,
+            actor_user_id=user_id,
+            reason=transition_data.reason,
+        )
+
+        logger.info(
+            "Valuation status transitioned successfully",
+            valuation_id=valuation_id,
+            new_status=transition_data.status,
+        )
+
+        return ValuationResponse(
+            success=True,
+            data=result,
+            message=f"Valuation status updated to '{transition_data.status}'",
+        )
+
+    except ValuAdisException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error transitioning valuation status", error=str(e), valuation_id=valuation_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
         )
 
 

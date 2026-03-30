@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "recorded_at": "2026-03-22T00:00:00Z",
+  "environment": "development",
+  "thresholds": {
+    "p95_response_time_ms": 500,
+    "p99_response_time_ms": 1000,
+    "error_rate_percent": 1,
+    "degradation_tolerance_percent": 10
+  },
+  "baselines": {
+    "health_check": {
+      "endpoint": "GET /api/v1/health",
+      "p50_ms": 20,
+      "p95_ms": 50,
+      "p99_ms": 100,
+      "error_rate": 0.0,
+      "throughput_rps": 500
+    },
+    "login": {
+      "endpoint": "POST /api/v1/auth/login",
+      "p50_ms": 150,
+      "p95_ms": 300,
+      "p99_ms": 450,
+      "error_rate": 0.0,
+      "throughput_rps": 50
+    },
+    "refresh": {
+      "endpoint": "POST /api/v1/auth/refresh",
+      "p50_ms": 80,
+      "p95_ms": 200,
+      "p99_ms": 350,
+      "error_rate": 0.0,
+      "throughput_rps": 100
+    },
+    "list_valuations": {
+      "endpoint": "GET /api/v1/valuations/",
+      "p50_ms": 200,
+      "p95_ms": 450,
+      "p99_ms": 800,
+      "error_rate": 0.0,
+      "throughput_rps": 30
+    },
+    "create_valuation": {
+      "endpoint": "POST /api/v1/valuations/",
+      "p50_ms": 250,
+      "p95_ms": 480,
+      "p99_ms": 900,
+      "error_rate": 0.0,
+      "throughput_rps": 20
+    },
+    "get_valuation": {
+      "endpoint": "GET /api/v1/valuations/{id}",
+      "p50_ms": 120,
+      "p95_ms": 300,
+      "p99_ms": 500,
+      "error_rate": 0.0,
+      "throughput_rps": 40
+    },
+    "list_vehicles": {
+      "endpoint": "GET /api/v1/vehicles/",
+      "p50_ms": 180,
+      "p95_ms": 400,
+      "p99_ms": 700,
+      "error_rate": 0.0,
+      "throughput_rps": 35
+    }
+  },
+  "notes": "Baseline recorded under 100 concurrent users, 60s steady state. Degradation alert fires if any p95 exceeds baseline by >10%."
+}

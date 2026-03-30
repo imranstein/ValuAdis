@@ -402,9 +402,9 @@ WAVE 3 (Parallel)
 - [ ] Task 16: Report generation E2E test passes
 
 ### Wave 3B (Status)
-- [ ] Task 17: Valuation status model updated
-- [ ] Task 18: Status transition service created
-- [ ] Task 19: Status workflow E2E test passes
+- [x] Task 17: Valuation status model updated
+- [x] Task 18: Status transition service created
+- [x] Task 19: Status workflow E2E test passes
 
 ---
 

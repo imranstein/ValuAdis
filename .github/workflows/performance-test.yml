@@ -1,0 +1,139 @@
+name: Performance Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  # Baseline thresholds — update after an intentional performance improvement
+  BASELINE_P95_MS: '500'
+  BASELINE_P99_MS: '1000'
+  BASELINE_RPS: '50'
+
+jobs:
+  k6-performance:
+    name: K6 Load Tests with Baseline Comparison
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
+
+      - name: Create reports directory
+        run: mkdir -p reports/performance
+
+      - name: Run K6 load test
+        env:
+          BASE_URL: ${{ secrets.PERF_TARGET_URL }}
+        run: |
+          TARGET="${BASE_URL:-http://localhost:8000}"
+          k6 run \
+            --out json=reports/performance/k6-raw.json \
+            --summary-export=reports/performance/k6-summary.json \
+            -e BASE_URL="$TARGET" \
+            tests/performance/k6-load-test.js \
+            || echo "K6_FAILED=1" >> "$GITHUB_ENV"
+
+      - name: Baseline comparison and regression detection
+        env:
+          BASELINE_P95_MS: ${{ env.BASELINE_P95_MS }}
+          BASELINE_P99_MS: ${{ env.BASELINE_P99_MS }}
+          BASELINE_RPS: ${{ env.BASELINE_RPS }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys
+
+          summary_path = "reports/performance/k6-summary.json"
+          if not os.path.exists(summary_path):
+              print("::warning::K6 summary not found — skipping baseline comparison")
+              sys.exit(0)
+
+          with open(summary_path) as f:
+              data = json.load(f)
+
+          metrics = data.get("metrics", {})
+
+          def get_metric(name, stat):
+              m = metrics.get(name, {})
+              vals = m.get("values", m)
+              return vals.get(stat, 0) or 0
+
+          p95 = get_metric("http_req_duration", "p(95)")
+          p99 = get_metric("http_req_duration", "p(99)")
+          rps = get_metric("http_reqs", "rate")
+
+          baseline_p95 = float(os.environ["BASELINE_P95_MS"])
+          baseline_p99 = float(os.environ["BASELINE_P99_MS"])
+          baseline_rps = float(os.environ["BASELINE_RPS"])
+
+          def pct_change(current, baseline):
+              if baseline == 0:
+                  return 0.0
+              return ((current - baseline) / baseline) * 100.0
+
+          p95_chg = pct_change(p95, baseline_p95)
+          p99_chg = pct_change(p99, baseline_p99)
+          rps_chg = pct_change(rps, baseline_rps)
+
+          report_lines = [
+              "## Performance Baseline Comparison",
+              "",
+              "| Metric | Baseline | Measured | Change |",
+              "|--------|----------|----------|--------|",
+              f"| p95 latency | {baseline_p95:.0f} ms | {p95:.1f} ms | {p95_chg:+.1f}% |",
+              f"| p99 latency | {baseline_p99:.0f} ms | {p99:.1f} ms | {p99_chg:+.1f}% |",
+              f"| Requests/s  | {baseline_rps:.0f}    | {rps:.1f}    | {rps_chg:+.1f}% |",
+              "",
+          ]
+
+          regressions = []
+          # Flag if latency degrades >20% or throughput drops >20%
+          if p95_chg > 20:
+              regressions.append(f"p95 latency regression: {p95_chg:+.1f}%")
+          if p99_chg > 20:
+              regressions.append(f"p99 latency regression: {p99_chg:+.1f}%")
+          if rps_chg < -20:
+              regressions.append(f"Throughput regression: {rps_chg:+.1f}%")
+
+          if regressions:
+              report_lines.append("### Regressions Detected")
+              for r in regressions:
+                  report_lines.append(f"- {r}")
+              report_lines.append("")
+              report_lines.append("> **PR blocked:** Fix performance regressions before merging.")
+
+          report = "\n".join(report_lines)
+          print(report)
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if step_summary:
+              with open(step_summary, "a") as f:
+                  f.write(report + "\n")
+
+          if regressions:
+              print("::error::Performance regressions detected. See step summary.")
+              sys.exit(1)
+
+          print("::notice::All performance metrics within acceptable baseline thresholds.")
+          PYEOF
+
+      - name: Upload performance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports-${{ github.run_number }}
+          path: reports/performance/
+          retention-days: 30

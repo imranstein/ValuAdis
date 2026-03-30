@@ -145,3 +145,16 @@ class ValuationOverrideRequest(BaseModel):
     market_value: float = Field(..., gt=0, description="Override market value in ETB")
     taxable_value: Optional[float] = Field(None, gt=0, description="Override taxable value (default: 25% of market_value)")
     override_reason: Optional[str] = Field(None, max_length=500, description="Reason for override (audit trail)")
+
+
+class ValuationStatusTransitionRequest(BaseModel):
+    """Request schema for valuation status transitions"""
+    status: str = Field(..., description="Target status (pending, approved, archived, rejected)")
+    reason: Optional[str] = Field(None, max_length=500, description="Reason for status change (audit trail)")
+
+    @validator("status")
+    def validate_status(cls, v):
+        allowed = ["pending", "approved", "archived", "rejected", "draft"]
+        if v not in allowed:
+            raise ValueError(f"Status must be one of: {', '.join(allowed)}")
+        return v

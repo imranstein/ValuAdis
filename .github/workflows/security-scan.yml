@@ -1,0 +1,82 @@
+name: Dependency Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  dependency-scan:
+    name: Scan Dependencies for Vulnerabilities
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      # Fail on critical severity npm vulnerabilities; blocks merge via branch protection
+      - name: npm audit (frontend)
+        run: |
+          mkdir -p reports/dependency-scan
+          npm audit \
+            --prefix frontend \
+            --json \
+            --audit-level=critical \
+            > reports/dependency-scan/npm-audit.json 2>&1 || {
+              echo "::error::Critical npm vulnerabilities detected. See uploaded report."
+              exit 1
+            }
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      # Fail on any vulnerable Python package; blocks merge via branch protection
+      - name: pip-audit (backend)
+        run: |
+          pip-audit \
+            --requirement backend/requirements.txt \
+            --format json \
+            --output reports/dependency-scan/pip-audit.json \
+            --vulnerability-service pypi || {
+              echo "::error::Vulnerable Python packages detected. See uploaded report."
+              exit 1
+            }
+
+      # Always upload scan artifacts so every build has a downloadable report
+      - name: Upload dependency scan reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-scan-reports-${{ github.run_number }}
+          path: reports/dependency-scan/
+          retention-days: 30
+
+      - name: Post scan summary
+        if: always()
+        run: |
+          echo "## Dependency Scan Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tool | Report |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit (frontend) | reports/dependency-scan/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| pip-audit (backend)  | reports/dependency-scan/pip-audit.json |" >> "$GITHUB_STEP_SUMMARY"

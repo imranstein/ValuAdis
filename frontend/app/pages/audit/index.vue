@@ -1,1091 +1,326 @@
 <template>
-  <div class="audit-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Audit Log</h1>
-        <p>Track system activities, user actions, and security events</p>
-      </div>
-      <div class="header-actions">
-        <button class="action-button secondary" @click="exportAuditLog">
-          <i class="pi pi-download"></i>
-          Export
-        </button>
-        <button class="action-button primary" @click="refreshLogs">
-          <i class="pi pi-refresh"></i>
-          Refresh
-        </button>
-      </div>
-    </div>
+  <div class="app-shell">
 
-    <!-- Filters -->
-    <div class="filters-section">
-      <div class="filter-row">
-        <div class="form-field">
-          <label>Date Range</label>
-          <select v-model="filters.dateRange">
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
-            <option value="quarter">Last 90 Days</option>
-            <option value="year">Last Year</option>
-          </select>
-        </div>
-        
-        <div class="form-field">
-          <label>Action Type</label>
-          <select v-model="filters.actionType">
-            <option value="">All Actions</option>
-            <option value="create">Create</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-            <option value="export">Export</option>
-          </select>
-        </div>
-        
-        <div class="form-field">
-          <label>User</label>
-          <input type="text" v-model="filters.user" placeholder="Search user..." />
-        </div>
-        
-        <div class="form-field">
-          <label>Module</label>
-          <select v-model="filters.module">
-            <option value="">All Modules</option>
-            <option value="users">Users</option>
-            <option value="properties">Properties</option>
-            <option value="valuations">Valuations</option>
-            <option value="settings">Settings</option>
-            <option value="reports">Reports</option>
-          </select>
-        </div>
-        
-        <button class="reset-button" @click="resetFilters">
-          <i class="pi pi-refresh"></i>
-          Reset
-        </button>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-title">ValuAdis</span>
+        <p class="brand-sub">Property Valuation</p>
       </div>
-    </div>
+      <nav class="sidebar-nav">
+        <NuxtLink to="/properties" class="nav-item">
+          <span class="material-symbols-outlined">domain</span><span>Properties</span>
+        </NuxtLink>
+        <NuxtLink to="/vehicles" class="nav-item">
+          <span class="material-symbols-outlined">directions_car</span><span>Vehicles</span>
+        </NuxtLink>
+        <NuxtLink to="/valuations" class="nav-item">
+          <span class="material-symbols-outlined">assessment</span><span>Valuations</span>
+        </NuxtLink>
+        <NuxtLink to="/map" class="nav-item">
+          <span class="material-symbols-outlined">map</span><span>Maps</span>
+        </NuxtLink>
+        <NuxtLink to="/reports" class="nav-item">
+          <span class="material-symbols-outlined">analytics</span><span>Reports</span>
+        </NuxtLink>
+        <NuxtLink to="/audit" class="nav-item active">
+          <span class="material-symbols-outlined">fact_check</span><span>Audit</span>
+        </NuxtLink>
+        <NuxtLink to="/settings" class="nav-item">
+          <span class="material-symbols-outlined">settings</span><span>Settings</span>
+        </NuxtLink>
+      </nav>
+      <div class="sidebar-user">
+        <div class="user-avatar">AO</div>
+        <div>
+          <p class="user-name">Audit Officer</p>
+          <p class="user-role">Compliance Team</p>
+        </div>
+      </div>
+    </aside>
 
-    <!-- Statistics -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-list"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ totalLogs }}</h3>
-          <p>Total Activities</p>
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input class="search-input" type="text" placeholder="Search audit logs..." />
+      </div>
+      <div class="header-right">
+        <nav class="header-links">
+          <NuxtLink to="/dashboard" class="hlink">Dashboard</NuxtLink>
+          <a href="#" class="hlink">Market Insights</a>
+        </nav>
+        <div class="header-actions">
+          <button class="icon-btn"><span class="material-symbols-outlined">notifications</span></button>
+          <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
+          <button class="btn-new">New Valuation</button>
         </div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-users"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ userActivities }}</h3>
-          <p>User Actions</p>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-shield"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ securityEvents }}</h3>
-          <p>Security Events</p>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-exclamation-triangle"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ criticalEvents }}</h3>
-          <p>Critical Events</p>
-        </div>
-      </div>
-    </div>
+    </header>
 
-    <!-- Audit Table -->
-    <div class="audit-table-container">
-      <div class="table-header">
-        <h2>Audit Trail</h2>
-        <div class="table-info">
-          <span>{{ filteredLogs.length }} records</span>
-        </div>
-      </div>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-wrap">
 
-      <div class="table-container">
-        <table class="audit-table">
-          <thead>
-            <tr>
-              <th @click="sortBy('timestamp')">
-                Timestamp
-                <i class="pi" :class="getSortIcon('timestamp')"></i>
-              </th>
-              <th @click="sortBy('user')">
-                User
-                <i class="pi" :class="getSortIcon('user')"></i>
-              </th>
-              <th @click="sortBy('action')">
-                Action
-                <i class="pi" :class="getSortIcon('action')"></i>
-              </th>
-              <th @click="sortBy('module')">
-                Module
-                <i class="pi" :class="getSortIcon('module')"></i>
-              </th>
-              <th @click="sortBy('resource')">
-                Resource
-                <i class="pi" :class="getSortIcon('resource')"></i>
-              </th>
-              <th @click="sortBy('ip_address')">
-                IP Address
-                <i class="pi" :class="getSortIcon('ip_address')"></i>
-              </th>
-              <th @click="sortBy('status')">
-                Status
-                <i class="pi" :class="getSortIcon('status')"></i>
-              </th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in paginatedLogs" :key="log.id">
-              <td>
-                <span class="timestamp">{{ formatDateTime(log.timestamp) }}</span>
-              </td>
-              <td>
-                <div class="user-info">
-                  <div class="user-avatar">{{ getInitials(log.user_name) }}</div>
-                  <span>{{ log.user_name }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="action-badge" :class="log.action_type">{{ getActionLabel(log.action_type) }}</span>
-              </td>
-              <td>
-                <span class="module-badge">{{ getModuleLabel(log.module) }}</span>
-              </td>
-              <td>
-                <span class="resource-info">{{ log.resource_type }}: {{ log.resource_id }}</span>
-              </td>
-              <td>
-                <span class="ip-address">{{ log.ip_address }}</span>
-              </td>
-              <td>
-                <span class="status-badge" :class="log.status">{{ getStatusLabel(log.status) }}</span>
-              </td>
-              <td>
-                <button class="detail-btn" @click="showLogDetails(log)">
-                  <i class="pi pi-eye"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+          <span>Home</span>
+          <span class="bc-sep">/</span>
+          <span class="bc-active">Audit Log</span>
+        </nav>
 
-      <!-- Empty State -->
-      <div v-if="filteredLogs.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="pi pi-list"></i>
-        </div>
-        <h3>No audit records found</h3>
-        <p>Try adjusting your filters or check back later</p>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div v-if="filteredLogs.length > itemsPerPage" class="pagination">
-      <div class="pagination-info">
-        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredLogs.length) }} of {{ filteredLogs.length }} records</span>
-      </div>
-      <div class="pagination-controls">
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-        >
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-        >
-          <i class="pi pi-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Log Details Modal -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Audit Log Details</h3>
-          <button class="modal-close" @click="closeModal">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Timestamp:</label>
-              <span>{{ formatDateTime(selectedLog.timestamp) }}</span>
-            </div>
-            <div class="detail-item">
-              <label>User:</label>
-              <span>{{ selectedLog.user_name }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Action:</label>
-              <span class="action-badge" :class="selectedLog.action_type">{{ getActionLabel(selectedLog.action_type) }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Module:</label>
-              <span>{{ getModuleLabel(selectedLog.module) }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Resource:</label>
-              <span>{{ selectedLog.resource_type }}: {{ selectedLog.resource_id }}</span>
-            </div>
-            <div class="detail-item">
-              <label>IP Address:</label>
-              <span>{{ selectedLog.ip_address }}</span>
-            </div>
-            <div class="detail-item">
-              <label>User Agent:</label>
-              <span>{{ selectedLog.user_agent }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Status:</label>
-              <span class="status-badge" :class="selectedLog.status">{{ getStatusLabel(selectedLog.status) }}</span>
-            </div>
+        <!-- Page Header -->
+        <div class="page-hd">
+          <div>
+            <h1 class="page-title">Audit Log</h1>
+            <p class="page-desc">System activity tracking and compliance monitoring.</p>
           </div>
-          
-          <div class="detail-section">
-            <h4>Description</h4>
-            <p>{{ selectedLog.description }}</p>
-          </div>
-          
-          <div class="detail-section" v-if="selectedLog.changes">
-            <h4>Changes Made</h4>
-            <pre class="changes-json">{{ JSON.stringify(selectedLog.changes, null, 2) }}</pre>
+          <div class="page-hd-actions">
+            <button class="btn-outline">
+              <span class="material-symbols-outlined">download</span> Export
+            </button>
           </div>
         </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">fact_check</span></div>
+            <p class="stat-label">Total Events</p>
+            <h3 class="stat-value">24,892</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-green">↑ 8.2%</span>
+              <span class="stat-sub">this month</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">warning</span></div>
+            <p class="stat-label">Alerts</p>
+            <h3 class="stat-value">14</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-amber">3 urgent</span>
+              <span class="stat-sub">requires attention</span>
+            </div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">verified</span></div>
+            <p class="stat-label">Compliance Rate</p>
+            <h3 class="stat-value">99.4%</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-indigo">OPTIMAL</span>
+              <span class="stat-sub">within thresholds</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Log Table -->
+        <div class="table-card glass-card">
+          <div class="table-header">
+            <h2 class="table-title">Activity Log</h2>
+            <div class="table-filters">
+              <select class="filter-select">
+                <option>All Events</option>
+                <option>CREATE</option>
+                <option>UPDATE</option>
+                <option>DELETE</option>
+                <option>LOGIN</option>
+              </select>
+              <button class="btn-reset"><span class="material-symbols-outlined">refresh</span></button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr class="table-head-row">
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Details</th>
+                  <th>IP Address</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row" v-for="log in auditLogs" :key="log.id">
+                  <td><span class="td-time">{{ log.timestamp }}</span></td>
+                  <td>
+                    <div class="td-user">
+                      <div class="user-avatar-sm">{{ log.initials }}</div>
+                      <span>{{ log.user }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="action-badge" :class="log.actionClass">{{ log.action }}</span>
+                  </td>
+                  <td><span class="td-resource">{{ log.resource }}</span></td>
+                  <td><span class="td-details">{{ log.details }}</span></td>
+                  <td><span class="td-ip">{{ log.ip }}</span></td>
+                  <td>
+                    <span class="status-badge" :class="log.statusClass">{{ log.status }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="pag-info">Showing 6 of 24,892 events</span>
+            <div class="pag-btns">
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_left</span></button>
+              <button class="pag-btn pag-active">1</button>
+              <button class="pag-btn">2</button>
+              <button class="pag-btn">3</button>
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span class="footer-brand">ValuAdis</span>
+      <p class="footer-copy">© 2025 ValuAdis. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Contact Support</a>
+      </div>
+    </footer>
+
   </div>
 </template>
 
-<script setup>
-definePageMeta({ middleware: ['admin'] })
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
 
-// Reactive data
-const filters = ref({
-  dateRange: 'week',
-  actionType: '',
-  user: '',
-  module: ''
-})
+const auditLogs = [
+  { id: 1, timestamp: '2024-11-20 14:32:15', user: 'John Doe', initials: 'JD', action: 'CREATE', actionClass: 'act-create', resource: 'Property', details: 'Created PRP-2024-0891', ip: '192.168.1.45', status: 'Success', statusClass: 'status-success' },
+  { id: 2, timestamp: '2024-11-20 14:28:03', user: 'Martha Kebede', initials: 'MK', action: 'UPDATE', actionClass: 'act-update', resource: 'Valuation', details: 'Modified SP-2024-0042', ip: '192.168.1.52', status: 'Success', statusClass: 'status-success' },
+  { id: 3, timestamp: '2024-11-20 14:15:47', user: 'Abebe B.', initials: 'AB', action: 'LOGIN', actionClass: 'act-login', resource: 'System', details: 'User authentication', ip: '192.168.1.38', status: 'Success', statusClass: 'status-success' },
+  { id: 4, timestamp: '2024-11-20 13:58:22', user: 'System', initials: 'SY', action: 'DELETE', actionClass: 'act-delete', resource: 'Draft', details: 'Auto-cleared expired draft', ip: '127.0.0.1', status: 'Success', statusClass: 'status-success' },
+  { id: 5, timestamp: '2024-11-20 13:45:11', user: 'Selamawit K.', initials: 'SK', action: 'EXPORT', actionClass: 'act-export', resource: 'Report', details: 'Downloaded Q3-2024 report', ip: '192.168.1.61', status: 'Success', statusClass: 'status-success' },
+  { id: 6, timestamp: '2024-11-20 13:30:55', user: 'Yonas L.', initials: 'YL', action: 'UPDATE', actionClass: 'act-update', resource: 'Profile', details: 'Changed password', ip: '192.168.1.49', status: 'Warning', statusClass: 'status-warning' },
+]
 
-const sortField = ref('timestamp')
-const sortDirection = ref('desc')
-const currentPage = ref(1)
-const itemsPerPage = ref(20)
-const showModal = ref(false)
-const selectedLog = ref(null)
-
-// Real audit logs from API
-const auditLogs = ref([])
-
-// Computed properties
-const filteredLogs = computed(() => {
-  let filtered = auditLogs.value
-
-  // Apply date range filter
-  if (filters.value.dateRange) {
-    const now = new Date()
-    let startDate
-    
-    switch (filters.value.dateRange) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        break
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case 'month':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-        break
-      case 'quarter':
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-        break
-      case 'year':
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-        break
-    }
-    
-    filtered = filtered.filter(log => new Date(log.timestamp) >= startDate)
-  }
-
-  // Apply other filters
-  if (filters.value.actionType) {
-    filtered = filtered.filter(log => log.action_type === filters.value.actionType)
-  }
-
-  if (filters.value.user) {
-    const query = filters.value.user.toLowerCase()
-    filtered = filtered.filter(log => 
-      log.user_name.toLowerCase().includes(query)
-    )
-  }
-
-  if (filters.value.module) {
-    filtered = filtered.filter(log => log.module === filters.value.module)
-  }
-
-  // Sort
-  filtered.sort((a, b) => {
-    let aVal = a[sortField.value]
-    let bVal = b[sortField.value]
-    
-    if (sortField.value === 'timestamp') {
-      aVal = new Date(aVal)
-      bVal = new Date(bVal)
-    }
-    
-    if (sortDirection.value === 'asc') {
-      return aVal > bVal ? 1 : -1
-    } else {
-      return aVal < bVal ? 1 : -1
-    }
-  })
-
-  return filtered
-})
-
-const paginatedLogs = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredLogs.value.slice(start, end)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredLogs.value.length / itemsPerPage.value)
-})
-
-const totalLogs = computed(() => auditLogs.value.length)
-const userActivities = computed(() => auditLogs.value.filter(log => log.user_id > 0).length)
-const securityEvents = computed(() => auditLogs.value.filter(log => log.module === 'auth' || log.action_type === 'delete').length)
-const criticalEvents = computed(() => auditLogs.value.filter(log => log.status === 'failed' || log.action_type === 'delete').length)
-
-// Methods
-function sortBy(field) {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
-  }
-}
-
-function getSortIcon(field) {
-  if (sortField.value !== field) return 'pi-sort'
-  return sortDirection.value === 'asc' ? 'pi-sort-up' : 'pi-sort-down'
-}
-
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function getActionLabel(action) {
-  const labels = {
-    create: 'Create',
-    update: 'Update',
-    delete: 'Delete',
-    login: 'Login',
-    logout: 'Logout',
-    export: 'Export',
-    view: 'View',
-    download: 'Download'
-  }
-  return labels[action] || action
-}
-
-function getModuleLabel(module) {
-  const labels = {
-    users: 'Users',
-    properties: 'Properties',
-    valuations: 'Valuations',
-    settings: 'Settings',
-    reports: 'Reports',
-    auth: 'Authentication'
-  }
-  return labels[module] || module
-}
-
-function getStatusLabel(status) {
-  const labels = {
-    success: 'Success',
-    failed: 'Failed',
-    pending: 'Pending',
-    warning: 'Warning'
-  }
-  return labels[status] || status
-}
-
-function formatDateTime(timestamp) {
-  return new Date(timestamp).toLocaleString('en-ET', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
-
-function resetFilters() {
-  filters.value = {
-    dateRange: 'week',
-    actionType: '',
-    user: '',
-    module: ''
-  }
-  currentPage.value = 1
-}
-
-function showLogDetails(log) {
-  selectedLog.value = log
-  showModal.value = true
-}
-
-function closeModal() {
-  showModal.value = false
-  selectedLog.value = null
-}
-
-async function refreshLogs() {
-  try {
-    const config = useRuntimeConfig()
-    const apiBase = config.public?.apiBaseUrl || 'http://localhost:8020'
-    const token = localStorage.getItem('valuadis_token')
-    const response = await fetch(`${apiBase}/api/v1/audit/logs`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      auditLogs.value = data.data || []
-    } else {
-      console.error('Failed to load audit logs from API')
-      auditLogs.value = []
-    }
-  } catch (error) {
-    console.error('Error loading audit logs:', error)
-    auditLogs.value = []
-  }
-}
-
-function exportAuditLog() {
-  const dataStr = JSON.stringify(filteredLogs.value, null, 2)
-  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
-  
-  const exportFileDefaultName = `audit-log-${new Date().toISOString().split('T')[0]}.json`
-  
-  const linkElement = document.createElement('a')
-  linkElement.setAttribute('href', dataUri)
-  linkElement.setAttribute('download', exportFileDefaultName)
-  linkElement.click()
-}
-
-onMounted(() => {
-  refreshLogs()
+useHead({
+  title: 'Audit Log — ValuAdis',
+  meta: [{ name: 'description', content: 'System audit log and compliance monitoring.' }]
 })
 </script>
 
 <style scoped>
-/* Audit Container */
-.audit-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-radius: 16px;
-  color: white;
-  box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
-}
+.app-shell { display: flex; min-height: 100vh; background: #f7f9fb; font-family: 'Inter', sans-serif; color: #191c1e; }
 
-.header-content h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
+/* Sidebar */
+.sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 16rem; background: rgba(248,250,252,0.7); backdrop-filter: blur(20px); border-right: 1px solid rgba(226,232,240,0.2); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 50; }
+.sidebar-brand { padding: 0 0.5rem; margin-bottom: 2.5rem; }
+.brand-title { display: block; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #065f46; }
+.brand-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-top: 0.2rem; }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; color: #475569; text-decoration: none; transition: all 0.2s; }
+.nav-item:hover { color: #006948; background: rgba(248,250,252,0.6); }
+.nav-item.active { color: #005137; font-weight: 600; background: rgba(0,105,72,0.06); border-right: 3px solid #006948; }
+.nav-item .material-symbols-outlined { font-size: 1.25rem; }
+.sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(226,232,240,0.2); margin-top: auto; }
+.user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #00855d; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+.user-name { font-size: 0.8rem; font-weight: 700; margin: 0; }
+.user-role { font-size: 0.7rem; color: #94a3b8; margin: 0; }
 
-.header-content p {
-  font-size: 1.125rem;
-  opacity: 0.9;
-  margin: 0;
-}
+/* Header */
+.top-header { position: fixed; top: 0; right: 0; width: calc(100% - 16rem); height: 4rem; z-index: 40; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226,232,240,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+.search-wrap { position: relative; flex: 1; max-width: 28rem; }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
+.search-input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; background: #f1f5f9; border: none; border-radius: 9999px; font-size: 0.875rem; outline: none; }
+.header-right { display: flex; align-items: center; gap: 1.5rem; }
+.header-links { display: flex; gap: 1rem; }
+.hlink { font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: color 0.2s; }
+.hlink:hover { color: #006948; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.icon-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 0.5rem; border-radius: 50%; transition: background 0.2s; }
+.icon-btn:hover { background: #f1f5f9; }
+.btn-new { background: #006948; color: #fff; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btn-new:hover { opacity: 0.9; }
 
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
+/* Main */
+.main-content { margin-left: 16rem; padding-top: 4rem; flex: 1; min-height: 100vh; }
+.content-wrap { padding: 2.5rem 2rem; }
 
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+/* Breadcrumb */
+.breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-bottom: 1.5rem; }
+.bc-sep { margin: 0 0.2rem; }
+.bc-active { color: #065f46; }
 
-.action-button.primary {
-  background: white;
-  color: #059669;
-}
+/* Page header */
+.page-hd { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 1rem; }
+.page-title { font-family: 'Syne', sans-serif; font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; color: #191c1e; margin: 0 0 0.4rem; }
+.page-desc { font-size: 0.95rem; color: #3d4a42; margin: 0; }
+.page-hd-actions { display: flex; gap: 0.75rem; }
+.btn-outline { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: #fff; border: 1px solid rgba(188,202,192,0.3); border-radius: 0.75rem; font-size: 0.8rem; font-weight: 500; color: #3d4a42; cursor: pointer; transition: background 0.2s; }
+.btn-outline:hover { background: #f2f4f6; }
 
-.action-button.primary:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
-}
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(188,202,192,0.2); }
+.stat-card { padding: 1.5rem; border-radius: 1.5rem; position: relative; overflow: hidden; }
+.stat-bg-icon { position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; }
+.stat-bg-icon .material-symbols-outlined { font-size: 4rem; }
+.stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 0.5rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 800; color: #191c1e; margin: 0 0 1rem; }
+.stat-badge-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.stat-badge { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 9999px; }
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-indigo { background: #e0e7ff; color: #4b41e1; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.stat-sub { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
 
-.action-button.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Filters */
-.filters-section {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-.filter-row {
-  display: flex;
-  gap: 1rem;
-  align-items: end;
-  flex-wrap: wrap;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 150px;
-}
-
-.form-field label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.form-field input,
-.form-field select {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-}
-
-.reset-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  height: fit-content;
-}
-
-.reset-button:hover {
-  background: #f8fafc;
-  border-color: #059669;
-  color: #059669;
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #059669, #047857);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-}
-
-.stat-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.25rem 0;
-}
-
-.stat-content p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-/* Audit Table */
-.audit-table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.table-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.table-info span {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.audit-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.audit-table th {
-  background: #f8fafc;
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.audit-table th:hover {
-  background: #f1f5f9;
-}
-
-.audit-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.875rem;
-}
-
-.timestamp {
-  font-family: 'Courier New', monospace;
-  color: #64748b;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #059669;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.action-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.action-badge.create {
-  background: #dcfce7;
-  color: #059669;
-}
-
-.action-badge.update {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.action-badge.delete {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.action-badge.login {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.action-badge.export {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.module-badge {
-  background: #f3f4f6;
-  color: #6b7280;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.resource-info {
-  color: #374151;
-}
-
-.ip-address {
-  font-family: 'Courier New', monospace;
-  color: #64748b;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-badge.success {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.status-badge.failed {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.status-badge.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.detail-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.detail-btn:hover {
-  background: #6b7280;
-  color: white;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  background: #f8fafc;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 2rem;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.empty-state p {
-  color: #64748b;
-  margin: 0;
-}
+/* Table */
+.table-card { border-radius: 1.5rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.table-header { padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.table-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #191c1e; margin: 0; }
+.table-filters { display: flex; gap: 0.75rem; align-items: center; }
+.filter-select { padding: 0.5rem 1rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.8rem; color: #475569; }
+.btn-reset { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.5rem; }
+.btn-reset:hover { color: #006948; }
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; text-align: left; border-collapse: collapse; }
+.table-head-row { background: rgba(248,250,252,0.5); }
+.table-head-row th { padding: 1rem 1.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #64748b; }
+.table-row { border-top: 1px solid #f1f5f9; transition: background 0.15s; }
+.table-row:hover { background: rgba(248,250,252,0.85); }
+.table-row td { padding: 1.25rem 1.5rem; }
+.td-time { font-family: monospace; font-size: 0.8rem; color: #475569; }
+.td-user { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+.user-avatar-sm { width: 2rem; height: 2rem; border-radius: 50%; background: #e2e8f0; color: #475569; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.action-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.act-create { background: #d1fae5; color: #065f46; }
+.act-update { background: #dbeafe; color: #1e40af; }
+.act-delete { background: #fecaca; color: #dc2626; }
+.act-login { background: #f1f5f9; color: #64748b; }
+.act-export { background: #e9d5ff; color: #7c3aed; }
+.td-resource { font-size: 0.875rem; color: #191c1e; font-weight: 500; }
+.td-details { font-size: 0.875rem; color: #64748b; }
+.td-ip { font-family: monospace; font-size: 0.8rem; color: #94a3b8; }
+.status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.status-success { background: #d1fae5; color: #065f46; }
+.status-warning { background: #fef3c7; color: #92400e; }
 
 /* Pagination */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: white;
-  border-top: 1px solid #f1f5f9;
-}
+.pagination { padding: 1.5rem 2rem; background: rgba(248,250,252,0.3); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.pag-btns { display: flex; gap: 0.4rem; }
+.pag-btn { width: 2rem; height: 2rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #fff; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.pag-btn:hover { color: #006948; border-color: #006948; }
+.pag-btn.pag-active { background: #006948; color: #fff; border-color: #006948; }
+.pag-btn .material-symbols-outlined { font-size: 0.9rem; }
+.pag-info { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
 
-.pagination-info {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.pagination-btn {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #f8fafc;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.modal-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.modal-close {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: #f3f4f6;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  background: #e5e7eb;
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-item label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.detail-item span {
-  font-size: 0.875rem;
-  color: #1e293b;
-}
-
-.detail-section {
-  margin-bottom: 1.5rem;
-}
-
-.detail-section h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.75rem 0;
-}
-
-.detail-section p {
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.changes-json {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 1rem;
-  font-size: 0.75rem;
-  color: #374151;
-  overflow-x: auto;
-  margin: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .filter-row {
-    flex-direction: column;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
+/* Footer */
+.app-footer { margin-left: 16rem; padding: 2rem 3rem; border-top: 1px solid rgba(226,232,240,0.15); background: #f8fafc; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.footer-brand { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; }
+.footer-copy { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0; }
+.footer-links { display: flex; gap: 2rem; }
+.footer-links a { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; text-decoration: none; }
+.footer-links a:hover { color: #006948; }
 </style>

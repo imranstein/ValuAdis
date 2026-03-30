@@ -1,0 +1,94 @@
+endpoints:
+  auth:
+    - name: login
+      method: POST
+      path: /api/v1/auth/login
+      critical: true
+      body:
+        phone_number: "+251911000001"
+        password: "TestPassword123!"
+
+    - name: register
+      method: POST
+      path: /api/v1/auth/register
+      critical: false
+      body:
+        phone_number: "+251911000002"
+        password: "TestPassword123!"
+        full_name: "Load Test User"
+
+    - name: refresh
+      method: POST
+      path: /api/v1/auth/refresh
+      critical: true
+      requires_auth: true
+
+  valuations:
+    - name: list_valuations
+      method: GET
+      path: /api/v1/valuations/
+      critical: true
+      requires_auth: true
+
+    - name: create_valuation
+      method: POST
+      path: /api/v1/valuations/
+      critical: true
+      requires_auth: true
+      body:
+        property_type: "residential"
+        location: "Addis Ababa"
+        area_sqm: 150
+        bedrooms: 3
+
+    - name: get_valuation
+      method: GET
+      path: /api/v1/valuations/{id}
+      critical: true
+      requires_auth: true
+
+  vehicles:
+    - name: list_vehicles
+      method: GET
+      path: /api/v1/vehicles/
+      critical: true
+      requires_auth: true
+
+    - name: get_vehicle_data
+      method: GET
+      path: /api/v1/vehicle-data/
+      critical: false
+      requires_auth: true
+
+  health:
+    - name: health_check
+      method: GET
+      path: /api/v1/health
+      critical: true
+      requires_auth: false
+
+  analytics:
+    - name: analytics
+      method: GET
+      path: /api/v1/analytics/
+      critical: false
+      requires_auth: true
+
+  reports:
+    - name: list_reports
+      method: GET
+      path: /api/v1/reports/
+      critical: false
+      requires_auth: true
+
+thresholds:
+  p95_response_time_ms: 500
+  p99_response_time_ms: 1000
+  error_rate_percent: 1
+  degradation_tolerance_percent: 10
+
+load_profile:
+  vus: 100
+  ramp_up_duration: 30s
+  steady_state_duration: 60s
+  ramp_down_duration: 15s

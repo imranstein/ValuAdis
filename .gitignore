@@ -116,3 +116,4 @@ frontend/playwright-report/
 frontend/test-results/
 **/test-results/
 **/playwright-report/
+CLAUDE.local.md

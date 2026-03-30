@@ -21,6 +21,7 @@ class ValuationStatus(str, enum.Enum):
     DRAFT = "draft"
     PENDING = "pending"
     APPROVED = "approved"
+    ARCHIVED = "archived"
     REJECTED = "rejected"
     EXPIRED = "expired"
 

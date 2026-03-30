@@ -1,1193 +1,341 @@
 <template>
-  <div class="valuations-container">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Valuations</h1>
-        <p>Manage and track all property valuations and assessments</p>
-      </div>
-      <div class="header-actions">
-        <button class="action-button secondary" @click="exportValuations">
-          <i class="pi pi-download"></i>
-          Export
-        </button>
-        <button class="action-button primary" @click="router.push('/valuations/quick')">
-          <i class="pi pi-plus"></i>
-          Quick Valuation
-        </button>
-      </div>
-    </div>
+  <div class="app-shell">
 
-    <!-- Search and Filters -->
-    <div class="search-filters">
-      <div class="search-section">
-        <div class="search-bar">
-          <i class="pi pi-search"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Search valuations by property address, owner, or ID..."
-          />
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-title">ValuAdis</span>
+        <p class="brand-sub">Property Valuation</p>
+      </div>
+      <nav class="sidebar-nav">
+        <NuxtLink to="/properties" class="nav-item">
+          <span class="material-symbols-outlined">domain</span><span>Properties</span>
+        </NuxtLink>
+        <NuxtLink to="/vehicles" class="nav-item">
+          <span class="material-symbols-outlined">directions_car</span><span>Vehicles</span>
+        </NuxtLink>
+        <NuxtLink to="/valuations" class="nav-item active">
+          <span class="material-symbols-outlined">assessment</span><span>Valuations</span>
+        </NuxtLink>
+        <NuxtLink to="/map" class="nav-item">
+          <span class="material-symbols-outlined">map</span><span>Maps</span>
+        </NuxtLink>
+        <NuxtLink to="/reports" class="nav-item">
+          <span class="material-symbols-outlined">analytics</span><span>Reports</span>
+        </NuxtLink>
+        <NuxtLink to="/settings" class="nav-item">
+          <span class="material-symbols-outlined">settings</span><span>Settings</span>
+        </NuxtLink>
+      </nav>
+      <div class="sidebar-user">
+        <div class="user-avatar">AP</div>
+        <div>
+          <p class="user-name">Admin Panel</p>
+          <p class="user-role">Verified Officer</p>
         </div>
       </div>
-      
-      <div class="filter-section">
-        <select v-model="selectedStatus" class="filter-dropdown">
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="pending">Pending Review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="expired">Expired</option>
-        </select>
-        
-        <select v-model="selectedMunicipality" class="filter-dropdown">
-          <option value="">All Municipalities</option>
-          <option value="addis_ababa">Addis Ababa</option>
-          <option value="dire_dawa">Dire Dawa</option>
-          <option value="mekelle">Mekelle</option>
-          <option value="gondar">Gondar</option>
-          <option value="bahir_dar">Bahir Dar</option>
-          <option value="hawassa">Hawassa</option>
-          <option value="adama">Adama</option>
-          <option value="jimma">Jimma</option>
-          <option value="dessie">Dessie</option>
-          <option value="harar">Harar</option>
-        </select>
-        
-        <select v-model="selectedType" class="filter-dropdown">
-          <option value="">All Types</option>
-          <option value="residential">Residential</option>
-          <option value="commercial">Commercial</option>
-          <option value="industrial">Industrial</option>
-          <option value="agricultural">Agricultural</option>
-          <option value="mixed_use">Mixed Use</option>
-        </select>
-        
-        <button class="reset-button" @click="resetFilters">
-          <i class="pi pi-refresh"></i>
-          Reset
-        </button>
-      </div>
-    </div>
+    </aside>
 
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-file-text"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ totalValuations }}</h3>
-          <p>Total Valuations</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>12% from last month</span>
-          </div>
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input class="search-input" type="text" v-model="searchQuery" placeholder="Search valuations, assets, or IDs..." />
+      </div>
+      <div class="header-right">
+        <nav class="header-links">
+          <NuxtLink to="/dashboard" class="hlink">Dashboard</NuxtLink>
+          <a href="#" class="hlink hlink-active">Market Insights</a>
+        </nav>
+        <div class="header-actions">
+          <button class="icon-btn"><span class="material-symbols-outlined">notifications</span></button>
+          <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
+          <button class="btn-new-val" @click="router.push('/valuations/quick')">
+            <span class="material-symbols-outlined">add</span> New Valuation
+          </button>
         </div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-clock"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ pendingValuations }}</h3>
-          <p>Pending Review</p>
-          <div class="stat-trend neutral">
-            <i class="pi pi-minus"></i>
-            <span>No change</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-check-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ approvedValuations }}</h3>
-          <p>Approved</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>8% from last month</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="pi pi-money-bill"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ formatCurrency(totalMarketValue) }}</h3>
-          <p>Total Market Value</p>
-          <div class="stat-trend positive">
-            <i class="pi pi-arrow-up"></i>
-            <span>15% from last month</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    </header>
 
-    <!-- Valuations Registry -->
-    <div class="valuations-registry">
-      <div class="registry-header">
-        <h2>Valuation Registry</h2>
-        <div class="registry-info">
-          <span>{{ filteredValuations.length }} valuations</span>
-          <div class="view-toggle">
-            <button 
-              class="view-btn" 
-              :class="{ active: viewMode === 'table' }"
-              @click="viewMode = 'table'"
-            >
-              <i class="pi pi-table"></i>
-            </button>
-            <button 
-              class="view-btn" 
-              :class="{ active: viewMode === 'grid' }"
-              @click="viewMode = 'grid'"
-            >
-              <i class="pi pi-th-large"></i>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-wrap">
+
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+          <span>Home</span>
+          <span class="material-symbols-outlined bc-chevron">chevron_right</span>
+          <span class="bc-active">Valuations</span>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="hero-section">
+          <div class="hero-text">
+            <h1 class="page-title">Valuations Hub</h1>
+            <p class="page-desc">The definitive digital ledger for national asset appraisals. Monitoring ETB 1.4B in active market valuations across all government sectors.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-export" @click="exportValuations">
+              <span class="material-symbols-outlined">download</span> Export Ledger
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Table View -->
-      <div v-if="viewMode === 'table'" class="table-container">
-        <table class="valuations-table">
-          <thead>
-            <tr>
-              <th @click="sortBy('valuation_id')">
-                Valuation ID
-                <i class="pi" :class="getSortIcon('valuation_id')"></i>
-              </th>
-              <th @click="sortBy('property_address')">
-                Property Address
-                <i class="pi" :class="getSortIcon('property_address')"></i>
-              </th>
-              <th @click="sortBy('owner_name')">
-                Owner
-                <i class="pi" :class="getSortIcon('owner_name')"></i>
-              </th>
-              <th @click="sortBy('municipality')">
-                Municipality
-                <i class="pi" :class="getSortIcon('municipality')"></i>
-              </th>
-              <th @click="sortBy('property_type')">
-                Type
-                <i class="pi" :class="getSortIcon('property_type')"></i>
-              </th>
-              <th @click="sortBy('market_value')">
-                Market Value
-                <i class="pi" :class="getSortIcon('market_value')"></i>
-              </th>
-              <th @click="sortBy('status')">
-                Status
-                <i class="pi" :class="getSortIcon('status')"></i>
-              </th>
-              <th @click="sortBy('created_date')">
-                Date
-                <i class="pi" :class="getSortIcon('created_date')"></i>
-              </th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="valuation in paginatedValuations" :key="valuation.id">
-              <td>
-                <span class="valuation-id">{{ valuation.valuation_id }}</span>
-              </td>
-              <td>
-                <div class="property-info">
-                  <i class="pi pi-map-marker"></i>
-                  <span>{{ valuation.property_address }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="owner-info">
-                  <div class="owner-avatar">{{ getInitials(valuation.owner_name) }}</div>
-                  <span>{{ valuation.owner_name }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="municipality-badge">{{ valuation.municipality }}</span>
-              </td>
-              <td>
-                <span class="type-badge" :class="valuation.property_type">{{ getPropertyTypeLabel(valuation.property_type) }}</span>
-              </td>
-              <td>
-                <div class="value-info">
-                  <div class="market-value">{{ formatCurrency(valuation.market_value) }}</div>
-                  <div class="taxable-value">{{ formatCurrency(valuation.taxable_value) }}</div>
-                </div>
-              </td>
-              <td>
-                <span class="status-badge" :class="valuation.status">{{ getStatusLabel(valuation.status) }}</span>
-              </td>
-              <td>
-                <span class="date">{{ formatDate(valuation.created_date) }}</span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="action-btn view" @click="viewValuation(valuation)" title="View">
-                    <i class="pi pi-eye"></i>
-                  </button>
-                  <button class="action-btn edit" @click="editValuation(valuation)" title="Edit">
-                    <i class="pi pi-pencil"></i>
-                  </button>
-                  <button class="action-btn download" @click="downloadValuation(valuation)" title="Download">
-                    <i class="pi pi-download"></i>
-                  </button>
-                  <button class="action-btn delete" @click="deleteValuation(valuation)" title="Delete">
-                    <i class="pi pi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Grid View -->
-      <div v-else class="grid-container">
-        <div v-for="valuation in paginatedValuations" :key="valuation.id" class="valuation-card">
-          <div class="card-header">
-            <div class="valuation-info">
-              <span class="valuation-id">{{ valuation.valuation_id }}</span>
-              <span class="status-badge" :class="valuation.status">{{ getStatusLabel(valuation.status) }}</span>
-            </div>
-            <div class="card-actions">
-              <button class="action-btn view" @click="viewValuation(valuation)">
-                <i class="pi pi-eye"></i>
-              </button>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">account_balance</span></div>
+            <p class="stat-label">Total Market Value</p>
+            <h3 class="stat-value">ETB 1.48B</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-green">↑ 12.4%</span>
+              <span class="stat-sub">from last quarter</span>
             </div>
           </div>
-          
-          <div class="card-content">
-            <div class="property-details">
-              <h4>{{ valuation.property_address }}</h4>
-              <div class="property-meta">
-                <span class="municipality-badge">{{ valuation.municipality }}</span>
-                <span class="type-badge" :class="valuation.property_type">{{ getPropertyTypeLabel(valuation.property_type) }}</span>
-              </div>
-            </div>
-            
-            <div class="owner-details">
-              <div class="owner-avatar">{{ getInitials(valuation.owner_name) }}</div>
-              <span>{{ valuation.owner_name }}</span>
-            </div>
-            
-            <div class="value-details">
-              <div class="market-value">{{ formatCurrency(valuation.market_value) }}</div>
-              <div class="taxable-value">Taxable: {{ formatCurrency(valuation.taxable_value) }}</div>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">verified</span></div>
+            <p class="stat-label">Compliance Rate</p>
+            <h3 class="stat-value">98.4%</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-indigo">OPTIMAL</span>
+              <span class="stat-sub">against national benchmarks</span>
             </div>
           </div>
-          
-          <div class="card-footer">
-            <span class="date">{{ formatDate(valuation.created_date) }}</span>
-            <div class="card-actions">
-              <button class="action-btn edit" @click="editValuation(valuation)">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button class="action-btn download" @click="downloadValuation(valuation)">
-                <i class="pi pi-download"></i>
-              </button>
-              <button class="action-btn delete" @click="deleteValuation(valuation)">
-                <i class="pi pi-trash"></i>
-              </button>
+          <div class="stat-card glass-card">
+            <div class="stat-bg-icon"><span class="material-symbols-outlined">schedule</span></div>
+            <p class="stat-label">Pending Appraisals</p>
+            <h3 class="stat-value">142</h3>
+            <div class="stat-badge-wrap">
+              <span class="stat-badge badge-amber">ATTENTION</span>
+              <span class="stat-sub">avg. 48h resolution time</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Empty State -->
-      <div v-if="filteredValuations.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="pi pi-file-text"></i>
+        <!-- Valuations Table -->
+        <div class="valuations-card">
+          <div class="valuations-header">
+            <h2 class="valuations-title">Appraisal History</h2>
+            <div class="valuations-actions">
+              <button class="icon-btn-round"><span class="material-symbols-outlined">filter_list</span></button>
+              <button class="icon-btn-round"><span class="material-symbols-outlined">sort</span></button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="valuations-table">
+              <thead>
+                <tr class="table-head-row">
+                  <th>Valuation ID</th>
+                  <th>Asset Type</th>
+                  <th>Location</th>
+                  <th class="text-right">Market Value</th>
+                  <th class="text-center">Compliance Status</th>
+                  <th>Validator</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row" v-for="v in valuations" :key="v.id">
+                  <td><span class="td-id">{{ v.id }}</span></td>
+                  <td>
+                    <div class="td-type">
+                      <span class="material-symbols-outlined td-icon">{{ v.icon }}</span>
+                      <span>{{ v.type }}</span>
+                    </div>
+                  </td>
+                  <td><span class="td-location">{{ v.location }}</span></td>
+                  <td class="text-right"><span class="td-value">{{ v.value }}</span></td>
+                  <td class="text-center">
+                    <span class="compliance-badge" :class="v.statusClass">
+                      <span class="dot"></span>{{ v.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="td-validator">
+                      <div class="validator-avatar" :style="`background:${v.avatarBg}`">{{ v.initials }}</div>
+                      <span class="validator-name">{{ v.validator }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="action-btn" @click="viewValuation(v)"><span class="material-symbols-outlined">more_vert</span></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="pag-info">Showing 1 to 4 of 1,248 active appraisals</span>
+            <div class="pag-btns">
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_left</span></button>
+              <button class="pag-btn"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+          </div>
         </div>
-        <h3>No valuations found</h3>
-        <p>Create your first valuation to get started</p>
-        <button class="action-button primary" @click="router.push('/valuations/quick')">
-          <i class="pi pi-plus"></i>
-          Create Valuation
-        </button>
-      </div>
-    </div>
 
-    <!-- Pagination -->
-    <div v-if="filteredValuations.length > itemsPerPage" class="pagination">
-      <div class="pagination-info">
-        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredValuations.length) }} of {{ filteredValuations.length }} valuations</span>
       </div>
-      <div class="pagination-controls">
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-        >
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button 
-          class="pagination-btn" 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-        >
-          <i class="pi pi-chevron-right"></i>
-        </button>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span class="footer-brand">ValuAdis</span>
+      <p class="footer-copy">© 2025 ValuAdis. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Contact Support</a>
       </div>
-    </div>
+    </footer>
+
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+definePageMeta({ middleware: 'auth' })
+
 const router = useRouter()
-
-// Reactive data
 const searchQuery = ref('')
-const selectedStatus = ref('')
-const selectedMunicipality = ref('')
-const selectedType = ref('')
-const viewMode = ref('table')
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-const sortField = ref('created_date')
-const sortDirection = ref('desc')
 
-const valuations = ref([])
+const valuations = [
+  { id: 'SP-2024-001', type: 'Commercial Land', icon: 'domain', location: 'Addis Ababa, Piazza', value: '$4,200,000', status: 'Certified', statusClass: 'status-certified', validator: 'Dr. Selamawit K.', initials: 'SK', avatarBg: '#e0e7ff' },
+  { id: 'SP-2024-002', type: 'Industrial Plant', icon: 'factory', location: 'Bole Lemi Zone', value: '$12,850,000', status: 'Pending', statusClass: 'status-pending', validator: 'Abebe B.', initials: 'AB', avatarBg: '#d1fae5' },
+  { id: 'SP-2024-003', type: 'Govt HQ', icon: 'apartment', location: 'Arat Kilo District', value: '$25,000,000', status: 'Flagged', statusClass: 'status-flagged', validator: 'Hanna M.', initials: 'HM', avatarBg: '#fce7f3' },
+  { id: 'SP-2024-004', type: 'Fleet Cluster A', icon: 'directions_car', location: 'National Logistics Hub', value: '$1,120,000', status: 'Certified', statusClass: 'status-certified', validator: 'Yonas L.', initials: 'YL', avatarBg: '#fef3c7' },
+]
 
-// Computed properties
-const filteredValuations = computed(() => {
-  let filtered = valuations.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(v => 
-      v.property_address.toLowerCase().includes(query) ||
-      v.owner_name.toLowerCase().includes(query) ||
-      v.valuation_id.toLowerCase().includes(query)
-    )
-  }
-
-  if (selectedStatus.value) {
-    filtered = filtered.filter(v => v.status === selectedStatus.value)
-  }
-
-  if (selectedMunicipality.value) {
-    filtered = filtered.filter(v => v.municipality === selectedMunicipality.value)
-  }
-
-  if (selectedType.value) {
-    filtered = filtered.filter(v => v.property_type === selectedType.value)
-  }
-
-  // Sort
-  filtered.sort((a, b) => {
-    let aVal = a[sortField.value]
-    let bVal = b[sortField.value]
-    
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase()
-      bVal = bVal.toLowerCase()
-    }
-    
-    if (sortDirection.value === 'asc') {
-      return aVal > bVal ? 1 : -1
-    } else {
-      return aVal < bVal ? 1 : -1
-    }
-  })
-
-  return filtered
-})
-
-const paginatedValuations = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredValuations.value.slice(start, end)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredValuations.value.length / itemsPerPage.value)
-})
-
-const totalValuations = computed(() => valuations.value.length)
-const pendingValuations = computed(() => valuations.value.filter(v => v.status === 'pending').length)
-const approvedValuations = computed(() => valuations.value.filter(v => v.status === 'approved').length)
-const totalMarketValue = computed(() => valuations.value.reduce((sum, v) => sum + v.market_value, 0))
-
-// Methods
-function sortBy(field) {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
-  }
+const viewValuation = (v: any) => {
+  router.push(`/valuations/${v.id}`)
 }
 
-function getSortIcon(field) {
-  if (sortField.value !== field) return 'pi-sort'
-  return sortDirection.value === 'asc' ? 'pi-sort-up' : 'pi-sort-down'
+const exportValuations = () => {
+  console.log('Exporting valuations...')
 }
 
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function getPropertyTypeLabel(type) {
-  const labels = {
-    residential: 'Residential',
-    commercial: 'Commercial',
-    industrial: 'Industrial',
-    agricultural: 'Agricultural',
-    mixed_use: 'Mixed Use'
-  }
-  return labels[type] || type
-}
-
-function getStatusLabel(status) {
-  const labels = {
-    draft: 'Draft',
-    pending: 'Pending',
-    approved: 'Approved',
-    rejected: 'Rejected',
-    expired: 'Expired'
-  }
-  return labels[status] || status
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat('en-ET', {
-    style: 'currency',
-    currency: 'ETB',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value)
-}
-
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('en-ET', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-function resetFilters() {
-  searchQuery.value = ''
-  selectedStatus.value = ''
-  selectedMunicipality.value = ''
-  selectedType.value = ''
-  currentPage.value = 1
-}
-
-function viewValuation(valuation) {
-  router.push(`/valuations/${valuation.id}`)
-}
-
-function editValuation(valuation) {
-  router.push(`/valuations/${valuation.id}/edit`)
-}
-
-function downloadValuation(valuation) {
-  // Download functionality
-  console.log('Downloading valuation:', valuation.valuation_id)
-}
-
-function deleteValuation(valuation) {
-  if (confirm(`Are you sure you want to delete valuation ${valuation.valuation_id}?`)) {
-    const index = valuations.value.findIndex(v => v.id === valuation.id)
-    if (index > -1) {
-      valuations.value.splice(index, 1)
-    }
-  }
-}
-
-function exportValuations() {
-  // Export functionality
-  console.log('Exporting valuations')
-}
-
-onMounted(() => {
-  // Load valuations from API
-  console.log('Loading valuations...')
+useHead({
+  title: 'Valuations Hub — ValuAdis',
+  meta: [{ name: 'description', content: 'National asset appraisals and valuations hub.' }]
 })
 </script>
 
 <style scoped>
-/* Valuations Container */
-.valuations-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-radius: 16px;
-  color: white;
-  box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
-}
+.app-shell { display: flex; min-height: 100vh; background: #f7f9fb; font-family: 'Inter', sans-serif; color: #191c1e; }
 
-.header-content h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
+/* Sidebar */
+.sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 16rem; background: rgba(248,250,252,0.7); backdrop-filter: blur(20px); border-right: 1px solid rgba(226,232,240,0.2); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 50; }
+.sidebar-brand { padding: 0 0.5rem; margin-bottom: 2.5rem; }
+.brand-title { display: block; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #065f46; }
+.brand-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-top: 0.2rem; }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; color: #475569; text-decoration: none; transition: all 0.2s; }
+.nav-item:hover { color: #006948; background: rgba(248,250,252,0.6); }
+.nav-item.active { color: #005137; font-weight: 600; background: rgba(0,105,72,0.06); border-right: 3px solid #006948; }
+.nav-item .material-symbols-outlined { font-size: 1.25rem; }
+.sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(226,232,240,0.2); margin-top: auto; }
+.user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #00855d; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+.user-name { font-size: 0.8rem; font-weight: 700; margin: 0; }
+.user-role { font-size: 0.7rem; color: #94a3b8; margin: 0; }
 
-.header-content p {
-  font-size: 1.125rem;
-  opacity: 0.9;
-  margin: 0;
-}
+/* Header */
+.top-header { position: fixed; top: 0; right: 0; width: calc(100% - 16rem); height: 4rem; z-index: 40; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226,232,240,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+.search-wrap { position: relative; flex: 1; max-width: 28rem; }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
+.search-input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; background: #f1f5f9; border: none; border-radius: 9999px; font-size: 0.875rem; outline: none; }
+.header-right { display: flex; align-items: center; gap: 1.5rem; }
+.header-links { display: flex; gap: 1rem; }
+.hlink { font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: color 0.2s; }
+.hlink:hover { color: #006948; }
+.hlink-active { color: #065f46; font-weight: 700; border-bottom: 2px solid #006948; padding-bottom: 0.1rem; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.icon-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 0.5rem; border-radius: 50%; transition: background 0.2s; }
+.icon-btn:hover { background: #f1f5f9; }
+.btn-new-val { display: flex; align-items: center; gap: 0.35rem; background: #006948; color: #fff; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btn-new-val .material-symbols-outlined { font-size: 1rem; }
+.btn-new-val:hover { opacity: 0.9; }
 
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
+/* Main */
+.main-content { margin-left: 16rem; padding-top: 4rem; flex: 1; min-height: 100vh; }
+.content-wrap { padding: 2.5rem 3rem; max-width: 1600px; }
 
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+/* Breadcrumb */
+.breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-bottom: 2rem; }
+.bc-chevron { font-size: 0.875rem; color: #cbd5e1; }
+.bc-active { color: #065f46; }
 
-.action-button.primary {
-  background: white;
-  color: #059669;
-}
-
-.action-button.primary:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
-}
-
-.action-button.secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Search and Filters */
-.search-filters {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-.search-section {
-  margin-bottom: 1.5rem;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  gap: 0.75rem;
-}
-
-.search-bar i {
-  color: #64748b;
-}
-
-.search-bar input {
-  flex: 1;
-  border: none;
-  background: none;
-  outline: none;
-  font-size: 0.875rem;
-}
-
-.filter-section {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-dropdown {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.875rem;
-  min-width: 150px;
-}
-
-.reset-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reset-button:hover {
-  background: #f8fafc;
-  border-color: #059669;
-  color: #059669;
-}
+/* Hero Section */
+.hero-section { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; gap: 1.5rem; }
+.hero-text { max-width: 40rem; }
+.page-title { font-family: 'Syne', sans-serif; font-size: 2.25rem; font-weight: 800; color: #191c1e; margin: 0 0 0.75rem; }
+.page-desc { font-size: 1.125rem; color: #3d4a42; line-height: 1.6; margin: 0; }
+.hero-actions { display: flex; gap: 0.75rem; }
+.btn-export { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: 1px solid #bccac0; background: #fff; color: #006948; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-export:hover { background: #f2f4f6; }
 
 /* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #059669, #047857);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-}
-
-.stat-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.25rem 0;
-}
-
-.stat-content p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0 0 0.5rem 0;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.stat-trend.positive {
-  color: #10b981;
-}
-
-.stat-trend.neutral {
-  color: #6b7280;
-}
-
-.stat-trend.negative {
-  color: #ef4444;
-}
-
-/* Valuations Registry */
-.valuations-registry {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.registry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.registry-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.registry-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.registry-info span {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.view-btn {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.view-btn.active {
-  background: #059669;
-  color: white;
-  border-color: #059669;
-}
-
-/* Table Styles */
-.table-container {
-  overflow-x: auto;
-}
-
-.valuations-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.valuations-table th {
-  background: #f8fafc;
-  padding: 1rem;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.valuations-table th:hover {
-  background: #f1f5f9;
-}
-
-.valuations-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.valuation-id {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  color: #059669;
-}
-
-.property-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.property-info i {
-  color: #6b7280;
-}
-
-.owner-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.owner-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #059669;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.municipality-badge {
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.type-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.type-badge.residential {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.type-badge.commercial {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.type-badge.industrial {
-  background: #e9d5ff;
-  color: #7c3aed;
-}
-
-.type-badge.agricultural {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.type-badge.mixed_use {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.value-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.market-value {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.taxable-value {
-  font-size: 0.75rem;
-  color: #059669;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-badge.draft {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.status-badge.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge.approved {
-  background: #bbf7d0;
-  color: #059669;
-}
-
-.status-badge.rejected {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.status-badge.expired {
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.date {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.action-btn.view {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.action-btn.view:hover {
-  background: #1e40af;
-  color: white;
-}
-
-.action-btn.edit {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.action-btn.edit:hover {
-  background: #6b7280;
-  color: white;
-}
-
-.action-btn.download {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.action-btn.download:hover {
-  background: #0369a1;
-  color: white;
-}
-
-.action-btn.delete {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.action-btn.delete:hover {
-  background: #dc2626;
-  color: white;
-}
-
-/* Grid View */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-  padding: 2rem;
-}
-
-.valuation-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-
-.valuation-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.valuation-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.card-content {
-  padding: 1.5rem;
-}
-
-.property-details h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.property-meta {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.owner-details {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 1rem 0;
-}
-
-.value-details {
-  margin: 1rem 0;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-.card-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  background: #f8fafc;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 2rem;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-}
-
-.empty-state p {
-  color: #64748b;
-  margin: 0 0 2rem 0;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(188,202,192,0.2); }
+.stat-card { padding: 2rem; border-radius: 1.5rem; position: relative; overflow: hidden; transition: all 0.2s; }
+.stat-card:hover { transform: scale(1.02); }
+.stat-bg-icon { position: absolute; top: 0; right: 0; width: 6rem; height: 6rem; background: linear-gradient(135deg, rgba(0,105,72,0.05) 0%, transparent 70%); border-bottom-left-radius: 100%; display: flex; align-items: center; justify-content: center; }
+.stat-bg-icon .material-symbols-outlined { font-size: 2rem; color: rgba(0,105,72,0.2); }
+.stat-label { font-size: 0.875rem; font-weight: 500; color: #64748b; margin: 0 0 0.5rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: #065f46; margin: 0 0 1rem; }
+.stat-badge-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.stat-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.15rem 0.5rem; border-radius: 9999px; }
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-indigo { background: #e0e7ff; color: #4b41e1; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.stat-sub { font-size: 0.75rem; color: #94a3b8; font-style: italic; }
+
+/* Valuations Table Card */
+.valuations-card { background: rgba(255,255,255,0.5); backdrop-filter: blur(8px); border-radius: 2rem; border: 1px solid rgba(226,232,240,0.5); box-shadow: 0 1px 4px rgba(0,0,0,0.04); overflow: hidden; }
+.valuations-header { padding: 2rem 2rem 1.5rem; border-bottom: 1px solid rgba(226,232,240,0.5); display: flex; justify-content: space-between; align-items: center; }
+.valuations-title { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #191c1e; margin: 0; }
+.valuations-actions { display: flex; gap: 0.5rem; }
+.icon-btn-round { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.icon-btn-round:hover { border-color: #006948; color: #006948; }
+.table-wrap { overflow-x: auto; }
+.valuations-table { width: 100%; text-align: left; border-collapse: collapse; }
+.table-head-row { background: rgba(248,250,252,0.5); }
+.table-head-row th { padding: 1.25rem 2rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #64748b; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.table-row { border-top: 1px solid #f1f5f9; transition: background 0.15s; }
+.table-row:hover { background: rgba(255,255,255,0.85); }
+.table-row td { padding: 1.5rem 2rem; }
+.td-id { font-family: monospace; font-weight: 700; color: #065f46; }
+.td-type { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+.td-icon { font-size: 1.1rem; color: #94a3b8; }
+.td-location { font-size: 0.875rem; color: #475569; }
+.td-value { font-weight: 700; color: #191c1e; }
+.compliance-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.compliance-badge .dot { width: 0.375rem; height: 0.375rem; border-radius: 50%; }
+.status-certified { background: #d1fae5; color: #065f46; }
+.status-certified .dot { background: #065f46; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-pending .dot { background: #92400e; }
+.status-flagged { background: #fecaca; color: #dc2626; }
+.status-flagged .dot { background: #dc2626; }
+.td-validator { display: flex; align-items: center; gap: 0.5rem; }
+.validator-avatar { width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: 0.6rem; font-weight: 700; color: #475569; display: flex; align-items: center; justify-content: center; }
+.validator-name { font-size: 0.8rem; color: #475569; }
+.action-btn { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.25rem; }
+.action-btn:hover { color: #006948; }
 
 /* Pagination */
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: white;
-  border-top: 1px solid #f1f5f9;
-}
+.pagination { padding: 1.5rem 2rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: rgba(248,250,252,0.3); }
+.pag-info { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+.pag-btns { display: flex; gap: 0.5rem; }
+.pag-btn { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.pag-btn:hover { border-color: #006948; color: #006948; }
 
-.pagination-info {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.pagination-btn {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #f8fafc;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-  }
-  
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .filter-section {
-    flex-direction: column;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .registry-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .grid-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .pagination {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
+/* Footer */
+.app-footer { margin-left: 16rem; padding: 2rem 3rem; border-top: 1px solid rgba(226,232,240,0.15); background: #f8fafc; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.footer-brand { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; }
+.footer-copy { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0; }
+.footer-links { display: flex; gap: 2rem; }
+.footer-links a { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; text-decoration: none; }
+.footer-links a:hover { color: #006948; }
 </style>

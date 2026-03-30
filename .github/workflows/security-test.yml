@@ -1,0 +1,170 @@
+name: Security Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # ── Job 1: Dependency scanning (npm + pip) ──────────────────────────────────
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: npm audit — block on critical vulnerabilities
+        run: |
+          mkdir -p reports/security/dependency
+          npm audit \
+            --prefix frontend \
+            --json \
+            --audit-level=critical \
+            > reports/security/dependency/npm-audit.json 2>&1 || {
+              echo "::error::Critical npm vulnerabilities detected. Run 'npm audit fix --prefix frontend'."
+              exit 1
+            }
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: pip-audit — block on any vulnerable packages
+        run: |
+          pip-audit \
+            --requirement backend/requirements.txt \
+            --format json \
+            --output reports/security/dependency/pip-audit.json \
+            --vulnerability-service pypi || {
+              echo "::error::Vulnerable Python packages detected."
+              exit 1
+            }
+
+      - name: Upload dependency scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-scan-${{ github.run_number }}
+          path: reports/security/dependency/
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Dependency Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tool | Report |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit | reports/security/dependency/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| pip-audit | reports/security/dependency/pip-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Job 2: OWASP ZAP API scan ───────────────────────────────────────────────
+  owasp-scan:
+    name: OWASP ZAP Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create reports directory
+        run: mkdir -p reports/security/owasp
+
+      - name: Run OWASP ZAP API scan
+        env:
+          TARGET_URL: ${{ secrets.OWASP_TARGET_URL }}
+        run: |
+          # Default to localhost when no staging URL is configured
+          RESOLVED_TARGET="${TARGET_URL:-http://localhost:8000}"
+          docker run --rm \
+            -v "$(pwd)/reports/security/owasp:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+            -t "${RESOLVED_TARGET}/openapi.json" \
+            -f openapi \
+            -r zap-report.html \
+            -J zap-report.json \
+            -x zap-report.xml \
+            -I \
+            || {
+              echo "::error::OWASP ZAP found security issues. Review the uploaded report."
+              exit 1
+            }
+
+      - name: Upload OWASP ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-zap-report-${{ github.run_number }}
+          path: reports/security/owasp/
+          retention-days: 30
+
+      - name: OWASP summary
+        if: always()
+        run: |
+          echo "## OWASP ZAP Security Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "Report uploaded as artifact: owasp-zap-report-${{ github.run_number }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Job 3: Static security analysis (Bandit for Python) ─────────────────────
+  sast:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit on backend
+        run: |
+          mkdir -p reports/security/sast
+          bandit \
+            -r backend/app \
+            -f json \
+            -o reports/security/sast/bandit-report.json \
+            --severity-level medium \
+            || {
+              echo "::error::Bandit found medium/high severity security issues in backend code."
+              exit 1
+            }
+
+      - name: Upload SAST report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-report-${{ github.run_number }}
+          path: reports/security/sast/
+          retention-days: 30
+
+      - name: SAST summary
+        if: always()
+        run: |
+          echo "## Static Security Analysis (Bandit)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Report: reports/security/sast/bandit-report.json" >> "$GITHUB_STEP_SUMMARY"

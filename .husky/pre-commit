@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ─── npm audit: block commit if critical vulnerabilities found ────────────────
+echo "==> Running npm audit (frontend)..."
+npm audit --prefix frontend --audit-level=critical || {
+  echo ""
+  echo "[BLOCKED] Critical npm vulnerabilities found. Fix them before committing."
+  echo "          Run: npm audit --prefix frontend --fix"
+  exit 1
+}
+
+echo "==> Pre-commit dependency scan passed."

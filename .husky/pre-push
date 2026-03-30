@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ─── Dependency scan: block push if critical vulnerabilities found ────────────
+echo "==> Running npm audit (frontend)..."
+npm audit --prefix frontend --audit-level=critical || {
+  echo ""
+  echo "[BLOCKED] Critical npm vulnerabilities found. Fix before pushing."
+  echo "          Run: npm audit --prefix frontend --fix"
+  exit 1
+}
+
+echo "==> Running pip-audit (backend)..."
+if command -v pip-audit >/dev/null 2>&1; then
+  pip-audit --requirement backend/requirements.txt --vulnerability-service pypi || {
+    echo ""
+    echo "[BLOCKED] Vulnerable Python packages found. Fix before pushing."
+    exit 1
+  }
+else
+  echo "    pip-audit not installed — skipping Python dependency scan."
+  echo "    Install with: pip install pip-audit"
+fi
+
+# ─── Static security analysis: block push on medium+ Bandit findings ─────────
+echo "==> Running Bandit SAST on backend..."
+if command -v bandit >/dev/null 2>&1; then
+  bandit -r backend/app --severity-level medium -q || {
+    echo ""
+    echo "[BLOCKED] Bandit found medium/high severity security issues."
+    echo "          Run: bandit -r backend/app --severity-level medium"
+    exit 1
+  }
+else
+  echo "    Bandit not installed — skipping SAST."
+  echo "    Install with: pip install bandit"
+fi
+
+echo "==> Pre-push security checks passed."
