@@ -1,21 +1,29 @@
+import {
+  clearAuthTokens,
+  getAccessToken,
+  removeAccessToken,
+  setAccessToken
+} from '~/utils/authToken'
+
 class AuthService
 {
-  constructor ()
+  getBaseURL ()
   {
-    this.baseURL = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
+    const config = useRuntimeConfig()
+    return config.public.apiBaseUrl
   }
 
   async login ( credentials )
   {
     try
     {
-      const response = await fetch( `${ this.baseURL }/api/v1/login-fixed`, {
+      const baseURL = this.getBaseURL()
+      const response = await fetch( `${ baseURL }/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify( credentials ),
-        credentials: 'include' // Important for httpOnly cookies
+        body: JSON.stringify( credentials )
       } )
 
       if ( !response.ok )
@@ -26,28 +34,16 @@ class AuthService
       const data = await response.json()
 
       // Store token and user data for authentication
-      if ( data.access_token )
+      const token = data.access_token || data.data?.access_token
+      if ( token )
       {
-        localStorage.setItem( 'valuadis_token', data.access_token )
+        setAccessToken( token )
       }
 
-      // Store minimal user data for UI purposes
-      if ( data.user )
-      {
-        localStorage.setItem( 'valuadis_user', JSON.stringify( data.user ) )
-      } else
-      {
-        // Create minimal user data from login credentials
-        const user = {
-          id: 1,
-          email: credentials.email,
-          full_name: 'System Administrator',
-          role: 'admin',
-          is_admin: true,
-          created_at: new Date().toISOString()
-        }
-        localStorage.setItem( 'valuadis_user', JSON.stringify( user ) )
-      }
+      localStorage.setItem( 'valuadis_user', JSON.stringify( {
+        email: credentials.email,
+        created_at: new Date().toISOString()
+      } ) )
 
       return { success: true, data }
     } catch ( error )
@@ -62,7 +58,7 @@ class AuthService
     try
     {
       // Call backend logout to invalidate httpOnly cookie
-      await fetch( `${ this.baseURL }/api/v1/auth/logout`, {
+      await fetch( `${ this.getBaseURL() }/api/v1/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       } )
@@ -71,7 +67,7 @@ class AuthService
       console.error( 'Logout error:', error )
     } finally
     {
-      // Clear local storage
+      clearAuthTokens()
       localStorage.removeItem( 'valuadis_user' )
     }
   }
@@ -80,7 +76,7 @@ class AuthService
   {
     try
     {
-      const response = await fetch( `${ this.baseURL }/api/v1/auth/refresh`, {
+      const response = await fetch( `${ this.getBaseURL() }/api/v1/auth/refresh`, {
         method: 'POST',
         credentials: 'include'
       } )
@@ -99,35 +95,37 @@ class AuthService
     }
   }
 
-  getCurrentUser ()
+  async getCurrentUser ()
   {
-    try
+    const baseURL = this.getBaseURL()
+    const token = getAccessToken()
+    if ( !token ) throw new Error( 'Missing authentication token' )
+
+    const response = await fetch( `${ baseURL }/api/v1/auth/me`, {
+      headers: { Authorization: `Bearer ${ token }` }
+    } )
+
+    if ( !response.ok )
     {
-      const user = localStorage.getItem( 'valuadis_user' )
-      return user ? JSON.parse( user ) : null
-    } catch ( error )
-    {
-      console.error( 'Error getting current user:', error )
-      return null
+      throw new Error( 'Failed to get current user' )
     }
+
+    return response.json()
   }
 
   isAuthenticated ()
   {
-    return !!this.getCurrentUser()
+    return !!getAccessToken()
   }
 
-  // For backward compatibility during transition
   getLegacyToken ()
   {
-    // This method provides fallback to localStorage token
-    return localStorage.getItem( 'valuadis_token' )
+    return getAccessToken()
   }
 
   clearLegacyTokens ()
   {
-    // Remove old localStorage tokens after migration
-    localStorage.removeItem( 'valuadis_token' )
+    removeAccessToken()
   }
 }
 

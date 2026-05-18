@@ -18,6 +18,8 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.core.database import engine
+from app.core.dev_schema import ensure_development_sqlite_schema
 from app.core.exceptions import ValuAdisException
 from app.core.sentry import init_sentry, get_sentry_manager
 
@@ -104,6 +106,8 @@ if settings.ENVIRONMENT == "development":
         allow_origins=[
             "http://localhost:3020",
             "http://127.0.0.1:3020",
+            "http://localhost:3021",
+            "http://127.0.0.1:3021",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://localhost:8020",
@@ -114,20 +118,9 @@ if settings.ENVIRONMENT == "development":
         allow_headers=["*"],
     )
 else:
-    # Production: use explicit origins
-    allowed_origins = [
-        "https://valuadis.vulcanig.net",
-        "http://valuadis.vulcanig.net",
-        "http://localhost:3000",
-        "http://localhost:3001", 
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://localhost:3020",
-        "http://127.0.0.1:3020",
-    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=allowed_origins,
+        allow_origins=settings.ALLOWED_HOSTS,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
@@ -144,9 +137,14 @@ if settings.ENVIRONMENT != "development":
 
 app.include_router(api_router, prefix="/api/v1")
 
-# Add minimal auth router for testing
-from minimal_auth_fix import router as minimal_auth_router
-app.include_router(minimal_auth_router, prefix="/api/v1")
+# ---------------------------------------------------------------------------
+# Startup
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+async def ensure_local_schema():
+    if settings.ENVIRONMENT == "development":
+        ensure_development_sqlite_schema(engine)
 
 
 # ---------------------------------------------------------------------------

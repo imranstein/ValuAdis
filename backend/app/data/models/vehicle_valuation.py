@@ -11,6 +11,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 import enum
+from typing import ClassVar, Optional
 
 from app.core.database import Base
 
@@ -113,6 +114,42 @@ class VehicleValuation(Base):
             f"<VehicleValuation(id={self.id}, vehicle_id={self.vehicle_id}, "
             f"market_value={self.market_value}, status={self.status})>"
         )
+
+    # Backward-compatible legacy fields
+    _legacy_certificate_number: ClassVar[Optional[str]] = None
+
+    @property
+    def approved_by(self) -> Optional[int]:
+        return self.reviewed_by
+
+    @approved_by.setter
+    def approved_by(self, value: Optional[int]) -> None:
+        self.reviewed_by = value
+
+    @property
+    def approved_at(self) -> Optional[datetime]:
+        return self.reviewed_at
+
+    @approved_at.setter
+    def approved_at(self, value: Optional[datetime]) -> None:
+        self.reviewed_at = value
+
+    @property
+    def certificate_number(self) -> Optional[str]:
+        return self._legacy_certificate_number
+
+    @certificate_number.setter
+    def certificate_number(self, value: Optional[str]) -> None:
+        self._legacy_certificate_number = value
+
+    @property
+    def certificate_issued_at(self) -> Optional[datetime]:
+        return self.reviewed_at
+
+    @certificate_issued_at.setter
+    def certificate_issued_at(self, value: Optional[datetime]) -> None:
+        if value is not None:
+            self.reviewed_at = value
     
     def to_dict(self):
         """Convert vehicle valuation to dictionary"""

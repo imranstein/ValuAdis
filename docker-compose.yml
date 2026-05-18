@@ -89,18 +89,18 @@ services:
     container_name: valuadis_frontend
     working_dir: /app/app
     environment:
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8020/api/v1}
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-http://localhost:8020}
+      VALUADIS_LOCAL_BROWSER_PROOF: ${VALUADIS_LOCAL_BROWSER_PROOF:-true}
+      VALUADIS_ENFORCE_PRODUCTION_CONFIG: ${VALUADIS_ENFORCE_PRODUCTION_CONFIG:-false}
     volumes:
       - ./frontend:/app
-      - /app/app/node_modules
-      - /app/app/.nuxt
     ports:
       - "3020:3020"
     depends_on:
       - backend
     networks:
       - valuadis_network
-    command: sh -c "npm install --force && npm run dev"
+    command: sh -c "npm install --force && npm run build && HOST=0.0.0.0 PORT=3020 npm run preview"
 
 volumes:
   postgres_data:

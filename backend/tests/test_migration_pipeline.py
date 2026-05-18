@@ -17,6 +17,12 @@ import time
 from datetime import datetime
 
 
+pytestmark = pytest.mark.skipif(
+    os.getenv("RUN_POSTGRES_MIGRATION_TESTS") != "1",
+    reason="requires a local PostgreSQL/PostGIS database",
+)
+
+
 class TestMigrationPipeline:
     """
     Test suite for ValuAdis data migration pipeline

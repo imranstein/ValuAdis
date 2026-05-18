@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getAccessToken } from '~/utils/authToken'
 
 export interface WizardFormData {
   // Step 1 - Basic Info
@@ -91,6 +92,8 @@ const defaultForm = (): WizardFormData => ({
 })
 
 export const usePropertyWizardStore = defineStore('propertyWizard', () => {
+  const config = useRuntimeConfig()
+  const apiBase = config.public.apiBaseUrl
   const currentStep = ref(1)
   const completedSteps = ref<Set<number>>(new Set())
   const formData = ref<WizardFormData>(defaultForm())
@@ -212,13 +215,12 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
   }
 
   async function calculateAIValuation() {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     const d = formData.value
 
     const conditionMap: Record<string, number> = { excellent: 1, good: 2, fair: 3, poor: 4 }
 
-    const res = await fetch(`${API_BASE}/api/v1/valuations/calculate`, {
+    const res = await fetch(`${apiBase}/api/v1/valuations/calculate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -247,9 +249,11 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
   }
 
   async function fetchTrustMetrics() {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
     try {
-      const res = await fetch(`${API_BASE}/api/v1/valuation-feedback/metrics`)
+      const token = getAccessToken()
+      const res = await fetch(`${apiBase}/api/v1/valuation-feedback/metrics`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
       if (res.ok) trustMetrics.value = await res.json()
     } catch {
       // Non-critical; silently fail
@@ -257,8 +261,7 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
   }
 
   async function submitProperty(): Promise<{ id: number; property_ref: string } | null> {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     isSubmitting.value = true
 
     try {
@@ -290,8 +293,8 @@ export const usePropertyWizardStore = defineStore('propertyWizard', () => {
       }
 
       const url = editPropertyId.value
-        ? `${API_BASE}/api/v1/properties/${editPropertyId.value}`
-        : `${API_BASE}/api/v1/properties`
+        ? `${apiBase}/api/v1/properties/${editPropertyId.value}`
+        : `${apiBase}/api/v1/properties`
       const method = editPropertyId.value ? 'PUT' : 'POST'
 
       const res = await fetch(url, {

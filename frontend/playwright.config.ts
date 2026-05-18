@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const e2ePort = process.env.E2E_FRONTEND_PORT || '3020';
+const e2eBaseURL = process.env.E2E_BASE_URL || `http://127.0.0.1:${e2ePort}`;
+const apiBaseURL = process.env.NUXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8020';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -12,7 +16,7 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: 'http://localhost:3020',
+    baseURL: e2eBaseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -51,8 +55,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'cd app && npm run dev',
-    url: 'http://localhost:3020',
+    command: `cd app && NUXT_PUBLIC_API_BASE_URL=${apiBaseURL} npm run dev -- --host 127.0.0.1 --port ${e2ePort}`,
+    url: e2eBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     stdout: 'ignore',

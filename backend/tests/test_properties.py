@@ -9,6 +9,11 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
+def _access_token(response):
+    body = response.json()
+    return body.get("access_token") or body["data"]["access_token"]
+
+
 class TestProperties:
     """Test property CRUD operations"""
     
@@ -16,7 +21,7 @@ class TestProperties:
         """Test successful property creation"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -28,18 +33,55 @@ class TestProperties:
         assert "id" in data["data"]
         assert data["data"]["address"] == test_property_data["address"]
         assert data["data"]["area_sqm"] > 0
+
+    def test_bulk_import_properties_success(self, client: TestClient, test_user_data):
+        register_response = client.post("/api/v1/auth/register", json=test_user_data)
+        access_token = _access_token(register_response)
+        headers = {"Authorization": f"Bearer {access_token}"}
+        csv_body = (
+            "address,municipality,property_type,latitude,longitude,area_sqm,market_value,taxable_value\n"
+            "Bole Atlas,Addis Ababa,residential,9.0320,38.7578,120,1000000,250000\n"
+        )
+
+        response = client.post(
+            "/api/v1/properties/bulk-import",
+            headers=headers,
+            files={"file": ("properties.csv", csv_body, "text/csv")},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["imported_count"] == 1
+
+    def test_bulk_import_properties_rejects_invalid_taxable_value(self, client: TestClient, test_user_data):
+        register_response = client.post("/api/v1/auth/register", json=test_user_data)
+        access_token = _access_token(register_response)
+        headers = {"Authorization": f"Bearer {access_token}"}
+        csv_body = (
+            "address,municipality,property_type,latitude,longitude,area_sqm,market_value,taxable_value\n"
+            "Kazanchis Tower,Addis Ababa,commercial,9.0320,38.7578,120,1000000,300000\n"
+        )
+
+        response = client.post(
+            "/api/v1/properties/bulk-import",
+            headers=headers,
+            files={"file": ("properties.csv", csv_body, "text/csv")},
+        )
+
+        assert response.status_code == 422
+        assert "25%" in response.json()["detail"][0]["message"]
     
     def test_create_property_invalid_coordinates(self, client: TestClient, test_user_data):
         """Test property creation with invalid coordinates fails"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Invalid coordinates (not closed polygon)
         invalid_property_data = {
             "address": "Invalid Address",
             "municipality": "Addis Ababa",
             "property_type": "residential",
+            "area_sqm": 120.0,
             "coordinates": [
                 [38.7578, 9.0320],
                 [38.7580, 9.0320],
@@ -53,14 +95,13 @@ class TestProperties:
         
         assert response.status_code == 400
         data = response.json()
-        assert data["success"] is False
-        assert "polygon" in data["message"].lower()
+        assert "polygon" in data["detail"].lower()
     
     def test_get_properties(self, client: TestClient, test_user_data, test_property_data):
         """Test getting user's properties"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -79,7 +120,7 @@ class TestProperties:
         """Test getting specific property by ID"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -104,7 +145,7 @@ class TestProperties:
         """Test updating property"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -128,7 +169,7 @@ class TestProperties:
         """Test deleting property"""
         # Register and login
         register_response = client.post("/api/v1/auth/register", json=test_user_data)
-        access_token = register_response.json()["data"]["access_token"]
+        access_token = _access_token(register_response)
         
         # Create property
         headers = {"Authorization": f"Bearer {access_token}"}

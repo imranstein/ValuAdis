@@ -55,6 +55,7 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""
     to_encode = data.copy()
+    to_encode.update({"type": "access"})
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -91,6 +92,12 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     """Extract user ID from JWT token"""
     payload = verify_token(token)
     raw_sub = payload.get("sub")
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     if raw_sub is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -173,8 +180,8 @@ def validate_ethiopian_license(license: str) -> dict:
     # Ethiopian license format: XXX-NNNNNNNNNN
     # - 2-4 uppercase letters (prefix)
     # - hyphen separator
-    # - 6-10 digits
-    ethiopian_license_regex = re.compile(r'^[A-Z]{2,4}-\d{6,10}$')
+    # - 10 digits
+    ethiopian_license_regex = re.compile(r'^[A-Z]{2,4}-\d{10}$')
 
     if not ethiopian_license_regex.match(trimmed):
         return {

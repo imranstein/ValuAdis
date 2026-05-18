@@ -328,79 +328,9 @@ const handleSubmit = async () => {
     isSubmitting.value = false
   }
 }
-
-// Clear errors when user types
-watch(() => form.make, () => delete errors.make)
-watch(() => form.model, () => delete errors.model)
-watch(() => form.year, () => delete errors.year)
-watch(() => form.vin, () => delete errors.vin)
-watch(() => form.plate_number, () => delete errors.plate_number)
 </script>
 
 <style scoped>
-.vehicle-form {
-  @apply bg-white rounded-lg shadow-sm p-6;
-}
-
-.form-header {
-  @apply mb-6;
-}
-
-.form-header h3 {
-  @apply text-lg font-semibold text-gray-900 mb-1;
-}
-
-.form-header p {
-  @apply text-sm;
-}
-
-.form-section {
-  @apply mb-8;
-}
-
-.section-title {
-  @apply text-base font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200;
-}
-
-.form-label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
-}
-
-.form-input,
-.form-select {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
-}
-
-.form-input.error,
-.form-select.error {
-  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
-}
-
-.error-text {
-  @apply text-xs text-red-600 mt-1;
-}
-
-.form-checkbox {
-  @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
-}
-
-.form-actions {
-  @apply flex justify-end space-x-3 pt-6 border-t border-gray-200;
-}
-
-.btn-primary {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-secondary {
-  @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
-}
-
-.spinner {
-  @apply inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin;
-  animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);

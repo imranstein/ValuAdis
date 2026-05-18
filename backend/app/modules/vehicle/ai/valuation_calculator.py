@@ -11,7 +11,7 @@ from datetime import datetime
 import statistics
 import math
 
-from ...models import Vehicle, VehicleValuation
+from ..models import Vehicle, VehicleValuation
 
 logger = logging.getLogger(__name__)
 

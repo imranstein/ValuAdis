@@ -1,20 +1,22 @@
 import { test as setup } from '@playwright/test';
-import { TEST_CREDENTIALS } from '../config/test-credentials';
+import { MOCK_TOKEN, setupApiMock } from './api-mock';
 
 const authFile = 'tests/e2e/.auth/user.json';
 
 setup('authenticate', async ({ page }) => {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  // Register API mocks before any navigation so all requests are intercepted
+  await setupApiMock(page);
 
-  const url = page.url();
-  const isDashboard = url.includes('/dashboard') || url.endsWith(':3020/');
+  // Inject token into localStorage before the page loads.
+  // This way Nuxt's auth middleware finds a valid token on first render
+  // and allows access to /dashboard without going through the login form.
+  await page.addInitScript((token) => {
+    localStorage.setItem('valuadis_token', token);
+  }, MOCK_TOKEN);
 
-  if (!isDashboard) {
-    await page.fill('input[type="email"]', TEST_CREDENTIALS.email);
-    await page.fill('input[type="password"]', TEST_CREDENTIALS.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/(dashboard)?$/, { timeout: 15000 });
-  }
+  await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(/\/dashboard/, { timeout: 15000 });
 
   await page.context().storageState({ path: authFile });
 });
+

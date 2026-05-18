@@ -1,381 +1,565 @@
 <template>
-  <div class="app-shell">
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <span class="brand-title">ValuAdis</span>
-        <p class="brand-sub">Property Valuation</p>
+  <div class="page-shell map-page">
+    <section class="page-head">
+      <div>
+        <p class="page-kicker">GIS Command</p>
+        <h1 class="page-title">Asset Map</h1>
+        <p class="page-subtitle">
+          Spatial review for taxable assets, compliance overlays, and valuation activity across Addis Ababa corridors.
+        </p>
       </div>
-      <nav class="sidebar-nav">
-        <NuxtLink to="/properties" class="nav-item">
-          <span class="material-symbols-outlined">domain</span><span>Properties</span>
-        </NuxtLink>
-        <NuxtLink to="/vehicles" class="nav-item">
-          <span class="material-symbols-outlined">directions_car</span><span>Vehicles</span>
-        </NuxtLink>
-        <NuxtLink to="/valuations" class="nav-item">
-          <span class="material-symbols-outlined">assessment</span><span>Valuations</span>
-        </NuxtLink>
-        <NuxtLink to="/map" class="nav-item active">
-          <span class="material-symbols-outlined">map</span><span>Maps</span>
-        </NuxtLink>
-        <NuxtLink to="/reports" class="nav-item">
-          <span class="material-symbols-outlined">analytics</span><span>Reports</span>
-        </NuxtLink>
-        <NuxtLink to="/settings" class="nav-item">
-          <span class="material-symbols-outlined">settings</span><span>Settings</span>
-        </NuxtLink>
-      </nav>
-      <div class="sidebar-user">
-        <div class="user-avatar">AB</div>
-        <div>
-          <p class="user-name">Abebe Bikila</p>
-          <p class="user-role">Regional Auditor</p>
-        </div>
+      <div class="page-actions">
+        <button class="btn-secondary" type="button">
+          <i class="pi pi-sliders-h" aria-hidden="true"></i>
+          Layers
+        </button>
+        <button class="btn-primary" type="button">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          New Valuation
+        </button>
       </div>
-    </aside>
+    </section>
 
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="search-wrap">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input class="search-input" type="text" placeholder="Search assets, coordinates..." />
-      </div>
-      <div class="header-right">
-        <nav class="header-links">
-          <NuxtLink to="/dashboard" class="hlink">Dashboard</NuxtLink>
-          <a href="#" class="hlink">Market Insights</a>
-        </nav>
-        <div class="header-actions">
-          <button class="icon-btn"><span class="material-symbols-outlined">notifications</span></button>
-          <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
-          <button class="btn-new-val">New Valuation</button>
-        </div>
-      </div>
-    </header>
+    <section class="metric-grid">
+      <article v-for="metric in metrics" :key="metric.label" class="metric-card">
+        <p class="metric-label">{{ metric.label }}</p>
+        <p class="metric-value">{{ metric.value }}</p>
+        <p class="metric-note">{{ metric.note }}</p>
+      </article>
+    </section>
 
-    <!-- Map Area -->
-    <main class="map-main">
-
-      <!-- Breadcrumb overlay -->
-      <div class="breadcrumb-overlay">
-        <span>Home</span>
-        <span class="material-symbols-outlined bc-chevron">chevron_right</span>
-        <span class="bc-active">Maps</span>
-      </div>
-
-      <!-- Map canvas -->
-      <div class="map-canvas">
-        <!-- Pin 1 -->
-        <div class="map-pin pin-1 group">
-          <div class="pin-badge pin-primary">
-            <span class="material-symbols-outlined pin-icon">home</span>
-          </div>
-          <div class="pin-tooltip">Bole Residential A2</div>
-        </div>
-        <!-- Pin 2 -->
-        <div class="map-pin pin-2 group">
-          <div class="pin-badge pin-secondary">
-            <span class="material-symbols-outlined pin-icon">directions_car</span>
-          </div>
-          <div class="pin-tooltip">Logistics Unit #402</div>
-        </div>
-
-        <!-- Map Controls -->
-        <div class="map-controls">
-          <div class="zoom-btns">
-            <button class="map-ctrl-btn border-b"><span class="material-symbols-outlined">add</span></button>
-            <button class="map-ctrl-btn"><span class="material-symbols-outlined">remove</span></button>
-          </div>
-          <button class="map-ctrl-btn mt-2"><span class="material-symbols-outlined">layers</span></button>
-          <button class="map-ctrl-btn mt-1"><span class="material-symbols-outlined">my_location</span></button>
-        </div>
-
-        <!-- PropertyMap Component (functional) -->
-        <div class="leaflet-wrap">
-          <PropertyMap
-            ref="propertyMap"
-            height="100%"
-            :zoom="12"
-            :center="[9.0116, 38.7616]"
-            :properties="mapProperties"
-            @property-selected="onPropertySelected"
-            @property-view="onPropertyView"
-          />
-        </div>
-      </div>
-
-      <!-- Detail Panel -->
-      <div class="detail-panel" :class="{ 'panel-visible': selectedProperty }">
-        <div class="panel-header">
+    <section class="map-workspace">
+      <div class="panel map-panel">
+        <div class="panel-head map-toolbar">
           <div>
-            <span class="active-label">Active Selection</span>
-            <button class="panel-close" @click="closeModal">
-              <span class="material-symbols-outlined">close</span>
+            <h2 class="panel-title">Cadastral asset grid</h2>
+            <p class="panel-subtitle">{{ mapStatus }}</p>
+          </div>
+          <div class="layer-tabs" aria-label="Map layers">
+            <button
+              v-for="layer in layers"
+              :key="layer"
+              class="layer-tab"
+              :class="{ active: activeLayer === layer }"
+              type="button"
+              @click="activeLayer = layer"
+            >
+              {{ layer }}
             </button>
           </div>
-          <h2 class="panel-title">{{ selectedProperty?.title || 'Bole Estate Sector 4' }}</h2>
-          <p class="panel-id">Asset ID: {{ selectedProperty?.id || 'ETH-AA-77291-B' }}</p>
         </div>
-        <div class="panel-body">
-          <div class="panel-stats">
-            <div class="ps-card ps-green">
-              <p class="ps-label">Valuation</p>
-              <p class="ps-val">{{ selectedProperty ? formatPrice(selectedProperty.price) : '12.4M ETB' }}</p>
-            </div>
-            <div class="ps-card ps-indigo">
-              <p class="ps-label">Compliance</p>
-              <div class="ps-compliance">
-                <span class="material-symbols-outlined compliance-icon">verified</span>
-                <p class="ps-val">High</p>
-              </div>
-            </div>
-          </div>
-          <div class="params-section">
-            <h3 class="params-heading">Property Parameters</h3>
-            <div class="param-list">
-              <div class="param-row" v-for="p in propertyParams" :key="p.label">
-                <span class="param-label">{{ p.label }}</span>
-                <span class="param-value" :class="p.valueClass">{{ p.value }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="insight-box">
-            <h4 class="insight-title">Development Insight</h4>
-            <p class="insight-body">This sector has seen a 14.2% value appreciation over the last 18 months due to proximity to the new diplomatic corridor.</p>
-          </div>
-          <div class="panel-actions">
-            <button class="btn-update-val" @click="viewFullDetails">
-              <span class="material-symbols-outlined">edit_document</span> Update Valuation
-            </button>
-            <button class="btn-view-hist">
-              <span class="material-symbols-outlined">history</span> View History
-            </button>
-          </div>
+
+        <div class="civic-map" data-testid="asset-map-canvas">
+          <div class="map-grid-lines" aria-hidden="true"></div>
+          <div class="road primary-road" aria-hidden="true"></div>
+          <div class="road secondary-road" aria-hidden="true"></div>
+          <div v-if="loading" class="map-empty">Loading backend property coordinates...</div>
+          <div v-else-if="loadError" class="map-empty">{{ loadError }}</div>
+          <div v-else-if="assets.length === 0" class="map-empty">No geocoded backend properties are available yet.</div>
+          <button
+            v-for="asset in assets"
+            :key="asset.id"
+            class="asset-marker"
+            :class="[asset.kind, { active: selectedAsset?.id === asset.id }]"
+            :style="{ left: asset.x, top: asset.y }"
+            type="button"
+            @click="selectedAsset = asset"
+          >
+            <span>{{ asset.code }}</span>
+          </button>
+          <div class="map-scale">500 m</div>
+          <div class="map-coordinates">9.0116 N / 38.7616 E</div>
         </div>
       </div>
 
-      <!-- Default detail panel when nothing selected -->
-      <div class="detail-panel" v-if="!selectedProperty">
-        <div class="panel-header">
-          <div class="panel-header-top">
-            <span class="active-label">Active Selection</span>
+      <aside v-if="selectedAsset" class="panel selected-panel">
+        <div class="panel-head">
+          <div>
+            <p class="page-kicker">Active Selection</p>
+            <h2 class="panel-title">{{ selectedAsset.name }}</h2>
+            <p class="panel-subtitle">{{ selectedAsset.id }} · {{ selectedAsset.subCity }}</p>
           </div>
-          <h2 class="panel-title">Bole Estate Sector 4</h2>
-          <p class="panel-id">Asset ID: ETH-AA-77291-B</p>
+          <span class="status-pill" :class="selectedAsset.statusClass">{{ selectedAsset.status }}</span>
         </div>
-        <div class="panel-body">
-          <div class="panel-stats">
-            <div class="ps-card ps-green">
-              <p class="ps-label">Valuation</p>
-              <p class="ps-val">12.4M <span class="ps-unit">ETB</span></p>
-            </div>
-            <div class="ps-card ps-indigo">
-              <p class="ps-label">Compliance</p>
-              <div class="ps-compliance">
-                <span class="material-symbols-outlined compliance-icon">verified</span>
-                <p class="ps-val">High</p>
-              </div>
-            </div>
+
+        <div class="asset-summary">
+          <div>
+            <p class="metric-label">Valuation</p>
+            <p class="asset-value">{{ selectedAsset.value }}</p>
           </div>
-          <div class="params-section">
-            <h3 class="params-heading">Property Parameters</h3>
-            <div class="param-list">
-              <div class="param-row" v-for="p in propertyParams" :key="p.label">
-                <span class="param-label">{{ p.label }}</span>
-                <span class="param-value" :class="p.valueClass">{{ p.value }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="insight-box">
-            <h4 class="insight-title">Development Insight</h4>
-            <p class="insight-body">This sector has seen a 14.2% value appreciation over the last 18 months due to proximity to the new diplomatic corridor.</p>
-          </div>
-          <div class="panel-actions">
-            <button class="btn-update-val">
-              <span class="material-symbols-outlined">edit_document</span> Update Valuation
-            </button>
-            <button class="btn-view-hist">
-              <span class="material-symbols-outlined">history</span> View History
-            </button>
+          <div>
+            <p class="metric-label">Risk</p>
+            <p class="asset-risk">{{ selectedAsset.risk }}</p>
           </div>
         </div>
+
+        <div class="detail-list">
+          <div v-for="item in selectedDetails" :key="item.label" class="detail-row">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+
+        <div class="panel inspection-panel">
+          <p class="metric-label">Field Note</p>
+          <p>
+            {{ selectedAsset.note }}
+          </p>
+        </div>
+
+        <div class="page-actions">
+          <NuxtLink class="btn-primary" :to="`/properties/${selectedAsset.propertyId}`">
+            <i class="pi pi-file-edit" aria-hidden="true"></i>
+            Open Record
+          </NuxtLink>
+          <button class="btn-secondary" type="button">
+            <i class="pi pi-history" aria-hidden="true"></i>
+            History
+          </button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="table-panel">
+      <div class="panel-head map-table-head">
+        <div>
+          <h2 class="panel-title">Spatial Exceptions</h2>
+          <p class="panel-subtitle">Assets needing field review before the next valuation run.</p>
+        </div>
+        <span class="status-pill warn">4 Open</span>
       </div>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-      <span class="footer-brand">ValuAdis</span>
-      <p class="footer-copy">© 2025 ValuAdis. All rights reserved.</p>
-      <div class="footer-links">
-        <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Contact Support</a>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Sub-city</th>
+              <th>Exception</th>
+              <th class="text-right">Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="5" class="empty-cell">Loading spatial records...</td>
+            </tr>
+            <tr v-else-if="loadError">
+              <td colspan="5" class="empty-cell">{{ loadError }}</td>
+            </tr>
+            <tr v-else-if="assets.length === 0">
+              <td colspan="5" class="empty-cell">No geocoded backend properties are available yet.</td>
+            </tr>
+            <tr v-for="asset in assets" v-else :key="asset.id">
+              <td>{{ asset.name }}</td>
+              <td>{{ asset.subCity }}</td>
+              <td>{{ asset.exception }}</td>
+              <td class="text-right">{{ asset.value }}</td>
+              <td><span class="status-pill" :class="asset.statusClass">{{ asset.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </footer>
-
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import PropertyMap from '~/components/map/PropertyMap.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 definePageMeta({ middleware: 'auth' })
 
-const router = useRouter()
-const config = useRuntimeConfig()
-const apiBase = config.public.apiBaseUrl || 'http://localhost:8020'
-
-const selectedProperty = ref<any>(null)
-const mapProperties = ref<any[]>([])
-
-const propertyParams = [
-  { label: 'Land Area', value: '1,250 m²', valueClass: '' },
-  { label: 'Zoning', value: 'Residential-Mixed', valueClass: '' },
-  { label: 'Tax Status', value: 'Current', valueClass: 'val-green' },
-  { label: 'Owner', value: 'Private Heritage Fund', valueClass: '' },
-]
-
-onMounted(async () => {
-  try {
-    const token = localStorage.getItem('valuadis_token')
-    const res = await fetch(`${apiBase}/api/v1/properties?limit=500`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    if (res.ok) {
-      const data = await res.json()
-      mapProperties.value = data.data || []
-    }
-  } catch {
-    mapProperties.value = []
-  }
-})
-
-const onPropertySelected = (property: any) => { selectedProperty.value = property }
-const onPropertyView = () => { viewFullDetails() }
-const closeModal = () => { selectedProperty.value = null }
-const viewFullDetails = () => {
-  if (selectedProperty.value) router.push(`/properties/${selectedProperty.value.id}`)
+type Asset = {
+  id: string
+  propertyId: number
+  name: string
+  subCity: string
+  code: string
+  x: string
+  y: string
+  kind: string
+  value: string
+  risk: string
+  status: string
+  statusClass: string
+  exception: string
+  area: string
+  zoning: string
+  owner: string
+  note: string
 }
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price)
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
+const layers = ['Valuation', 'Compliance', 'Transit']
+const activeLayer = ref('Valuation')
+const loading = ref(true)
+const loadError = ref('')
+const assets = ref<Asset[]>([])
+const selectedAsset = ref<Asset | null>(null)
+
+const metrics = computed(() => {
+  const total = assets.value.length
+  const mapped = assets.value.filter((asset) => asset.x !== '50%' || asset.y !== '50%').length
+  const exceptions = assets.value.filter((asset) => asset.statusClass !== 'good').length
+  const priority = mostCommon(assets.value.map((asset) => asset.subCity)) || 'Unavailable'
+  return [
+    { label: 'Mapped assets', value: String(total), note: `${mapped} geocoded backend records` },
+    { label: 'Mapped coverage', value: total ? `${Math.round((mapped / total) * 100)}%` : '0%', note: 'Backend coordinate availability' },
+    { label: 'Open exceptions', value: String(exceptions), note: 'Records needing review' },
+    { label: 'Priority corridor', value: priority, note: 'Highest current record count' },
+  ]
+})
+
+const mapStatus = computed(() => {
+  if (loading.value) return 'Loading backend property coordinates.'
+  if (loadError.value) return 'Backend spatial records unavailable.'
+  return 'Backend property layer with valuation concentration and review exceptions.'
+})
+
+const selectedDetails = computed(() => [
+  { label: 'Land area', value: selectedAsset.value?.area || 'Unavailable' },
+  { label: 'Zoning', value: selectedAsset.value?.zoning || 'Unavailable' },
+  { label: 'Owner', value: selectedAsset.value?.owner || 'Unavailable' },
+  { label: 'Layer', value: activeLayer.value },
+])
+
+onMounted(loadProperties)
+
+async function loadProperties() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const response = await fetch(`${apiBase}/api/v1/properties`, {
+      headers: { Authorization: `Bearer ${getAccessToken()}` },
+    })
+    if (!response.ok) {
+      loadError.value = 'Property coordinates could not be loaded from the backend.'
+      return
+    }
+    const payload = await response.json()
+    const rows = Array.isArray(payload.data) ? payload.data : []
+    assets.value = rows.map(mapPropertyToAsset)
+    selectedAsset.value = assets.value[0] || null
+  } catch {
+    loadError.value = 'Property coordinates could not be loaded from the backend.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function mapPropertyToAsset(property: Record<string, any>, index: number): Asset {
+  const status = String(property.status || 'review').toLowerCase()
+  const hasCoordinates = Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))
+  return {
+    id: property.property_ref || `PROPERTY-${property.id}`,
+    propertyId: Number(property.id),
+    name: property.address || `Property ${property.id}`,
+    subCity: property.municipality || 'Unassigned',
+    code: String(property.property_type || 'PR').slice(0, 2).toUpperCase(),
+    x: hasCoordinates ? coordinateToPercent(Number(property.longitude), 38.68, 38.88, index) : '50%',
+    y: hasCoordinates ? coordinateToPercent(Number(property.latitude), 8.92, 9.12, index, true) : '50%',
+    kind: status === 'active' || status === 'approved' ? 'property' : 'review',
+    value: formatCurrency(Number(property.market_value || property.ai_estimated_value || 0)),
+    risk: status === 'active' || status === 'approved' ? 'Low' : 'Review',
+    status: labelize(status),
+    statusClass: status === 'active' || status === 'approved' ? 'good' : 'warn',
+    exception: hasCoordinates ? 'Coordinate available' : 'Missing coordinate',
+    area: `${formatCount(Number(property.area_sqm || property.building_area_sqm || 0))} m2`,
+    zoning: labelize(property.property_type || 'Unclassified'),
+    owner: 'Backend registry',
+    note: hasCoordinates
+      ? 'Backend record includes coordinate data and can be reviewed on the operational map.'
+      : 'Backend record is missing coordinates and needs geocoding before spatial review.',
+  }
+}
+
+function coordinateToPercent(value: number, min: number, max: number, index: number, invert = false) {
+  const normalized = Math.min(Math.max((value - min) / (max - min), 0), 1)
+  const adjusted = normalized || ((index % 7) + 1) / 8
+  const percent = invert ? 100 - adjusted * 100 : adjusted * 100
+  return `${Math.round(Math.min(Math.max(percent, 10), 90))}%`
+}
+
+function mostCommon(values: string[]) {
+  const counts = values.reduce<Record<string, number>>((acc, value) => {
+    if (value) acc[value] = (acc[value] || 0) + 1
+    return acc
+  }, {})
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('en-ET', {
+    style: 'currency',
+    currency: 'ETB',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value || 0)
+}
+
+function labelize(value: string) {
+  return String(value).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
 
 useHead({
-  title: 'GIS Maps — ValuAdis',
-  meta: [{ name: 'description', content: 'Interactive GIS map for asset valuation across Ethiopia.' }]
+  title: 'Asset Map - ValuAdis',
+  meta: [{ name: 'description', content: 'GIS map for ValuAdis asset valuation operations.' }],
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+.map-page {
+  gap: 24px;
+}
 
-.app-shell { display: flex; min-height: 100vh; background: #f7f9fb; font-family: 'Inter', sans-serif; color: #191c1e; }
+.map-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.55fr);
+  gap: 18px;
+  align-items: stretch;
+}
 
-/* Sidebar */
-.sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 16rem; background: rgba(248,250,252,0.7); backdrop-filter: blur(20px); border-right: 1px solid rgba(226,232,240,0.2); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 50; }
-.sidebar-brand { padding: 0 0.5rem; margin-bottom: 2.5rem; }
-.brand-title { display: block; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #065f46; }
-.brand-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-top: 0.2rem; }
-.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
-.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; color: #475569; text-decoration: none; transition: all 0.2s; }
-.nav-item:hover { color: #006948; background: rgba(248,250,252,0.6); }
-.nav-item.active { color: #005137; font-weight: 600; background: rgba(0,105,72,0.06); border-right: 3px solid #006948; }
-.nav-item .material-symbols-outlined { font-size: 1.25rem; }
-.sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(226,232,240,0.2); margin-top: auto; }
-.user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #00855d; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
-.user-name { font-size: 0.8rem; font-weight: 700; margin: 0; }
-.user-role { font-size: 0.7rem; color: #94a3b8; margin: 0; }
+.map-panel,
+.selected-panel {
+  min-height: 640px;
+}
 
-/* Header */
-.top-header { position: fixed; top: 0; right: 0; width: calc(100% - 16rem); height: 4rem; z-index: 40; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226,232,240,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
-.search-wrap { position: relative; flex: 1; max-width: 28rem; }
-.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
-.search-input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; background: #f1f5f9; border: none; border-radius: 9999px; font-size: 0.875rem; outline: none; }
-.header-right { display: flex; align-items: center; gap: 1.5rem; }
-.header-links { display: flex; gap: 1rem; }
-.hlink { font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: color 0.2s; }
-.hlink:hover { color: #006948; }
-.header-actions { display: flex; align-items: center; gap: 0.75rem; }
-.icon-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 0.5rem; border-radius: 50%; transition: background 0.2s; }
-.icon-btn:hover { background: #f1f5f9; }
-.btn-new-val { background: #006948; color: #fff; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-.btn-new-val:hover { opacity: 0.9; }
+.map-toolbar {
+  align-items: flex-start;
+}
 
-/* Map Main */
-.map-main { margin-left: 16rem; margin-top: 4rem; flex: 1; position: relative; display: flex; height: calc(100vh - 4rem); overflow: hidden; }
+.layer-tabs {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 4px;
+}
 
-/* Breadcrumb overlay */
-.breadcrumb-overlay { position: absolute; top: 1.5rem; left: 2rem; z-index: 20; display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); padding: 0.35rem 1rem; border-radius: 9999px; border: 1px solid rgba(209,250,229,0.5); box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-size: 0.75rem; font-weight: 500; color: #94a3b8; }
-.bc-chevron { font-size: 0.875rem; color: #cbd5e1; }
-.bc-active { color: #065f46; font-weight: 700; }
+.layer-tab {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
 
-/* Map canvas */
-.map-canvas { flex: 1; position: relative; background: #cbd5e1; overflow: hidden; }
-.leaflet-wrap { position: absolute; inset: 0; z-index: 0; }
+.layer-tab.active {
+  background: var(--surface);
+  color: var(--green);
+  box-shadow: 0 1px 4px rgba(23, 26, 23, 0.08);
+}
 
-/* Pins */
-.map-pin { position: absolute; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-.pin-1 { top: 33%; left: 25%; }
-.pin-2 { bottom: 33%; right: 50%; }
-.pin-badge { background: #fff; padding: 0.25rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid #006948; }
-.pin-badge.pin-secondary { border-color: #4b41e1; }
-.pin-badge > span { display: flex; align-items: center; justify-content: center; background: #006948; color: #fff; padding: 0.35rem; border-radius: 0.4rem; font-size: 1.1rem; }
-.pin-badge.pin-secondary > span { background: #4b41e1; }
-.pin-tooltip { margin-top: 0.4rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); padding: 0.2rem 0.6rem; border-radius: 0.4rem; box-shadow: 0 1px 4px rgba(0,0,0,0.1); border: 1px solid rgba(0,105,72,0.1); font-size: 0.65rem; font-weight: 700; color: #065f46; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-.map-pin:hover .pin-tooltip { opacity: 1; }
+.civic-map {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 32% 38%, rgba(31, 107, 79, 0.2), transparent 22%),
+    radial-gradient(circle at 72% 52%, rgba(156, 107, 29, 0.18), transparent 20%),
+    linear-gradient(135deg, #e7ede5 0%, #f8f6ec 42%, #dfe9e3 100%);
+}
 
-/* Map Controls */
-.map-controls { position: absolute; right: 1.5rem; top: 5rem; z-index: 20; display: flex; flex-direction: column; gap: 0.5rem; }
-.zoom-btns { display: flex; flex-direction: column; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-radius: 0.75rem; overflow: hidden; border: 1px solid rgba(226,232,240,0.5); }
-.map-ctrl-btn { background: #fff; border: none; padding: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #475569; transition: background 0.15s; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-radius: 0.75rem; border: 1px solid rgba(226,232,240,0.5); }
-.map-ctrl-btn:hover { background: #f1f5f9; }
-.border-b { border-bottom: 1px solid #f1f5f9; border-radius: 0; }
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
+.map-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(23, 26, 23, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 26, 23, 0.08) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.45));
+}
 
-/* Detail Panel */
-.detail-panel { width: 24rem; background: #fff; border-left: 1px solid rgba(226,232,240,0.5); z-index: 30; display: flex; flex-direction: column; overflow-y: auto; }
-.panel-header { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; }
-.panel-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
-.active-label { background: #d1fae5; color: #065f46; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.15rem 0.6rem; border-radius: 9999px; }
-.panel-close { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.25rem; }
-.panel-title { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #191c1e; margin: 0.5rem 0 0.2rem; }
-.panel-id { font-size: 0.75rem; color: #94a3b8; margin: 0; }
-.panel-body { flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
-.panel-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.ps-card { padding: 1rem; border-radius: 1rem; background: #f2f4f6; }
-.ps-green { border: 1px solid rgba(0,105,72,0.1); }
-.ps-indigo { border: 1px solid rgba(75,65,225,0.1); }
-.ps-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0 0 0.35rem; }
-.ps-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #065f46; margin: 0; }
-.ps-unit { font-size: 0.65rem; }
-.ps-compliance { display: flex; align-items: center; gap: 0.35rem; }
-.compliance-icon { font-size: 1rem; color: #006948; }
-.params-heading { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin: 0 0 1rem; }
-.param-list { display: flex; flex-direction: column; }
-.param-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #f8fafc; }
-.param-label { font-size: 0.875rem; color: #475569; }
-.param-value { font-size: 0.875rem; font-weight: 600; color: #191c1e; }
-.val-green { color: #006948; }
-.insight-box { padding: 1.25rem; border-radius: 1rem; background: rgba(0,105,72,0.05); border: 1px solid rgba(0,105,72,0.12); position: relative; overflow: hidden; }
-.insight-title { font-family: 'Syne', sans-serif; font-size: 0.875rem; font-weight: 700; color: #065f46; margin: 0 0 0.5rem; }
-.insight-body { font-size: 0.8rem; color: rgba(4,47,34,0.8); line-height: 1.6; margin: 0; }
-.panel-actions { display: flex; flex-direction: column; gap: 0.5rem; }
-.btn-update-val { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; background: #006948; color: #fff; border: none; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-.btn-update-val:hover { opacity: 0.9; }
-.btn-view-hist { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; background: #fff; border: 1px solid #e2e8f0; color: #475569; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
-.btn-view-hist:hover { background: #f8fafc; }
+.road {
+  position: absolute;
+  height: 26px;
+  border: 1px solid rgba(54, 95, 115, 0.3);
+  background: rgba(252, 252, 250, 0.76);
+  box-shadow: 0 0 0 6px rgba(252, 252, 250, 0.28);
+}
 
-/* Footer */
-.app-footer { margin-left: 16rem; padding: 1.5rem 3rem; border-top: 1px solid rgba(226,232,240,0.15); background: #f8fafc; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
-.footer-brand { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; }
-.footer-copy { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0; }
-.footer-links { display: flex; gap: 2rem; }
-.footer-links a { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; text-decoration: none; }
-.footer-links a:hover { color: #006948; }
+.primary-road {
+  left: -8%;
+  top: 45%;
+  width: 118%;
+  transform: rotate(-16deg);
+}
+
+.secondary-road {
+  left: 28%;
+  top: -6%;
+  width: 26px;
+  height: 112%;
+  transform: rotate(18deg);
+}
+
+.asset-marker {
+  position: absolute;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--surface);
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--surface);
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(23, 26, 23, 0.22);
+  transform: translate(-50%, -50%);
+}
+
+.asset-marker.review {
+  background: var(--amber);
+}
+
+.asset-marker.vehicle {
+  background: var(--blue);
+}
+
+.asset-marker.active {
+  outline: 4px solid rgba(31, 107, 79, 0.18);
+}
+
+.asset-marker span {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.map-scale,
+.map-coordinates {
+  position: absolute;
+  z-index: 3;
+  bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(252, 252, 250, 0.9);
+  color: var(--ink-soft);
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.map-scale {
+  left: 18px;
+}
+
+.map-coordinates {
+  right: 18px;
+}
+
+.selected-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.asset-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.asset-summary > div,
+.inspection-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f7f9f5;
+  padding: 16px;
+}
+
+.asset-value,
+.asset-risk {
+  margin: 7px 0 0;
+  font-family: var(--display);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.detail-list {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail-row:last-child {
+  border-bottom: 0;
+}
+
+.detail-row strong {
+  color: var(--ink);
+  font-weight: 800;
+  text-align: right;
+}
+
+.inspection-panel {
+  box-shadow: none;
+}
+
+.inspection-panel p:last-child {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.map-table-head {
+  padding: 20px 22px 0;
+}
+
+@media (max-width: 1180px) {
+  .map-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .map-panel,
+  .selected-panel {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .map-toolbar,
+  .map-table-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .layer-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .civic-map {
+    min-height: 420px;
+  }
+
+  .asset-summary {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
-

@@ -120,6 +120,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import ValuationTrustBadge from '~/components/property/ValuationTrustBadge.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 const props = defineProps<{
   propertyId: number
@@ -128,6 +129,8 @@ const props = defineProps<{
   totalReviews?: number
   propertyContext?: Record<string, unknown>
 }>()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
 
 const mode = ref<'approve' | 'modify'>('approve')
 const finalValue = ref<number | null>(null)
@@ -178,12 +181,11 @@ async function submitReview() {
   const approved = mode.value === 'approve'
   const resolvedFinal = approved ? props.aiEstimate! : finalValue.value!
 
-  const token = localStorage.getItem('valuadis_token')
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
+  const token = getAccessToken()
 
   submitting.value = true
   try {
-    const res = await fetch(`${API_BASE}/api/v1/valuation-feedback`, {
+    const res = await fetch(`${apiBase}/api/v1/valuation-feedback`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

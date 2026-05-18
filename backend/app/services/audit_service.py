@@ -8,6 +8,7 @@ Generates system audit reports, compliance reports, and performance metrics
 import json
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func, and_, or_
@@ -25,6 +26,13 @@ class AuditService:
     
     def __init__(self, db: Session):
         self.db = db
+
+    def _serialize_datetime(self, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value)
     
     def generate_system_audit_report(self, 
                                    start_date: Optional[datetime] = None,
@@ -504,8 +512,9 @@ class AuditService:
                 "total_valuations_analyzed": len(all_valuations),
                 "proclamation_1365_2025_compliance": {
                     "rule": "25% taxable value of market value",
-                    "compliant_count": 0,
-                    "non_compliant_count": 0,
+                    "total_valuations": len(all_valuations),
+                    "compliant_valuations": 0,
+                    "non_compliant_valuations": 0,
                     "compliance_rate": 0.0
                 },
                 "municipality_analysis": {},
@@ -516,15 +525,17 @@ class AuditService:
             # Analyze each valuation
             for valuation in all_valuations:
                 valuation_id, prop_type, municipality, market_value, taxable_value, created_at = valuation
+                market_value_decimal = Decimal(str(market_value or 0))
+                taxable_value_decimal = Decimal(str(taxable_value or 0))
                 
                 # Check 25% compliance
-                expected_taxable = market_value * 0.25
-                is_compliant = abs(taxable_value - expected_taxable) < 1
+                expected_taxable = market_value_decimal * Decimal("0.25")
+                is_compliant = abs(taxable_value_decimal - expected_taxable) < 1
                 
                 if is_compliant:
-                    compliance_analysis["proclamation_1365_2025_compliance"]["compliant_count"] += 1
+                    compliance_analysis["proclamation_1365_2025_compliance"]["compliant_valuations"] += 1
                 else:
-                    compliance_analysis["proclamation_1365_2025_compliance"]["non_compliant_count"] += 1
+                    compliance_analysis["proclamation_1365_2025_compliance"]["non_compliant_valuations"] += 1
                 
                 # Municipality analysis
                 if municipality not in compliance_analysis["municipality_analysis"]:
@@ -556,18 +567,18 @@ class AuditService:
                         "valuation_id": valuation_id,
                         "property_type": prop_type,
                         "municipality": municipality,
-                        "market_value": float(market_value),
-                        "taxable_value": float(taxable_value),
+                        "market_value": float(market_value_decimal),
+                        "taxable_value": float(taxable_value_decimal),
                         "expected_taxable": float(expected_taxable),
-                        "deviation": float(taxable_value - expected_taxable),
-                        "created_at": created_at.isoformat() if created_at else None
+                        "deviation": float(taxable_value_decimal - expected_taxable),
+                        "created_at": self._serialize_datetime(created_at)
                     })
             
             # Calculate compliance rates
-            total_val = compliance_analysis["proclamation_1365_2025_compliance"]["total_valuations_analyzed"]
+            total_val = compliance_analysis["proclamation_1365_2025_compliance"]["total_valuations"]
             if total_val > 0:
                 compliance_analysis["proclamation_1365_2025_compliance"]["compliance_rate"] = (
-                    compliance_analysis["proclamation_1365_2025_compliance"]["compliant_count"] / total_val * 100
+                    compliance_analysis["proclamation_1365_2025_compliance"]["compliant_valuations"] / total_val * 100
                 )
                 
                 for municipality in compliance_analysis["municipality_analysis"]:

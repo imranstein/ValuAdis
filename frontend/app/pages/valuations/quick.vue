@@ -13,7 +13,7 @@
         </button>
         <button class="action-button primary" @click="exportResults" v-if="result">
           <i class="pi pi-download"></i>
-          Export PDF
+          Export Report
         </button>
       </div>
     </div>
@@ -132,18 +132,18 @@
               <label>Municipality/City *</label>
               <select v-model="formData.municipality" required>
                 <option value="">Select municipality</option>
-                <option value="addis_ababa">Addis Ababa</option>
-                <option value="dire_dawa">Dire Dawa</option>
-                <option value="mekelle">Mekelle</option>
-                <option value="gondar">Gondar</option>
-                <option value="bahir_dar">Bahir Dar</option>
-                <option value="hawassa">Hawassa</option>
-                <option value="adama">Adama</option>
-                <option value="jimma">Jimma</option>
-                <option value="dessie">Dessie</option>
-                <option value="harar">Harar</option>
-                <option value="shashamane">Shashamane</option>
-                <option value="nazret">Nazret</option>
+                <option value="Addis Ababa">Addis Ababa</option>
+                <option value="Dire Dawa">Dire Dawa</option>
+                <option value="Mekelle">Mekelle</option>
+                <option value="Gonder">Gonder</option>
+                <option value="Bahir Dar">Bahir Dar</option>
+                <option value="Hawassa">Hawassa</option>
+                <option value="Adama">Adama</option>
+                <option value="Jimma">Jimma</option>
+                <option value="Dessie">Dessie</option>
+                <option value="Harar">Harar</option>
+                <option value="Shashamane">Shashamane</option>
+                <option value="Arba Minch">Arba Minch</option>
               </select>
             </div>
 
@@ -410,11 +410,11 @@
               <label>Neighborhood Quality</label>
               <select v-model="formData.neighborhood_quality">
                 <option value="">Select quality</option>
-                <option value="premium">Premium</option>
+                <option value="prime">Prime</option>
                 <option value="above_average">Above Average</option>
                 <option value="average">Average</option>
                 <option value="below_average">Below Average</option>
-                <option value="poor">Poor</option>
+                <option value="developing">Developing</option>
               </select>
             </div>
 
@@ -486,6 +486,7 @@
             {{ loading ? 'Calculating...' : 'Calculate Valuation' }}
           </button>
         </div>
+        <p v-if="statusMessage" class="form-status" data-testid="quick-valuation-status">{{ statusMessage }}</p>
       </form>
     </div>
 
@@ -586,10 +587,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
+const route = useRoute()
 
 const currentStep = ref(1)
 const formData = ref({
@@ -648,8 +651,17 @@ const formData = ref({
 const result = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const statusMessage = ref('')
+const config = useRuntimeConfig()
 
 const currentYear = computed(() => new Date().getFullYear())
+
+onMounted(() => {
+  const propertyId = Number(route.query.property_id)
+  if (Number.isInteger(propertyId) && propertyId > 0) {
+    loadPropertyForValuation(propertyId)
+  }
+})
 
 // Auto-calculate hectares from square meters
 watch(() => formData.value.land_area_sqm, (newValue) => {
@@ -684,7 +696,7 @@ async function calculateValuation() {
   currentStep.value = 4
 
   try {
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     
     // Prepare comprehensive valuation data
     const valuationData = {
@@ -695,7 +707,7 @@ async function calculateValuation() {
       year_built: formData.value.year_built
     }
     
-    const response = await fetch('http://localhost:8020/api/v1/valuations/quick', {
+    const response = await fetch(`${config.public.apiBaseUrl}/api/v1/valuations/quick`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -722,6 +734,83 @@ async function calculateValuation() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadPropertyForValuation(propertyId) {
+  try {
+    const token = getAccessToken()
+    const response = await fetch(`${config.public.apiBaseUrl}/api/v1/properties/${propertyId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+      statusMessage.value = `Property ${propertyId} could not be loaded`
+      return
+    }
+    const payload = await response.json()
+    const property = payload.data || payload
+    formData.value = {
+      ...formData.value,
+      property_type: property.property_type || formData.value.property_type,
+      property_category: normalizePropertyCategory(property.property_subtype, property.property_type) || formData.value.property_category,
+      ownership_type: property.ownership_type || formData.value.ownership_type || 'private',
+      address: property.address || formData.value.address,
+      municipality: property.municipality || formData.value.municipality,
+      sub_city: property.subcity || property.sub_city || formData.value.sub_city,
+      kebele: property.kebele || formData.value.kebele,
+      land_area_sqm: property.area_sqm || formData.value.land_area_sqm,
+      building_area_sqm: property.building_area_sqm || formData.value.building_area_sqm,
+      number_of_floors: property.number_of_floors || formData.value.number_of_floors,
+      year_built: property.year_built || formData.value.year_built,
+      building_condition: property.condition || formData.value.building_condition,
+      zone_classification: formData.value.zone_classification || defaultZoneClassification(property.property_type),
+      construction_type: property.construction_material || formData.value.construction_type || 'reinforced_concrete',
+      roof_type: property.roof_material || formData.value.roof_type || 'concrete_slab',
+      valuation_purpose: formData.value.valuation_purpose || 'tax_assessment',
+      market_sector: formData.value.market_sector || 'secondary',
+      neighborhood_quality: formData.value.neighborhood_quality || 'above_average',
+      accessibility_rating: formData.value.accessibility_rating || 'good',
+      has_road_access: formData.value.has_road_access || true,
+      has_water_supply: formData.value.has_water_supply || true,
+      has_electricity: formData.value.has_electricity || true,
+    }
+    statusMessage.value = `Loaded property ${property.property_ref || propertyId}`
+  } catch {
+    statusMessage.value = `Property ${propertyId} could not be loaded`
+  }
+}
+
+function normalizePropertyCategory(subtype, propertyType) {
+  const subtypeMap = {
+    villa: 'single_family',
+    house: 'single_family',
+    apartment_building: 'apartment',
+    apartment: 'apartment',
+    office_building: 'office',
+    commercial: 'retail',
+    farmland: 'farm',
+    agricultural: 'farm',
+  }
+  if (subtype && subtypeMap[String(subtype).toLowerCase()]) {
+    return subtypeMap[String(subtype).toLowerCase()]
+  }
+
+  const typeMap = {
+    residential: 'single_family',
+    commercial: 'office',
+    industrial: 'warehouse',
+    agricultural: 'farm',
+  }
+  return typeMap[String(propertyType || '').toLowerCase()] || ''
+}
+
+function defaultZoneClassification(propertyType) {
+  const typeMap = {
+    residential: 'residential_a',
+    commercial: 'commercial_a',
+    industrial: 'industrial',
+    agricultural: 'special',
+  }
+  return typeMap[String(propertyType || '').toLowerCase()] || 'mixed_use'
 }
 
 function formatCurrency(value) {
@@ -795,10 +884,8 @@ function getPropertyTypeLabel(type) {
 }
 
 function saveDraft() {
-  // Save form data to localStorage
   localStorage.setItem('valuation_draft', JSON.stringify(formData.value))
-  // Show success message (you could add a toast notification here)
-  alert('Draft saved successfully!')
+  statusMessage.value = 'Draft saved'
 }
 
 function loadSavedValuation() {
@@ -807,18 +894,47 @@ function loadSavedValuation() {
     try {
       const draft = JSON.parse(savedDraft)
       formData.value = { ...formData.value, ...draft }
-      alert('Draft loaded successfully!')
+      statusMessage.value = 'Draft loaded'
     } catch (error) {
-      alert('Failed to load draft')
+      statusMessage.value = 'Saved draft could not be loaded'
     }
   } else {
-    alert('No saved draft found')
+    statusMessage.value = 'No saved draft found'
   }
 }
 
 function exportResults() {
-  // Placeholder for PDF export functionality
-  alert('PDF export feature coming soon!')
+  if (!result.value) return
+
+  const report = {
+    generated_at: new Date().toISOString(),
+    property: {
+      type: formData.value.property_type,
+      category: formData.value.property_category,
+      address: formData.value.address,
+      municipality: formData.value.municipality,
+      land_area_sqm: formData.value.land_area_sqm,
+      building_area_sqm: formData.value.building_area_sqm,
+      year_built: formData.value.year_built,
+      condition: formData.value.building_condition,
+    },
+    valuation: result.value,
+    compliance: {
+      proclamation: '1365/2025',
+      taxable_value_rule: '25% of market value',
+    },
+  }
+
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `valuadis-quick-valuation-${new Date().toISOString().slice(0, 10)}.json`
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+  statusMessage.value = 'Valuation report exported'
 }
 
 function saveAsProperty() {
@@ -1106,6 +1222,15 @@ function saveAsProperty() {
 .form-actions .action-button {
   padding: 0.875rem 2rem;
   font-size: 0.875rem;
+}
+
+.form-status {
+  margin: 0;
+  padding: 0.9rem 2rem 1.5rem;
+  background: #f8fafc;
+  color: #065f46;
+  font-weight: 700;
+  border-top: 1px solid #e2e8f0;
 }
 
 /* Results Section */

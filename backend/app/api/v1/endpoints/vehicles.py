@@ -127,6 +127,73 @@ async def get_user_vehicles(
         )
 
 
+@router.get("/statistics/summary")
+async def get_vehicle_statistics(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Get vehicle statistics summary for the current user
+
+    Returns statistics including total vehicles, total value, and breakdowns.
+    """
+    try:
+        vehicles = db.query(Vehicle).filter(Vehicle.user_id == current_user_id).all()
+        valuations = db.query(VehicleValuation).filter(
+            VehicleValuation.user_id == current_user_id
+        ).all()
+
+        total_vehicles = len(vehicles)
+        total_market_value = sum(v.market_value for v in valuations)
+        total_taxable_value = sum(v.taxable_value for v in valuations)
+
+        make_breakdown = {}
+        for vehicle in vehicles:
+            make = vehicle.make
+            make_breakdown[make] = make_breakdown.get(make, 0) + 1
+
+        year_breakdown = {}
+        for vehicle in vehicles:
+            year = vehicle.year
+            year_breakdown[year] = year_breakdown.get(year, 0) + 1
+
+        region_breakdown = {}
+        for vehicle in vehicles:
+            region = vehicle.region or "Unknown"
+            region_breakdown[region] = region_breakdown.get(region, 0) + 1
+
+        status_breakdown = {}
+        for valuation in valuations:
+            status = valuation.status.value
+            status_breakdown[status] = status_breakdown.get(status, 0) + 1
+
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_valuations = len([
+            v for v in valuations if v.created_at > thirty_days_ago
+        ])
+
+        logger.info(f"User {current_user_id} retrieved vehicle statistics")
+        return {
+            "total_vehicles": total_vehicles,
+            "total_valuations": len(valuations),
+            "total_market_value": total_market_value,
+            "total_taxable_value": total_taxable_value,
+            "average_vehicle_value": total_market_value / len(valuations) if valuations else 0,
+            "recent_valuations": recent_valuations,
+            "make_breakdown": make_breakdown,
+            "year_breakdown": year_breakdown,
+            "region_breakdown": region_breakdown,
+            "status_breakdown": status_breakdown
+        }
+
+    except Exception as e:
+        logger.error(f"Error retrieving vehicle statistics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error while retrieving vehicle statistics"
+        )
+
+
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(
     vehicle_id: int,
@@ -459,80 +526,3 @@ async def get_latest_vehicle_valuation(
             detail="Internal server error while retrieving latest vehicle valuation"
         )
 
-
-@router.get("/statistics/summary")
-async def get_vehicle_statistics(
-    current_user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-):
-    """
-    Get vehicle statistics summary for the current user
-    
-    Returns statistics including total vehicles, total value, and breakdowns.
-    """
-    try:
-        # Get user's vehicles
-        vehicles = db.query(Vehicle).filter(Vehicle.user_id == current_user_id).all()
-
-        # Get user's valuations
-        valuations = db.query(VehicleValuation).filter(
-            VehicleValuation.user_id == current_user_id
-        ).all()
-        
-        # Calculate statistics
-        total_vehicles = len(vehicles)
-        total_market_value = sum(v.market_value for v in valuations)
-        total_taxable_value = sum(v.taxable_value for v in valuations)
-        
-        # Breakdown by make
-        make_breakdown = {}
-        for vehicle in vehicles:
-            make = vehicle.make
-            make_breakdown[make] = make_breakdown.get(make, 0) + 1
-        
-        # Breakdown by year
-        year_breakdown = {}
-        for vehicle in vehicles:
-            year = vehicle.year
-            year_breakdown[year] = year_breakdown.get(year, 0) + 1
-        
-        # Breakdown by region
-        region_breakdown = {}
-        for vehicle in vehicles:
-            region = vehicle.region or "Unknown"
-            region_breakdown[region] = region_breakdown.get(region, 0) + 1
-        
-        # Valuation status breakdown
-        status_breakdown = {}
-        for valuation in valuations:
-            status = valuation.status.value
-            status_breakdown[status] = status_breakdown.get(status, 0) + 1
-        
-        # Recent valuations (last 30 days)
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        recent_valuations = len([
-            v for v in valuations if v.created_at > thirty_days_ago
-        ])
-        
-        statistics = {
-            "total_vehicles": total_vehicles,
-            "total_valuations": len(valuations),
-            "total_market_value": total_market_value,
-            "total_taxable_value": total_taxable_value,
-            "average_vehicle_value": total_market_value / len(valuations) if valuations else 0,
-            "recent_valuations": recent_valuations,
-            "make_breakdown": make_breakdown,
-            "year_breakdown": year_breakdown,
-            "region_breakdown": region_breakdown,
-            "status_breakdown": status_breakdown
-        }
-        
-        logger.info(f"User {current_user_id} retrieved vehicle statistics")
-        return statistics
-        
-    except Exception as e:
-        logger.error(f"Error retrieving vehicle statistics: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error while retrieving vehicle statistics"
-        )

@@ -60,18 +60,20 @@ class VehicleValuationService:
     
     def update_vehicle(self, vehicle_id: UUID, update_data: VehicleUpdate) -> Optional[Vehicle]:
         """Update vehicle information"""
+        update_values = update_data.dict(exclude_unset=True)
+
         # Check if VIN or plate is being changed to an existing one
-        if "vin" in update_data:
-            existing = self.vehicle_repo.get_by_vin(update_data["vin"])
+        if "vin" in update_values:
+            existing = self.vehicle_repo.get_by_vin(update_values["vin"])
             if existing and existing.id != vehicle_id:
-                raise ValueError(f"Vehicle with VIN {update_data['vin']} already exists")
+                raise ValueError(f"Vehicle with VIN {update_values['vin']} already exists")
         
-        if "plate_number" in update_data:
-            existing = self.vehicle_repo.get_by_plate(update_data["plate_number"])
+        if "plate_number" in update_values:
+            existing = self.vehicle_repo.get_by_plate(update_values["plate_number"])
             if existing and existing.id != vehicle_id:
-                raise ValueError(f"Vehicle with plate {update_data['plate_number']} already exists")
+                raise ValueError(f"Vehicle with plate {update_values['plate_number']} already exists")
         
-        return self.vehicle_repo.update(vehicle_id, update_data.dict(exclude_unset=True))
+        return self.vehicle_repo.update(vehicle_id, update_values)
     
     def delete_vehicle(self, vehicle_id: UUID) -> bool:
         """Delete (soft delete) a vehicle"""
@@ -164,6 +166,8 @@ class VehicleValuationService:
             except Exception as e:
                 logger.error(f"AI analysis failed for vehicle {vehicle_id}: {e}")
                 # Fallback to basic calculation
+                ai_results = self._basic_valuation_calculation(vehicle, similar_vehicles)
+            if "market_value" not in ai_results:
                 ai_results = self._basic_valuation_calculation(vehicle, similar_vehicles)
         else:
             ai_results = self._basic_valuation_calculation(vehicle, similar_vehicles)

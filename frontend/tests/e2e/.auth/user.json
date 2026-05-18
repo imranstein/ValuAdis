@@ -5,16 +5,8 @@
       "origin": "http://localhost:3020",
       "localStorage": [
         {
-          "name": "__VUE_DEVTOOLS_NEXT_PLUGIN_SETTINGS__dev.esm.pinia__",
-          "value": "{\"logStoreChanges\":true}"
-        },
-        {
-          "name": "valuadis_user",
-          "value": "{\"id\":1,\"email\":\"admin@valuadis.com\",\"full_name\":\"System Administrator\",\"role\":\"admin\",\"is_admin\":true,\"created_at\":\"2026-03-17T05:46:22.967Z\"}"
-        },
-        {
           "name": "valuadis_token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzczNzI4MTgyfQ.A29Cy2QW0b76307cpeksYrUUNPQiKRd_IbuSyUaKzTU"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkB2YWx1YWRpcy5jb20iLCJleHAiOjk5OTk5OTk5OTl9.mock-e2e-signature"
         }
       ]
     }

@@ -41,9 +41,12 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PropertyDetailView from '~/components/property/PropertyDetailView.vue'
 import ValuationReviewPanel from '~/components/property/ValuationReviewPanel.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
 const route = useRoute()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
 
 const property = ref({})
 const valuations = ref([])
@@ -78,7 +81,7 @@ const propertyContext = computed(() => ({
 
 // Authenticated fetch helper
 async function fetchWithAuth(url, options = {}) {
-  const token = localStorage.getItem('valuadis_token')
+  const token = getAccessToken()
   
   if (!token) {
     router.push('/login')
@@ -134,8 +137,7 @@ onMounted(async () => {
 
 async function loadProperty() {
   try {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const response = await fetchWithAuth(`${API_BASE}/api/v1/properties/${route.params.id}`)
+    const response = await fetchWithAuth(`${apiBase}/api/v1/properties/${route.params.id}`)
     
     const result = await response.json()
     property.value = result.data || result
@@ -146,8 +148,7 @@ async function loadProperty() {
 
 async function loadValuations() {
   try {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const response = await fetchWithAuth(`${API_BASE}/api/v1/valuations?property_id=${route.params.id}`)
+    const response = await fetchWithAuth(`${apiBase}/api/v1/valuations?property_id=${route.params.id}`)
     
     const result = await response.json()
     valuations.value = result.data || []
@@ -166,13 +167,15 @@ function editProperty(id) {
 }
 
 function createValuation(id) {
-  router.push(`/valuations/create?property_id=${id}`)
+  router.push(`/valuations/quick?property_id=${id}`)
 }
 
 async function loadTrustMetrics() {
   try {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const res = await fetch(`${API_BASE}/api/v1/valuation-feedback/metrics`)
+    const token = getAccessToken()
+    const res = await fetch(`${apiBase}/api/v1/valuation-feedback/metrics`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
     if (res.ok) trustMetrics.value = await res.json()
   } catch {}
 }

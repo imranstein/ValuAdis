@@ -71,6 +71,8 @@ uploads/
 *.png
 *.jpg
 *.jpeg
+!frontend/app/public/images/
+!frontend/app/public/images/valuadis-civic-ledger-hero.png
 
 # Database
 *.sql

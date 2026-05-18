@@ -3,8 +3,11 @@
  * Allows full test suite to run without backend on port 8020.
  */
 
-const MOCK_TOKEN = 'mock-jwt-token-for-e2e-testing';
-const MOCK_USER = {
+// Valid JWT format (header.payload.signature) with exp=9999999999 (year ~2286).
+// The auth middleware calls isTokenExpired() which checks JWT structure and exp,
+// so this must be a properly formatted JWT even though it's not cryptographically signed.
+export const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkB2YWx1YWRpcy5jb20iLCJleHAiOjk5OTk5OTk5OTl9.mock-e2e-signature';
+export const MOCK_USER = {
   id: 1,
   email: 'admin@valuadis.com',
   full_name: 'Admin User',

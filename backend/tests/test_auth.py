@@ -5,8 +5,10 @@ Test authentication endpoints and JWT token management
 """
 
 import pytest
+from jose import jwt
 from fastapi.testclient import TestClient
 from app.main import app
+from app.core.config import settings
 
 
 class TestAuthentication:
@@ -122,3 +124,55 @@ class TestAuthentication:
         response = client.get("/api/v1/auth/me", headers=headers)
         
         assert response.status_code == 401
+
+    def test_refresh_token_rejected_on_protected_endpoint(self, client: TestClient, test_user_data):
+        """Test refresh token cannot access access-token-only endpoints"""
+        client.post("/api/v1/auth/register", json=test_user_data)
+        login_data = {
+            "email": test_user_data["email"],
+            "password": test_user_data["password"],
+        }
+        login_response = client.post("/api/v1/auth/login", json=login_data)
+        refresh_token = login_response.json()["data"]["refresh_token"]
+
+        response = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {refresh_token}"})
+
+        assert response.status_code == 401
+
+    def test_access_token_can_only_be_expired_token(self, client: TestClient, test_user_data):
+        """Expired access tokens are rejected by protected routes"""
+        client.post("/api/v1/auth/register", json=test_user_data)
+
+        expired_token = jwt.encode(
+            {
+                "sub": "1",
+                "type": "access",
+                "exp": 0,
+            },
+            settings.SECRET_KEY,
+            algorithm=settings.ALGORITHM,
+        )
+
+        response = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_token}"})
+
+        assert response.status_code == 401
+
+    def test_admin_routes_block_regular_users(self, client: TestClient, db_session, test_user_data):
+        """Admin-only routes reject non-admin tokens"""
+        client.post("/api/v1/auth/register", json=test_user_data)
+
+        # Promote route should remain inaccessible for non-admin users
+        # without extra roles or admin flag.
+        login_data = {
+            "email": test_user_data["email"],
+            "password": test_user_data["password"],
+        }
+        login_response = client.post("/api/v1/auth/login", json=login_data)
+        token = login_response.json()["data"]["access_token"]
+
+        response = client.get(
+            "/api/v1/users",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 403

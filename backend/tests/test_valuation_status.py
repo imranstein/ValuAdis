@@ -40,7 +40,6 @@ class TestValuationStatusTransitions:
     def test_draft_to_pending_is_valid(self):
         """Draft → Pending should succeed."""
         service, mock_valuation, mock_repo = self._make_service("draft")
-        mock_valuation.status = ValuationStatus.PENDING
         mock_valuation.to_dict.return_value = {"id": 1, "status": "pending"}
 
         result = service.transition_status(1, "pending", actor_user_id=42)
@@ -50,7 +49,6 @@ class TestValuationStatusTransitions:
     def test_pending_to_approved_is_valid(self):
         """Pending → Approved should succeed."""
         service, mock_valuation, mock_repo = self._make_service("pending")
-        mock_valuation.status = ValuationStatus.APPROVED
         mock_valuation.to_dict.return_value = {"id": 1, "status": "approved"}
 
         result = service.transition_status(1, "approved", actor_user_id=42)
@@ -59,7 +57,6 @@ class TestValuationStatusTransitions:
     def test_pending_to_rejected_is_valid(self):
         """Pending → Rejected should succeed."""
         service, mock_valuation, mock_repo = self._make_service("pending")
-        mock_valuation.status = ValuationStatus.REJECTED
         mock_valuation.to_dict.return_value = {"id": 1, "status": "rejected"}
 
         result = service.transition_status(1, "rejected", actor_user_id=42)
@@ -68,7 +65,6 @@ class TestValuationStatusTransitions:
     def test_approved_to_archived_is_valid(self):
         """Approved → Archived should succeed."""
         service, mock_valuation, mock_repo = self._make_service("approved")
-        mock_valuation.status = ValuationStatus.ARCHIVED
         mock_valuation.to_dict.return_value = {"id": 1, "status": "archived"}
 
         result = service.transition_status(1, "archived", actor_user_id=42)
@@ -140,7 +136,6 @@ class TestValuationStatusTransitions:
     def test_db_commit_called_on_valid_transition(self):
         """DB commit should be called after a valid transition."""
         service, mock_valuation, mock_repo = self._make_service("draft")
-        mock_valuation.status = ValuationStatus.PENDING
         mock_valuation.to_dict.return_value = {"id": 1, "status": "pending"}
 
         service.transition_status(1, "pending", actor_user_id=42)
@@ -149,7 +144,6 @@ class TestValuationStatusTransitions:
     def test_reason_can_be_passed_for_audit(self):
         """transition_status should accept an optional reason without error."""
         service, mock_valuation, mock_repo = self._make_service("draft")
-        mock_valuation.status = ValuationStatus.PENDING
         mock_valuation.to_dict.return_value = {"id": 1, "status": "pending"}
 
         result = service.transition_status(1, "pending", actor_user_id=42, reason="Ready for supervisor review")

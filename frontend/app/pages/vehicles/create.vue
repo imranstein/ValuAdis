@@ -310,6 +310,7 @@
                 {{ submitting ? 'Saving...' : 'Save Vehicle' }}
               </button>
             </div>
+            <p v-if="submitStatus" class="submit-status" data-testid="vehicle-create-status">{{ submitStatus }}</p>
           </form>
         </div>
 
@@ -379,14 +380,22 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import VehicleBrandSelector from '@/components/vehicle/VehicleBrandSelector.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
+const route = useRoute()
+const config = useRuntimeConfig()
 
 // Reactive data
 const currentYear = new Date().getFullYear()
 const submitting = ref(false)
+const submitStatus = ref('')
+const editingVehicleId = computed(() => {
+  const id = Number(route.query.vehicle_id)
+  return Number.isInteger(id) && id > 0 ? id : null
+})
 
 const vehicleSelection = ref({})
 
@@ -554,23 +563,63 @@ function clearErrors() {
 
 async function handleSubmit() {
   if (!validateForm()) {
+    submitStatus.value = 'Review the highlighted fields before saving'
     return
   }
   
   submitting.value = true
+  submitStatus.value = 'Saving vehicle'
   
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Show success message
-    alert('Vehicle saved successfully!')
-    
-    // Navigate to vehicle details
+    const token = getAccessToken()
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
+    const response = await fetch(
+      editingVehicleId.value
+        ? `${config.public.apiBaseUrl}/api/v1/vehicles/${editingVehicleId.value}`
+        : `${config.public.apiBaseUrl}/api/v1/vehicles/`,
+      {
+      method: editingVehicleId.value ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        make: form.make,
+        model: form.model,
+        year: Number(form.year),
+        vin: form.vin,
+        plate_number: form.plate_number,
+        body_type: form.body_type || null,
+        fuel_type: form.fuel_type || null,
+        transmission: form.transmission || null,
+        engine_capacity: form.engine_capacity ? Number(form.engine_capacity) : null,
+        mileage: form.mileage ? Number(form.mileage) : null,
+        color: form.color || null,
+        previous_owners: Number(form.previous_owners || 1),
+        region: form.region || null,
+        city: form.city || null,
+        import_year: form.import_year ? Number(form.import_year) : null,
+        custom_duty_paid: form.custom_duty_paid,
+        customs_declaration_number: form.customs_declaration_number || null,
+        description: form.description || null,
+        features: form.features || null,
+        notes: form.notes || null,
+      }),
+    })
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      throw new Error(body.detail || 'Failed to save vehicle')
+    }
+
+    submitStatus.value = editingVehicleId.value ? 'Vehicle updated' : 'Vehicle saved'
     router.push('/vehicles')
   } catch (error) {
-    console.error('Error saving vehicle:', error)
-    alert('Failed to save vehicle. Please try again.')
+    submitStatus.value = error.message || 'Failed to save vehicle'
   } finally {
     submitting.value = false
   }
@@ -586,9 +635,50 @@ function formatCurrency(value) {
 }
 
 onMounted(() => {
-  // Initialize form
-  console.log('Vehicle creation page mounted')
+  if (editingVehicleId.value) {
+    loadVehicleForEdit(editingVehicleId.value)
+  }
 })
+
+async function loadVehicleForEdit(vehicleId) {
+  const token = getAccessToken()
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  const response = await fetch(`${config.public.apiBaseUrl}/api/v1/vehicles/${vehicleId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    submitStatus.value = `Vehicle ${vehicleId} could not be loaded`
+    return
+  }
+  const vehicle = await response.json()
+  Object.assign(form, {
+    make: vehicle.make || '',
+    model: vehicle.model || '',
+    year: vehicle.year || '',
+    vin: vehicle.vin || '',
+    plate_number: vehicle.plate_number || '',
+    body_type: vehicle.body_type || '',
+    fuel_type: vehicle.fuel_type || '',
+    transmission: vehicle.transmission || '',
+    engine_capacity: vehicle.engine_capacity || '',
+    mileage: vehicle.mileage || '',
+    color: vehicle.color || '',
+    previous_owners: vehicle.previous_owners || 1,
+    region: vehicle.region || '',
+    city: vehicle.city || '',
+    import_year: vehicle.import_year || '',
+    custom_duty_paid: Boolean(vehicle.custom_duty_paid),
+    customs_declaration_number: vehicle.customs_declaration_number || '',
+    description: vehicle.description || '',
+    features: vehicle.features || '',
+    notes: vehicle.notes || '',
+  })
+  submitStatus.value = `Loaded vehicle ${vehicle.plate_number || vehicleId}`
+}
 </script>
 
 <style scoped>
@@ -793,6 +883,12 @@ onMounted(() => {
   padding-top: 2rem;
   border-top: 1px solid #e5e7eb;
   margin-top: 2rem;
+}
+
+.submit-status {
+  margin: 1rem 0 0;
+  color: #065f46;
+  font-weight: 700;
 }
 
 .btn-primary,

@@ -14,6 +14,32 @@ from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
+FALLBACK_MAKES = [
+    "Toyota",
+    "Nissan",
+    "Hyundai",
+    "Suzuki",
+    "Isuzu",
+    "Mitsubishi",
+    "Honda",
+    "Mercedes-Benz",
+    "Kia",
+    "Ford",
+]
+
+FALLBACK_MODELS = {
+    "toyota": ["Corolla", "Vitz", "Yaris", "RAV4", "Hilux", "Land Cruiser"],
+    "nissan": ["Sunny", "Patrol", "X-Trail", "Navara", "Qashqai"],
+    "hyundai": ["Accent", "Elantra", "Tucson", "Santa Fe", "H-1"],
+    "suzuki": ["Swift", "Vitara", "Dzire", "Jimny"],
+    "isuzu": ["D-Max", "NPR", "NQR"],
+    "mitsubishi": ["L200", "Pajero", "Outlander", "Attrage"],
+    "honda": ["Civic", "Fit", "CR-V", "Accord"],
+    "mercedes-benz": ["C-Class", "E-Class", "Sprinter", "Actros"],
+    "kia": ["Picanto", "Sportage", "Sorento", "Rio"],
+    "ford": ["Ranger", "Escape", "Transit", "Focus"],
+}
+
 class VehicleDataService:
     """Service for fetching vehicle data from NHTSA vPIC API"""
     
@@ -48,7 +74,7 @@ class VehicleDataService:
                 
         except Exception as e:
             logger.error(f"Failed to fetch vehicle makes: {e}")
-            return []
+            return FALLBACK_MAKES
     
     async def get_models_for_make(self, make: str) -> List[str]:
         """Get all models for a specific make"""
@@ -79,7 +105,7 @@ class VehicleDataService:
                 
         except Exception as e:
             logger.error(f"Failed to fetch models for {make}: {e}")
-            return []
+            return FALLBACK_MODELS.get(make.lower(), [])
     
     async def decode_vin(self, vin: str) -> Dict[str, Any]:
         """Decode VIN to get vehicle specifications"""

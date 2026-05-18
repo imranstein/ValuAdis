@@ -10,6 +10,9 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Tex
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape
+from shapely import wkt
+from shapely.geometry import mapping
 import uuid
 import enum
 
@@ -85,6 +88,7 @@ class Valuation(Base):
     # Relationships
     user = relationship("User", back_populates="valuations")
     property = relationship("Property", back_populates="valuations")
+    feedback = relationship("ValuationFeedback", back_populates="valuation")
     
     def __repr__(self):
         """String representation of valuation"""
@@ -113,17 +117,23 @@ class Valuation(Base):
     
     def get_coordinates_wkt(self):
         """Get coordinates as WKT string"""
-        if self.coordinates:
-            # This would need to be called with a session in practice
-            return "WKT representation available with session"
-        return None
+        geometry = self._coordinates_shape()
+        return geometry.wkt if geometry else None
     
     def get_coordinates_geojson(self):
         """Get coordinates as GeoJSON"""
-        if self.coordinates:
-            # This would need to be called with a session in practice
-            return "GeoJSON representation available with session"
-        return None
+        geometry = self._coordinates_shape()
+        return mapping(geometry) if geometry else None
+
+    def _coordinates_shape(self):
+        if not self.coordinates:
+            return None
+
+        if isinstance(self.coordinates, str):
+            value = self.coordinates.split(";", 1)[1] if self.coordinates.startswith("SRID=") else self.coordinates
+            return wkt.loads(value)
+
+        return to_shape(self.coordinates)
     
     def calculate_taxable_value(self):
         """

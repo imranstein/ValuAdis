@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import statistics
 
-from ...models import Vehicle, VehicleValuation
+from ..models import Vehicle, VehicleValuation
 
 logger = logging.getLogger(__name__)
 

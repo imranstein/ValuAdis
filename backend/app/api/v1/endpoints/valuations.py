@@ -161,7 +161,7 @@ async def export_valuations(
     )
 
 
-@router.get("/{valuation_id}", response_model=ValuationDetail, tags=["Valuations"])
+@router.get("/{valuation_id}", response_model=ValuationResponse, tags=["Valuations"])
 async def get_valuation(
     valuation_id: int,
     user_id: int = Depends(get_current_user_id),
@@ -493,6 +493,7 @@ async def transition_valuation_status(
 @router.post("/quick", response_model=ValuationCalculation, tags=["Valuations"])
 async def quick_valuation(
     valuation_data: dict,
+    _: int = Depends(get_current_user_id),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
@@ -556,9 +557,10 @@ async def quick_valuation(
         )
 
 
-@router.post("/calculate", response_model=ValuationCalculation, tags=["Valuations"])
+@router.post("/calculate", response_model=ValuationResponse, tags=["Valuations"])
 async def calculate_valuation_only(
     valuation_data: ValuationCreate,
+    _: int = Depends(get_current_user_id),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
@@ -595,7 +597,11 @@ async def calculate_valuation_only(
             taxable_value=float(taxable_value)
         )
         
-        return calculation_result
+        return ValuationResponse(
+            success=True,
+            data=calculation_result.model_dump(),
+            message="Valuation calculated successfully",
+        )
         
     except (PropertyValidationError, ValuAdisException) as e:
         raise HTTPException(

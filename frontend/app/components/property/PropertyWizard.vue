@@ -4,7 +4,7 @@
     :completed-steps="store.completedSteps"
     :can-proceed="canProceedToNext"
     @go-to-step="store.goToStep"
-    @previous-step="previousStep"
+    @previous-step="prevStep"
     @next-step="nextStep"
     @save-draft="handleSaveDraft"
     @submit-property="handleSubmit"
@@ -27,7 +27,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePropertyWizardStore } from '~/stores/propertyWizard'
 import EnhancedWizardUI from './wizard/EnhancedWizardUI.vue'
 import WizardStep1BasicInfo from './wizard/WizardStep1BasicInfo.vue'
@@ -40,7 +39,6 @@ import WizardStep7Documents from './wizard/WizardStep7Documents.vue'
 import WizardReviewSummary from './wizard/WizardReviewSummary.vue'
 
 const store = usePropertyWizardStore()
-const router = useRouter()
 const draftRestored = ref(false)
 let autoSaveInterval: ReturnType<typeof setInterval> | null = null
 
@@ -87,16 +85,12 @@ function discardDraft() {
   draftRestored.value = false
 }
 
-function handleCancel() {
-  router.push('/properties')
-}
-
 function handleSaveDraft() {
   store.saveDraft()
 }
 
-function previousStep() {
-  store.previousStep()
+function prevStep() {
+  store.prevStep()
 }
 
 function nextStep() {

@@ -1,328 +1,250 @@
 <template>
-  <div class="app-shell">
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <span class="brand-title">ValuAdis</span>
-        <p class="brand-sub">Property Valuation</p>
+  <div class="page-shell compliance-page">
+    <section class="page-head">
+      <div>
+        <p class="page-kicker">Regulatory reporting</p>
+        <h2 class="page-title">Compliance report.</h2>
+        <p class="page-subtitle">
+          Track Ethiopian Proclamation 1365/2025 taxable-value compliance from live valuation records.
+        </p>
       </div>
-      <nav class="sidebar-nav">
-        <NuxtLink to="/properties" class="nav-item">
-          <span class="material-symbols-outlined">domain</span><span>Properties</span>
+      <div class="page-actions">
+        <NuxtLink to="/reports" class="btn-secondary">
+          <i class="pi pi-file-export" aria-hidden="true"></i>
+          Export center
         </NuxtLink>
-        <NuxtLink to="/vehicles" class="nav-item">
-          <span class="material-symbols-outlined">directions_car</span><span>Vehicles</span>
-        </NuxtLink>
-        <NuxtLink to="/valuations" class="nav-item">
-          <span class="material-symbols-outlined">assessment</span><span>Valuations</span>
-        </NuxtLink>
-        <NuxtLink to="/map" class="nav-item">
-          <span class="material-symbols-outlined">map</span><span>Maps</span>
-        </NuxtLink>
-        <NuxtLink to="/reports" class="nav-item">
-          <span class="material-symbols-outlined">analytics</span><span>Reports</span>
-        </NuxtLink>
-        <NuxtLink to="/reports/compliance" class="nav-item active">
-          <span class="material-symbols-outlined">gavel</span><span>Compliance</span>
-        </NuxtLink>
-        <NuxtLink to="/settings" class="nav-item">
-          <span class="material-symbols-outlined">settings</span><span>Settings</span>
-        </NuxtLink>
-      </nav>
-      <div class="sidebar-user">
-        <div class="user-avatar">CO</div>
-        <div>
-          <p class="user-name">Compliance Officer</p>
-          <p class="user-role">Legal Team</p>
-        </div>
+        <button class="btn-secondary" type="button" @click="loadCompliance">
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+          Refresh
+        </button>
       </div>
-    </aside>
+    </section>
 
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="search-wrap">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input class="search-input" type="text" placeholder="Search compliance records..." />
-      </div>
-      <div class="header-right">
-        <nav class="header-links">
-          <NuxtLink to="/dashboard" class="hlink">Dashboard</NuxtLink>
-          <a href="#" class="hlink">Market Insights</a>
-        </nav>
-        <div class="header-actions">
-          <button class="icon-btn"><span class="material-symbols-outlined">notifications</span></button>
-          <button class="icon-btn"><span class="material-symbols-outlined">help_outline</span></button>
-          <button class="btn-new">New Valuation</button>
-        </div>
-      </div>
-    </header>
+    <div v-if="errorMessage" class="state-panel error-state" role="alert">
+      <strong>Compliance report unavailable</strong>
+      <span>{{ errorMessage }}</span>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="content-wrap">
+    <section class="metric-grid">
+      <article v-for="metric in metrics" :key="metric.label" class="metric-card">
+        <p class="metric-label">{{ metric.label }}</p>
+        <p class="metric-value">{{ metric.value }}</p>
+        <p class="metric-note">{{ metric.note }}</p>
+      </article>
+    </section>
 
-        <!-- Breadcrumb -->
-        <nav class="breadcrumb">
-          <span>Home</span>
-          <span class="bc-sep">/</span>
-          <NuxtLink to="/reports" class="bc-link">Reports</NuxtLink>
-          <span class="bc-sep">/</span>
-          <span class="bc-active">Compliance</span>
-        </nav>
-
-        <!-- Page Header -->
-        <div class="page-hd">
+    <section class="profile-detail-grid">
+      <article class="table-panel">
+        <div class="panel-head table-head">
           <div>
-            <h1 class="page-title">Compliance Report</h1>
-            <p class="page-desc">Regulatory adherence and legal compliance tracking.</p>
-          </div>
-          <div class="page-hd-actions">
-            <button class="btn-outline">
-              <span class="material-symbols-outlined">download</span> Export Report
-            </button>
+            <h3 class="panel-title">Municipality compliance</h3>
+            <p class="panel-subtitle">Grouped by valuation municipality from the backend report.</p>
           </div>
         </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Municipality</th>
+                <th>Total</th>
+                <th>Compliant</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="4">Loading municipality compliance...</td>
+              </tr>
+              <tr v-else-if="municipalityRows.length === 0">
+                <td colspan="4">No municipality compliance records are available yet.</td>
+              </tr>
+              <tr v-for="row in municipalityRows" v-else :key="row.name">
+                <td>{{ row.name }}</td>
+                <td class="num">{{ row.total }}</td>
+                <td class="num">{{ row.compliant }}</td>
+                <td>
+                  <span class="status-pill" :class="rateClass(row.rate)">{{ formatPercent(row.rate) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-card glass-card">
-            <div class="stat-bg-icon"><span class="material-symbols-outlined">verified</span></div>
-            <p class="stat-label">Overall Compliance</p>
-            <h3 class="stat-value">97.8%</h3>
-            <div class="stat-badge-wrap">
-              <span class="stat-badge badge-green">↑ 2.1%</span>
-              <span class="stat-sub">vs last quarter</span>
-            </div>
-          </div>
-          <div class="stat-card glass-card">
-            <div class="stat-bg-icon"><span class="material-symbols-outlined">rule</span></div>
-            <p class="stat-label">Regulations Met</p>
-            <h3 class="stat-value">42/43</h3>
-            <div class="stat-badge-wrap">
-              <span class="stat-badge badge-indigo">98%</span>
-              <span class="stat-sub">coverage</span>
-            </div>
-          </div>
-          <div class="stat-card glass-card">
-            <div class="stat-bg-icon"><span class="material-symbols-outlined">warning</span></div>
-            <p class="stat-label">Open Issues</p>
-            <h3 class="stat-value">3</h3>
-            <div class="stat-badge-wrap">
-              <span class="stat-badge badge-amber">1 urgent</span>
-              <span class="stat-sub">requires action</span>
-            </div>
+      <article class="table-panel">
+        <div class="panel-head table-head">
+          <div>
+            <h3 class="panel-title">Property-type compliance</h3>
+            <p class="panel-subtitle">Taxable-value compliance by asset class.</p>
           </div>
         </div>
-
-        <!-- Compliance Table -->
-        <div class="table-card glass-card">
-          <div class="table-header">
-            <h2 class="table-title">Regulatory Checklist</h2>
-            <div class="table-filters">
-              <select class="filter-select">
-                <option>All Categories</option>
-                <option>Data Protection</option>
-                <option>Financial</option>
-                <option>Environmental</option>
-                <option>Legal</option>
-              </select>
-              <button class="btn-reset"><span class="material-symbols-outlined">refresh</span></button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr class="table-head-row">
-                  <th>Regulation</th>
-                  <th>Category</th>
-                  <th>Last Review</th>
-                  <th>Status</th>
-                  <th>Next Due</th>
-                  <th>Responsible</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="table-row" v-for="item in complianceItems" :key="item.id">
-                  <td>
-                    <div class="td-reg">
-                      <span class="material-symbols-outlined reg-icon">policy</span>
-                      <span class="reg-name">{{ item.name }}</span>
-                    </div>
-                  </td>
-                  <td><span class="td-category">{{ item.category }}</span></td>
-                  <td><span class="td-date">{{ item.lastReview }}</span></td>
-                  <td>
-                    <span class="status-badge" :class="item.statusClass">{{ item.status }}</span>
-                  </td>
-                  <td><span class="td-due" :class="item.dueClass">{{ item.nextDue }}</span></td>
-                  <td>
-                    <div class="td-resp">
-                      <div class="resp-avatar">{{ item.initials }}</div>
-                      <span>{{ item.responsible }}</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination">
-            <span class="pag-info">Showing {{ complianceItems.length }} regulations</span>
-            <div class="pag-btns">
-              <button class="pag-btn"><span class="material-symbols-outlined">chevron_left</span></button>
-              <button class="pag-btn pag-active">1</button>
-              <button class="pag-btn"><span class="material-symbols-outlined">chevron_right</span></button>
-            </div>
-          </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Property type</th>
+                <th>Total</th>
+                <th>Compliant</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="4">Loading property-type compliance...</td>
+              </tr>
+              <tr v-else-if="propertyTypeRows.length === 0">
+                <td colspan="4">No property-type compliance records are available yet.</td>
+              </tr>
+              <tr v-for="row in propertyTypeRows" v-else :key="row.name">
+                <td>{{ row.name }}</td>
+                <td class="num">{{ row.total }}</td>
+                <td class="num">{{ row.compliant }}</td>
+                <td>
+                  <span class="status-pill" :class="rateClass(row.rate)">{{ formatPercent(row.rate) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </article>
+    </section>
 
+    <section class="table-panel">
+      <div class="panel-head table-head">
+        <div>
+          <h3 class="panel-title">Compliance exceptions</h3>
+          <p class="panel-subtitle">Valuations where taxable value does not match the 25% rule.</p>
+        </div>
       </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-      <span class="footer-brand">ValuAdis</span>
-      <p class="footer-copy">© 2025 ValuAdis. All rights reserved.</p>
-      <div class="footer-links">
-        <a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Contact Support</a>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Valuation</th>
+              <th>Municipality</th>
+              <th>Market value</th>
+              <th>Taxable value</th>
+              <th>Expected</th>
+              <th>Deviation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="6">Loading compliance exceptions...</td>
+            </tr>
+            <tr v-else-if="violations.length === 0">
+              <td colspan="6">No taxable-value exceptions are reported.</td>
+            </tr>
+            <tr v-for="violation in violations" v-else :key="violation.valuation_id">
+              <td>
+                <strong>#{{ violation.valuation_id }}</strong>
+                <span class="record-id">{{ violation.property_type }}</span>
+              </td>
+              <td>{{ violation.municipality }}</td>
+              <td class="num">{{ formatCurrency(violation.market_value) }}</td>
+              <td class="num">{{ formatCurrency(violation.taxable_value) }}</td>
+              <td class="num">{{ formatCurrency(violation.expected_taxable) }}</td>
+              <td class="num">{{ formatCurrency(violation.deviation) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </footer>
-
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { getAccessToken } from '~/utils/authToken'
+
 definePageMeta({ middleware: 'auth' })
 
-const complianceItems = [
-  { id: 1, name: 'Data Protection Act', category: 'Data Privacy', lastReview: '2024-11-15', status: 'Compliant', statusClass: 'status-compliant', nextDue: '2025-02-15', dueClass: '', responsible: 'Abebe B.', initials: 'AB' },
-  { id: 2, name: 'Financial Reporting Standards', category: 'Financial', lastReview: '2024-11-10', status: 'Compliant', statusClass: 'status-compliant', nextDue: '2025-01-10', dueClass: '', responsible: 'Martha K.', initials: 'MK' },
-  { id: 3, name: 'Environmental Impact Assessment', category: 'Environmental', lastReview: '2024-10-28', status: 'Review Needed', statusClass: 'status-review', nextDue: '2024-12-01', dueClass: 'due-soon', responsible: 'John D.', initials: 'JD' },
-  { id: 4, name: 'Property Registration Law', category: 'Legal', lastReview: '2024-11-18', status: 'Compliant', statusClass: 'status-compliant', nextDue: '2025-05-18', dueClass: '', responsible: 'Selamawit K.', initials: 'SK' },
-  { id: 5, name: 'Anti-Money Laundering', category: 'Financial', lastReview: '2024-09-20', status: 'Non-Compliant', statusClass: 'status-noncompliant', nextDue: 'Overdue', dueClass: 'due-overdue', responsible: 'Yonas L.', initials: 'YL' },
-  { id: 6, name: 'Building Safety Codes', category: 'Legal', lastReview: '2024-11-05', status: 'Compliant', statusClass: 'status-compliant', nextDue: '2025-11-05', dueClass: '', responsible: 'Hanna M.', initials: 'HM' },
-]
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
 
-useHead({
-  title: 'Compliance Report — ValuAdis',
-  meta: [{ name: 'description', content: 'Regulatory compliance tracking and reporting.' }]
-})
+const loading = ref(true)
+const errorMessage = ref('')
+const report = ref<any>(null)
+
+const rule = computed(() => report.value?.proclamation_1365_2025_compliance || {})
+const violations = computed(() => Array.isArray(report.value?.compliance_details) ? report.value.compliance_details : [])
+
+const metrics = computed(() => [
+  { label: 'Compliance rate', value: formatPercent(rule.value.compliance_rate || 0), note: rule.value.rule || '25% taxable value rule' },
+  { label: 'Analyzed valuations', value: String(report.value?.total_valuations_analyzed || 0), note: 'Backend valuation records' },
+  { label: 'Compliant', value: String(rule.value.compliant_valuations || 0), note: 'Within tolerance' },
+  { label: 'Exceptions', value: String(rule.value.non_compliant_valuations || 0), note: 'Need review' },
+])
+
+const municipalityRows = computed(() => normalizeGroupedRows(report.value?.municipality_analysis))
+const propertyTypeRows = computed(() => normalizeGroupedRows(report.value?.property_type_analysis))
+
+onMounted(loadCompliance)
+
+async function loadCompliance() {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = getAccessToken()
+    const response = await fetch(`${apiBase}/api/v1/audit/compliance`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) throw new Error(`Compliance report request failed with ${response.status}`)
+    const payload = await response.json()
+    report.value = payload.compliance_report || null
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Could not load compliance report.'
+    report.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+function normalizeGroupedRows(grouped: Record<string, any> | undefined) {
+  if (!grouped) return []
+  return Object.entries(grouped).map(([name, value]) => ({
+    name,
+    total: Number(value.total || 0),
+    compliant: Number(value.compliant || 0),
+    rate: Number(value.compliance_rate || 0),
+  })).sort((a, b) => b.total - a.total)
+}
+
+function rateClass(rate: number) {
+  if (rate >= 95) return 'good'
+  if (rate >= 80) return 'warn'
+  return 'bad'
+}
+
+function formatPercent(value: number) {
+  return `${Number(value || 0).toFixed(1)}%`
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('en-ET', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0))
+}
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+.profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
 
-.app-shell { display: flex; min-height: 100vh; background: #f7f9fb; font-family: 'Inter', sans-serif; color: #191c1e; }
+.table-panel {
+  min-width: 0;
+}
 
-/* Sidebar */
-.sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 16rem; background: rgba(248,250,252,0.7); backdrop-filter: blur(20px); border-right: 1px solid rgba(226,232,240,0.2); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 50; }
-.sidebar-brand { padding: 0 0.5rem; margin-bottom: 2.5rem; }
-.brand-title { display: block; font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: #065f46; }
-.brand-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-top: 0.2rem; }
-.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
-.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; color: #475569; text-decoration: none; transition: all 0.2s; }
-.nav-item:hover { color: #006948; background: rgba(248,250,252,0.6); }
-.nav-item.active { color: #005137; font-weight: 600; background: rgba(0,105,72,0.06); border-right: 3px solid #006948; }
-.nav-item .material-symbols-outlined { font-size: 1.25rem; }
-.sidebar-user { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0.5rem; border-top: 1px solid rgba(226,232,240,0.2); margin-top: auto; }
-.user-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #00855d; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
-.user-name { font-size: 0.8rem; font-weight: 700; margin: 0; }
-.user-role { font-size: 0.7rem; color: #94a3b8; margin: 0; }
-
-/* Header */
-.top-header { position: fixed; top: 0; right: 0; width: calc(100% - 16rem); height: 4rem; z-index: 40; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226,232,240,0.2); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
-.search-wrap { position: relative; flex: 1; max-width: 28rem; }
-.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
-.search-input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; background: #f1f5f9; border: none; border-radius: 9999px; font-size: 0.875rem; outline: none; }
-.header-right { display: flex; align-items: center; gap: 1.5rem; }
-.header-links { display: flex; gap: 1rem; }
-.hlink { font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: color 0.2s; }
-.hlink:hover { color: #006948; }
-.header-actions { display: flex; align-items: center; gap: 0.75rem; }
-.icon-btn { background: none; border: none; cursor: pointer; color: #64748b; padding: 0.5rem; border-radius: 50%; transition: background 0.2s; }
-.icon-btn:hover { background: #f1f5f9; }
-.btn-new { background: #006948; color: #fff; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-.btn-new:hover { opacity: 0.9; }
-
-/* Main */
-.main-content { margin-left: 16rem; padding-top: 4rem; flex: 1; min-height: 100vh; }
-.content-wrap { padding: 2.5rem 2rem; }
-
-/* Breadcrumb */
-.breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; margin-bottom: 1.5rem; }
-.bc-sep { margin: 0 0.2rem; }
-.bc-link { color: #64748b; text-decoration: none; }
-.bc-link:hover { color: #006948; }
-.bc-active { color: #065f46; }
-
-/* Page header */
-.page-hd { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 1rem; }
-.page-title { font-family: 'Syne', sans-serif; font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; color: #191c1e; margin: 0 0 0.4rem; }
-.page-desc { font-size: 0.95rem; color: #3d4a42; margin: 0; }
-.page-hd-actions { display: flex; gap: 0.75rem; }
-.btn-outline { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: #fff; border: 1px solid rgba(188,202,192,0.3); border-radius: 0.75rem; font-size: 0.8rem; font-weight: 500; color: #3d4a42; cursor: pointer; transition: background 0.2s; }
-.btn-outline:hover { background: #f2f4f6; }
-
-/* Stats */
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
-.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(188,202,192,0.2); }
-.stat-card { padding: 1.5rem; border-radius: 1.5rem; position: relative; overflow: hidden; }
-.stat-bg-icon { position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; }
-.stat-bg-icon .material-symbols-outlined { font-size: 4rem; }
-.stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 0.5rem; }
-.stat-value { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 800; color: #191c1e; margin: 0 0 1rem; }
-.stat-badge-wrap { display: flex; align-items: center; gap: 0.5rem; }
-.stat-badge { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 9999px; }
-.badge-green { background: #d1fae5; color: #065f46; }
-.badge-indigo { background: #e0e7ff; color: #4b41e1; }
-.badge-amber { background: #fef3c7; color: #92400e; }
-.stat-sub { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
-
-/* Table */
-.table-card { border-radius: 1.5rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-.table-header { padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-.table-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #191c1e; margin: 0; }
-.table-filters { display: flex; gap: 0.75rem; align-items: center; }
-.filter-select { padding: 0.5rem 1rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.8rem; color: #475569; }
-.btn-reset { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.5rem; }
-.btn-reset:hover { color: #006948; }
-.table-wrap { overflow-x: auto; }
-.data-table { width: 100%; text-align: left; border-collapse: collapse; }
-.table-head-row { background: rgba(248,250,252,0.5); }
-.table-head-row th { padding: 1rem 1.5rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #64748b; }
-.table-row { border-top: 1px solid #f1f5f9; transition: background 0.15s; }
-.table-row:hover { background: rgba(248,250,252,0.85); }
-.table-row td { padding: 1.25rem 1.5rem; }
-.td-reg { display: flex; align-items: center; gap: 0.75rem; }
-.reg-icon { font-size: 1.25rem; color: #006948; }
-.reg-name { font-weight: 600; color: #191c1e; }
-.td-category { font-size: 0.875rem; color: #475569; }
-.td-date { font-size: 0.875rem; color: #64748b; }
-.td-due { font-size: 0.875rem; font-weight: 500; color: #191c1e; }
-.due-soon { color: #92400e; }
-.due-overdue { color: #dc2626; }
-.status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-.status-compliant { background: #d1fae5; color: #065f46; }
-.status-review { background: #fef3c7; color: #92400e; }
-.status-noncompliant { background: #fecaca; color: #dc2626; }
-.td-resp { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #475569; }
-.resp-avatar { width: 1.75rem; height: 1.75rem; border-radius: 50%; background: #e2e8f0; color: #475569; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-
-/* Pagination */
-.pagination { padding: 1.5rem 2rem; background: rgba(248,250,252,0.3); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-.pag-btns { display: flex; gap: 0.4rem; }
-.pag-btn { width: 2rem; height: 2rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #fff; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.pag-btn:hover { color: #006948; border-color: #006948; }
-.pag-btn.pag-active { background: #006948; color: #fff; border-color: #006948; }
-.pag-btn .material-symbols-outlined { font-size: 0.9rem; }
-.pag-info { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
-
-/* Footer */
-.app-footer { margin-left: 16rem; padding: 2rem 3rem; border-top: 1px solid rgba(226,232,240,0.15); background: #f8fafc; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
-.footer-brand { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: #94a3b8; }
-.footer-copy { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 0; }
-.footer-links { display: flex; gap: 2rem; }
-.footer-links a { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; text-decoration: none; }
-.footer-links a:hover { color: #006948; }
+@media (max-width: 980px) {
+  .profile-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

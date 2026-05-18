@@ -157,7 +157,7 @@ export const ETHIOPIAN_LICENSE_PREFIXES = {
   'SO': 'Somali Regional State',
   'BE': 'Benishangul-Gumuz Regional State',
   'GA': 'Gambela Regional State',
-  'HA': 'Harari Regional State',
+  'HR': 'Harari Regional State',
   'SI': 'Sidama Regional State',
   'SW': 'South West Ethiopia Peoples Regional State'
 } as const

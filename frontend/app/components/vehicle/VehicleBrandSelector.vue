@@ -240,7 +240,6 @@ const loadBrands = async () => {
   try {
     brands.value = await fetchVehicleBrands()
   } catch (error) {
-    console.error('Failed to load brands:', error)
     errors.brand = 'Failed to load vehicle brands'
   } finally {
     loading.brands = false
@@ -265,7 +264,6 @@ const handleBrandChange = async () => {
     models.value = await fetchVehicleModels(selectedBrand.value)
     emitSelectionChange()
   } catch (error) {
-    console.error('Failed to load models:', error)
     errors.model = 'Failed to load models for this brand'
   } finally {
     loading.models = false
@@ -311,7 +309,7 @@ const fetchVehicleSpecs = async () => {
     
     emit('specs-updated', vehicleSpecs.value)
   } catch (error) {
-    console.error('Failed to fetch vehicle specs:', error)
+    errors.model = 'Failed to fetch vehicle specifications'
   } finally {
     loading.specs = false
   }
@@ -349,7 +347,6 @@ const decodeVin = async () => {
     
     emit('vin-decoded', decoded)
   } catch (error) {
-    console.error('Failed to decode VIN:', error)
     errors.vin = 'Failed to decode VIN. Please check the VIN and try again.'
   } finally {
     loading.vin = false

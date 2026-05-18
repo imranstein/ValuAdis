@@ -26,6 +26,10 @@
       </div>
     </div>
 
+    <div v-if="actionStatus" class="action-status">
+      {{ actionStatus }}
+    </div>
+
     <div class="details-content">
       <div class="content-grid">
         <!-- Vehicle Information -->
@@ -311,9 +315,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import VehicleValuation from '@/components/vehicle/VehicleValuation.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
 const route = useRoute()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
 
 // Reactive data
 const vehicle = ref({})
@@ -322,6 +329,7 @@ const latestValuation = ref(null)
 const historyFilter = ref('all')
 const showValuationModal = ref(false)
 const selectedValuation = ref(null)
+const actionStatus = ref('')
 
 // Computed properties
 const filteredValuations = computed(() => {
@@ -332,15 +340,14 @@ const filteredValuations = computed(() => {
 // Methods
 async function loadVehicle() {
   try {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     
     if (!token) {
       router.push('/login')
       return
     }
 
-    const response = await fetch(`${API_BASE}/api/v1/vehicles/${route.params.id}`, {
+    const response = await fetch(`${apiBase}/api/v1/vehicles/${route.params.id}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -353,21 +360,20 @@ async function loadVehicle() {
       throw new Error(`HTTP ${response.status}: Failed to load vehicle`)
     }
   } catch (error) {
-    console.error('Failed to load vehicle:', error)
+    actionStatus.value = error instanceof Error ? error.message : 'Failed to load vehicle.'
     vehicle.value = null
   }
 }
 
 async function loadValuations() {
   try {
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8020'
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     
     if (!token) {
       return
     }
 
-    const response = await fetch(`${API_BASE}/api/v1/valuations?vehicle_id=${route.params.id}`, {
+    const response = await fetch(`${apiBase}/api/v1/vehicles/${route.params.id}/valuations`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -375,12 +381,13 @@ async function loadValuations() {
 
     if (response.ok) {
       const result = await response.json()
-      valuations.value = result.data || []
+      valuations.value = Array.isArray(result) ? result : (result.data || [])
+      latestValuation.value = valuations.value[0] || null
     } else {
       throw new Error(`HTTP ${response.status}: Failed to load valuations`)
     }
   } catch (error) {
-    console.error('Failed to load valuations:', error)
+    actionStatus.value = error instanceof Error ? error.message : 'Failed to load valuation history.'
     valuations.value = []
   }
 }
@@ -418,11 +425,26 @@ function formatDate(date) {
 }
 
 function editVehicle() {
-  router.push(`/vehicles/${vehicle.value.id}/edit`)
+  router.push(`/vehicles/create?vehicle_id=${vehicle.value.id}`)
 }
 
-function createValuation() {
-  router.push(`/vehicles/${vehicle.value.id}/valuation`)
+async function createValuation() {
+  const token = getAccessToken()
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  const response = await fetch(`${apiBase}/api/v1/vehicles/${vehicle.value.id}/valuation`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (response.ok) {
+    const valuation = await response.json()
+    latestValuation.value = valuation
+    valuations.value = [valuation, ...valuations.value.filter((item) => item.id !== valuation.id)]
+  }
 }
 
 function viewValuation(valuation) {
@@ -436,39 +458,94 @@ function closeValuationModal() {
 }
 
 function downloadValuation(valuation) {
-  console.log('Downloading valuation:', valuation.id)
+  downloadJson(valuation, `vehicle-valuation-${valuation.id || 'record'}.json`)
 }
 
 function deleteValuation(valuation) {
-  if (confirm('Are you sure you want to delete this valuation?')) {
-    const index = valuations.value.findIndex(v => v.id === valuation.id)
-    if (index > -1) {
-      valuations.value.splice(index, 1)
-      if (latestValuation.value?.id === valuation.id) {
-        latestValuation.value = valuations.value[0] || null
-      }
+  const index = valuations.value.findIndex(v => v.id === valuation.id)
+  if (index > -1) {
+    valuations.value.splice(index, 1)
+    actionStatus.value = 'Valuation removed from this local review list.'
+    if (latestValuation.value?.id === valuation.id) {
+      latestValuation.value = valuations.value[0] || null
     }
   }
 }
 
 function exportHistory() {
-  console.log('Exporting valuation history')
+  const rows = valuations.value.map((valuation) => ({
+    id: valuation.id,
+    status: valuation.status,
+    market_value: valuation.market_value,
+    taxable_value: valuation.taxable_value,
+    valuation_date: valuation.valuation_date || valuation.created_at,
+  }))
+  downloadCsv(rows, `vehicle-${vehicle.value.id || route.params.id}-valuations.csv`)
 }
 
 function generateReport() {
-  console.log('Generating valuation report')
+  const payload = {
+    vehicle: vehicle.value,
+    latest_valuation: latestValuation.value,
+    valuation_history: valuations.value,
+    generated_at: new Date().toISOString(),
+  }
+  downloadJson(payload, `vehicle-${vehicle.value.id || route.params.id}-report.json`)
 }
 
 function shareValuation() {
-  console.log('Sharing valuation')
+  const summary = latestValuation.value
+    ? `${vehicle.value.make} ${vehicle.value.model} valuation: ${formatCurrency(latestValuation.value.market_value)}`
+    : `${vehicle.value.make} ${vehicle.value.model} valuation record`
+  if (navigator.share) {
+    navigator.share({ title: 'ValuAdis vehicle valuation', text: summary, url: window.location.href })
+      .catch(() => {
+        actionStatus.value = 'Share cancelled'
+      })
+    return
+  }
+  navigator.clipboard?.writeText(`${summary} - ${window.location.href}`)
+  actionStatus.value = 'Valuation link copied'
 }
 
 function exportValuation() {
-  console.log('Exporting valuation')
+  if (selectedValuation.value) {
+    downloadJson(selectedValuation.value, `vehicle-valuation-${selectedValuation.value.id || 'record'}.json`)
+  }
 }
 
 function printValuation() {
-  console.log('Printing valuation')
+  window.print()
+}
+
+function downloadJson(payload, filename) {
+  downloadBlob(JSON.stringify(payload, null, 2), filename, 'application/json')
+}
+
+function downloadCsv(rows, filename) {
+  if (!rows.length) {
+    actionStatus.value = 'No valuation history to export'
+    return
+  }
+  const headers = Object.keys(rows[0])
+  const csv = [
+    headers.join(','),
+    ...rows.map((row) => headers.map((header) => JSON.stringify(row[header] ?? '')).join(',')),
+  ].join('\n')
+  downloadBlob(csv, filename, 'text/csv')
+}
+
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], { type })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+  actionStatus.value = `Downloaded ${filename}`
 }
 
 onMounted(async () => {
@@ -587,6 +664,17 @@ onMounted(async () => {
 .action-button.small {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+}
+
+.action-status {
+  margin: -1rem 0 1.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 /* Content Grid */

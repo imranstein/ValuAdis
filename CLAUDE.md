@@ -56,3 +56,61 @@ python -m uvicorn app.main:app --reload  # dev server (localhost:8000)
 - Don't modify `.nuxt/`, `.output/`, `node_modules/`, or `__pycache__/`
 - Don't modify generated files (`*.gen.ts`, `*.generated.*`)
 - Don't commit `CLAUDE.local.md` (use it for local overrides)
+
+## Session Learnings
+
+### 2026-05-17
+
+- Vehicle statistics routes must be declared before `/{vehicle_id}` in FastAPI; otherwise `/api/v1/vehicles/statistics/summary` is parsed as a vehicle id and fails before the handler runs.
+- Public landing imagery should be project-local under `frontend/app/public/images/`; generated assets in `~/.codex/generated_images` are not deployable dependencies.
+- Browser proof for pre-production should distinguish real backend rows from static UI examples. `/vehicles` now shows backend counts and the seeded VIN instead of fake portfolio totals.
+- The seeded admin account may have `is_admin=True` with no role rows. Admin-only backend gates should honor the flag, not only role names.
+- The in-app Browser can lose protected-route proof when its token expires; if storage/input automation is blocked, keep the distinction clear between API proof and authenticated Browser proof.
+- Raw-SQL endpoints still need matching ORM metadata when SQLite dev schema is created from `Base.metadata`; `/api/v1/audit/logs` depends on `AuditLog` being imported through `app.data.models`.
+- Profile/account pages should use `/api/v1/auth/me` and audit activity from `/api/v1/audit/logs`; do not leave invented names, activity history, or valuation counts in protected app pages.
+- Compliance report UI should read `/api/v1/audit/compliance` directly. Keep service keys matched to `ComplianceReportResponse`, and normalize SQLite numeric/date values before returning the report.
+- Local SQLite development databases can miss newer ORM tables while tests still pass against the fresh test database. Keep the dev-only schema sync active for SQLite and verify live endpoints after schema changes.
+- Frontend API calls should use `runtimeConfig.public.apiBaseUrl` and the `valuadis_token` key consistently.
+- Pinia stores and nested components are part of the same API contract; avoid `import.meta.env.VITE_API_BASE` there too.
+- Quick valuation select values must match backend valuation service keys exactly, especially `Addis Ababa` and neighborhood quality values like `prime` and `developing`.
+- The AI automation dashboard should stay connected to real backend services: valuation-feedback trust metrics and analytics market insights.
+- Production Nuxt builds must be fail-closed: `npm run build` requires a non-local `NUXT_PUBLIC_API_BASE_URL`; use `npm run typecheck` for config-neutral type checking.
+- Root `pytest -q` is intentionally scoped by `pytest.ini` to the maintained backend suites. Old ad-hoc scripts under `backend/test_*.py` are not release-confidence tests.
+- App-shell identity fallbacks must stay neutral. Do not show invented admin names, admin emails, or fabricated notifications when token payload/user APIs do not provide them.
+- Dashboard recent valuation tables must use `/api/v1/valuations/` or an honest empty/error state; do not ship hard-coded `VAL-*` sample records in protected routes.
+- Settings controls for email delivery and API keys are local draft-only until backend settings/key-management endpoints exist. Label that explicitly instead of pretending values are production-backed.
+- Protected analytics pages should use the shared admin shell. Avoid standalone duplicate navigation, fake analyst identities, Material Symbols-only shells, and footer/legal links inside authenticated app pages.
+- `/valuations` and `/reports` are now shared-shell routes. Keep them that way; do not reintroduce duplicate sidebars, standalone footers, Material Symbols route chrome, fake operator identities, or links to missing detail pages.
+- Chrome proof is possible through Computer Use even when the dedicated Chrome plugin is not exposed. Keep it distinct from in-app Browser proof if the user requested both.
+- `/map` is now a backend-backed route using `/api/v1/properties`; keep it free of seed asset records and keep `/map/test` deleted.
+- Nuxt page transitions can keep stale route bodies mounted if the page is not keyed. `app.vue` keys `NuxtPage` by `route.fullPath`; keep that guard unless the routing architecture changes.
+- The legacy `components/map/PropertyMap.vue` must not fall back to `seedProperties`; empty input should remain empty so protected surfaces do not silently show fake assets.
+- `/scrapers` should remain a restrained data-operations surface. Do not reintroduce emoji headers, page-load success toasts, or fake scraper rows; keep it tied to `scraperService` backend endpoints.
+- Vehicle edit flows intentionally reuse `/vehicles/create?vehicle_id=...`; keep list/detail edit actions on that route unless a dedicated edit page is actually added. Vehicle detail valuation loading belongs on `/api/v1/vehicles/{id}/valuations`, not the property valuation list endpoint.
+- The local demo login is only for local/dev proof and currently matches the running backend seed as `admin@valuadis.com` / `admin123`; do not expose or rely on demo credentials for production builds.
+- Vehicle brand/model selection depends on `/api/v1/vehicle-data/*`. Keep that router mounted and keep the local fallback makes/models so the vehicle form still works when NHTSA is unavailable.
+- Protected production UI should not leave `console.log` or blocking `alert()` handlers in user workflows. Use real downloads, inline validation, emitted component events, or honest disabled/empty states.
+- Production deployment must run `bash scripts/validate-production-env.sh .env.production` before compose/cPanel deploy. `.env.production` and `.env.cpanel.template` are templates; real domains, secrets, database host, Redis host, and strict CORS origins are still externally supplied values.
+- Valuation geometry helpers are expected to return real spatial output. `get_coordinates_wkt()` and `get_coordinates_geojson()` now support WKT/EWKT strings and GeoAlchemy values; keep regression coverage when touching spatial model behavior.
+- Feedback relationships are active again between `Property`, `Valuation`, and `ValuationFeedback`. Do not disable relationship wiring to dodge metadata errors; fix model registration/import issues instead.
+- Full backend release-confidence proof after this cleanup is `214 passed, 17 skipped`; the old duplicate vehicle metadata collection blocker is no longer present in the maintained backend suite.
+- Frontend vehicle-data calls must include the mounted API prefix: `/api/v1/vehicle-data/*`. The shared axios service already returns the response body, so `vehicleDataService.js` should not read a second `.data` property.
+- Property detail should stay as a self-contained dossier surface, not a stack of oversized generic cards. Keep the restrained hero, summary strip, map, valuation history, and download actions aligned to real backend property fields.
+- Quick valuation property prefill must normalize backend subtype/type values into select-compatible valuation categories. Backend data like `villa` should map to `single_family`, and missing valuation assumptions should default to values accepted by the backend service.
+- Audit report endpoints expose sensitive operational and compliance data. Keep `/api/v1/audit/system`, `/compliance`, `/summary`, `/metrics`, `/export/*`, and `/schedule` behind `get_current_user_id`; frontend audit/report pages must send the bearer token explicitly.
+- Valuation preview and AI trust metrics are protected application data. Keep `/api/v1/valuations/quick`, `/api/v1/valuations/calculate`, and `/api/v1/valuation-feedback/metrics` authenticated, and keep dashboard/property wizard/property detail callers sending bearer tokens.
+- `NUXT_PUBLIC_API_BASE_URL` must be the deployed API origin only. Frontend callers append `/api/v1`, so production templates, validators, and Nuxt production builds should reject values that already end in `/api` or `/api/v1`.
+- Valuation certificate generation requires an approved valuation. The release happy path must create the valuation, transition draft to pending to approved, then request `/api/v1/valuations/{id}/certificate`.
+- Do not reintroduce the old `backend/app/api/v1/endpoints/reports.py` path without replacing it with a property/valuation implementation. Active report downloads are valuation certificates, valuation CSV export, property CSV export, and audit compliance export.
+- Keep settings honest until backend settings/key-management endpoints exist. The active `/settings` page is local-draft only; do not reintroduce components that post to `/api/v1/settings` unless that backend contract is implemented and tested.
+- Keep legacy vehicle aliases as redirects unless they are rebuilt into the same shared-shell experience. `/vehicles/list` should route to `/vehicles`, and `/vehicles/register` should route to `/vehicles/create` with query params preserved.
+- Public pages should not present exact-looking operational metrics unless they are backend-backed or clearly marked as product capability language. Demo login must not expose or hard-code local seed credentials; use explicit local env values only.
+- Route-local toolbar styles are required when a page uses `.registry-toolbar`, `.search-field`, and `.filter-select`. Do not rely on scoped styles from another route; `/vehicles` previously collapsed its filter controls until it owned those styles directly.
+- `/api/v1/audit/logs` must not hard-fail protected UI pages when a local/dev database is missing `audit_logs`; return an authenticated empty ledger and keep the real migration gap visible as deployment work. The Docker DB can have existing tables with no Alembic version, so `alembic current` alone is not proof of release migration health.
+- Deployment must fail early when a database has ValuAdis application tables but no `alembic_version`; do not run `alembic upgrade head` into that partial state because it will hit duplicate baseline tables. Use a controlled baseline/stamp procedure or a fresh database, then verify current revision equals Alembic head.
+- `scripts/check-migration-state.sh` is the reusable guard for migration state. Keep `scripts/deploy.sh` using it for both pre-upgrade partial-schema detection and post-upgrade current-vs-head verification.
+- Fresh database migration proof should include `audit_logs`; the current head is `2026_05_18_1200_audit_logs`. A dirty local Docker app DB may still have no Alembic version, but a fresh DB migration chain now reaches head and creates the audit table.
+- Latest backend happy-path proof used property `27` and valuation `23`; valuation `23` was approved and generated a certificate PDF plus valuations CSV export. Do not claim full browser happy-path completion until visible browser automation succeeds on the same chain.
+- Chrome visible proof for the same happy-path records now covers `/login#demo`, `/dashboard`, `/valuations`, `/properties/27`, `/reports`, and `/valuations/quick?property_id=27`. It proves the created/approved records are visible across the app, but it is not the same as form-click E2E proof through the unavailable in-app Browser plugin.
+- If the Nuxt preview turns blank after a build, restart the Node preview server before debugging route code. Rebuilding `.output` while `node .output/server/index.mjs` is still running can leave the server with a stale manifest and blank hard-loads.
+- Use `backend/venv/bin/python -m pytest -q` for full backend release confidence on this machine. System Python currently fails before collection because it does not have `shapely`, while the project venv passes the maintained suite.

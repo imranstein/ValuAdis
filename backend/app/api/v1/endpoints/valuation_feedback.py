@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_user_id
 from app.services import valuation_feedback_service as svc
 
 router = APIRouter()
@@ -64,6 +64,6 @@ def submit_feedback(
 
 
 @router.get("/metrics")
-def get_metrics():
-    """Get current AI trust metrics (public endpoint)."""
+def get_metrics(_: int = Depends(get_current_user_id)):
+    """Get current AI trust metrics."""
     return svc.get_trust_metrics()

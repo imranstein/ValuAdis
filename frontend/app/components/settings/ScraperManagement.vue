@@ -1,26 +1,28 @@
 <template>
   <div class="scraper-management">
-    <!-- Scraper Header -->
     <div class="scraper-header">
-      <h2>🕷️ Web Scraper Management</h2>
-      <p>Manage Ethiopian property and vehicle listing scrapers and data collection</p>
+      <div>
+        <h2>Source control desk</h2>
+        <p>Backend scraper targets, recent source activity, and registry records loaded from the API.</p>
+      </div>
     </div>
 
-    <!-- Scraper Type Toggle -->
     <div class="scraper-type-toggle">
       <button 
         @click="scraperType = 'property'"
         :class="{ active: scraperType === 'property' }"
         class="type-btn"
       >
-        🏠 Property Scrapers
+        <i class="pi pi-building" aria-hidden="true"></i>
+        Property scrapers
       </button>
       <button 
         @click="scraperType = 'vehicle'"
         :class="{ active: scraperType === 'vehicle' }"
         class="type-btn"
       >
-        🚗 Vehicle Scrapers
+        <i class="pi pi-car" aria-hidden="true"></i>
+        Vehicle scrapers
       </button>
     </div>
 
@@ -61,7 +63,10 @@
 
     <!-- Scraped Data -->
     <div class="scraped-data-section">
-      <h3>📊 Scraped {{ scraperType === 'property' ? 'Properties' : 'Vehicles' }}</h3>
+      <div class="section-head">
+        <h3>Scraped {{ scraperType === 'property' ? 'properties' : 'vehicles' }}</h3>
+        <span class="status-pill">{{ scrapedData.length }} backend records</span>
+      </div>
 
       <!-- Data Table with Pagination -->
       <div v-if="scrapedData.length > 0" class="data-table-container">
@@ -210,7 +215,6 @@ const loadScrapers = async () => {
     const result = await scraperService.getScrapers()
     if (result.success) {
       scrapers.value = result.data
-      success('Scrapers loaded successfully')
     } else {
       error('Failed to load scrapers - Please check your connection')
       scrapers.value = []
@@ -229,7 +233,6 @@ const loadScraperStats = async () => {
     const result = await scraperService.getScraperStats()
     if (result.success) {
       scraperStats.value = result.data
-      success('Scraper statistics loaded')
     } else {
       error('Failed to load scraper statistics')
       scraperStats.value = {
@@ -268,7 +271,6 @@ const loadScrapedData = async () => {
       scrapedData.value = result.data.data || result.data || []
       pagination.value.totalRecords = result.data.total || scrapedData.value.length
       pagination.value.currentPage = 1
-      success(`${scraperType.value === 'property' ? 'Property' : 'Vehicle'} data loaded`)
     } else {
       error(`Failed to load ${scraperType.value} data`)
       scrapedData.value = []
@@ -314,8 +316,7 @@ const testScraper = async (scraperId) => {
 }
 
 const runScraper = async (scraperId) => {
-  if (!confirm('Start scraping now? This may take several minutes.')) return
-  
+  info('Scraper run queued')
   const result = await scraperService.runScraper(scraperId)
   if (result.success) {
     success(result.data.message || 'Scraper started successfully')
@@ -326,8 +327,6 @@ const runScraper = async (scraperId) => {
 }
 
 const deleteScraper = async (scraperId) => {
-  if (!confirm('Are you sure you want to delete this scraper?')) return
-  
   const result = await scraperService.deleteScraper(scraperId)
   if (result.success) {
     await refreshScrapers()
@@ -408,58 +407,69 @@ onMounted(() => {
 
 <style scoped>
 .scraper-management {
-  padding: 20px;
+  display: grid;
+  gap: 20px;
 }
 
 .scraper-header {
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .scraper-header h2 {
-  margin: 0 0 8px 0;
-  font-size: 24px;
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 28px;
   font-weight: 600;
 }
 
 .scraper-header p {
   margin: 0;
-  color: #666;
+  color: var(--muted);
 }
 
 .scraper-type-toggle {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .type-btn {
-  padding: 12px 24px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  border-radius: 8px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius);
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 800;
 }
 
 .type-btn.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  background: var(--green);
+  color: var(--surface);
+  border-color: var(--green);
 }
 
 .action-buttons {
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: white;
-  border: none;
+  background: var(--green);
+  color: var(--surface);
+  border: 1px solid var(--green);
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -467,11 +477,11 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -479,11 +489,11 @@ onMounted(() => {
 }
 
 .btn-small {
-  background: #f9fafb;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
 }
@@ -509,23 +519,11 @@ onMounted(() => {
   color: #6b7280;
 }
 
-.mock-data-warning {
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
 .data-table-container {
-  background: white;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .data-table {
@@ -541,9 +539,35 @@ onMounted(() => {
 }
 
 .data-table th {
-  background: #f9fafb;
+  background: var(--surface-2);
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-soft);
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-head h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.status-pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .status-available {

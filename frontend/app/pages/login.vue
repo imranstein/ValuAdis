@@ -10,7 +10,7 @@
         <p class="login-tagline">Ethiopian Property Valuation Platform</p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="login-form">
+      <form ref="formEl" @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
           <label for="email">Email</label>
           <InputText
@@ -40,15 +40,26 @@
           <p>{{ errorMessage }}</p>
         </div>
 
-        <Button
-          type="submit"
-          label="Sign In"
+        <button
+          type="button"
           class="login-btn"
-          :loading="authStore.loading"
           :disabled="authStore.loading"
-        />
+          @click="handleLogin"
+        >
+          {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
+        </button>
 
-        <p v-if="isDev" class="login-hint">Test: admin@valuadis.com / Admin123!</p>
+        <button
+          v-if="canUseDemoLogin"
+          type="button"
+          class="demo-login-btn"
+          :disabled="authStore.loading"
+          @click="loginAsDemoUser"
+        >
+          Use demo account
+        </button>
+
+        <p v-if="canUseDemoLogin" class="login-hint">Local demo access is available in development mode.</p>
       </form>
     </div>
   </div>
@@ -56,21 +67,35 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ middleware: 'guest', layout: 'landing' })
 
-const router = useRouter()
 const authStore = useAuthStore()
+const route = useRoute()
+const config = useRuntimeConfig()
 
-const isDev = import.meta.dev
+const isLocalApi = String(config.public.apiBaseUrl).includes('127.0.0.1') || String(config.public.apiBaseUrl).includes('localhost')
+const demoCredentials = {
+  email: String(config.public.demoLoginEmail || ''),
+  password: String(config.public.demoLoginPassword || '')
+}
+const canUseDemoLogin = Boolean(demoCredentials.email && demoCredentials.password) && (import.meta.dev || isLocalApi)
 
+const formEl = ref<HTMLFormElement | null>(null)
 const credentials = ref({ email: '', password: '' })
 const errorMessage = ref<string | null>(null)
 
+onMounted(() => {
+  const hashDemo = process.client && window.location.hash === '#demo'
+  if ((route.query.demo === '1' || hashDemo) && canUseDemoLogin) {
+    loginAsDemoUser()
+  }
+})
+
 async function handleLogin() {
   errorMessage.value = null
+  syncCredentialsFromForm()
   
   // Client-side validation
   if (!credentials.value.email || !credentials.value.password) {
@@ -85,12 +110,36 @@ async function handleLogin() {
   
   try {
     await authStore.login(credentials.value)
-    router.push('/dashboard')
+    await navigateTo(getRedirectPath(), { replace: true })
   } catch (err: any) {
     errorMessage.value =
       err?.message ||
-      authStore.error ||
+    authStore.error ||
       'Login failed. Please check your credentials.'
+  }
+}
+
+function getRedirectPath() {
+  const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect
+  if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) return '/dashboard'
+  return redirect
+}
+
+async function loginAsDemoUser() {
+  credentials.value = { ...demoCredentials }
+  await handleLogin()
+}
+
+function syncCredentialsFromForm() {
+  const form = formEl.value
+  if (!form) return
+
+  const email = form.querySelector<HTMLInputElement>('input[type="email"]')?.value
+  const password = form.querySelector<HTMLInputElement>('input[type="password"]')?.value
+
+  credentials.value = {
+    email: email || credentials.value.email,
+    password: password || credentials.value.password
   }
 }
 </script>
@@ -103,7 +152,12 @@ async function handleLogin() {
   justify-content: center;
   padding: 1.5rem;
   position: relative;
-  background: #0a0a0a;
+  background:
+    linear-gradient(rgba(23, 26, 23, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 26, 23, 0.025) 1px, transparent 1px),
+    var(--canvas);
+  background-size: 56px 56px, 56px 56px, auto;
+  color: var(--ink);
 }
 
 .login-bg {
@@ -114,17 +168,18 @@ async function handleLogin() {
 .login-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(26, 26, 46, 0.9) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(212, 175, 55, 0.06) 0%, transparent 50%);
+  background:
+    linear-gradient(115deg, rgba(236, 239, 233, 0.92) 0%, rgba(246, 247, 244, 0.46) 45%, rgba(31, 107, 79, 0.08) 100%);
 }
 
 .login-pattern {
   position: absolute;
   inset: 0;
-  background-image: 
-    linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+  background-image:
+    linear-gradient(rgba(23, 26, 23, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 26, 23, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0.32));
 }
 
 .login-card {
@@ -132,33 +187,38 @@ async function handleLogin() {
   width: 100%;
   max-width: 28rem;
   padding: 2.5rem;
-  background: rgba(26, 26, 46, 0.6);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(252, 252, 250, 0.94);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
 }
 
 .login-header {
-  text-align: center;
   margin-bottom: 2rem;
+  text-align: left;
 }
 
 .login-logo {
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
-  font-size: 2rem;
-  font-weight: 600;
-  color: #d4af37;
-  text-decoration: none;
-  letter-spacing: 0.08em;
   display: block;
   margin-bottom: 0.5rem;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-decoration: none;
+  transition: color 160ms var(--ease);
 }
 
 .login-logo:hover {
-  color: #e8c547;
+  color: var(--green);
 }
 
 .login-tagline {
+  margin: 0;
+  color: var(--muted);
   font-size: 0.9rem;
-  color: rgba(245, 240, 232, 0.7);
 }
 
 .login-form {
@@ -169,58 +229,54 @@ async function handleLogin() {
 
 .form-group label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: rgba(245, 240, 232, 0.9);
   margin-bottom: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 800;
 }
 
 .login-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(212, 175, 55, 0.4) !important;
-  color: #fffff5 !important;
-  border-radius: 0.5rem !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
   padding: 0.875rem 1rem !important;
-  transition: all 0.3s ease !important;
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease) !important;
 }
 
-/* PrimeVue components - base styling */
 .login-input :deep(.p-inputtext) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(212, 175, 55, 0.4) !important;
-  color: #fffff5 !important;
-  border-radius: 0.5rem !important;
-  padding: 0.875rem 1rem !important;
-  transition: all 0.3s ease !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  padding: 0.875rem 1rem !important;
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease) !important;
 }
 
-/* Password component container - make it look like email field */
 .login-input :deep(.p-password) {
   width: 100% !important;
   position: relative !important;
 }
 
-/* Password input field - match email field exactly */
 .login-input :deep(.p-password-input) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(212, 175, 55, 0.4) !important;
-  color: #fffff5 !important;
-  border-radius: 0.5rem !important;
-  padding: 0.875rem 1rem !important;
-  transition: all 0.3s ease !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius) !important;
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  padding: 0.875rem 1rem !important;
   outline: none !important;
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease) !important;
 }
 
-/* Remove nested input styling completely */
 .login-input :deep(.p-password .p-inputtext) {
   background: transparent !important;
   border: none !important;
-  color: #fffff5 !important;
+  color: var(--ink) !important;
   border-radius: 0 !important;
   padding: 0 !important;
   width: calc(100% - 40px) !important;
@@ -229,7 +285,6 @@ async function handleLogin() {
   margin: 0 !important;
 }
 
-/* Password toggle button - style to match theme */
 .login-input :deep(.p-password .p-password-panel-open) {
   position: absolute !important;
   right: 12px !important;
@@ -237,105 +292,131 @@ async function handleLogin() {
   transform: translateY(-50%) !important;
   background: transparent !important;
   border: none !important;
-  color: rgba(212, 175, 55, 0.7) !important;
+  color: var(--muted) !important;
   padding: 4px !important;
   cursor: pointer !important;
-  border-radius: 4px !important;
-  transition: all 0.3s ease !important;
+  border-radius: var(--radius) !important;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease) !important;
 }
 
 .login-input :deep(.p-password .p-password-panel-open:hover) {
-  color: #d4af37 !important;
-  background: rgba(212, 175, 55, 0.1) !important;
+  color: var(--green) !important;
+  background: var(--green-soft) !important;
 }
 
-/* Focus states - make both fields identical */
 .login-input:focus,
 .login-input :deep(.p-inputtext:focus),
 .login-input :deep(.p-password-input:focus) {
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(31, 107, 79, 0.14) !important;
+  background: var(--surface) !important;
   outline: none !important;
 }
 
-/* Hover states - make both fields identical */
+.demo-login-btn {
+  min-height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 800;
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+}
+
+.demo-login-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.demo-login-btn:active {
+  transform: scale(0.98);
+}
+
 .login-input:hover,
 .login-input :deep(.p-inputtext:hover),
 .login-input :deep(.p-password-input:hover) {
-  border-color: rgba(212, 175, 55, 0.6) !important;
+  border-color: var(--green) !important;
 }
 
 .login-input::placeholder {
-  color: rgba(245, 240, 232, 0.5) !important;
+  color: var(--muted) !important;
 }
 
 .login-input :deep(.p-inputtext::placeholder) {
-  color: rgba(245, 240, 232, 0.5) !important;
+  color: var(--muted) !important;
 }
 
 .login-input :deep(.p-password-input::placeholder) {
-  color: rgba(245, 240, 232, 0.5) !important;
+  color: var(--muted) !important;
 }
 
 .login-input:focus {
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(31, 107, 79, 0.14) !important;
+  background: var(--surface) !important;
 }
 
 .login-input :deep(.p-inputtext:focus) {
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(31, 107, 79, 0.14) !important;
+  background: var(--surface) !important;
 }
 
 .login-input :deep(.p-password-input:focus) {
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(31, 107, 79, 0.14) !important;
+  background: var(--surface) !important;
 }
 
 .login-input:hover {
-  border-color: rgba(212, 175, 55, 0.6) !important;
+  border-color: var(--green) !important;
 }
 
 .login-input :deep(.p-inputtext:hover) {
-  border-color: rgba(212, 175, 55, 0.6) !important;
+  border-color: var(--green) !important;
 }
 
 .login-input :deep(.p-password-input:hover) {
-  border-color: rgba(212, 175, 55, 0.6) !important;
+  border-color: var(--green) !important;
 }
 
 .login-error {
   padding: 0.75rem;
-  background: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 0.5rem;
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  background: var(--red-soft);
 }
 
 .login-error p {
+  margin: 0;
+  color: var(--red);
   font-size: 0.875rem;
-  color: #fca5a5;
 }
 
 .login-btn {
   width: 100%;
-  background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%) !important;
-  border: none !important;
-  color: #0a0a0a !important;
-  font-weight: 600;
+  border: 1px solid var(--green) !important;
+  border-radius: var(--radius) !important;
+  background: var(--green) !important;
+  color: var(--surface) !important;
+  font-weight: 850;
   padding: 0.875rem !important;
+  transition: background-color 160ms var(--ease), transform 120ms var(--ease) !important;
 }
 
 .login-btn:hover {
-  background: linear-gradient(135deg, #e8c547 0%, #d4af37 100%) !important;
+  background: var(--green-dark) !important;
+}
+
+.login-btn:active {
+  transform: scale(0.98);
 }
 
 .login-hint {
   text-align: center;
   font-size: 0.8rem;
-  color: rgba(245, 240, 232, 0.5);
+  color: var(--muted);
 }
 </style>

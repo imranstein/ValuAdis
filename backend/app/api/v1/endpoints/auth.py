@@ -5,9 +5,12 @@ JWT authentication for ValuAdis users
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import timedelta
+from typing import Optional
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import (
@@ -17,14 +20,34 @@ from app.core.security import (
     get_current_user_id,
     validate_ethiopian_phone_number
 )
+from app.core.exceptions import AuthenticationException, ValidationException
 from app.schemas.auth import UserLogin, UserRegister, TokenResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter()
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
-@router.post("/register", response_model=TokenResponse, tags=["Authentication"])
+def token_envelope(tokens: TokenResponse, message: str):
+    return {
+        "success": True,
+        "message": message,
+        "data": tokens.model_dump(),
+    }
+
+
+def error_envelope(status_code: int, message: str):
+    return JSONResponse(
+        status_code=status_code,
+        content={"success": False, "message": message},
+    )
+
+
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    tags=["Authentication"],
+)
 async def register(
     user_data: UserRegister,
     db: Session = Depends(get_db)
@@ -34,27 +57,33 @@ async def register(
     
     # Validate Ethiopian phone number
     if not validate_ethiopian_phone_number(user_data.phone):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid Ethiopian phone number format"
+        return error_envelope(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Invalid Ethiopian phone number format",
         )
     
     # Create user
-    user = await auth_service.create_user(user_data.dict())
+    try:
+        user = await auth_service.create_user(user_data.model_dump())
+    except ValidationException as exc:
+        return error_envelope(status.HTTP_400_BAD_REQUEST, str(exc))
     
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    return token_envelope(
+        TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        ),
+        "Registration successful",
     )
 
 
-@router.post("/login", response_model=TokenResponse, tags=["Authentication"])
+@router.post("/login", tags=["Authentication"])
 async def login(
     user_credentials: UserLogin,
     db: Session = Depends(get_db)
@@ -63,31 +92,30 @@ async def login(
     auth_service = AuthService(db)
     
     # Authenticate user
-    user = await auth_service.authenticate_user(
-        user_credentials.email,
-        user_credentials.password
-    )
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        user = await auth_service.authenticate_user(
+            user_credentials.email,
+            user_credentials.password,
         )
+    except AuthenticationException as exc:
+        return error_envelope(status.HTTP_401_UNAUTHORIZED, str(exc))
     
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    return token_envelope(
+        TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        ),
+        "Login successful",
     )
 
 
-@router.post("/refresh", response_model=TokenResponse, tags=["Authentication"])
+@router.post("/refresh", tags=["Authentication"])
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -113,11 +141,14 @@ async def refresh_token(
         access_token = create_access_token(data={"sub": user_id})
         new_refresh_token = create_refresh_token(data={"sub": user_id})
 
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=new_refresh_token,
-            token_type="bearer",
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        return token_envelope(
+            TokenResponse(
+                access_token=access_token,
+                refresh_token=new_refresh_token,
+                token_type="bearer",
+                expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            ),
+            "Token refreshed",
         )
 
     except HTTPException:
@@ -131,10 +162,17 @@ async def refresh_token(
 
 @router.get("/me", tags=["Authentication"])
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Get current user information"""
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     user_id = get_current_user_id(credentials.credentials)
     auth_service = AuthService(db)
     
@@ -145,7 +183,10 @@ async def get_current_user(
             detail="User not found"
         )
     
-    role_names = [r.name for r in user.roles] if user.roles else []
+    try:
+        role_names = [r.name for r in user.roles] if user.roles else []
+    except SQLAlchemyError:
+        role_names = []
     primary_role = role_names[0] if role_names else ("system_admin" if user.is_admin else "valuer")
     return {
         "id": user.id,

@@ -32,7 +32,7 @@ def require_admin_permission(allowed_roles: List[str] = ["system_admin", "firm_a
                 detail="User not found"
             )
         
-        if not any(role.name in allowed_roles for role in user.roles):
+        if not user.is_admin and not any(role.name in allowed_roles for role in user.roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions"

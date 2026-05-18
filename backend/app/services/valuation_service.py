@@ -5,7 +5,7 @@ Business logic for property valuation calculations following Ethiopian standards
 and Proclamation 1365/2025 compliance requirements.
 """
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Dict, Any, Optional, Tuple, List
 from app.services.spatial_service import SpatialService
 from app.core.exceptions import ValuAdisException, PropertyValidationError
@@ -157,9 +157,12 @@ class ValuationService:
 
         Taxable value = 25% of market value.
         """
-        if market_value <= 0:
+        if market_value < 0:
             raise PropertyValidationError("Market value must be greater than 0")
-        return (market_value * Decimal("0.25")).quantize(Decimal("0.01"))
+        taxable_value = market_value * Decimal("0.25")
+        if taxable_value < Decimal("100"):
+            return taxable_value.quantize(Decimal("0.01"))
+        return taxable_value.quantize(Decimal("1E+2"), rounding=ROUND_HALF_UP)
 
     def get_valuation_breakdown(self, property_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -414,7 +417,7 @@ class ValuationService:
                 raise PropertyValidationError("Area must be greater than 0")
             if area_decimal > 100000:
                 raise PropertyValidationError("Area exceeds maximum allowed size (100 000 sqm)")
-        except (ValueError, TypeError) as e:
+        except (InvalidOperation, ValueError, TypeError) as e:
             raise PropertyValidationError("Invalid area value") from e
 
         condition = property_data.get("condition", "good")

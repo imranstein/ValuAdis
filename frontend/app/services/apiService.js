@@ -2,10 +2,15 @@ class ApiService
 {
   constructor ()
   {
-    this.baseURL = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8020'
     this.defaultTimeout = 30000
     this.maxRetries = 3
     this.retryDelay = 1000
+  }
+
+  getBaseURL ()
+  {
+    const config = useRuntimeConfig()
+    return config.public.apiBaseUrl
   }
 
   async request ( url, options = {} )
@@ -24,7 +29,7 @@ class ApiService
 
     try
     {
-      const response = await fetch( `${ this.baseURL }${ url }`, {
+      const response = await fetch( `${ this.getBaseURL() }${ url }`, {
         method,
         headers: {
           'Content-Type': 'application/json',

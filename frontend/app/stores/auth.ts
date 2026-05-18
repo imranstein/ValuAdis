@@ -6,11 +6,12 @@ import type { User, LoginCredentials, RegisterData } from '~/types'
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null)
+  const activeSession = ref(false)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
   // Getters
-  const isAuthenticated = computed(() => !!user.value)
+  const isAuthenticated = computed(() => activeSession.value || !!user.value)
   const userRole = computed(() => user.value?.role)
   const userName = computed(() => user.value?.full_name)
 
@@ -20,6 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       await authService.login(credentials)
+      activeSession.value = true
       // Try to fetch current user, but don't let it fail the login
       try {
         await fetchCurrentUser()
@@ -30,10 +32,8 @@ export const useAuthStore = defineStore('auth', () => {
           id: 0,
           email: credentials.email,
           full_name: 'User',
-          role: 'user',
+          role: 'valuer',
           phone: '',
-          municipality: '',
-          license_number: '',
           is_admin: false,
           roles: [],
           created_at: new Date().toISOString()
@@ -78,11 +78,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout() {
     authService.logout()
+    activeSession.value = false
     user.value = null
   }
 
   async function initialize() {
     if (authService.isAuthenticated()) {
+      activeSession.value = true
       try {
         await fetchCurrentUser()
       } catch (err) {
@@ -94,6 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // State
     user,
+    activeSession,
     loading,
     error,
     // Getters

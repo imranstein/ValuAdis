@@ -30,5 +30,6 @@ class ValuationFeedback(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # property = relationship("Property", back_populates="feedback")  # Temporarily disabled
+    property = relationship("Property", back_populates="feedback")
+    valuation = relationship("Valuation", back_populates="feedback")
     reviewer = relationship("User", foreign_keys=[reviewer_id])

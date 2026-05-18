@@ -1,252 +1,434 @@
 <template>
-  <div class="settings-modern min-h-screen bg-[#f7f9fb] font-['Inter']">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/80 backdrop-blur-xl flex flex-col p-4 space-y-2 shadow-xl shadow-emerald-900/5">
-      <div class="px-4 py-6 mb-4">
-        <h1 class="font-['Syne'] font-extrabold text-emerald-800 text-2xl tracking-tight leading-tight">ValuAdis</h1>
-        <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-emerald-600/60 mt-1">Federal Valuation Dept</p>
+  <div class="page-shell settings-page">
+    <section class="page-head">
+      <div>
+        <p class="page-kicker">System controls</p>
+        <h2 class="page-title">Operational settings.</h2>
+          <p class="page-subtitle">
+          Review account context and prepare workspace defaults. Production notification and API-key controls require backend settings endpoints before deployment.
+        </p>
       </div>
-      <nav class="flex-1 space-y-1">
-        <NuxtLink to="/dashboard" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:view-dashboard" class="w-5 h-5" />
-          <span class="text-sm font-medium">Dashboard</span>
-        </NuxtLink>
-        <NuxtLink to="/properties" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:domain" class="w-5 h-5" />
-          <span class="text-sm font-medium">Properties</span>
-        </NuxtLink>
-        <NuxtLink to="/vehicles" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:car" class="w-5 h-5" />
-          <span class="text-sm font-medium">Vehicles</span>
-        </NuxtLink>
-        <NuxtLink to="/valuations" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:chart-line" class="w-5 h-5" />
-          <span class="text-sm font-medium">Valuations</span>
-        </NuxtLink>
-        <NuxtLink to="/map" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:map" class="w-5 h-5" />
-          <span class="text-sm font-medium">Maps</span>
-        </NuxtLink>
-        <NuxtLink to="/reports" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:file-document" class="w-5 h-5" />
-          <span class="text-sm font-medium">Reports</span>
-        </NuxtLink>
-      </nav>
-      <div class="pt-4 border-t border-emerald-900/5 mt-auto space-y-1">
-        <NuxtLink to="/settings" class="flex items-center gap-3 px-4 py-3 bg-emerald-100/50 text-emerald-700 rounded-xl font-bold transition-all duration-200 group">
-          <Icon name="mdi:cog" class="w-5 h-5" />
-          <span class="text-sm font-medium">Settings</span>
-        </NuxtLink>
-        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group w-full text-left">
-          <Icon name="mdi:logout" class="w-5 h-5" />
-          <span class="text-sm font-medium">Logout</span>
+      <div class="page-actions">
+        <button class="btn-secondary" type="button" @click="generateApiKey">
+          <i class="pi pi-key" aria-hidden="true"></i>
+          Create draft key
+        </button>
+        <button class="btn-primary" type="button" @click="saveOperationalSettings">
+          <i class="pi pi-save" aria-hidden="true"></i>
+          Save settings
         </button>
       </div>
-    </aside>
+    </section>
 
-    <!-- Main Content -->
-    <main class="ml-64 p-8 min-h-screen">
-      <!-- Header -->
-      <header class="flex justify-between items-center mb-10">
-        <div>
-          <h2 class="font-['Syne'] font-extrabold text-4xl text-[#191c1e] tracking-tighter">System Settings</h2>
-          <p class="text-[#3d4a42] font-medium mt-1">Manage your administrative profile and global system configurations.</p>
+    <section class="settings-grid">
+      <article class="panel profile-panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Administrative profile</h3>
+            <p class="panel-subtitle">Authenticated account context from the backend session</p>
+          </div>
+          <span class="status-pill" :class="profileLoadError ? 'warn' : 'good'">
+            {{ profileLoadError ? 'Session check needed' : 'Verified' }}
+          </span>
         </div>
-      </header>
+        <div class="field-grid">
+          <div v-for="field in profileFields" :key="field.label" class="read-field">
+            <span>{{ field.label }}</span>
+            <strong>{{ field.value }}</strong>
+          </div>
+        </div>
+      </article>
 
-      <!-- Bento Grid Layout -->
-      <div class="grid grid-cols-12 gap-6">
-        <!-- Administrative Profile -->
-        <section class="col-span-12 lg:col-span-8 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm">
-          <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700">
-                <Icon name="mdi:account" class="w-6 h-6" />
-              </div>
-              <h3 class="text-xl font-bold font-['Syne']">Administrative Profile</h3>
-            </div>
-            <button class="text-sm font-semibold text-emerald-700 hover:underline">Edit Details</button>
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Workspace behavior</h3>
+            <p class="panel-subtitle">Interface defaults for repeated administrative work</p>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Name</label>
-              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.fullName }}</p>
-            </div>
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Email Address</label>
-              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.email }}</p>
-            </div>
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Department</label>
-              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.department }}</p>
-            </div>
-            <div class="space-y-1">
-              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Role Access</label>
-              <p class="text-[#191c1e] font-medium border-b border-slate-100 pb-2">{{ userProfile.role }}</p>
+        </div>
+        <div class="control-list">
+          <label class="control-row">
+            <span>
+              <strong>Dark mode</strong>
+              <small>Reserved for low-light review sessions</small>
+            </span>
+            <input v-model="darkMode" type="checkbox" />
+          </label>
+          <div class="segmented-row">
+            <span>
+              <strong>Data density</strong>
+              <small>Controls table and form spacing</small>
+            </span>
+            <div class="segmented-control">
+              <button type="button" :class="{ active: dataDensity === 'compact' }" @click="dataDensity = 'compact'">Compact</button>
+              <button type="button" :class="{ active: dataDensity === 'spacious' }" @click="dataDensity = 'spacious'">Spacious</button>
             </div>
           </div>
-        </section>
+          <label class="field">
+            <span>System language</span>
+            <select v-model="systemLanguage">
+              <option>English (International)</option>
+              <option>Amharic</option>
+              <option>Afaan Oromo</option>
+            </select>
+          </label>
+        </div>
+      </article>
 
-        <!-- System Preferences -->
-        <section class="col-span-12 lg:col-span-4 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm flex flex-col">
-          <div class="flex items-center gap-4 mb-8">
-            <div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700">
-              <Icon name="mdi:tune" class="w-6 h-6" />
-            </div>
-            <h3 class="text-xl font-bold font-['Syne']">System Preferences</h3>
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Email delivery</h3>
+            <p class="panel-subtitle">Outbound notifications for reports and approvals</p>
           </div>
-          <div class="space-y-6 flex-1">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-bold">Dark Mode</p>
-                <p class="text-xs text-slate-500">Toggle system-wide theme</p>
-              </div>
-              <button @click="toggleDarkMode" :class="darkMode ? 'bg-emerald-600' : 'bg-slate-200'" class="w-12 h-6 rounded-full relative transition-colors p-1">
-                <div :class="darkMode ? 'translate-x-6' : 'translate-x-0'" class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform"></div>
-              </button>
-            </div>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-bold">Data Density</p>
-                <p class="text-xs text-slate-500">Compact or Spacious UI</p>
-              </div>
-              <div class="flex bg-slate-100 p-1 rounded-lg">
-                <button @click="dataDensity = 'compact'" :class="dataDensity === 'compact' ? 'bg-white shadow-sm' : 'text-slate-500'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">Compact</button>
-                <button @click="dataDensity = 'spacious'" :class="dataDensity === 'spacious' ? 'bg-white shadow-sm' : 'text-slate-500'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">Spacious</button>
-              </div>
-            </div>
-            <div class="space-y-2 pt-2">
-              <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">System Language</label>
-              <select v-model="systemLanguage" class="w-full bg-slate-50 border-slate-200 rounded-xl text-sm py-2 px-3 border">
-                <option>English (International)</option>
-                <option>Amharic (አማርኛ)</option>
-                <option>French</option>
-              </select>
-            </div>
-          </div>
-        </section>
+          <span class="status-pill warn">
+            {{ emailSettings.enabled ? 'Draft enabled' : 'Draft only' }}
+          </span>
+        </div>
+        <div class="form-grid">
+          <label class="field">
+            <span>SMTP host</span>
+            <input v-model="emailSettings.smtpHost" type="text" />
+          </label>
+          <label class="field">
+            <span>SMTP port</span>
+            <input v-model.number="emailSettings.smtpPort" type="number" />
+          </label>
+          <label class="field full">
+            <span>Sender email</span>
+            <input v-model="emailSettings.senderEmail" type="email" />
+          </label>
+        </div>
+      </article>
 
-        <!-- Security & API Integration -->
-        <section class="col-span-12 bg-white/70 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-sm">
-          <div class="flex items-center gap-4 mb-10">
-            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
-              <Icon name="mdi:shield" class="w-6 h-6" />
-            </div>
-            <div>
-              <h3 class="text-xl font-bold font-['Syne']">Security & API Integration</h3>
-              <p class="text-xs text-slate-500">Manage sensitive access tokens and authentication layers</p>
-            </div>
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Security limits</h3>
+            <p class="panel-subtitle">Request caps and credential posture</p>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <!-- Security -->
-            <div class="space-y-6">
-              <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                <div class="flex items-start justify-between">
-                  <div class="flex gap-4">
-                    <Icon name="mdi:shield-check" class="w-6 h-6 text-emerald-600" />
-                    <div>
-                      <p class="font-bold text-sm">Two-Factor Authentication</p>
-                      <p class="text-xs text-slate-500 mt-1">Status: <span class="text-emerald-600 font-bold uppercase">Active</span></p>
-                    </div>
-                  </div>
-                  <button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Configure</button>
-                </div>
-              </div>
-              <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                <div class="flex items-start justify-between">
-                  <div class="flex gap-4">
-                    <Icon name="mdi:lock" class="w-6 h-6 text-slate-400" />
-                    <div>
-                      <p class="font-bold text-sm">Update Password</p>
-                      <p class="text-xs text-slate-500 mt-1">Last updated {{ daysSincePasswordChange }} days ago</p>
-                    </div>
-                  </div>
-                  <button class="px-4 py-2 border border-slate-200 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-all">Update</button>
-                </div>
-              </div>
-            </div>
-            <!-- API Keys -->
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active API Keys</h4>
-                <button class="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
-                  <Icon name="mdi:plus" class="w-4 h-4" /> GENERATE KEY
+          <span class="status-pill warn">{{ passwordAgeLabel }}</span>
+        </div>
+        <div class="form-grid">
+          <label class="field">
+            <span>Requests per window</span>
+            <input v-model.number="rateLimitSettings.requestsPerWindow" type="number" />
+          </label>
+          <label class="field">
+            <span>Burst limit</span>
+            <input v-model.number="rateLimitSettings.burst" type="number" />
+          </label>
+          <label class="field full">
+            <span>Window</span>
+            <select v-model="rateLimitSettings.window">
+              <option>minute</option>
+              <option>hour</option>
+              <option>day</option>
+            </select>
+          </label>
+        </div>
+      </article>
+    </section>
+
+    <section class="table-panel">
+      <div class="panel-head table-head">
+        <div>
+          <h3 class="panel-title">API keys</h3>
+            <p class="panel-subtitle">{{ saveStatus }}</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Key</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="apiKeys.length === 0">
+              <td colspan="3" class="empty-cell">No API keys are loaded. Backend key management is not connected yet.</td>
+            </tr>
+            <tr v-for="key in apiKeys" :key="key.id">
+              <td><strong>{{ key.name }}</strong></td>
+              <td class="num">{{ maskApiKey(key.key) }}</td>
+              <td class="text-right">
+                <button class="icon-button inline" type="button" aria-label="Copy API key" @click="copyApiKey(key.key)">
+                  <i class="pi pi-copy" aria-hidden="true"></i>
                 </button>
-              </div>
-              <div class="space-y-2">
-                <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-                  <div>
-                    <p class="text-xs font-bold">{{ key.name }}</p>
-                    <p class="text-[10px] font-mono text-slate-400">{{ maskApiKey(key.key) }}</p>
-                  </div>
-                  <div class="flex gap-2">
-                    <button @click="copyApiKey(key.key)" class="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors">
-                      <Icon name="mdi:content-copy" class="w-4 h-4" />
-                    </button>
-                    <button @click="deleteApiKey(key.id)" class="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-colors">
-                      <Icon name="mdi:delete" class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+                <button class="icon-button inline danger" type="button" aria-label="Delete API key" @click="deleteApiKey(key.id)">
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </main>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '~/stores/auth'
+import { computed, onMounted, ref } from 'vue'
+import authService from '~/services/authService'
 
-definePageMeta({ middleware: 'auth' })
-
-const router = useRouter()
-const authStore = useAuthStore()
+definePageMeta({ middleware: ['auth', 'admin'] })
 
 const darkMode = ref(false)
 const dataDensity = ref('compact')
 const systemLanguage = ref('English (International)')
-const daysSincePasswordChange = ref(42)
+const daysSincePasswordChange = ref('unknown')
+const saveStatus = ref('Local draft only')
+const profileLoadError = ref('')
 
 const userProfile = ref({
-  fullName: 'Abebe Kebede',
-  email: 'a.kebede@mof.gov.et',
-  department: 'National Property Registry',
-  role: 'System Administrator'
+  fullName: 'Signed-in user',
+  email: 'Profile details unavailable',
+  department: 'Not provided',
+  role: 'Workspace access'
 })
 
-const apiKeys = ref([
-  { id: 1, name: 'PROD_REGISTRY_V4', key: 'sk_live_xxxxxxxxxxxxxxxx4e21' },
-  { id: 2, name: 'STAGING_VALUATION_SERVICE', key: 'sk_test_xxxxxxxxxxxxxxxx92a3' }
+const apiKeys = ref([])
+
+const emailSettings = ref({
+  enabled: false,
+  smtpHost: '',
+  smtpPort: 587,
+  senderEmail: ''
+})
+
+const rateLimitSettings = ref({
+  requestsPerWindow: 900,
+  window: 'hour',
+  burst: 75
+})
+
+const profileFields = computed(() => [
+  { label: 'Full name', value: userProfile.value.fullName },
+  { label: 'Email address', value: userProfile.value.email },
+  { label: 'Department', value: userProfile.value.department },
+  { label: 'Role access', value: userProfile.value.role }
 ])
 
-function toggleDarkMode() {
-  darkMode.value = !darkMode.value
+const passwordAgeLabel = computed(() => {
+  return typeof daysSincePasswordChange.value === 'number'
+    ? `${daysSincePasswordChange.value}d password age`
+    : 'Password age unavailable'
+})
+
+onMounted(async () => {
+  loadLocalSettings()
+  await loadCurrentUser()
+})
+
+async function loadCurrentUser() {
+  try {
+    const user = await authService.getCurrentUser()
+    userProfile.value = {
+      fullName: user.full_name || 'Signed-in user',
+      email: user.email || 'Profile details unavailable',
+      department: user.municipality || 'Not provided',
+      role: normalizeRole(user.role || (user.is_admin ? 'system_admin' : 'valuer'))
+    }
+    profileLoadError.value = ''
+  } catch {
+    profileLoadError.value = 'Unable to load authenticated profile'
+  }
+}
+
+function loadLocalSettings() {
+  const saved = localStorage.getItem('valuadis_operational_settings')
+  if (!saved) return
+
+  try {
+    const parsed = JSON.parse(saved)
+    emailSettings.value = { ...emailSettings.value, ...(parsed.email || {}) }
+    rateLimitSettings.value = { ...rateLimitSettings.value, ...(parsed.rateLimits || {}) }
+    apiKeys.value = Array.isArray(parsed.apiKeys) ? parsed.apiKeys : []
+    saveStatus.value = 'Local draft loaded'
+  } catch {
+    saveStatus.value = 'Saved draft could not be read'
+  }
+}
+
+function normalizeRole(role) {
+  return String(role || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase()) || 'Workspace access'
 }
 
 function maskApiKey(key) {
-  return key.substring(0, 7) + '••••••••••••' + key.substring(key.length - 4)
+  return `${key.substring(0, 7)}............${key.substring(key.length - 4)}`
 }
 
 function copyApiKey(key) {
-  navigator.clipboard.writeText(key)
-  // Could add toast notification here
+  navigator.clipboard?.writeText(key)
+  saveStatus.value = 'Key copied'
 }
 
 function deleteApiKey(id) {
-  apiKeys.value = apiKeys.value.filter(k => k.id !== id)
+  apiKeys.value = apiKeys.value.filter((key) => key.id !== id)
+  saveStatus.value = 'Key removed'
 }
 
-function logout() {
-  authStore.logout()
-  router.push('/login')
+function generateApiKey() {
+  const nextId = Math.max(...apiKeys.value.map((key) => key.id), 0) + 1
+  const randomPart = crypto.randomUUID?.() || `${Date.now()}`
+  apiKeys.value.push({
+    id: nextId,
+    name: `LOCAL_DRAFT_KEY_${nextId}`,
+    key: `local_draft_${randomPart.replace(/-/g, '').slice(0, 24)}`
+  })
+  saveStatus.value = 'Draft key created locally'
+}
+
+function saveOperationalSettings() {
+  localStorage.setItem('valuadis_operational_settings', JSON.stringify({
+    email: emailSettings.value,
+    rateLimits: rateLimitSettings.value,
+    apiKeys: apiKeys.value
+  }))
+  saveStatus.value = 'Local draft saved'
 }
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+<style scoped>
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 14px;
+}
+
+.profile-panel {
+  grid-row: span 2;
+}
+
+.field-grid,
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.read-field,
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.read-field span,
+.field span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.read-field strong {
+  min-height: 42px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-weight: 750;
+}
+
+.field input,
+.field select {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0 10px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.control-list {
+  display: grid;
+  gap: 18px;
+}
+
+.control-row,
+.segmented-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.control-row strong,
+.segmented-row strong {
+  display: block;
+  color: var(--ink);
+}
+
+.control-row small,
+.segmented-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.segmented-control {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 3px;
+}
+
+.segmented-control button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 10px;
+}
+
+.segmented-control button.active {
+  background: var(--surface);
+  color: var(--green);
+  box-shadow: var(--shadow-sm);
+}
+
+.table-head {
+  margin: 0;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.icon-button.inline {
+  display: inline-grid;
+  margin-left: 6px;
+}
+
+.icon-button.danger {
+  color: var(--red);
+}
+
+.empty-cell {
+  color: var(--muted);
+  padding: 24px;
+  text-align: left;
+}
+
+@media (max-width: 1080px) {
+  .settings-grid,
+  .field-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-panel {
+    grid-row: auto;
+  }
+}
 </style>

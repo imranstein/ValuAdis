@@ -171,12 +171,6 @@ function removeDoc(i: number) {
   form.documents.splice(i, 1)
 }
 
-const docKeywords: Record<string, string> = {
-  'title': 'title_deed',
-  'deed': 'title_deed',
-  'tax': 'tax_clearance',
-  'survey': 'survey_plan',
-}
 const requiredDocs = computed(() => {
   const names = form.documents.map(d => d.name.toLowerCase())
   return [

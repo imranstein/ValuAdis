@@ -68,6 +68,22 @@ check_prerequisites() {
     success "Prerequisites check passed"
 }
 
+# Validate production environment before any deploy action mutates services
+validate_environment() {
+    log "Validating production environment..."
+
+    cd "$PROJECT_DIR"
+
+    if [[ ! -f ".env.production" ]]; then
+        error ".env.production is missing. Copy the production template and set real values first."
+        exit 1
+    fi
+
+    bash scripts/validate-production-env.sh .env.production
+
+    success "Production environment validation passed"
+}
+
 # Create necessary directories
 create_directories() {
     log "Creating necessary directories..."
@@ -168,9 +184,34 @@ run_migrations() {
         sleep 2
         timeout=$((timeout - 2))
     done
+
+    local app_table_count
+    app_table_count=$(docker-compose -f "$COMPOSE_FILE" exec -T db psql \
+        -U "${POSTGRES_USER:-valuadis_user}" \
+        -d "${POSTGRES_DB:-valuadis}" \
+        -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'properties', 'valuations', 'vehicles', 'raw_market_listings', 'scraper_targets');")
+
+    local has_alembic_version
+    has_alembic_version=$(docker-compose -f "$COMPOSE_FILE" exec -T db psql \
+        -U "${POSTGRES_USER:-valuadis_user}" \
+        -d "${POSTGRES_DB:-valuadis}" \
+        -tAc "SELECT to_regclass('public.alembic_version') IS NOT NULL;")
+
+    if ! bash scripts/check-migration-state.sh "${app_table_count:-0}" "$has_alembic_version"; then
+        exit 1
+    fi
     
     # Run migrations
     docker-compose -f "$COMPOSE_FILE" exec -T backend alembic upgrade head
+
+    local current_revision
+    local head_revision
+    current_revision=$(docker-compose -f "$COMPOSE_FILE" exec -T backend alembic current | tail -n 1 | awk '{print $1}')
+    head_revision=$(docker-compose -f "$COMPOSE_FILE" exec -T backend alembic heads | tail -n 1 | awk '{print $1}')
+
+    if ! bash scripts/check-migration-state.sh 0 true "$current_revision" "$head_revision"; then
+        exit 1
+    fi
     
     success "Database migrations completed"
 }
@@ -287,6 +328,7 @@ main() {
     # Check prerequisites
     check_root
     check_prerequisites
+    validate_environment
     
     # Create directories
     create_directories

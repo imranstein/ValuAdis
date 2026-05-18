@@ -11,8 +11,12 @@
       <div class="modal-body">
         <form @submit.prevent="handleSubmit">
           <!-- Basic Configuration -->
+          <div v-if="validationError" class="validation-error">
+            {{ validationError }}
+          </div>
+
           <div class="form-section">
-            <h3>🔧 Basic Configuration</h3>
+            <h3>Basic Configuration</h3>
             
             <div class="form-group">
               <label>Domain *</label>
@@ -69,7 +73,7 @@
 
           <!-- CSS Selectors -->
           <div class="form-section">
-            <h3>🎯 CSS Selectors</h3>
+            <h3>CSS Selectors</h3>
             
             <div class="form-row">
               <div class="form-group">
@@ -179,6 +183,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const isSaving = ref(false)
+const validationError = ref('')
 
 const formData = ref({
   domain: '',
@@ -212,16 +217,17 @@ watch(() => props.scraper, (newScraper) => {
 }, { immediate: true })
 
 const handleSubmit = async () => {
-  // Validate required fields
+  validationError.value = ''
+
   if (!formData.value.url_template.includes('{page}')) {
-    alert('URL template must contain {page} placeholder')
+    validationError.value = 'URL template must contain the {page} placeholder.'
     return
   }
   
   const requiredSelectors = ['title', 'price', 'location', 'listing_url']
   const missingSelectors = requiredSelectors.filter(selector => !formData.value.selectors[selector])
   if (missingSelectors.length > 0) {
-    alert(`Missing required selectors: ${missingSelectors.join(', ')}`)
+    validationError.value = `Missing required selectors: ${missingSelectors.join(', ')}.`
     return
   }
   
@@ -235,6 +241,7 @@ const handleSubmit = async () => {
 }
 
 const resetForm = () => {
+  validationError.value = ''
   formData.value = {
     domain: '',
     url_template: '',
@@ -315,6 +322,17 @@ const resetForm = () => {
 .modal-body {
   padding: 2rem;
   overflow-y: auto;
+}
+
+.validation-error {
+  margin-bottom: 1.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .form-group {

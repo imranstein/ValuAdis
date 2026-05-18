@@ -102,7 +102,7 @@ class VehicleValuationBase(BaseModel):
 
 class VehicleValuationCreate(VehicleValuationBase):
     vehicle_id: UUID = Field(..., description="Vehicle ID")
-    valuer_id: int = Field(..., description="Valuer ID")
+    valuer_id: Optional[int] = Field(None, description="Valuer ID")
 
 
 class VehicleValuationUpdate(BaseModel):

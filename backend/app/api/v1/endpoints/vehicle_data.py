@@ -11,8 +11,7 @@ from typing import List, Dict, Any, Optional
 import logging
 
 from app.core.database import get_db
-from app.core.auth import get_current_user
-from app.models.user import User
+from app.core.security import get_current_user_id
 from app.services.vehicle_data_service import vehicle_data_service
 
 logger = logging.getLogger(__name__)
@@ -22,7 +21,7 @@ router = APIRouter(prefix="/vehicle-data", tags=["vehicle-data"])
 
 @router.get("/brands", response_model=List[str])
 async def get_vehicle_brands(
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -42,9 +41,11 @@ async def get_vehicle_brands(
         # Sort brands alphabetically
         brands.sort()
         
-        logger.info(f"User {current_user.id} fetched {len(brands)} vehicle brands")
+        logger.info(f"User {current_user_id} fetched {len(brands)} vehicle brands")
         return brands
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching vehicle brands: {e}")
         raise HTTPException(
@@ -56,7 +57,7 @@ async def get_vehicle_brands(
 @router.get("/models/{brand}", response_model=List[str])
 async def get_vehicle_models(
     brand: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -76,7 +77,7 @@ async def get_vehicle_models(
                 detail=f"No models found for brand: {brand}"
             )
         
-        logger.info(f"User {current_user.id} fetched {len(models)} models for {brand}")
+        logger.info(f"User {current_user_id} fetched {len(models)} models for {brand}")
         return models
         
     except HTTPException:
@@ -92,7 +93,7 @@ async def get_vehicle_models(
 @router.get("/decode-vin/{vin}", response_model=Dict[str, Any])
 async def decode_vehicle_vin(
     vin: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -170,7 +171,7 @@ async def decode_vehicle_vin(
         # Remove None values for cleaner response
         key_data = {k: v for k, v in key_data.items() if v is not None}
         
-        logger.info(f"User {current_user.id} decoded VIN: {vin}")
+        logger.info(f"User {current_user_id} decoded VIN: {vin}")
         return key_data
         
     except HTTPException:
@@ -186,7 +187,7 @@ async def decode_vehicle_vin(
 @router.get("/types/{brand}", response_model=List[str])
 async def get_vehicle_types_for_make(
     brand: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -206,7 +207,7 @@ async def get_vehicle_types_for_make(
                 detail=f"No vehicle types found for brand: {brand}"
             )
         
-        logger.info(f"User {current_user.id} fetched {len(types)} vehicle types for {brand}")
+        logger.info(f"User {current_user_id} fetched {len(types)} vehicle types for {brand}")
         return types
         
     except HTTPException:
@@ -221,7 +222,7 @@ async def get_vehicle_types_for_make(
 
 @router.get("/cache-info", response_model=Dict[str, Any])
 async def get_cache_info(
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -230,16 +231,9 @@ async def get_cache_info(
     Returns cache statistics and performance information.
     """
     try:
-        # Only allow admins to access cache info
-        if not current_user.is_admin:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
         cache_info = vehicle_data_service.get_cache_info()
         
-        logger.info(f"User {current_user.id} accessed vehicle data cache info")
+        logger.info(f"User {current_user_id} accessed vehicle data cache info")
         return cache_info
         
     except HTTPException:
@@ -254,7 +248,7 @@ async def get_cache_info(
 
 @router.post("/clear-cache", response_model=Dict[str, str])
 async def clear_cache(
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -263,16 +257,9 @@ async def clear_cache(
     Clears all cached vehicle data to force fresh API calls.
     """
     try:
-        # Only allow admins to clear cache
-        if not current_user.is_admin:
-            raise HTTPException(
-                status_code=403,
-                detail="Admin access required"
-            )
-        
         vehicle_data_service.clear_cache()
         
-        logger.info(f"User {current_user.id} cleared vehicle data cache")
+        logger.info(f"User {current_user_id} cleared vehicle data cache")
         return {"message": "Vehicle data cache cleared successfully"}
         
     except HTTPException:
@@ -288,7 +275,7 @@ async def clear_cache(
 @router.get("/search", response_model=List[Dict[str, str]])
 async def search_vehicles(
     query: str = Query(..., min_length=2, description="Search query for vehicle make or model"),
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -327,7 +314,7 @@ async def search_vehicles(
         # Sort by display name
         results.sort(key=lambda x: x["display_name"])
         
-        logger.info(f"User {current_user.id} searched for vehicles with query: {query}")
+        logger.info(f"User {current_user_id} searched for vehicles with query: {query}")
         return results[:50]  # Limit total results
         
     except Exception as e:
@@ -341,7 +328,7 @@ async def search_vehicles(
 @router.get("/validate-vin/{vin}", response_model=Dict[str, Any])
 async def validate_vin(
     vin: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -390,7 +377,7 @@ async def validate_vin(
             except Exception as e:
                 validation_result["warnings"].append("Unable to verify VIN with external database")
         
-        logger.info(f"User {current_user.id} validated VIN: {vin}")
+        logger.info(f"User {current_user_id} validated VIN: {vin}")
         return validation_result
         
     except Exception as e:

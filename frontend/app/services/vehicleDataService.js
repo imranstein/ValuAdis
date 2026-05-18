@@ -8,16 +8,16 @@
 import api from './api'
 
 class VehicleDataService {
+  basePath = '/api/v1/vehicle-data'
+
   /**
    * Get all vehicle brands from NHTSA API
    * @returns {Promise<Array<string>>} List of vehicle brands
    */
   async getVehicleBrands() {
     try {
-      const response = await api.get('/vehicle-data/brands')
-      return response.data
+      return await api.get(`${this.basePath}/brands`)
     } catch (error) {
-      console.error('Error fetching vehicle brands:', error)
       throw new Error('Failed to fetch vehicle brands')
     }
   }
@@ -29,10 +29,8 @@ class VehicleDataService {
    */
   async getVehicleModels(brand) {
     try {
-      const response = await api.get(`/vehicle-data/models/${brand}`)
-      return response.data
+      return await api.get(`${this.basePath}/models/${encodeURIComponent(brand)}`)
     } catch (error) {
-      console.error(`Error fetching models for ${brand}:`, error)
       throw new Error(`Failed to fetch models for ${brand}`)
     }
   }
@@ -44,10 +42,8 @@ class VehicleDataService {
    */
   async decodeVehicleVin(vin) {
     try {
-      const response = await api.get(`/vehicle-data/decode-vin/${vin}`)
-      return response.data
+      return await api.get(`${this.basePath}/decode-vin/${encodeURIComponent(vin)}`)
     } catch (error) {
-      console.error(`Error decoding VIN ${vin}:`, error)
       throw new Error(`Failed to decode VIN ${vin}`)
     }
   }
@@ -59,10 +55,8 @@ class VehicleDataService {
    */
   async getVehicleTypesForMake(brand) {
     try {
-      const response = await api.get(`/vehicle-data/types/${brand}`)
-      return response.data
+      return await api.get(`${this.basePath}/types/${encodeURIComponent(brand)}`)
     } catch (error) {
-      console.error(`Error fetching vehicle types for ${brand}:`, error)
       throw new Error(`Failed to fetch vehicle types for ${brand}`)
     }
   }
@@ -74,12 +68,10 @@ class VehicleDataService {
    */
   async searchVehicles(query) {
     try {
-      const response = await api.get('/vehicle-data/search', {
+      return await api.get(`${this.basePath}/search`, {
         params: { query }
       })
-      return response.data
     } catch (error) {
-      console.error(`Error searching vehicles with query "${query}":`, error)
       throw new Error(`Failed to search vehicles`)
     }
   }
@@ -91,10 +83,8 @@ class VehicleDataService {
    */
   async validateVin(vin) {
     try {
-      const response = await api.get(`/vehicle-data/validate-vin/${vin}`)
-      return response.data
+      return await api.get(`${this.basePath}/validate-vin/${encodeURIComponent(vin)}`)
     } catch (error) {
-      console.error(`Error validating VIN ${vin}:`, error)
       throw new Error(`Failed to validate VIN ${vin}`)
     }
   }
@@ -105,10 +95,8 @@ class VehicleDataService {
    */
   async getCacheInfo() {
     try {
-      const response = await api.get('/vehicle-data/cache-info')
-      return response.data
+      return await api.get(`${this.basePath}/cache-info`)
     } catch (error) {
-      console.error('Error getting cache info:', error)
       throw new Error('Failed to get cache info')
     }
   }
@@ -119,10 +107,8 @@ class VehicleDataService {
    */
   async clearCache() {
     try {
-      const response = await api.post('/vehicle-data/clear-cache')
-      return response.data
+      return await api.post(`${this.basePath}/clear-cache`)
     } catch (error) {
-      console.error('Error clearing cache:', error)
       throw new Error('Failed to clear cache')
     }
   }
@@ -152,7 +138,6 @@ class VehicleDataService {
       
       return [...availablePopular, ...otherBrands]
     } catch (error) {
-      console.error('Error getting popular brands:', error)
       return []
     }
   }
@@ -174,7 +159,6 @@ class VehicleDataService {
         popular: false
       }))
     } catch (error) {
-      console.error(`Error getting models year range for ${brand}:`, error)
       return []
     }
   }
@@ -205,7 +189,6 @@ class VehicleDataService {
       
       return results
     } catch (error) {
-      console.error('Error batch decoding VINs:', error)
       throw new Error('Failed to batch decode VINs')
     }
   }
@@ -234,7 +217,6 @@ class VehicleDataService {
       
       return specs
     } catch (error) {
-      console.error(`Error getting specifications for ${make} ${model} ${year}:`, error)
       throw new Error('Failed to get vehicle specifications')
     }
   }

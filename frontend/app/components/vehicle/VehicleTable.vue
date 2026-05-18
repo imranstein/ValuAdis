@@ -61,7 +61,7 @@
           <tr v-else-if="filteredVehicles.length === 0" class="empty-row">
             <td colspan="7" class="text-center">
               <div class="empty-state">
-                <div class="empty-icon">🚗</div>
+                <div class="empty-icon"><i class="pi pi-car" aria-hidden="true"></i></div>
                 <p>No vehicles found</p>
                 <button @click="$emit('add-vehicle')" class="btn-secondary">
                   Add Your First Vehicle
@@ -121,14 +121,14 @@
                   class="btn-icon"
                   title="View Details"
                 >
-                  👁️
+                  <i class="pi pi-eye" aria-hidden="true"></i>
                 </button>
                 <button
                   @click="$emit('edit-vehicle', vehicle)"
                   class="btn-icon"
                   title="Edit Vehicle"
                 >
-                  ✏️
+                  <i class="pi pi-pencil" aria-hidden="true"></i>
                 </button>
                 <button
                   @click="$emit('request-valuation', vehicle)"
@@ -136,14 +136,14 @@
                   title="Request Valuation"
                   :disabled="!vehicle.is_active"
                 >
-                  💰
+                  <i class="pi pi-calculator" aria-hidden="true"></i>
                 </button>
                 <button
                   @click="confirmDelete(vehicle)"
                   class="btn-icon danger"
                   title="Delete Vehicle"
                 >
-                  🗑️
+                  <i class="pi pi-trash" aria-hidden="true"></i>
                 </button>
               </div>
             </td>
@@ -329,196 +329,7 @@ const confirmDeleteAction = () => {
 </script>
 
 <style scoped>
-.vehicle-table {
-  @apply bg-white rounded-lg shadow-sm;
-}
-
-.table-header {
-  @apply flex justify-between items-center p-6 border-b border-gray-200;
-}
-
-.table-header h3 {
-  @apply text-lg font-semibold text-gray-900;
-}
-
-.table-actions {
-  @apply flex items-center space-x-4;
-}
-
-.btn-primary {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700;
-}
-
-.btn-secondary {
-  @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50;
-}
-
-.btn-danger {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700;
-}
-
-.plus-icon {
-  @apply mr-2 text-lg;
-}
-
-.search-box {
-  @apply relative;
-}
-
-.search-input {
-  @apply pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
-  width: 300px;
-}
-
 .search-input::before {
-  content: "🔍";
-  @apply absolute left-3 top-2.5;
-}
-
-.table-container {
-  @apply overflow-x-auto;
-}
-
-.vehicle-table-grid {
-  @apply w-full;
-}
-
-.vehicle-table-grid th {
-  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-50;
-}
-
-.vehicle-table-grid td {
-  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
-}
-
-.loading-row,
-.empty-row {
-  @apply text-center;
-}
-
-.spinner {
-  @apply inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin;
-  margin-right: 8px;
-}
-
-.empty-state {
-  @apply py-8;
-}
-
-.empty-icon {
-  @apply text-4xl mb-4;
-}
-
-.vehicle-row:hover {
-  @apply bg-gray-50;
-}
-
-.vehicle-row.inactive {
-  @apply opacity-60;
-}
-
-.vehicle-info {
-  @apply font-medium;
-}
-
-.vehicle-name {
-  @apply font-semibold;
-}
-
-.vehicle-meta {
-  @apply text-xs text-gray-500;
-}
-
-.mileage {
-  @apply text-gray-600;
-}
-
-.region-badge {
-  @apply inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800;
-}
-
-.status-badge {
-  @apply inline-flex px-2 py-1 text-xs font-medium rounded-full;
-}
-
-.status-badge.active {
-  @apply bg-green-100 text-green-800;
-}
-
-.status-badge.pending {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.status-badge.inactive {
-  @apply bg-gray-100 text-gray-800;
-}
-
-.valuation-info {
-  @apply text-sm;
-}
-
-.valuation-amount {
-  @apply font-semibold text-green-600;
-}
-
-.valuation-date {
-  @apply text-xs text-gray-500;
-}
-
-.actions {
-  @apply text-center;
-}
-
-.action-buttons {
-  @apply flex justify-center space-x-1;
-}
-
-.btn-icon {
-  @apply p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors;
-  @apply disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-icon.danger {
-  @apply text-red-600 hover:bg-red-50;
-}
-
-.pagination {
-  @apply flex justify-between items-center px-6 py-3 border-t border-gray-200;
-}
-
-.btn-pagination {
-  @apply px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.page-info {
-  @apply text-sm text-gray-700;
-}
-
-.modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-}
-
-.modal-content {
-  @apply bg-white rounded-lg p-6 max-w-md w-full mx-4;
-}
-
-.modal-content h3 {
-  @apply text-lg font-semibold text-gray-900 mb-4;
-}
-
-.vehicle-summary {
-  @apply my-4 p-3 bg-gray-50 rounded text-sm;
-}
-
-.modal-actions {
-  @apply flex justify-end space-x-3 mt-6;
-}
-
-.text-gray-400 {
-  @apply text-gray-400;
-}
-
-.text-center {
-  @apply text-center;
+  content: "";
 }
 </style>

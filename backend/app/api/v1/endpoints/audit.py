@@ -7,6 +7,7 @@ Supports Ethiopian compliance reporting and system monitoring
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import ProgrammingError
 from datetime import datetime, timedelta
 from typing import Optional
 import json
@@ -71,10 +72,17 @@ async def get_audit_logs(
     """
     count_sql = f"SELECT COUNT(*) FROM audit_logs al WHERE {where_clause}"
 
-    result = db.execute(text(full_sql), params)
-    rows = result.fetchall()
-    count_params = {k: v for k, v in params.items() if k not in ("skip", "limit")}
-    total = db.execute(text(count_sql), count_params).scalar() or 0
+    try:
+        result = db.execute(text(full_sql), params)
+        rows = result.fetchall()
+        count_params = {k: v for k, v in params.items() if k not in ("skip", "limit")}
+        total = db.execute(text(count_sql), count_params).scalar() or 0
+    except ProgrammingError as exc:
+        db.rollback()
+        if "audit_logs" not in str(exc):
+            raise
+        logger.warning("Audit log table is missing; returning an empty audit ledger")
+        return {"success": True, "data": [], "total": 0, "skip": skip, "limit": limit}
 
     user_ids = {r.user_id for r in rows if r.user_id}
     users = {}
@@ -109,6 +117,7 @@ async def generate_system_audit_report(
     start_date: Optional[datetime] = Query(None, description="Report start date"),
     end_date: Optional[datetime] = Query(None, description="Report end date"),
     days_back: Optional[int] = Query(30, description="Days back from end date"),
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -162,6 +171,7 @@ async def generate_system_audit_report(
 
 @router.get("/compliance", response_model=ComplianceReportResponse)
 async def generate_ethiopian_compliance_report(
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -204,6 +214,7 @@ async def generate_ethiopian_compliance_report(
 
 @router.get("/summary", response_model=SummaryReportResponse)
 async def generate_summary_report(
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -249,6 +260,7 @@ async def export_audit_report(
     end_date: Optional[datetime] = Query(None, description="Report end date"),
     days_back: Optional[int] = Query(30, description="Days back from end date"),
     format: str = Query("json", description="Export format (json)"),
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -368,6 +380,7 @@ async def audit_system_health(db: Session = Depends(get_db)):
 @router.get("/metrics")
 async def get_audit_metrics(
     metric_type: str = Query("overview", description="Type of metrics to retrieve"),
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -436,6 +449,7 @@ async def schedule_audit_report(
     recipients: list[str],
     start_date: Optional[datetime] = Query(None, description="Report start date"),
     end_date: Optional[datetime] = Query(None, description="Report end date"),
+    _: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """

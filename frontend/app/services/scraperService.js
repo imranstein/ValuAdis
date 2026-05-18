@@ -1,4 +1,5 @@
 import { apiService } from './apiService.js'
+import { getAccessToken } from '~/utils/authToken'
 
 class ScraperService
 {
@@ -15,8 +16,7 @@ class ScraperService
 
   getAuthHeaders ()
   {
-    // Get JWT token from localStorage
-    const token = localStorage.getItem( 'valuadis_token' )
+    const token = getAccessToken()
     return token ? { 'Authorization': `Bearer ${ token }` } : {}
   }
 

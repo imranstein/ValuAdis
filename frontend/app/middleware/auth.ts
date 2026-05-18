@@ -1,3 +1,5 @@
+import { clearAuthTokens, getAccessToken } from '~/utils/authToken'
+
 /**
  * Check if JWT token is expired
  */
@@ -6,9 +8,13 @@ function isTokenExpired(token: string): boolean {
     const parts = token.split('.')
     if (parts.length !== 3) return true
 
-    const payload = JSON.parse(
-      Buffer.from(parts[1], 'base64').toString('utf-8')
-    )
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(char => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .join('')
+    ))
 
     if (!payload.exp) return true
 
@@ -29,7 +35,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (process.client) {
-    const token = localStorage.getItem('valuadis_token')
+    const authStore = useAuthStore()
+    if (authStore.isAuthenticated) return
+
+    const token = getAccessToken()
 
     if (!token) {
       return navigateTo('/login')
@@ -37,15 +46,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     // Check if token is expired
     if (isTokenExpired(token)) {
-      localStorage.removeItem('valuadis_token')
-      localStorage.removeItem('valuadis_user')
-      const authStore = useAuthStore()
+      clearAuthTokens()
       authStore.logout()
       return navigateTo('/login?reason=token-expired')
     }
 
     // Ensure the Pinia store has the user populated
-    const authStore = useAuthStore()
     if (!authStore.user) {
       try {
         await authStore.fetchCurrentUser()

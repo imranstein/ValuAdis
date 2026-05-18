@@ -4,7 +4,7 @@ Properties Endpoints
 Property CRUD operations for ValuAdis
 """
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Tuple
@@ -22,7 +22,7 @@ from app.schemas.property import (
 )
 from app.services.property_service import PropertyService
 from app.services.spatial_service import SpatialService
-from app.core.exceptions import SpatialOperationException
+from app.core.exceptions import SpatialOperationException, ValidationException
 
 router = APIRouter()
 
@@ -40,6 +40,32 @@ def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:
             )
         result.append((float(c[0]), float(c[1])))
     return result
+
+
+def _csv_value(value: str):
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped if stripped else None
+
+
+def _float_csv_value(value: str):
+    normalized = _csv_value(value)
+    return float(normalized) if normalized is not None else None
+
+
+def _build_property_import_row(row: dict) -> dict:
+    data = {key: _csv_value(value) for key, value in row.items()}
+    for field in ["latitude", "longitude", "area_sqm", "building_area_sqm", "land_value", "building_value", "market_value", "taxable_value"]:
+        if field in data:
+            data[field] = _float_csv_value(data[field])
+    if data.get("market_value") is not None:
+        expected_taxable = round(data["market_value"] * 0.25, 2)
+        supplied_taxable = data.get("taxable_value")
+        if supplied_taxable is not None and round(supplied_taxable, 2) != expected_taxable:
+            raise ValueError("Taxable value must be exactly 25% of market value")
+        data["taxable_value"] = expected_taxable
+    return data
 
 
 @router.post("/spatial/summary", tags=["Properties"])
@@ -99,18 +125,56 @@ async def create_property(
     property_service = PropertyService(db)
     
     try:
-        print(f"DEBUG: Received property data: {property_data.dict()}")
         property = await property_service.create_property(
             property_data.dict(),
             user_id=current_user_id
         )
         return PropertyResponse(success=True, data=property.to_dict())
-    except ValueError as e:
-        print(f"DEBUG: ValueError: {e}")
+    except (ValueError, ValidationException, SpatialOperationException) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        print(f"DEBUG: Unexpected error: {e}")
         raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.post("/bulk-import", tags=["Properties"])
+async def bulk_import_properties(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """Import properties from a CSV file."""
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+
+    content = (await file.read()).decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(content))
+    property_service = PropertyService(db)
+    rows = []
+    errors = []
+
+    for row_number, row in enumerate(reader, start=2):
+        try:
+            property_data = _build_property_import_row(row)
+            rows.append(PropertyCreate(**property_data).dict())
+        except Exception as exc:
+            errors.append({"row": row_number, "message": str(exc)})
+
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+
+    imported = []
+    for row in rows:
+        try:
+            property = await property_service.create_property(row, user_id=current_user_id)
+            imported.append(property.to_dict())
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=[{"row": len(imported) + 2, "message": str(exc)}])
+
+    return {
+        "success": True,
+        "imported_count": len(imported),
+        "data": imported,
+    }
 
 
 @router.get("/export", tags=["Properties"])

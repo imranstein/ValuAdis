@@ -59,9 +59,8 @@ class TestTaxableValue:
     def test_small_value(self, svc):
         assert svc.calculate_taxable_value(Decimal("4.00")) == Decimal("1.00")
 
-    def test_zero_raises_validation_error(self, svc):
-        with pytest.raises(PropertyValidationError):
-            svc.calculate_taxable_value(Decimal("0"))
+    def test_zero_returns_zero(self, svc):
+        assert svc.calculate_taxable_value(Decimal("0")) == Decimal("0.00")
 
     def test_negative_raises_validation_error(self, svc):
         with pytest.raises(PropertyValidationError):

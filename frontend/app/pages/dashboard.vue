@@ -1,345 +1,611 @@
 <template>
-  <div class="dashboard-modern min-h-screen bg-[#f7f9fb] font-['Inter']">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/80 backdrop-blur-xl flex flex-col p-4 space-y-2 shadow-xl shadow-emerald-900/5">
-      <div class="px-4 py-6 mb-4">
-        <h1 class="font-['Syne'] font-extrabold text-emerald-800 text-2xl tracking-tight leading-tight">ValuAdis</h1>
-        <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-emerald-600/60 mt-1">Federal Valuation Dept</p>
+  <div class="page-shell dashboard-page">
+    <section class="page-head">
+      <div>
+        <p class="page-kicker">Command ledger</p>
+        <h2 class="page-title">Valuation operations at a glance.</h2>
+        <p class="page-subtitle">
+          Monitor record readiness, valuation throughput, asset coverage, and compliance posture from one desk view.
+        </p>
       </div>
-      <nav class="flex-1 space-y-1">
-        <NuxtLink to="/dashboard" class="flex items-center gap-3 px-4 py-3 bg-emerald-100/50 text-emerald-700 rounded-xl font-bold transition-all duration-200 group">
-          <Icon name="mdi:view-dashboard" class="w-5 h-5" />
-          <span class="text-sm font-medium">Dashboard</span>
+      <div class="page-actions">
+        <NuxtLink to="/properties/create" class="btn-secondary">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          New property
         </NuxtLink>
-        <NuxtLink to="/properties" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:domain" class="w-5 h-5" />
-          <span class="text-sm font-medium">Properties</span>
+        <NuxtLink to="/valuations/quick" class="btn-primary">
+          <i class="pi pi-bolt" aria-hidden="true"></i>
+          Quick valuation
         </NuxtLink>
-        <NuxtLink to="/vehicles" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:car" class="w-5 h-5" />
-          <span class="text-sm font-medium">Vehicles</span>
-        </NuxtLink>
-        <NuxtLink to="/valuations" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:chart-line" class="w-5 h-5" />
-          <span class="text-sm font-medium">Valuations</span>
-        </NuxtLink>
-        <NuxtLink to="/map" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:map" class="w-5 h-5" />
-          <span class="text-sm font-medium">Maps</span>
-        </NuxtLink>
-        <NuxtLink to="/reports" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:file-document" class="w-5 h-5" />
-          <span class="text-sm font-medium">Reports</span>
-        </NuxtLink>
-      </nav>
-      <div class="pt-4 border-t border-emerald-900/5 mt-auto space-y-1">
-        <NuxtLink to="/settings" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group">
-          <Icon name="mdi:cog" class="w-5 h-5" />
-          <span class="text-sm font-medium">Settings</span>
-        </NuxtLink>
-        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-200/50 rounded-xl transition-all duration-200 hover:translate-x-1 group w-full text-left">
-          <Icon name="mdi:logout" class="w-5 h-5" />
-          <span class="text-sm font-medium">Logout</span>
-        </button>
       </div>
-    </aside>
+    </section>
 
-    <!-- Main Content -->
-    <main class="ml-64 p-8 min-h-screen">
-      <!-- Header -->
-      <header class="flex justify-between items-center mb-10">
+    <section class="metric-grid" aria-label="Dashboard metrics">
+      <article v-for="metric in metrics" :key="metric.label" class="metric-card">
+        <p class="metric-label">{{ metric.label }}</p>
+        <p class="metric-value">{{ metric.value }}</p>
+        <p class="metric-note">{{ metric.note }}</p>
+      </article>
+    </section>
+
+    <section class="automation-panel panel" aria-label="AI automation status">
+      <div class="panel-head">
         <div>
-          <h2 class="font-['Syne'] font-extrabold text-4xl text-[#191c1e] tracking-tighter">Dashboard</h2>
-          <p class="text-[#3d4a42] font-medium mt-1">Real-time asset valuation intelligence.</p>
+          <h3 class="panel-title">AI automation desk</h3>
+          <p class="panel-subtitle">Prediction, review learning, and compliance signals</p>
         </div>
-        <div class="flex gap-4">
-          <button @click="router.push('/properties/create')" class="bg-[#e0e3e5] text-[#006948] px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all hover:bg-[#eceef0] active:scale-95 shadow-sm">
-            <Icon name="mdi:home-plus" class="w-5 h-5" />
-            New Property
-          </button>
-          <button @click="router.push('/valuations/quick')" class="bg-gradient-to-br from-[#006948] to-[#00855d] text-white px-6 py-3 rounded-3xl font-bold flex items-center gap-2 transition-all hover:shadow-lg active:scale-95">
-            <Icon name="mdi:check-circle" class="w-5 h-5" />
-            New Valuation
-          </button>
-        </div>
-      </header>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div class="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-[#bccac0]/10 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#006948]/10 to-transparent rounded-bl-full"></div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-3 bg-[#00855d]/10 rounded-2xl text-[#006948]">
-              <Icon name="mdi:office-building" class="w-8 h-8" />
-            </div>
-            <span class="text-xs font-bold text-[#006948] px-2 py-1 bg-[#006948]/10 rounded-lg flex items-center gap-1">
-              <Icon name="mdi:trending-up" class="w-3 h-3" /> +12%
-            </span>
-          </div>
-          <h3 class="text-[#3d4a42] text-xs font-bold uppercase tracking-widest">Total Properties</h3>
-          <p class="text-3xl font-['Syne'] font-bold text-[#191c1e] mt-1">{{ stats.totalProperties || '1,482' }}</p>
-        </div>
-
-        <div class="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-[#bccac0]/10 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#4b41e1]/10 to-transparent rounded-bl-full"></div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-3 bg-[#645efb]/10 rounded-2xl text-[#4b41e1]">
-              <Icon name="mdi:car-multiple" class="w-8 h-8" />
-            </div>
-            <span class="text-xs font-bold text-[#4b41e1] px-2 py-1 bg-[#4b41e1]/10 rounded-lg flex items-center gap-1">
-              <Icon name="mdi:trending-up" class="w-3 h-3" /> +5.4%
-            </span>
-          </div>
-          <h3 class="text-[#3d4a42] text-xs font-bold uppercase tracking-widest">Fleet Assets</h3>
-          <p class="text-3xl font-['Syne'] font-bold text-[#191c1e] mt-1">{{ vehicleStats.totalVehicles || '429' }}</p>
-        </div>
-
-        <div class="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-[#bccac0]/10 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#825100]/10 to-transparent rounded-bl-full"></div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-3 bg-[#a36700]/10 rounded-2xl text-[#825100]">
-              <Icon name="mdi:chart-bar" class="w-8 h-8" />
-            </div>
-            <span class="text-xs font-bold text-[#825100] px-2 py-1 bg-[#825100]/10 rounded-lg flex items-center gap-1">
-              <Icon name="mdi:trending-flat" class="w-3 h-3" /> 0%
-            </span>
-          </div>
-          <h3 class="text-[#3d4a42] text-xs font-bold uppercase tracking-widest">Valuations (MTD)</h3>
-          <p class="text-3xl font-['Syne'] font-bold text-[#191c1e] mt-1">{{ stats.totalValuations || '84' }}</p>
-        </div>
-
-        <div class="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-[#bccac0]/10 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-600/10 to-transparent rounded-bl-full"></div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-3 bg-emerald-500/10 rounded-2xl text-emerald-700">
-              <Icon name="mdi:shield-check" class="w-8 h-8" />
-            </div>
-            <span class="text-xs font-bold text-emerald-700 px-2 py-1 bg-emerald-500/10 rounded-lg flex items-center gap-1">
-              <Icon name="mdi:check-all" class="w-3 h-3" /> Valid
-            </span>
-          </div>
-          <h3 class="text-[#3d4a42] text-xs font-bold uppercase tracking-widest">Compliance Score</h3>
-          <p class="text-3xl font-['Syne'] font-bold text-[#191c1e] mt-1">{{ complianceRate || '98.2%' }}</p>
-        </div>
+        <NuxtLink to="/properties/create" class="btn-ghost">Run assessment</NuxtLink>
       </div>
-
-      <!-- Charts Section -->
-      <div class="grid grid-cols-12 gap-8 mb-10">
-        <div class="col-span-12 lg:col-span-8 bg-white/70 backdrop-blur-xl p-8 rounded-3xl border border-[#bccac0]/10">
-          <div class="flex justify-between items-center mb-8">
-            <h4 class="font-['Syne'] font-bold text-xl text-[#191c1e]">Valuations Trend</h4>
-            <select v-model="timeRange" class="bg-[#f2f4f6] border-none rounded-xl text-sm text-[#3d4a42] px-4 py-2">
-              <option>Last 6 Months</option>
-              <option>Last Year</option>
-            </select>
-          </div>
-          <div class="h-64 flex items-end justify-between gap-4 px-2">
-            <div v-for="(height, i) in chartData" :key="i" class="flex-1 bg-[#006948]/5 rounded-t-xl relative group transition-all hover:bg-[#006948]/10" :style="{ height: height + '%' }">
-              <div class="absolute bottom-0 left-0 right-0 bg-[#006948] h-[4px] rounded-full"></div>
-            </div>
-          </div>
-          <div class="flex justify-between mt-4 px-2">
-            <span v-for="month in months" :key="month" class="text-[10px] font-bold text-[#3d4a42]">{{ month }}</span>
-          </div>
-        </div>
-
-        <div class="col-span-12 lg:col-span-4 bg-white/70 backdrop-blur-xl p-8 rounded-3xl border border-[#bccac0]/10 flex flex-col items-center justify-center">
-          <h4 class="font-['Syne'] font-bold text-xl text-[#191c1e] mb-6 w-full">Property Distribution</h4>
-          <div class="relative w-48 h-48 mb-6">
-            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <path class="text-[#00855d]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="40, 100" stroke-width="6"></path>
-              <path class="text-[#4b41e1]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="30, 100" stroke-dashoffset="-40" stroke-width="6"></path>
-              <path class="text-[#825100]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="30, 100" stroke-dashoffset="-70" stroke-width="6"></path>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-2xl font-['Syne'] font-bold">1.4k</span>
-              <span class="text-[10px] text-[#3d4a42] uppercase font-bold tracking-tighter">Total</span>
-            </div>
-          </div>
-          <div class="space-y-3 w-full">
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#00855d]"></span>
-                <span class="font-medium">Residential</span>
-              </div>
-              <span class="font-bold">40%</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#4b41e1]"></span>
-                <span class="font-medium">Commercial</span>
-              </div>
-              <span class="font-bold">30%</span>
-            </div>
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-[#825100]"></span>
-                <span class="font-medium">Industrial</span>
-              </div>
-              <span class="font-bold">30%</span>
-            </div>
-          </div>
-        </div>
+      <div class="automation-grid">
+        <article v-for="item in aiAutomation" :key="item.label" class="automation-item">
+          <p>{{ item.label }}</p>
+          <strong>{{ item.value }}</strong>
+          <span>{{ item.note }}</span>
+        </article>
       </div>
+    </section>
 
-      <!-- Recent Activity -->
-      <section class="bg-white/70 backdrop-blur-xl rounded-3xl overflow-hidden border border-[#bccac0]/10 shadow-sm">
-        <div class="p-8 flex justify-between items-center bg-[#f2f4f6]/50">
-          <h4 class="font-['Syne'] font-bold text-xl text-[#191c1e]">Recent Valuations</h4>
-          <NuxtLink to="/valuations" class="text-[#006948] font-bold text-sm hover:underline">View All</NuxtLink>
+    <section class="dashboard-grid">
+      <article class="panel trend-panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Valuation trend</h3>
+            <p class="panel-subtitle">Last six operating periods</p>
+          </div>
+          <select v-model="timeRange" class="period-select" aria-label="Select trend range">
+            <option>Last 6 Months</option>
+            <option>Last Year</option>
+          </select>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-[#f2f4f6]/30">
-                <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-[#3d4a42]">ID</th>
-                <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-[#3d4a42]">Asset</th>
-                <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-[#3d4a42]">Type</th>
-                <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-[#3d4a42]">Status</th>
-                <th class="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-[#3d4a42] text-right">Value</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[#bccac0]/5">
-              <tr v-for="valuation in recentValuations" :key="valuation.id" class="hover:bg-[#00855d]/5 transition-colors group">
-                <td class="px-8 py-5 text-sm font-bold text-[#006948]">#{{ valuation.id }}</td>
-                <td class="px-8 py-5">
-                  <div class="font-medium text-[#191c1e]">{{ valuation.name }}</div>
-                  <div class="text-xs text-[#3d4a42]">{{ valuation.location }}</div>
-                </td>
-                <td class="px-8 py-5 text-sm">{{ valuation.type }}</td>
-                <td class="px-8 py-5">
-                  <span :class="getStatusClass(valuation.status)" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight">
-                    {{ valuation.status }}
-                  </span>
-                </td>
-                <td class="px-8 py-5 text-right font-['Syne'] font-bold text-[#191c1e]">{{ formatCurrency(valuation.value) }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="bar-chart" aria-label="Valuation trend chart">
+          <div v-for="(height, index) in chartData" :key="months[index]" class="bar-column">
+            <div class="bar-track">
+              <span class="bar-fill" :style="{ height: `${height}%` }"></span>
+            </div>
+            <span>{{ months[index] }}</span>
+          </div>
         </div>
-      </section>
-    </main>
+      </article>
+
+      <article class="panel distribution-panel">
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">Asset distribution</h3>
+            <p class="panel-subtitle">Current registry mix</p>
+          </div>
+        </div>
+        <div class="distribution-ring" aria-hidden="true">
+          <svg viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#dfe9e3" stroke-width="6"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#1f6b4f" stroke-width="6" stroke-dasharray="42 100"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#365f73" stroke-width="6" stroke-dasharray="31 100" stroke-dashoffset="-42"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#9c6b1d" stroke-width="6" stroke-dasharray="27 100" stroke-dashoffset="-73"></circle>
+          </svg>
+          <div>
+            <strong>{{ formatCount(totalAssets) }}</strong>
+            <span>Total assets</span>
+          </div>
+        </div>
+        <div class="distribution-list">
+          <div v-for="item in distribution" :key="item.label" class="distribution-item">
+            <span :style="{ background: item.color }"></span>
+            <p>{{ item.label }}</p>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="table-panel">
+      <div class="panel-head table-head">
+        <div>
+          <h3 class="panel-title">Recent valuations</h3>
+          <p class="panel-subtitle">Latest records that need operational attention</p>
+        </div>
+        <NuxtLink to="/valuations" class="btn-ghost">View all</NuxtLink>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Asset</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th class="text-right">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="recentValuationsLoading">
+              <td colspan="5" class="empty-cell">Loading recent valuation records...</td>
+            </tr>
+            <tr v-else-if="recentValuations.length === 0">
+              <td colspan="5" class="empty-cell">
+                {{ recentValuationsError || 'No valuation records are available from the backend yet.' }}
+              </td>
+            </tr>
+            <tr v-for="valuation in recentValuations" v-else :key="valuation.id">
+              <td class="record-id">#{{ valuation.id }}</td>
+              <td>
+                <strong>{{ valuation.name }}</strong>
+                <span>{{ valuation.location }}</span>
+              </td>
+              <td>{{ valuation.type }}</td>
+              <td>
+                <span class="status-pill" :class="statusClass(valuation.status)">
+                  {{ valuation.status }}
+                </span>
+              </td>
+              <td class="text-right num">{{ formatCurrency(valuation.value) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '~/stores/auth'
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { getAccessToken } from '~/utils/authToken'
 
 definePageMeta({ middleware: 'auth' })
 
-const router = useRouter()
-const authStore = useAuthStore()
 const config = useRuntimeConfig()
-const apiBase = config.public.apiBaseUrl || 'http://localhost:8020'
-
-const userName = computed(() => authStore.userName || authStore.user?.full_name || 'Admin')
+const apiBase = config.public.apiBaseUrl
 
 const stats = ref({
   totalProperties: 0,
   totalValuations: 0,
   totalMarketValue: 0,
-  pendingValuations: 0,
   propertyTrend: 0,
-  valuationTrend: 0,
-  marketValueTrend: 0
+  valuationTrend: 0
 })
 
 const vehicleStats = ref({
   totalVehicles: 0,
   totalValuations: 0,
-  totalMarketValue: 0,
-  pendingValuations: 0,
-  trend: 0
+  totalMarketValue: 0
+})
+
+const aiTrustMetrics = ref({
+  trustScore: 75,
+  totalReviews: 0
+})
+
+const marketInsight = ref({
+  forecast: 'Loading',
+  opportunities: 0
 })
 
 const complianceRate = ref('98.2%')
 const timeRange = ref('Last 6 Months')
-const chartData = ref([40, 55, 45, 70, 85, 65])
+const chartData = ref([38, 52, 44, 68, 83, 64])
 const months = ref(['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN'])
+const recentValuations = ref<RecentValuation[]>([])
+const recentValuationsLoading = ref(true)
+const recentValuationsError = ref('')
 
-const recentValuations = ref([
-  { id: 'VAL-88210', name: '22nd St. Bole, Addis Ababa', location: 'Kirkos Municipality', type: 'Commercial Hub', status: 'Completed', value: 2450000 },
-  { id: 'VAL-88211', name: 'Lideta Condominiums, Block 12', location: 'Lideta Municipality', type: 'Residential Unit', status: 'In Progress', value: 820000 },
-  { id: 'VAL-88212', name: 'Kaliti Industrial Zone A4', location: 'Akaki-Kality Municipality', type: 'Warehousing', status: 'Pending', value: 5600000 }
+interface RecentValuation {
+  id: string
+  name: string
+  location: string
+  type: string
+  status: string
+  value: number
+}
+
+const totalAssets = computed(() => stats.value.totalProperties + vehicleStats.value.totalVehicles)
+
+const metrics = computed(() => [
+  {
+    label: 'Total properties',
+    value: formatCount(stats.value.totalProperties),
+    note: `${formatSigned(stats.value.propertyTrend)}% month over month`
+  },
+  {
+    label: 'Fleet assets',
+    value: formatCount(vehicleStats.value.totalVehicles),
+    note: 'Vehicle registry coverage'
+  },
+  {
+    label: 'Valuations',
+    value: formatCount(stats.value.totalValuations),
+    note: `${formatSigned(stats.value.valuationTrend)}% active period`
+  },
+  {
+    label: 'Compliance',
+    value: complianceRate.value,
+    note: 'Audit package completeness'
+  }
+])
+
+const distribution = [
+  { label: 'Residential', value: '42%', color: '#1f6b4f' },
+  { label: 'Commercial', value: '31%', color: '#365f73' },
+  { label: 'Industrial', value: '27%', color: '#9c6b1d' }
+]
+
+const aiAutomation = computed(() => [
+  {
+    label: 'AI trust score',
+    value: `${Math.round(aiTrustMetrics.value.trustScore)}%`,
+    note: `${formatCount(aiTrustMetrics.value.totalReviews)} reviewer decisions learned`
+  },
+  {
+    label: 'Market forecast',
+    value: marketInsight.value.forecast,
+    note: `${formatCount(marketInsight.value.opportunities)} monitored opportunities`
+  },
+  {
+    label: 'Automation mode',
+    value: 'Human-in-loop',
+    note: 'AI estimates require reviewer confirmation'
+  }
 ])
 
 onMounted(async () => {
-  await loadDashboardStats()
-  await loadVehicleStats()
+  await Promise.all([loadDashboardStats(), loadVehicleStats(), loadAiAutomation(), loadRecentValuations()])
 })
 
 async function loadDashboardStats() {
   try {
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     const response = await fetch(`${apiBase}/api/v1/analytics/dashboard?period=month`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     })
-    if (response.ok) {
-      const data = await response.json()
-      stats.value = {
-        totalProperties: data.properties?.total ?? 0,
-        totalValuations: data.valuations?.total ?? 0,
-        totalMarketValue: data.financials?.total_market_value ?? 0,
-        pendingValuations: 0,
-        propertyTrend: Math.round(data.properties?.growth_rate ?? 0),
-        valuationTrend: Math.round(data.valuations?.growth_rate ?? 0),
-        marketValueTrend: Math.round(data.financials?.market_value_growth ?? 0)
-      }
-      if (data.compliance) {
-        complianceRate.value = Math.round(data.compliance.compliance_rate ?? 98.2) + '%'
-      }
+    if (!response.ok) return
+
+    const data = await response.json()
+    stats.value = {
+      totalProperties: data.properties?.total ?? 0,
+      totalValuations: data.valuations?.total ?? 0,
+      totalMarketValue: data.financials?.total_market_value ?? 0,
+      propertyTrend: Math.round(data.properties?.growth_rate ?? 0),
+      valuationTrend: Math.round(data.valuations?.growth_rate ?? 0)
     }
-  } catch (error) {
-    console.error('Failed to load dashboard stats:', error)
+    if (data.compliance) {
+      complianceRate.value = `${Math.round(data.compliance.compliance_rate ?? 98.2)}%`
+    }
+  } catch {
   }
 }
 
 async function loadVehicleStats() {
   try {
-    const token = localStorage.getItem('valuadis_token')
+    const token = getAccessToken()
     const response = await fetch(`${apiBase}/api/v1/vehicles/statistics/summary`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     })
-    if (response.ok) {
-      const data = await response.json()
-      vehicleStats.value = {
-        totalVehicles: data.total_vehicles ?? 0,
-        totalValuations: data.total_valuations ?? 0,
-        totalMarketValue: data.total_market_value ?? 0,
-        pendingValuations: data.pending_valuations ?? 0,
-        trend: 0
-      }
+    if (!response.ok) return
+
+    const data = await response.json()
+    vehicleStats.value = {
+      totalVehicles: data.total_vehicles ?? 0,
+      totalValuations: data.total_valuations ?? 0,
+      totalMarketValue: data.total_market_value ?? 0
     }
   } catch {
-    vehicleStats.value = { totalVehicles: 0, totalValuations: 0, totalMarketValue: 0, pendingValuations: 0, trend: 0 }
   }
 }
 
-function formatCurrency(value) {
-  if (value == null || isNaN(value)) return 'ETB 0'
+async function loadAiAutomation() {
+  await Promise.all([loadTrustMetrics(), loadMarketInsights()])
+}
+
+async function loadRecentValuations() {
+  recentValuationsLoading.value = true
+  recentValuationsError.value = ''
+  try {
+    const token = getAccessToken()
+    const response = await fetch(`${apiBase}/api/v1/valuations/?skip=0&limit=5`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!response.ok) {
+      recentValuationsError.value = 'Recent valuations could not be loaded from the backend.'
+      return
+    }
+
+    const payload = await response.json()
+    const records = Array.isArray(payload.data) ? payload.data : []
+    recentValuations.value = records.map(mapRecentValuation)
+  } catch {
+    recentValuationsError.value = 'Recent valuations could not be loaded from the backend.'
+  } finally {
+    recentValuationsLoading.value = false
+  }
+}
+
+function mapRecentValuation(record: Record<string, any>): RecentValuation {
+  return {
+    id: String(record.id),
+    name: record.property?.address || `Property ${record.property_id}`,
+    location: record.property?.municipality || record.municipality || 'Municipality unavailable',
+    type: formatPropertyType(record.property?.property_type || record.property_type),
+    status: formatStatus(record.status),
+    value: Number(record.market_value || 0)
+  }
+}
+
+async function loadTrustMetrics() {
+  try {
+    const token = getAccessToken()
+    const response = await fetch(`${apiBase}/api/v1/valuation-feedback/metrics`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) return
+
+    const data = await response.json()
+    aiTrustMetrics.value = {
+      trustScore: data.trust_score ?? 75,
+      totalReviews: data.total_reviews ?? 0
+    }
+  } catch {
+  }
+}
+
+async function loadMarketInsights() {
+  try {
+    const token = getAccessToken()
+    const response = await fetch(`${apiBase}/api/v1/analytics/market-insights`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!response.ok) return
+
+    const data = await response.json()
+    marketInsight.value = {
+      forecast: data.forecast?.medium_term_outlook ?? 'Available',
+      opportunities: data.ethiopian_context?.market_opportunities?.length ?? 0
+    }
+  } catch {
+  }
+}
+
+function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-ET', {
     style: 'currency',
     currency: 'ETB',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(value)
+  }).format(value || 0)
 }
 
-function getStatusClass(status) {
-  const s = (status || '').toLowerCase()
-  if (s === 'completed' || s === 'approved') return 'bg-emerald-100/50 text-emerald-700'
-  if (s === 'in progress' || s === 'draft') return 'bg-[#645efb]/10 text-[#4b41e1]'
-  return 'bg-slate-200 text-slate-600'
+function formatCount(value: number) {
+  return new Intl.NumberFormat('en-US').format(value || 0)
 }
 
-function logout() {
-  authStore.logout()
-  router.push('/login')
+function formatSigned(value: number) {
+  return value > 0 ? `+${value}` : `${value}`
+}
+
+function formatPropertyType(value?: string) {
+  if (!value) return 'Unclassified'
+  return value
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function formatStatus(value?: string) {
+  return formatPropertyType(value || 'draft')
+}
+
+function statusClass(status: string) {
+  const normalized = status.toLowerCase()
+  if (normalized === 'completed' || normalized === 'approved') return 'good'
+  if (normalized === 'pending' || normalized === 'in progress' || normalized === 'draft') return 'warn'
+  return ''
 }
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+<style scoped>
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+  gap: 14px;
+}
+
+.automation-panel {
+  margin-bottom: 14px;
+}
+
+.automation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--line);
+  background: var(--line);
+}
+
+.automation-item {
+  min-height: 124px;
+  padding: 18px;
+  background: var(--surface);
+}
+
+.automation-item p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.automation-item strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.automation-item span {
+  display: block;
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.period-select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-soft);
+  padding: 0 10px;
+}
+
+.bar-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  height: 280px;
+  padding-top: 8px;
+}
+
+.bar-column {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.bar-track {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f5f6f2;
+}
+
+.bar-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--green);
+}
+
+.distribution-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.distribution-ring {
+  position: relative;
+  width: 220px;
+  margin: 4px auto 20px;
+}
+
+.distribution-ring svg {
+  width: 220px;
+  height: 220px;
+  transform: rotate(-90deg);
+}
+
+.distribution-ring div {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.distribution-ring strong {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.distribution-ring span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.distribution-list {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.distribution-item {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.distribution-item span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.distribution-item p {
+  margin: 0;
+}
+
+.distribution-item strong {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.table-panel {
+  overflow: hidden;
+}
+
+.table-head {
+  margin: 0;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-id {
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.data-table td strong,
+.data-table td span {
+  display: block;
+}
+
+.data-table td span:not(.status-pill) {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .automation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-chart {
+    gap: 8px;
+    height: 220px;
+  }
+}
 </style>

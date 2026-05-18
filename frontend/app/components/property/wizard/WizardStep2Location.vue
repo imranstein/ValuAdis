@@ -129,7 +129,7 @@ onMounted(async () => {
 
   // Restore existing boundary
   if (form.boundaries.length > 0) {
-    const latlngs = form.boundaries.map(([lng, lat]: number[]) => [lat, lng])
+    const latlngs: Array<[number, number]> = form.boundaries.map(([lng, lat]: number[]) => [lat, lng])
     const polygon = L.polygon(latlngs, { color: '#059669', fillOpacity: 0.15 })
     drawnItems.addLayer(polygon)
   }
@@ -158,7 +158,7 @@ onMounted(async () => {
 
     if (markerInstance) mapInstance.removeLayer(markerInstance)
     markerInstance = L.marker([lat, lng]).addTo(mapInstance)
-      .bindPopup(`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup()
+      .bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup()
   })
 
   // Capture drawn polygon
@@ -215,7 +215,7 @@ async function geocodeAddress() {
       const L = (await import('leaflet')).default
       if (markerInstance) mapInstance.removeLayer(markerInstance)
       markerInstance = L.marker([lat, lng]).addTo(mapInstance)
-        .bindPopup(`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup()
+        .bindPopup(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).openPopup()
     }
   } finally {
     geocoding.value = false

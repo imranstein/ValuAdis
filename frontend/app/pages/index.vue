@@ -1,1069 +1,852 @@
 <template>
-  <div class="landing-page">
-
-    <!-- ═══ NAV ═══ -->
-    <nav :class="['nav-bar', { 'nav-scrolled': isScrolled }]">
-      <div class="nav-inner">
-        <NuxtLink to="/" class="brand-logo">
-          <span class="brand-name">ValuAdis</span>
-        </NuxtLink>
-        <div class="nav-links">
-          <NuxtLink to="/login">Properties</NuxtLink>
-          <NuxtLink to="/login">Valuations</NuxtLink>
-          <NuxtLink to="/login">GIS Maps</NuxtLink>
-          <NuxtLink to="/login">Reports</NuxtLink>
-        </div>
-        <div class="nav-actions">
-          <NuxtLink to="/login" class="btn-cta">New Valuation</NuxtLink>
-        </div>
+  <main class="landing-page">
+    <nav class="landing-nav" aria-label="Public navigation">
+      <NuxtLink to="/" class="landing-brand">
+        <span class="landing-mark">V</span>
+        <span>ValuAdis</span>
+      </NuxtLink>
+      <div class="landing-links">
+        <a href="#operating-desk">Operating desk</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#assurance">Assurance</a>
       </div>
+      <NuxtLink to="/login" class="landing-login">Sign in</NuxtLink>
     </nav>
 
-    <main>
-      <!-- ═══ HERO ═══ -->
-      <section class="hero-section">
-        <!-- Background -->
-        <div class="hero-bg">
-          <div class="hero-bg-gradient"></div>
-        </div>
-
-        <div class="hero-content">
-          <!-- Left copy -->
-          <div class="hero-copy">
-            <div class="eyebrow-badge">B2G Certified Infrastructure</div>
-            <h1 class="hero-headline">
-              Digital Property Valuation
-              <br />
-              <em class="hero-headline-em">Made Simple</em>
-            </h1>
-            <p class="hero-sub">
-              Transforming municipal asset management with Ethiopia's first
-              editorial-grade property ledger. Accurate, transparent, and sovereign.
-            </p>
-            <div class="hero-btns">
-              <NuxtLink to="/login" class="btn-primary">Start Valuation</NuxtLink>
-              <button class="btn-ghost">
-                <span class="play-ring">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </span>
-                Watch Demo
-              </button>
-            </div>
-          </div>
-
-          <!-- Right visual -->
-          <div class="hero-visual">
-            <div class="hero-orb floating">
-              <!-- Abstract gradient orb matching Stitch painterly-border style -->
-              <div class="orb-inner">
-                <div class="orb-gradient"></div>
-                <!-- Floating glass cards -->
-                <div class="glass-chip chip-top">
-                  <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                  <p class="chip-label">Properties</p>
-                </div>
-                <div class="glass-chip chip-bottom">
-                  <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="1" y="3" width="15" height="13" rx="2"/>
-                    <path d="M16 8h4l3 3v5h-7V8z"/>
-                    <circle cx="5.5" cy="18.5" r="2.5"/>
-                    <circle cx="18.5" cy="18.5" r="2.5"/>
-                  </svg>
-                  <p class="chip-label">Vehicles</p>
-                </div>
-              </div>
-              <!-- Amber pulse -->
-              <div class="amber-pulse-ring"></div>
-              <div class="amber-pulse-dot"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ FEATURES ═══ -->
-      <section class="features-section">
-        <div class="section-container">
-
-          <!-- GIS Feature — full width -->
-          <div class="feature-gis rv">
-            <div class="feature-gis-copy">
-              <svg class="feature-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                <circle cx="12" cy="9" r="2.5"/>
-              </svg>
-              <h3 class="feature-title-serif">Precision GIS Mapping</h3>
-              <p class="feature-desc">
-                Seamlessly integrate cadastral data with high-resolution satellite
-                imagery for millimeter-accurate property boundary definitions.
-              </p>
-              <div class="feature-tags">
-                <span><span class="dot-amber"></span> Topology validation</span>
-                <span><span class="dot-amber"></span> Historical layering</span>
-              </div>
-            </div>
-            <div class="feature-gis-visual">
-              <div class="feature-img-wrap painterly">
-                <div class="feature-img-inner"></div>
-                <div class="feature-img-overlay"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Two col features -->
-          <div class="feature-row-2">
-            <div class="feature-card rv">
-              <svg class="feature-icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              <h3 class="feature-card-title">Real-Time Compliance</h3>
-              <p class="feature-card-desc">
-                Every valuation report is instantly cross-referenced against federal
-                taxation guidelines and legal statutes.
-              </p>
-              <div class="feature-card-footer">
-                <span>Status: Certified</span>
-                <span class="text-amber-deep">Shield Protocol</span>
-              </div>
-            </div>
-
-            <div class="feature-card feature-card-white rv">
-              <svg class="feature-icon-md feature-icon-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M1 6l5.5 5.5L12 5l5.5 6.5L23 6"/>
-                <path d="M1 18l5.5-5.5L12 19l5.5-6.5L23 18"/>
-              </svg>
-              <h3 class="feature-card-title">Mobile Offline Mode</h3>
-              <p class="feature-card-desc">
-                Field agents can perform full valuations in areas with zero
-                connectivity. Data syncs automatically.
-              </p>
-              <div class="offline-bar">
-                <div class="offline-bar-fill"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ledger dark banner -->
-          <div class="ledger-banner rv">
-            <div class="ledger-copy">
-              <h3 class="ledger-title">Transparent Asset Ledger</h3>
-              <p class="ledger-desc">
-                A permanent, immutable record of all national assets, ensuring total
-                accountability for government stakeholders.
-              </p>
-              <NuxtLink to="/login" class="btn-ledger">View Demo Ledger</NuxtLink>
-            </div>
-            <div class="ledger-lines" aria-hidden="true">
-              <div class="ledger-line" style="width:100%;opacity:0.5"></div>
-              <div class="ledger-line" style="width:80%;opacity:0.3"></div>
-              <div class="ledger-line" style="width:100%;opacity:0.4"></div>
-              <div class="ledger-line" style="width:75%;opacity:0.2"></div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ═══ STATS ═══ -->
-      <section class="stats-section">
-        <div class="section-container">
-          <div class="stats-grid">
-            <div class="stat-item rv" v-for="stat in stats" :key="stat.label">
-              <span class="stat-value">{{ stat.value }}</span>
-              <span class="stat-label">{{ stat.label }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ CTA ═══ -->
-      <section class="cta-section">
-        <div class="cta-glow" aria-hidden="true"></div>
-        <div class="section-container">
-          <div class="cta-content rv">
-            <h2 class="cta-headline">
-              Ready to modernise your
-              <br />
-              <em class="cta-headline-em">property ledger?</em>
-            </h2>
-            <div class="cta-btns">
-              <NuxtLink to="/login" class="btn-cta-dark">Get Started Now</NuxtLink>
-              <button class="btn-cta-ghost">Request Consultation</button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- ═══ FOOTER ═══ -->
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-brand">
-          <span class="footer-logo">ValuAdis</span>
-          <p class="footer-copy">© 2025 ValuAdis GovTech.<br />Digital Heritage Initiative.</p>
-        </div>
-        <div class="footer-links">
-          <NuxtLink to="/login">Privacy Policy</NuxtLink>
-          <NuxtLink to="/login">Terms of Service</NuxtLink>
-          <NuxtLink to="/login">Compliance</NuxtLink>
-          <NuxtLink to="/login">Contact Support</NuxtLink>
-        </div>
-        <div class="footer-socials">
-          <button class="social-btn" aria-label="Website">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-          </button>
-          <button class="social-btn" aria-label="Email">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </button>
+    <section class="landing-hero">
+      <div class="hero-copy">
+        <p class="page-kicker">Municipal valuation infrastructure</p>
+        <h1>ValuAdis</h1>
+        <p class="hero-lede">
+          A civic ledger for Ethiopian valuation teams: property evidence, jurisdiction records,
+          AI-assisted estimates, approvals, and exportable audit packs in one operating desk.
+        </p>
+        <div class="hero-actions">
+          <NuxtLink to="/login" class="btn-primary">Enter workspace</NuxtLink>
         </div>
       </div>
-    </footer>
 
-  </div>
+      <div class="hero-stage" aria-label="ValuAdis operating preview">
+        <img src="/images/valuadis-civic-ledger-hero.png" alt="" class="hero-image" />
+        <div class="case-file">
+          <div class="case-file-head">
+            <span>Case file</span>
+            <strong>AA-BOL-0427</strong>
+          </div>
+          <dl>
+            <div>
+              <dt>Jurisdiction</dt>
+              <dd>Bole Sub-City</dd>
+            </div>
+            <div>
+              <dt>Asset class</dt>
+              <dd>Mixed-use parcel</dd>
+            </div>
+            <div>
+              <dt>Review state</dt>
+              <dd>Valuer approved</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="map-ledger" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="hero-ledger" aria-label="Platform capabilities">
+        <div>
+          <span>Records</span>
+          <strong>Property / vehicle</strong>
+        </div>
+        <div>
+          <span>Review path</span>
+          <strong>Draft to approved</strong>
+        </div>
+        <div>
+          <span>Export formats</span>
+          <strong>PDF / CSV</strong>
+        </div>
+      </div>
+    </section>
+
+    <section id="operating-desk" class="landing-band desk-band">
+      <div class="section-head">
+        <p class="page-kicker">Operating desk</p>
+        <h2>Built around the record, not the presentation.</h2>
+      </div>
+
+      <div class="desk-grid">
+        <article class="desk-panel primary-panel">
+          <div class="panel-meta">
+            <span>Registry intake</span>
+            <strong>Evidence complete</strong>
+          </div>
+          <h3>Property files stay connected to location, valuation, and approval history.</h3>
+          <p>
+            Municipal teams can review parcel data, ownership evidence, comparable signals, and
+            generated reports without moving between disconnected files.
+          </p>
+        </article>
+
+        <article class="desk-panel metric-panel">
+          <span>Taxable value</span>
+          <strong>25% rule</strong>
+          <p>Valuation output follows the configured proclamation calculation contract.</p>
+        </article>
+
+        <article class="desk-panel table-panel">
+          <div class="ledger-row">
+            <span>Residential parcels</span>
+            <strong>Ready</strong>
+          </div>
+          <div class="ledger-row">
+            <span>Commercial blocks</span>
+            <strong>Review</strong>
+          </div>
+          <div class="ledger-row">
+            <span>Vehicle asset files</span>
+            <strong>Synced</strong>
+          </div>
+          <div class="ledger-row">
+            <span>Audit exports</span>
+            <strong>Queued</strong>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="workflow" class="workflow-band">
+      <div class="section-head">
+        <p class="page-kicker">Workflow</p>
+        <h2>One disciplined path from intake to certificate.</h2>
+      </div>
+
+      <ol class="workflow-list">
+        <li>
+          <span>01</span>
+          <div>
+            <h3>Capture</h3>
+            <p>Register property, vehicle, spatial, and ownership evidence with clear jurisdiction context.</p>
+          </div>
+        </li>
+        <li>
+          <span>02</span>
+          <div>
+            <h3>Estimate</h3>
+            <p>Run valuation logic and compare the AI estimate against the record before approval.</p>
+          </div>
+        </li>
+        <li>
+          <span>03</span>
+          <div>
+            <h3>Approve</h3>
+            <p>Move records through review states with audit history attached to every material decision.</p>
+          </div>
+        </li>
+        <li>
+          <span>04</span>
+          <div>
+            <h3>Export</h3>
+            <p>Generate valuation reports, certificates, and operational CSVs for municipal reporting.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="assurance" class="assurance-band">
+      <div class="assurance-copy">
+        <p class="page-kicker">Assurance</p>
+        <h2>Controls that make public-sector review defensible.</h2>
+        <p>
+          ValuAdis keeps role access, workflow state, valuation evidence, and export history visible
+          so administrators can prove how a figure moved from draft to approved record.
+        </p>
+      </div>
+      <div class="assurance-ledger" aria-label="Assurance controls">
+        <div>
+          <span>Protected routes</span>
+          <strong>Role gated</strong>
+        </div>
+        <div>
+          <span>Reports</span>
+          <strong>Traceable</strong>
+        </div>
+        <div>
+          <span>Configuration</span>
+          <strong>Environment scoped</strong>
+        </div>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <span>ValuAdis civic valuation ledger</span>
+      <NuxtLink to="/login">Workspace sign in</NuxtLink>
+    </footer>
+  </main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-
-definePageMeta({ layout: 'landing', middleware: 'guest' })
-
-const isScrolled = ref(false)
-
-const stats = [
-  { value: '2,400+', label: 'Properties Valued' },
-  { value: '12', label: 'Cities Covered' },
-  { value: '100%', label: 'Compliance Rate' },
-  { value: '< 2min', label: 'Avg. Valuation Time' },
-]
-
-function handleScroll() {
-  isScrolled.value = window.scrollY > 60
-}
-
-function initReveal() {
-  if (typeof IntersectionObserver === 'undefined') return
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('revealed')
-          observer.unobserve(e.target)
-        }
-      })
-    },
-    { threshold: 0.1 }
-  )
-  document.querySelectorAll('.rv').forEach((el) => observer.observe(el))
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  setTimeout(initReveal, 50)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+definePageMeta({ layout: 'landing' })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap');
-
-/* ── TOKENS ── */
-:root {
-  --earth-dark:  #2d2a26;
-  --earth-clay:  #7c6a58;
-  --earth-sand:  #d9d0c1;
-  --earth-mist:  #f2eee9;
-  --amber-glow:  #ffbf69;
-  --amber-deep:  #b07d4b;
-  --sage:        #8a9a5b;
-}
-
-/* ── BASE ── */
 .landing-page {
-  font-family: 'Lora', serif;
-  background: var(--earth-mist);
-  color: var(--earth-dark);
-  line-height: 1.7;
-  overflow-x: hidden;
-}
-
-/* ── REVEAL ANIMATION ── */
-.rv {
-  opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-.rv.revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── NAV ── */
-.nav-bar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 50;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 3rem;
-  height: 6rem;
-  transition: background 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease;
-}
-.nav-scrolled {
-  background: rgba(242, 238, 233, 0.9);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 1px 0 rgba(124, 106, 88, 0.12);
-}
-.nav-inner {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.brand-logo {
-  text-decoration: none;
-}
-.brand-name {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 1.6rem;
-  color: var(--earth-clay);
-  letter-spacing: -0.02em;
-}
-.nav-links {
-  display: flex;
-  gap: 3rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-weight: 600;
-}
-.nav-links a {
-  color: rgba(124, 106, 88, 0.8);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-.nav-links a:hover { color: var(--amber-deep); }
-.btn-cta {
-  background: var(--earth-dark);
-  color: var(--earth-mist);
-  padding: 0.75rem 2rem;
-  border-radius: 9999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.4s ease, box-shadow 0.4s ease;
-}
-.btn-cta:hover {
-  background: var(--amber-deep);
-  box-shadow: 0 8px 24px rgba(176, 125, 75, 0.2);
-}
-
-/* ── HERO ── */
-.hero-section {
-  position: relative;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.hero-bg-gradient {
-  position: absolute;
-  inset: 0;
+  overflow-x: hidden;
   background:
-    radial-gradient(circle at 70% 30%, rgba(255, 191, 105, 0.18) 0%, transparent 52%),
-    radial-gradient(circle at 10% 80%, rgba(124, 106, 88, 0.12) 0%, transparent 42%);
+    linear-gradient(rgba(23, 26, 23, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 26, 23, 0.025) 1px, transparent 1px),
+    var(--canvas);
+  background-size: 56px 56px, 56px 56px, auto;
+  color: var(--ink);
 }
-.hero-content {
-  position: relative;
-  z-index: 10;
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 7rem 2rem 4rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-  width: 100%;
-}
-.hero-copy {
+
+.landing-nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-.eyebrow-badge {
-  display: inline-block;
-  padding: 0.35rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(176, 125, 75, 0.3);
-  background: rgba(255, 191, 105, 0.06);
-  color: var(--amber-deep);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  width: fit-content;
-}
-.hero-headline {
-  font-family: 'Instrument Serif', serif;
-  font-size: clamp(3.5rem, 7vw, 5.5rem);
-  line-height: 0.92;
-  color: var(--earth-dark);
-  margin: 0;
-}
-.hero-headline-em {
-  font-style: italic;
-  color: var(--amber-deep);
-}
-.hero-sub {
-  font-size: 1.2rem;
-  color: rgba(124, 106, 88, 0.85);
-  font-style: italic;
-  font-weight: 300;
-  max-width: 38rem;
-  line-height: 1.75;
-}
-.hero-btns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
   align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  height: 72px;
+  border-bottom: 1px solid rgba(215, 221, 212, 0.84);
+  background: rgba(246, 247, 244, 0.92);
+  padding: 0 clamp(18px, 5vw, 64px);
+  backdrop-filter: blur(14px);
 }
+
+.landing-brand,
+.landing-links,
+.landing-login,
 .btn-primary {
-  background: var(--amber-deep);
-  color: #fff;
-  padding: 1.1rem 2.5rem;
-  border-radius: 9999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  border: none;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
-  box-shadow: 0 8px 24px rgba(176, 125, 75, 0.22);
-  transition: background 0.4s ease, transform 0.3s ease;
-}
-.btn-primary:hover {
-  background: var(--earth-dark);
-  transform: translateY(-2px);
-}
-.btn-ghost {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--earth-clay);
-  transition: color 0.2s;
-}
-.btn-ghost:hover { color: var(--amber-deep); }
-.play-ring {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  border: 1px solid rgba(124, 106, 88, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s, border-color 0.3s;
-}
-.btn-ghost:hover .play-ring {
-  background: rgba(255, 191, 105, 0.1);
-  border-color: var(--amber-deep);
 }
 
-/* ── HERO VISUAL ── */
-.hero-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-.hero-orb {
-  position: relative;
-  width: 28rem;
-  height: 28rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.orb-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 60% 40% 70% 30% / 40% 50% 60% 70%;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.orb-gradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 191, 105, 0.25) 0%, rgba(138, 154, 91, 0.2) 100%);
-}
-.floating {
-  animation: float 7s ease-in-out infinite;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-.glass-chip {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 1.25rem;
-  border-radius: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: center;
-  animation: pulse 3s ease-in-out infinite;
-}
-.chip-top {
-  top: 20%;
-  right: -2rem;
-}
-.chip-bottom {
-  bottom: 22%;
-  left: -2rem;
-  animation-delay: 0.8s;
-}
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-}
-.chip-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  stroke: var(--amber-deep);
-}
-.chip-label {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  color: var(--earth-dark);
-  opacity: 0.7;
-  margin: 0;
-}
-.amber-pulse-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  background: rgba(255, 191, 105, 0.3);
-  filter: blur(8px);
-  animation: ping 2s ease-in-out infinite;
-}
-.amber-pulse-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  background: var(--amber-glow);
-  box-shadow: 0 0 20px 4px rgba(255, 191, 105, 0.6);
-}
-@keyframes ping {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-  50% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+.landing-brand {
+  gap: 10px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 750;
 }
 
-/* ── FEATURES ── */
-.features-section {
-  background: linear-gradient(to bottom, transparent, var(--earth-mist) 15%);
-  padding: 5rem 0 6rem;
-  margin-top: -6rem;
-}
-.section-container {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-/* GIS feature */
-.feature-gis {
-  display: flex;
-  flex-direction: column;
-  gap: 4rem;
-  margin-bottom: 4rem;
-}
-@media (min-width: 1024px) {
-  .feature-gis {
-    flex-direction: row;
-    align-items: center;
-  }
-  .feature-gis-copy,
-  .feature-gis-visual {
-    flex: 1;
-  }
-}
-.feature-gis-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.feature-icon-lg {
-  width: 3rem;
-  height: 3rem;
-  stroke: var(--amber-deep);
-}
-.feature-title-serif {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 2.8rem;
-  color: var(--earth-dark);
-  line-height: 1.1;
-  margin: 0;
-}
-.feature-desc {
-  font-size: 1.1rem;
-  color: rgba(124, 106, 88, 0.85);
-  font-weight: 300;
-  line-height: 1.75;
-}
-.feature-tags {
-  display: flex;
-  gap: 2rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  color: var(--earth-clay);
-}
-.feature-tags span {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.dot-amber {
-  display: inline-block;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 50%;
-  background: var(--amber-glow);
-}
-.feature-gis-visual {
-  position: relative;
-}
-.feature-img-wrap {
-  aspect-ratio: 4/3;
-  background: var(--earth-sand);
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(45, 42, 38, 0.12);
-}
-.painterly {
-  border-radius: 60% 40% 70% 30% / 40% 50% 60% 70%;
-}
-.feature-img-inner {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(176, 125, 75, 0.15), rgba(138, 154, 91, 0.2));
-  opacity: 0.8;
-}
-.feature-img-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(176, 125, 75, 0.08);
-}
-
-/* 2-col feature cards */
-.feature-row-2 {
+.landing-mark {
+  width: 34px;
+  height: 34px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--green);
+  color: var(--surface);
 }
-@media (max-width: 768px) {
-  .feature-row-2 { grid-template-columns: 1fr; }
+
+.landing-links {
+  gap: 26px;
 }
-.feature-card {
-  padding: 3rem;
-  border-radius: 4rem;
-  background: linear-gradient(135deg, rgba(124, 106, 88, 0.05), rgba(255, 191, 105, 0.1));
-  border: 1px solid rgba(255, 255, 255, 0.5);
+
+.landing-links a,
+.landing-login {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 160ms var(--ease), border-color 160ms var(--ease), background-color 160ms var(--ease);
+}
+
+.landing-links a:hover,
+.landing-login:hover {
+  color: var(--ink);
+}
+
+.landing-login {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0 14px;
+}
+
+.landing-login:active,
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.landing-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  gap: clamp(28px, 5vw, 74px);
+  min-height: 94vh;
+  align-items: center;
+  padding: 122px clamp(18px, 5vw, 64px) 132px;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 760px;
+}
+
+.page-kicker {
+  margin: 0 0 16px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(76px, 12vw, 164px);
+  font-weight: 760;
+  letter-spacing: 0;
+  line-height: 0.84;
+}
+
+.hero-lede {
+  max-width: 660px;
+  margin: 28px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(18px, 2vw, 23px);
+  line-height: 1.55;
+}
+
+.hero-actions {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  margin-top: 32px;
 }
-.feature-card-white {
-  background: #fff;
-  box-shadow: 0 10px 40px rgba(45, 42, 38, 0.06);
-  border-color: var(--earth-mist);
+
+.btn-primary {
+  min-height: 46px;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--green);
+  padding: 0 18px;
+  color: var(--surface);
+  font-weight: 850;
+  transition: transform 160ms var(--ease), background-color 160ms var(--ease);
 }
-.feature-icon-md {
-  width: 2.5rem;
-  height: 2.5rem;
-  stroke: var(--amber-deep);
+
+.btn-primary:hover {
+  background: var(--green-dark);
 }
-.feature-icon-sage {
-  stroke: var(--sage);
+
+.hero-stage {
+  position: relative;
+  min-height: min(68vh, 680px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: var(--shadow);
 }
-.feature-card-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 2rem;
-  color: var(--earth-dark);
-  margin: 0;
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0.82;
+  filter: saturate(0.8) contrast(0.98);
 }
-.feature-card-desc {
-  font-size: 1rem;
-  color: rgba(124, 106, 88, 0.85);
-  font-style: italic;
-  line-height: 1.7;
-  margin: 0;
-  flex: 1;
+
+.hero-stage::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(252, 252, 250, 0.06), rgba(23, 26, 23, 0.18)),
+    linear-gradient(90deg, rgba(252, 252, 250, 0.82) 0%, rgba(252, 252, 250, 0.28) 44%, rgba(23, 26, 23, 0.16) 100%);
 }
-.feature-card-footer {
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(124, 106, 88, 0.1);
+
+.case-file {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2;
+  width: min(360px, calc(100% - 48px));
+  border: 1px solid rgba(215, 221, 212, 0.92);
+  border-radius: var(--radius);
+  background: rgba(252, 252, 250, 0.92);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+}
+
+.case-file-head {
   display: flex;
   justify-content: space-between;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-weight: 700;
-  color: rgba(124, 106, 88, 0.6);
-}
-.text-amber-deep { color: var(--amber-deep); }
-.offline-bar {
-  height: 0.5rem;
-  width: 6rem;
-  background: rgba(138, 154, 91, 0.2);
-  border-radius: 9999px;
-  overflow: hidden;
-}
-.offline-bar-fill {
-  height: 100%;
-  width: 50%;
-  background: var(--sage);
-  border-radius: 9999px;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 16px;
 }
 
-/* Ledger dark banner */
-.ledger-banner {
-  border-radius: 5rem;
-  background: var(--earth-dark);
-  color: var(--earth-mist);
-  padding: 5rem 6rem;
-  display: flex;
-  gap: 4rem;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-}
-.ledger-copy {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: relative;
-  z-index: 1;
-}
-.ledger-title {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 3rem;
-  line-height: 1.1;
-  margin: 0;
-}
-.ledger-desc {
-  font-size: 1.05rem;
-  color: var(--earth-sand);
-  font-weight: 300;
-  line-height: 1.75;
-  margin: 0;
-}
-.btn-ledger {
-  display: inline-block;
-  padding: 1rem 3rem;
-  border: 1px solid rgba(217, 208, 193, 0.3);
-  border-radius: 9999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.7rem;
+.case-file-head span,
+.case-file dt,
+.hero-ledger span,
+.metric-panel span,
+.assurance-ledger span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-weight: 700;
-  color: var(--earth-mist);
-  text-decoration: none;
-  background: none;
-  cursor: pointer;
-  width: fit-content;
-  transition: background 0.6s ease, color 0.6s ease;
-}
-.btn-ledger:hover {
-  background: var(--amber-glow);
-  color: var(--earth-dark);
-  border-color: var(--amber-glow);
-}
-.ledger-lines {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: relative;
-  z-index: 1;
-}
-.ledger-line {
-  height: 3px;
-  background: rgba(255, 191, 105, 0.5);
-  border-radius: 9999px;
 }
 
-/* ── STATS ── */
-.stats-section {
-  padding: 5rem 0;
+.case-file-head strong,
+.case-file dd,
+.hero-ledger strong,
+.metric-panel strong,
+.ledger-row strong,
+.assurance-ledger strong {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
-.stats-grid {
+
+.case-file dl {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  border-top: 1px solid rgba(124, 106, 88, 0.15);
-  padding-top: 3rem;
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
 }
-@media (max-width: 768px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+
+.case-file dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
 }
-.stat-item {
+
+.case-file dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  text-align: right;
+}
+
+.map-ledger {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 0.8fr;
+  gap: 8px;
+  width: min(220px, 42%);
+  aspect-ratio: 1.2;
+  opacity: 0.82;
+}
+
+.map-ledger span {
+  border: 1px solid rgba(31, 107, 79, 0.44);
+  background: rgba(223, 233, 227, 0.62);
+}
+
+.map-ledger span:nth-child(1) {
+  grid-row: span 2;
+}
+
+.map-ledger span:nth-child(3) {
+  margin-left: 22px;
+}
+
+.hero-ledger {
+  position: absolute;
+  right: clamp(18px, 5vw, 64px);
+  bottom: 34px;
+  left: clamp(18px, 5vw, 64px);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 0.8fr;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(252, 252, 250, 0.94);
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-ledger div {
+  min-width: 0;
+  padding: 17px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.hero-ledger div:last-child {
+  border-right: 0;
+}
+
+.hero-ledger strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: clamp(18px, 2vw, 27px);
+  line-height: 1.1;
+}
+
+.landing-band,
+.workflow-band,
+.assurance-band {
+  padding: clamp(64px, 8vw, 108px) clamp(18px, 5vw, 64px);
+}
+
+.section-head {
+  max-width: 820px;
+  margin-bottom: 30px;
+}
+
+.section-head h2,
+.assurance-copy h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 760;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.desk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.58fr);
+  grid-template-areas:
+    "primary metric"
+    "primary table";
+  gap: 14px;
+}
+
+.desk-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary-panel {
+  grid-area: primary;
+  min-height: 470px;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 44px);
 }
-.stat-value {
-  font-family: 'Instrument Serif', serif;
-  font-size: 2.8rem;
-  color: var(--earth-dark);
+
+.primary-panel h3 {
+  max-width: 830px;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(34px, 5vw, 68px);
+  font-weight: 740;
   line-height: 1;
 }
-.stat-label {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-weight: 600;
-  color: var(--earth-clay);
+
+.primary-panel p {
+  max-width: 720px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.62;
 }
 
-/* ── CTA ── */
-.cta-section {
-  padding: 10rem 0;
-  position: relative;
-  overflow: hidden;
-}
-.cta-glow {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  height: 500px;
-  background: radial-gradient(ellipse at bottom, rgba(255, 191, 105, 0.12), transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
-}
-.cta-content {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3rem;
-  position: relative;
-  z-index: 1;
-}
-.cta-headline {
-  font-family: 'Instrument Serif', serif;
-  font-size: clamp(3.5rem, 8vw, 7rem);
-  line-height: 0.88;
-  color: var(--earth-dark);
-  margin: 0;
-}
-.cta-headline-em {
-  font-style: italic;
-  color: var(--amber-deep);
-}
-.cta-btns {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.btn-cta-dark {
-  background: var(--earth-dark);
-  color: var(--earth-mist);
-  padding: 1.25rem 3.5rem;
-  border-radius: 9999px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  box-shadow: 0 12px 36px rgba(45, 42, 38, 0.2);
-  transition: background 0.4s ease, transform 0.3s ease;
-}
-.btn-cta-dark:hover {
-  background: var(--amber-deep);
-  transform: scale(1.04);
-}
-.btn-cta-ghost {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--earth-clay);
-  text-decoration: underline;
-  text-underline-offset: 8px;
-  transition: color 0.2s;
-}
-.btn-cta-ghost:hover { color: var(--amber-deep); }
-
-/* ── FOOTER ── */
-.site-footer {
-  background: var(--earth-mist);
-  border-top: 1px solid rgba(124, 106, 88, 0.1);
-  padding: 5rem 3rem;
-}
-.footer-inner {
-  max-width: 80rem;
-  margin: 0 auto;
+.panel-meta {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 4rem;
-  flex-wrap: wrap;
-}
-.footer-brand {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.footer-logo {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 2.5rem;
-  color: var(--earth-clay);
-}
-.footer-copy {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.7rem;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: rgba(124, 106, 88, 0.5);
-  line-height: 1.7;
-  margin: 0;
-}
-.footer-links {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem 4rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-weight: 700;
-}
-.footer-links a {
-  color: var(--earth-clay);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-.footer-links a:hover { color: var(--amber-deep); }
-.footer-socials {
-  display: flex;
-  gap: 1rem;
-}
-.social-btn {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  border: 1px solid rgba(124, 106, 88, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  cursor: pointer;
-  color: var(--earth-clay);
-  transition: background 0.2s;
-}
-.social-btn:hover {
-  background: rgba(255, 191, 105, 0.1);
 }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 1024px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    text-align: center;
-    padding-top: 8rem;
-  }
-  .hero-visual { display: none; }
-  .eyebrow-badge { margin: 0 auto; }
-  .hero-btns { justify-content: center; }
-  .ledger-banner {
-    flex-direction: column;
-    padding: 3rem 2rem;
-    border-radius: 3rem;
-  }
-  .nav-links { display: none; }
+.panel-meta strong {
+  color: var(--green);
 }
+
+.metric-panel {
+  grid-area: metric;
+  min-height: 190px;
+  padding: 24px;
+}
+
+.metric-panel strong {
+  display: block;
+  margin-top: 18px;
+  font-size: clamp(32px, 4vw, 50px);
+  line-height: 1;
+}
+
+.metric-panel p {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+.table-panel {
+  grid-area: table;
+  overflow: hidden;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ledger-row:last-child {
+  border-bottom: 0;
+}
+
+.ledger-row span {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-weight: 740;
+}
+
+.ledger-row strong {
+  color: var(--green);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.workflow-band {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.workflow-list {
+  display: grid;
+  grid-template-columns: 0.82fr 1.08fr;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.workflow-list li {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 20px;
+  min-height: 190px;
+  background: var(--surface);
+  padding: 24px;
+}
+
+.workflow-list li:nth-child(2),
+.workflow-list li:nth-child(3) {
+  background: var(--canvas);
+}
+
+.workflow-list span {
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.workflow-list h3 {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: 34px;
+  font-weight: 740;
+}
+
+.workflow-list p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.assurance-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+  gap: clamp(30px, 6vw, 92px);
+  align-items: end;
+}
+
+.assurance-copy p:not(.page-kicker) {
+  max-width: 640px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.62;
+}
+
+.assurance-ledger {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.assurance-ledger div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.assurance-ledger div:last-child {
+  border-bottom: 0;
+}
+
+.assurance-ledger strong {
+  color: var(--green);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.landing-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid var(--line);
+  padding: 28px clamp(18px, 5vw, 64px);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.landing-footer a {
+  color: var(--green);
+  text-decoration: none;
+  transition: color 160ms var(--ease);
+}
+
+.landing-footer a:hover {
+  color: var(--green-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .landing-links {
+    display: none;
+  }
+
+  .landing-hero,
+  .desk-grid,
+  .workflow-list,
+  .assurance-band {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero {
+    padding-bottom: 28px;
+  }
+
+  .hero-stage {
+    min-height: 440px;
+  }
+
+  .hero-ledger {
+    position: static;
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+
+  .hero-ledger div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero-ledger div:last-child {
+    border-bottom: 0;
+  }
+
+  .desk-grid {
+    grid-template-areas:
+      "primary"
+      "metric"
+      "table";
+  }
+
+  .primary-panel {
+    min-height: 360px;
+  }
+}
+
 @media (max-width: 640px) {
-  .hero-headline { font-size: 3rem; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .feature-row-2 { grid-template-columns: 1fr; }
-  .cta-headline { font-size: 3rem; }
-  .nav-bar { padding: 0 1.5rem; }
-  .site-footer { padding: 3rem 1.5rem; }
+  .landing-nav {
+    height: 64px;
+  }
+
+  .landing-brand {
+    font-size: 21px;
+  }
+
+  .landing-login {
+    min-height: 36px;
+  }
+
+  .landing-hero {
+    padding-top: 104px;
+  }
+
+  .hero-stage {
+    min-height: 360px;
+  }
+
+  .case-file {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    width: auto;
+  }
+
+  .map-ledger {
+    top: 14px;
+    right: 14px;
+    width: 46%;
+  }
+
+  .case-file dl div,
+  .case-file-head,
+  .assurance-ledger div,
+  .ledger-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .case-file dd {
+    text-align: left;
+  }
+
+  .workflow-list li {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .landing-footer {
+    flex-direction: column;
+  }
 }
 </style>

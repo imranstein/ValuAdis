@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage :page-key="route => route.fullPath" />
     </NuxtLayout>
     <Toast />
   </div>

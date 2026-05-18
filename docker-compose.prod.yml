@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Nginx Reverse Proxy with SSL
   nginx:
@@ -26,7 +24,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-valuadis}
       POSTGRES_USER: ${POSTGRES_USER:-valuadis_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${PROD_POSTGRES_PASSWORD:?Set PROD_POSTGRES_PASSWORD for production}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -54,8 +52,8 @@ services:
     image: redis:7-alpine
     container_name: valuadis_redis
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+      REDIS_PASSWORD: ${PROD_REDIS_PASSWORD:?Set PROD_REDIS_PASSWORD for production}
+    command: redis-server --requirepass ${PROD_REDIS_PASSWORD:?Set PROD_REDIS_PASSWORD for production} --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     networks:
@@ -82,19 +80,20 @@ services:
       dockerfile: Dockerfile
     container_name: valuadis_backend
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-valuadis_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-valuadis}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valuadis_user}:${PROD_POSTGRES_PASSWORD:?Set PROD_POSTGRES_PASSWORD for production}@db:5432/${POSTGRES_DB:-valuadis}
+      REDIS_URL: redis://:${PROD_REDIS_PASSWORD:?Set PROD_REDIS_PASSWORD for production}@redis:6379/0
+      SECRET_KEY: ${PROD_SECRET_KEY:?Set PROD_SECRET_KEY for production}
+      ALLOWED_HOSTS: ${PROD_ALLOWED_HOSTS:?Set PROD_ALLOWED_HOSTS for production}
       ENVIRONMENT: production
-      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
-      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET}
-      MPESA_SHORTCODE: ${MPESA_SHORTCODE}
-      MPESA_PASSKEY: ${MPESA_PASSKEY}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SENTRY_DSN: ${SENTRY_DSN}
+      MPESA_CONSUMER_KEY: ${PROD_MPESA_CONSUMER_KEY:-}
+      MPESA_CONSUMER_SECRET: ${PROD_MPESA_CONSUMER_SECRET:-}
+      MPESA_SHORTCODE: ${PROD_MPESA_SHORTCODE:-}
+      MPESA_PASSKEY: ${PROD_MPESA_PASSKEY:-}
+      SMTP_HOST: ${PROD_SMTP_HOST:-}
+      SMTP_PORT: ${PROD_SMTP_PORT:-}
+      SMTP_USER: ${PROD_SMTP_USER:-}
+      SMTP_PASSWORD: ${PROD_SMTP_PASSWORD:-}
+      SENTRY_DSN: ${PROD_SENTRY_DSN:-}
     volumes:
       - backend_uploads:/app/uploads
       - ./logs/backend:/app/logs
@@ -127,11 +126,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE_URL: ${PROD_NUXT_PUBLIC_API_BASE_URL:?Set PROD_NUXT_PUBLIC_API_BASE_URL for production}
     container_name: valuadis_frontend
     environment:
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+      NUXT_PUBLIC_API_BASE_URL: ${PROD_NUXT_PUBLIC_API_BASE_URL:?Set PROD_NUXT_PUBLIC_API_BASE_URL for production}
       ENVIRONMENT: production
-      NUXT_PUBLIC_SENTRY_DSN: ${NUXT_PUBLIC_SENTRY_DSN}
+      NUXT_PUBLIC_SENTRY_DSN: ${PROD_NUXT_PUBLIC_SENTRY_DSN:-}
     depends_on:
       - backend
     networks:

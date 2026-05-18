@@ -7,7 +7,7 @@ Main API router for Ethiopian Property Valuation Platform
 from fastapi import APIRouter
 
 # Import all endpoint routers
-from app.api.v1.endpoints import auth, properties, health, valuations, audit, analytics, scrapers, users, vehicles
+from app.api.v1.endpoints import auth, properties, health, valuations, audit, analytics, scrapers, users, vehicles, vehicle_data
 from app.api.v1.endpoints import valuation_feedback, validation
 
 # Create main API router
@@ -70,6 +70,7 @@ api_router.include_router(
 
 # vehicles.router already has prefix="/vehicles" defined internally
 api_router.include_router(vehicles.router)
+api_router.include_router(vehicle_data.router)
 
 api_router.include_router(
     validation.router,

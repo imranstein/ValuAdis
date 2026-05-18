@@ -1,17 +1,15 @@
-import type { AxiosInstance } from 'axios'
 import type { LoginCredentials, RegisterData, AuthTokens, User } from '~/types'
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshTokenValue,
+  removeAccessToken,
+  setAccessToken,
+  setRefreshTokenValue
+} from '~/utils/authToken'
 
-// The backend returns token data directly (not wrapped in ApiResponse).
-// Use the raw Axios instance to avoid the ApiResponse unwrapping layer.
-function getRawApi(): AxiosInstance {
-  const config = useRuntimeConfig()
-  const { default: apiService } = useNuxtApp().$apiService as any
-  // Fall back to a direct axios instance keyed to apiBaseUrl
-  return (apiService as any)?.getApi?.() ?? (() => {
-    const axios = (window as any).__axios__
-    if (axios) return axios
-    throw new Error('Axios instance unavailable')
-  })()
+function unwrapTokens(response: AuthTokens | { data?: AuthTokens }): AuthTokens {
+  return 'access_token' in response ? response : response.data as AuthTokens
 }
 
 class AuthService {
@@ -26,9 +24,9 @@ class AuthService {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Login failed')
+      throw new Error(err.message || err.detail || 'Login failed')
     }
-    const tokens: AuthTokens = await res.json()
+    const tokens = unwrapTokens(await res.json())
     this.setToken(tokens.access_token)
     if (tokens.refresh_token) this.setRefreshToken(tokens.refresh_token)
     return tokens
@@ -44,9 +42,9 @@ class AuthService {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Registration failed')
+      throw new Error(err.message || err.detail || 'Registration failed')
     }
-    const tokens: AuthTokens = await res.json()
+    const tokens = unwrapTokens(await res.json())
     this.setToken(tokens.access_token)
     if (tokens.refresh_token) this.setRefreshToken(tokens.refresh_token)
     return tokens
@@ -86,7 +84,7 @@ class AuthService {
     if (!res.ok) {
       throw new Error(`Token refresh failed: ${res.status} ${res.statusText}`)
     }
-    const tokens: AuthTokens = await res.json()
+    const tokens = unwrapTokens(await res.json())
     this.setToken(tokens.access_token)
     // Persist the rotated refresh token returned by the server
     if (tokens.refresh_token) this.setRefreshToken(tokens.refresh_token)
@@ -94,25 +92,23 @@ class AuthService {
   }
 
   setToken(token: string): void {
-    if (process.client || typeof window !== 'undefined') localStorage.setItem('valuadis_token', token)
+    setAccessToken(token)
   }
 
   getToken(): string | null {
-    if (process.client) return localStorage.getItem('valuadis_token')
-    return null
+    return getAccessToken()
   }
 
   removeToken(): void {
-    if (process.client) localStorage.removeItem('valuadis_token')
+    removeAccessToken()
   }
 
   setRefreshToken(token: string): void {
-    if (process.client || typeof window !== 'undefined') localStorage.setItem('valuadis_refresh_token', token)
+    setRefreshTokenValue(token)
   }
 
   getRefreshToken(): string | null {
-    if (process.client) return localStorage.getItem('valuadis_refresh_token')
-    return null
+    return getRefreshTokenValue()
   }
 
   isAuthenticated(): boolean {
@@ -120,10 +116,7 @@ class AuthService {
   }
 
   logout(): void {
-    if (process.client) {
-      localStorage.removeItem('valuadis_token')
-      localStorage.removeItem('valuadis_refresh_token')
-    }
+    clearAuthTokens()
   }
 }
 

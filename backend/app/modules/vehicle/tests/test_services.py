@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from app.modules.vehicle.services import VehicleValuationService
 from app.modules.vehicle.models import Vehicle, VehicleValuation
-from app.modules.vehicle.schemas import VehicleCreate, VehicleValuationCreate
+from app.modules.vehicle.schemas import VehicleCreate, VehicleUpdate, VehicleValuationCreate
 
 
 class TestVehicleService:

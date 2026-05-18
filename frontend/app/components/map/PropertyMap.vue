@@ -152,7 +152,14 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { seedProperties, propertyTypeColors } from '~/data/seedProperties.js'
+
+const propertyTypeColors = {
+  residential: '#1f6b4f',
+  commercial: '#365f73',
+  industrial: '#6b5a1f',
+  agricultural: '#54724c',
+  land: '#8a6b2d',
+}
 
 // Import CSS for plugins
 if (process.client) {
@@ -214,10 +221,8 @@ const loading = ref(true)
 const isFullscreen = ref(false)
 const selectedType = ref('all')
 const selectedStatus = ref('all')
-// Use props.properties when provided and mappable, else seed data
 const sourceProperties = computed(() => {
   const fromApi = props.properties || []
-  if (fromApi.length === 0) return seedProperties
   return fromApi
     .filter(p => (p.latitude != null && p.longitude != null) || (p.coordinates && p.coordinates.length >= 2))
     .map(p => ({
@@ -267,7 +272,7 @@ const props = defineProps({
     type: Array,
     default: () => [9.0116, 38.7616] // Addis Ababa
   },
-  /** Properties to display (API format). Falls back to seed data when empty. */
+  /** Properties to display in API format. Empty input renders an empty map. */
   properties: {
     type: Array,
     default: () => []
@@ -275,7 +280,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['property-selected', 'property-view'])
+const emit = defineEmits(['property-selected', 'property-view', 'boundary-updated'])
 
 // Initialize map
 const initMap = async () => {
@@ -731,19 +736,17 @@ const handleDrawCreated = (e) => {
   const type = e.layerType
   
   drawnItems.value.addLayer(layer)
-  
-  // Show notification
-  console.log(`Created ${type} boundary`)
+  emit('boundary-updated', { action: 'created', type, count: 1 })
 }
 
 const handleDrawEdited = (e) => {
   const layers = e.layers
-  console.log('Edited boundaries', layers)
+  emit('boundary-updated', { action: 'edited', count: layers.getLayers().length })
 }
 
 const handleDrawDeleted = (e) => {
   const layers = e.layers
-  console.log('Deleted boundaries', layers)
+  emit('boundary-updated', { action: 'deleted', count: layers.getLayers().length })
 }
 
 // Export and Print Methods
@@ -898,14 +901,14 @@ const formatStatus = (status) => {
 
 // Global function for popup buttons
 window.selectProperty = (propertyId) => {
-  const property = seedProperties.find(p => p.id === propertyId)
+  const property = filteredProperties.value.find(p => p.id === propertyId)
   if (property) {
     selectProperty(property)
   }
 }
 
 window.navigateToProperty = (propertyId) => {
-  const property = seedProperties.find(p => p.id === propertyId)
+  const property = filteredProperties.value.find(p => p.id === propertyId)
   if (property) {
     const { coordinates, address } = property
     const url = `https://www.google.com/maps?q=${coordinates[0]},${coordinates[1]}`

@@ -442,31 +442,33 @@ const subtypeMap: Record<string, Array<{ label: string; value: string }>> = {
 const subtypes = computed(() => subtypeMap[form.value.property_type] || [])
 
 const ethiopianRegions = [
-  'Addis Ababa', 'Dire Dawa', 'Oromia', 'Amhara', 'Tigray',
-  'SNNPR', 'Somali', 'Afar', 'Benishangul-Gumuz', 'Gambela',
-  'Harari', 'Sidama', 'South West Ethiopia',
+  'Addis Ababa',
+  'Afar',
+  'Amhara',
+  'Benishangul-Gumuz',
+  'Central Ethiopia',
+  'Dire Dawa',
+  'Gambela',
+  'Harari',
+  'Oromia',
+  'Sidama',
+  'Somali',
+  'South Ethiopia',
+  'South West Ethiopia',
+  'Tigray'
 ]
 
-const municipalities = [
-  'Addis Ababa', 'Dire Dawa', 'Mekelle', 'Gondar', 'Bahir Dar',
-  'Hawassa', 'Adama', 'Jimma', 'Dessie', 'Harar', 'Shashamane',
-  'Arba Minch', 'Jijiga', 'Debre Berhan', 'Hosaena', 'Nekemte',
-  'Wolaita Sodo', 'Dilla', 'Bishoftu', 'Asella',
-]
+const municipalities = computed(() => {
+  if (form.value.region === 'Addis Ababa') {
+    return ['Addis Ababa', 'Bole', 'Kirkos', 'Arada', 'Yeka', 'Lideta', 'Nifas Silk-Lafto']
+  }
+
+  return form.value.region ? [form.value.region] : []
+})
+
 </script>
 
 <style scoped>
-/* Professional Modern Styles with Enhanced Interactivity */
-
-/* Type card animations and styling */
-.type-card {
-  @apply bg-white border-2 border-gray-200 rounded-2xl cursor-pointer;
-  min-width: 100px;
-  min-height: 120px;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
 
 .type-card::before {
   content: '';
@@ -482,16 +484,6 @@ const municipalities = [
 
 .type-card:hover::before {
   opacity: 1;
-}
-
-.type-card:hover {
-  @apply border-emerald-500 shadow-2xl transform scale-105;
-  box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.1);
-}
-
-.type-card.selected {
-  @apply border-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-xl;
-  box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.2), 0 10px 10px -5px rgba(16, 185, 129, 0.15);
 }
 
 .type-card.selected::before {
@@ -572,26 +564,8 @@ const municipalities = [
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Professional loading states */
-.field :deep(.p-inputtext:disabled),
-.field :deep(.p-dropdown:disabled) {
-  @apply bg-gray-100 cursor-not-allowed opacity-60;
-}
-
 /* Enhanced mobile responsiveness */
 @media (max-width: 768px) {
-  .type-cards {
-    @apply grid-cols-2 gap-4;
-  }
-  
-  .type-card {
-    @apply min-w-[80px] p-4;
-    min-height: 100px;
-  }
-  
-  .form-section {
-    @apply p-6;
-  }
 }
 
 /* Professional animations */

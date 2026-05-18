@@ -15,6 +15,16 @@ import redis
 router = APIRouter()
 
 
+@router.get("", tags=["Health"])
+async def api_health():
+    """API-scoped health endpoint."""
+    return {
+        "status": "healthy",
+        "service": "valuadis-api",
+        "version": settings.VERSION if hasattr(settings, "VERSION") else "1.0.0",
+    }
+
+
 @router.get("/ping", tags=["Health"])
 async def ping():
     """Simple ping endpoint"""
