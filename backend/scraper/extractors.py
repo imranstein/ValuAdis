@@ -68,7 +68,68 @@ def _text(node) -> str:
 
 
 def extract_epc(html: str) -> List[Listing]:
-    """ethiopiapropertycentre.com listing/search result pages."""
+    """ethiopiapropertycentre.com listing/search result pages.
+
+    Tries the 2026 Tailwind card layout first, then falls back to the
+    legacy WordPress-style markup so older cached pages still parse.
+    """
+    listings = _extract_epc_cards(html)
+    if listings:
+        return listings
+    return _extract_epc_legacy(html)
+
+
+_EPC_AREA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:sqm|m²|m2|ካሬ)", re.IGNORECASE)
+
+
+def _extract_epc_cards(html: str) -> List[Listing]:
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select("article"):
+        link = item.find("a", href=True)
+        href = link.get("href") if link else None
+        title = _text(item.find("h3"))
+        if not href or not title:
+            continue
+
+        price = parse_price(_text(item.select_one(".flex.items-baseline")))
+        chips = [_text(c) for c in item.select(".inline-flex")]
+        bedrooms = bathrooms = 0
+        for chip in chips:
+            lowered = chip.lower()
+            if "bed" in lowered:
+                bedrooms = parse_int(chip)
+            elif "bath" in lowered:
+                bathrooms = parse_int(chip)
+
+        area_sqm = 0.0
+        area_match = _EPC_AREA_RE.search(item.get_text(" ", strip=True))
+        if area_match:
+            area_sqm = float(area_match.group(1))
+
+        location = ""
+        for chip in chips:
+            # The location chip is the comma-separated place hierarchy
+            if "," in chip and "bed" not in chip.lower() and "bath" not in chip.lower():
+                location = chip
+                break
+
+        listings.append(
+            {
+                "title": title,
+                "asking_price_etb": price,
+                "location_subcity": location,
+                "area_sqm": area_sqm,
+                "property_type": _text(item.select_one(".text-primary")) or "Unknown",
+                "bedrooms": bedrooms,
+                "bathrooms": bathrooms,
+                "listing_url": _absolute_url(href, EPC_BASE_URL),
+            }
+        )
+    return listings
+
+
+def _extract_epc_legacy(html: str) -> List[Listing]:
     soup = BeautifulSoup(html, "html.parser")
     listings = []
     for item in soup.select("div.wp-block.property.list"):

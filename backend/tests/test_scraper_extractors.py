@@ -115,3 +115,51 @@ def test_extractor_registry_covers_all_five_portals():
         "ethiopianproperties.com",
         "livingethio.com",
     }
+
+
+FIXTURE_2026_PATH = os.path.join(
+    os.path.dirname(__file__), "fixtures", "scraper", "epc_listing_page_2026.html"
+)
+
+
+@pytest.fixture(scope="module")
+def epc_2026_listings():
+    with open(FIXTURE_2026_PATH, encoding="utf-8") as fixture_file:
+        return extract_epc(fixture_file.read())
+
+
+def test_extract_epc_2026_parses_every_listing_card(epc_2026_listings):
+    assert len(epc_2026_listings) == 20
+
+
+def test_extract_epc_2026_extracts_title(epc_2026_listings):
+    assert epc_2026_listings[0]["title"].startswith("Megenagna Top View")
+
+
+def test_extract_epc_2026_normalizes_br_price(epc_2026_listings):
+    assert epc_2026_listings[0]["asking_price_etb"] == 28500000.0
+
+
+def test_extract_epc_2026_extracts_location_chip(epc_2026_listings):
+    assert epc_2026_listings[0]["location_subcity"] == (
+        "Megenagna-Lamberet Top View, Yeka, Addis Ababa"
+    )
+
+
+def test_extract_epc_2026_extracts_beds_and_baths(epc_2026_listings):
+    assert epc_2026_listings[0]["bedrooms"] == 3
+    assert epc_2026_listings[0]["bathrooms"] == 3
+
+
+def test_extract_epc_2026_extracts_area_from_text(epc_2026_listings):
+    assert epc_2026_listings[0]["area_sqm"] == 188.0
+
+
+def test_extract_epc_2026_extracts_property_type(epc_2026_listings):
+    assert epc_2026_listings[0]["property_type"] == "Apartment for sale"
+
+
+def test_extract_epc_2026_builds_absolute_unique_urls(epc_2026_listings):
+    urls = [listing["listing_url"] for listing in epc_2026_listings]
+    assert all(url.startswith(EPC_BASE_URL) for url in urls)
+    assert len(set(urls)) == len(urls)
