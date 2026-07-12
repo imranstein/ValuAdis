@@ -14,8 +14,8 @@ import json
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.services.audit_service import AuditService
-from app.schemas.audit import (
+from .services import AuditService
+from .schemas import (
     AuditReportResponse,
     ComplianceReportResponse,
     SummaryReportResponse,
