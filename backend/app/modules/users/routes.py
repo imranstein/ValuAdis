@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user_id, get_password_hash
 from app.data.models.user import User
 from app.data.models.role import Role, Permission, UserRole, user_roles, role_permissions
-from app.schemas.user import UserResponse, UserCreate, UserUpdate, RoleResponse, PermissionResponse
+from .schemas import UserResponse, UserCreate, UserUpdate, RoleResponse, PermissionResponse
 import structlog
 
 logger = structlog.get_logger()

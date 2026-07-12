@@ -21,7 +21,7 @@ from app.core.security import (
     validate_ethiopian_phone_number
 )
 from app.core.exceptions import AuthenticationException, ValidationException
-from app.schemas.auth import UserLogin, UserRegister, TokenResponse
+from .schemas import UserLogin, UserRegister, TokenResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter()

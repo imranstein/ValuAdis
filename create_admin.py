@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.services.auth_service import AuthService
-from app.schemas.auth import UserCreate
+from app.modules.auth.schemas import UserCreate
 
 async def main():
     db = SessionLocal()
