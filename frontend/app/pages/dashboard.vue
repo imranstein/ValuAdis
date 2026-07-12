@@ -76,10 +76,10 @@
         </div>
         <div class="distribution-ring" aria-hidden="true">
           <svg viewBox="0 0 42 42">
-            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#dfe9e3" stroke-width="6"></circle>
-            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#1f6b4f" stroke-width="6" stroke-dasharray="42 100"></circle>
-            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#365f73" stroke-width="6" stroke-dasharray="31 100" stroke-dashoffset="-42"></circle>
-            <circle cx="21" cy="21" r="15.9" fill="none" stroke="#9c6b1d" stroke-width="6" stroke-dasharray="27 100" stroke-dashoffset="-73"></circle>
+            <circle class="ring-track" cx="21" cy="21" r="15.9" fill="none" stroke-width="6"></circle>
+            <circle class="ring-seg-a" cx="21" cy="21" r="15.9" fill="none" stroke-width="6" stroke-dasharray="42 100"></circle>
+            <circle class="ring-seg-b" cx="21" cy="21" r="15.9" fill="none" stroke-width="6" stroke-dasharray="31 100" stroke-dashoffset="-42"></circle>
+            <circle class="ring-seg-c" cx="21" cy="21" r="15.9" fill="none" stroke-width="6" stroke-dasharray="27 100" stroke-dashoffset="-73"></circle>
           </svg>
           <div>
             <strong>{{ formatCount(totalAssets) }}</strong>
@@ -221,9 +221,9 @@ const metrics = computed(() => [
 ])
 
 const distribution = [
-  { label: 'Residential', value: '42%', color: '#1f6b4f' },
-  { label: 'Commercial', value: '31%', color: '#365f73' },
-  { label: 'Industrial', value: '27%', color: '#9c6b1d' }
+  { label: 'Residential', value: '42%', color: 'var(--green)' },
+  { label: 'Commercial', value: '31%', color: 'var(--blue)' },
+  { label: 'Industrial', value: '27%', color: 'var(--gold-bright)' }
 ]
 
 const aiAutomation = computed(() => [
@@ -403,59 +403,85 @@ function statusClass(status: string) {
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
-  gap: 14px;
+  gap: var(--space-4);
 }
 
+/* AI automation desk — dark ledger panel */
 .automation-panel {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
+  border-color: var(--shell-line);
+  background:
+    linear-gradient(rgba(241, 238, 224, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(241, 238, 224, 0.018) 1px, transparent 1px),
+    var(--shell-bg);
+  background-size: 44px 44px, 44px 44px, auto;
+  color: var(--shell-ink);
+}
+
+.automation-panel .panel-title {
+  color: var(--shell-ink);
+}
+
+.automation-panel .panel-subtitle {
+  color: var(--shell-muted);
+}
+
+.automation-panel .btn-ghost {
+  border: 1px solid var(--shell-line);
+  color: var(--shell-ink);
+}
+
+.automation-panel .btn-ghost:hover {
+  background: var(--shell-bg-raised);
 }
 
 .automation-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  border-top: 1px solid var(--line);
-  background: var(--line);
+  border-top: 1px solid var(--shell-line);
+  background: var(--shell-line);
 }
 
 .automation-item {
   min-height: 124px;
-  padding: 18px;
-  background: var(--surface);
+  padding: var(--space-4);
+  background: var(--shell-bg-raised);
 }
 
 .automation-item p {
-  margin: 0 0 14px;
-  color: var(--muted);
+  margin: 0 0 var(--space-3);
+  color: var(--shell-muted);
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .automation-item strong {
   display: block;
-  color: var(--ink);
-  font-family: var(--display);
-  font-size: 28px;
+  color: var(--shell-gold);
+  font-family: var(--mono);
+  font-size: 24px;
   font-weight: 600;
-  line-height: 1;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
 .automation-item span {
   display: block;
-  margin-top: 12px;
-  color: var(--ink-soft);
+  margin-top: var(--space-3);
+  color: var(--shell-ink);
   font-size: 13px;
 }
 
 .period-select {
-  min-height: 38px;
+  min-height: 40px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-soft);
-  padding: 0 10px;
+  padding: 0 var(--space-3);
 }
 
 .bar-chart {
@@ -484,7 +510,7 @@ function statusClass(status: string) {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #f5f6f2;
+  background: var(--surface-2);
 }
 
 .bar-fill {
@@ -492,6 +518,7 @@ function statusClass(status: string) {
   right: 0;
   bottom: 0;
   left: 0;
+  border-top: 2px solid var(--gold-bright);
   background: var(--green);
 }
 
@@ -512,6 +539,22 @@ function statusClass(status: string) {
   transform: rotate(-90deg);
 }
 
+.ring-track {
+  stroke: var(--surface-3);
+}
+
+.ring-seg-a {
+  stroke: var(--green);
+}
+
+.ring-seg-b {
+  stroke: var(--blue);
+}
+
+.ring-seg-c {
+  stroke: var(--gold-bright);
+}
+
 .distribution-ring div {
   position: absolute;
   inset: 0;
@@ -521,16 +564,17 @@ function statusClass(status: string) {
 }
 
 .distribution-ring strong {
-  font-family: var(--display);
-  font-size: 36px;
+  font-family: var(--mono);
+  font-size: 32px;
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .distribution-ring span {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -570,7 +614,7 @@ function statusClass(status: string) {
 
 .table-head {
   margin: 0;
-  padding: 20px 22px;
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--line);
 }
 
@@ -578,7 +622,7 @@ function statusClass(status: string) {
   color: var(--green);
   font-family: var(--mono);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .data-table td strong,
@@ -590,6 +634,12 @@ function statusClass(status: string) {
   margin-top: 3px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.empty-cell {
+  padding: var(--space-6);
+  color: var(--muted);
+  text-align: center;
 }
 
 @media (max-width: 1100px) {
