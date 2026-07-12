@@ -19,6 +19,7 @@ from app.api.schemas.scraper import (
     ScraperTargetResponse,
     ScraperLogResponse,
     ScraperStatsResponse,
+    ScraperHealthResponse,
     ScraperTestRequest,
     ScraperTestResponse,
     ScraperRunRequest
@@ -53,6 +54,15 @@ def get_scraper_stats(
 ):
     """Get scraper statistics"""
     return ScraperService.get_scraper_stats(db)
+
+
+@router.get("/health", response_model=List[ScraperHealthResponse])
+def get_scraper_health(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Per-source scraper health for the operations desk"""
+    return ScraperService.get_scraper_health(db)
 
 
 @router.get("/logs", response_model=List[ScraperLogResponse])

@@ -19,11 +19,19 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import SessionLocal
+from app.core.scraper_limits import SCRAPER_HEALTH_LOG_WINDOW
+from app.core.sentry import sentry_manager
 from app.data.models.market_listing import RawMarketListing
+from app.data.models.scraper import ScraperLog
 from app.services.scraper_service import ScraperService
 from playwright.async_api import async_playwright
 
 from scraper.extractors import get_extractor
+from scraper.quality import (
+    CONSECUTIVE_FAILURE_THRESHOLD,
+    count_consecutive_failures,
+    filter_outliers,
+)
 from scraper.robots import fetch_robots_txt, is_path_allowed
 
 logging.basicConfig(
@@ -187,10 +195,41 @@ class ScraperRunner:
             scraper.last_status = "failed"
             self.db.commit()
 
+            self._alert_failure(scraper, error)
+
         finally:
             self._ensure_terminal_log(log)
             if self._owns_db:
                 self.db.close()
+
+    def _alert_failure(self, scraper, error):
+        """Report a failed run to Sentry, escalating on consecutive failures.
+
+        Guarded so a missing/misconfigured Sentry (or an alerting error)
+        never masks the run's terminal failed state.
+        """
+        try:
+            extra = {"scraper_id": self.scraper_id, "domain": scraper.domain}
+            sentry_manager.capture_exception(error, extra_data=extra)
+
+            recent_statuses = [
+                log.status
+                for log in self.db.query(ScraperLog)
+                .filter(ScraperLog.scraper_id == self.scraper_id)
+                .order_by(ScraperLog.created_at.desc())
+                .limit(SCRAPER_HEALTH_LOG_WINDOW)
+                .all()
+            ]
+            consecutive = count_consecutive_failures(recent_statuses)
+            if consecutive >= CONSECUTIVE_FAILURE_THRESHOLD:
+                sentry_manager.capture_message(
+                    f"Scraper {scraper.domain} has {consecutive} consecutive "
+                    "failed runs",
+                    level="error",
+                    extra_data={**extra, "consecutive_failures": consecutive},
+                )
+        except Exception as alert_error:
+            logger.error(f"Failed to send scraper failure alert: {alert_error}")
 
     def _ensure_terminal_log(self, log):
         """Guarantee the run log never stays stuck in 'running'."""
@@ -204,10 +243,18 @@ class ScraperRunner:
             logger.error(f"Could not finalize scraper log: {error}")
 
     def save_listings(self, records) -> int:
-        """Insert listings into raw_market_listings, skipping existing listing_urls."""
+        """Insert listings into raw_market_listings, skipping existing listing_urls.
+
+        Obvious price/area outliers are dropped before insert so misparsed
+        rows never pollute the AVM training data.
+        """
+        kept, dropped = filter_outliers(records)
+        if dropped:
+            logger.info(f"Dropped {len(dropped)} outlier listings before save")
+
         saved_count = 0
         seen_urls = set()
-        for record in records:
+        for record in kept:
             listing_url = record.get("listing_url")
             title = record.get("title")
             if not listing_url or not title or listing_url in seen_urls:

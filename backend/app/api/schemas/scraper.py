@@ -119,6 +119,18 @@ class ScraperStatsResponse(BaseModel):
     avg_success_rate: float
 
 
+class ScraperHealthResponse(BaseModel):
+    """Per-source operational health for the scraper ops desk"""
+    id: int
+    domain: str
+    enabled: bool
+    last_run: Optional[datetime]
+    last_status: Optional[str]
+    consecutive_failures: int
+    total_listings: int
+    last_error_message: Optional[str]
+
+
 class ScraperTestRequest(BaseModel):
     """Schema for testing scraper configuration"""
     url_template: str

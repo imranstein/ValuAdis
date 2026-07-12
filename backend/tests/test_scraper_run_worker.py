@@ -26,7 +26,11 @@ FIXTURE_PATH = os.path.join(
     os.path.dirname(__file__), "fixtures", "scraper", "epc_listing_page.html"
 )
 
+# The fixture yields 20 listings; one (167,992 ETB / 134 sqm ~= 1,254
+# ETB/sqm) is a misparse dropped by outlier filtering before save.
 EPC_FIXTURE_LISTING_COUNT = 20
+EPC_FIXTURE_OUTLIER_COUNT = 1
+EPC_FIXTURE_KEPT_COUNT = EPC_FIXTURE_LISTING_COUNT - EPC_FIXTURE_OUTLIER_COUNT
 
 
 @pytest.fixture(autouse=True)
@@ -202,7 +206,7 @@ def test_run_saves_epc_fixture_listings_to_raw_table(db_session, monkeypatch):
 
     asyncio.run(runner.run_scraper())
 
-    assert db_session.query(RawMarketListing).count() == EPC_FIXTURE_LISTING_COUNT
+    assert db_session.query(RawMarketListing).count() == EPC_FIXTURE_KEPT_COUNT
 
 
 def test_run_marks_log_success_with_found_and_saved_counts(db_session, monkeypatch):
@@ -220,7 +224,7 @@ def test_run_marks_log_success_with_found_and_saved_counts(db_session, monkeypat
     assert log.status == "success"
     assert log.completed_at is not None
     assert log.listings_found == EPC_FIXTURE_LISTING_COUNT
-    assert log.listings_saved == EPC_FIXTURE_LISTING_COUNT
+    assert log.listings_saved == EPC_FIXTURE_KEPT_COUNT
 
 
 def test_run_never_creates_property_rows(db_session, monkeypatch):
@@ -268,6 +272,131 @@ def test_run_aborts_and_marks_failed_when_robots_disallows(db_session, monkeypat
     log = db_session.query(ScraperLog).filter_by(scraper_id=scraper.id).one()
     assert log.status == "failed"
     assert "robots.txt disallows" in log.error_message
+
+
+def test_save_listings_drops_price_outliers_before_insert(db_session):
+    runner = ScraperRunner(scraper_id=1, db=db_session)
+    records = _sample_records(4)  # consistent 10,000 ETB/sqm listings
+    records.append(
+        {
+            "title": "Misparsed listing",
+            "asking_price_etb": 500.0,
+            "location_subcity": "Bole, Addis Ababa",
+            "area_sqm": 150.0,  # ~3.3 ETB/sqm, a clear outlier
+            "property_type": "Apartment",
+            "bedrooms": 2,
+            "bathrooms": 1,
+            "listing_url": "https://ethiopiapropertycentre.com/listing/outlier",
+        }
+    )
+
+    saved = runner.save_listings(records)
+
+    assert saved == 4
+    assert db_session.query(RawMarketListing).count() == 4
+    assert (
+        db_session.query(RawMarketListing)
+        .filter(RawMarketListing.title == "Misparsed listing")
+        .first()
+        is None
+    )
+
+
+def test_run_failure_captures_exception_to_sentry(db_session, monkeypatch):
+    scraper = _create_epc_scraper(db_session)
+
+    def broken_playwright():
+        raise RuntimeError("playwright browser missing")
+
+    monkeypatch.setattr(run_scraper_module, "async_playwright", broken_playwright)
+
+    captured = []
+
+    class _FakeSentry:
+        def capture_exception(self, exc, extra_data=None):
+            captured.append({"exc": exc, "extra": extra_data})
+
+        def capture_message(self, message, level="info", extra_data=None):
+            captured.append({"message": message, "level": level, "extra": extra_data})
+
+    monkeypatch.setattr(run_scraper_module, "sentry_manager", _FakeSentry())
+    runner = ScraperRunner(scraper_id=scraper.id, max_pages=1, db=db_session)
+
+    asyncio.run(runner.run_scraper())
+
+    exception_events = [event for event in captured if "exc" in event]
+    assert exception_events
+    assert isinstance(exception_events[0]["exc"], RuntimeError)
+    assert exception_events[0]["extra"]["scraper_id"] == scraper.id
+
+
+def test_run_alerts_on_consecutive_failures(db_session, monkeypatch):
+    from datetime import datetime, timedelta
+
+    scraper = _create_epc_scraper(db_session)
+
+    # Two prior failed runs; this run makes three consecutive failures.
+    now = datetime.utcnow()
+    for offset in range(2):
+        db_session.add(
+            ScraperLog(
+                scraper_id=scraper.id,
+                started_at=now + timedelta(minutes=offset),
+                completed_at=now + timedelta(minutes=offset, seconds=5),
+                created_at=now + timedelta(minutes=offset),
+                status="failed",
+                error_message="boom",
+            )
+        )
+    db_session.commit()
+
+    def broken_playwright():
+        raise RuntimeError("playwright browser missing")
+
+    monkeypatch.setattr(run_scraper_module, "async_playwright", broken_playwright)
+
+    messages = []
+
+    class _FakeSentry:
+        def capture_exception(self, exc, extra_data=None):
+            pass
+
+        def capture_message(self, message, level="info", extra_data=None):
+            messages.append({"message": message, "level": level, "extra": extra_data})
+
+    monkeypatch.setattr(run_scraper_module, "sentry_manager", _FakeSentry())
+    runner = ScraperRunner(scraper_id=scraper.id, max_pages=1, db=db_session)
+
+    asyncio.run(runner.run_scraper())
+
+    assert messages
+    assert any("consecutive" in m["message"].lower() for m in messages)
+    assert messages[0]["extra"]["consecutive_failures"] >= 3
+
+
+def test_run_failure_alerting_survives_sentry_errors(db_session, monkeypatch):
+    scraper = _create_epc_scraper(db_session)
+
+    def broken_playwright():
+        raise RuntimeError("playwright browser missing")
+
+    monkeypatch.setattr(run_scraper_module, "async_playwright", broken_playwright)
+
+    class _ExplodingSentry:
+        def capture_exception(self, exc, extra_data=None):
+            raise RuntimeError("sentry unavailable")
+
+        def capture_message(self, message, level="info", extra_data=None):
+            raise RuntimeError("sentry unavailable")
+
+    monkeypatch.setattr(run_scraper_module, "sentry_manager", _ExplodingSentry())
+    runner = ScraperRunner(scraper_id=scraper.id, max_pages=1, db=db_session)
+
+    # Alerting failures must never mask the run's terminal failed state.
+    asyncio.run(runner.run_scraper())
+
+    log = db_session.query(ScraperLog).filter_by(scraper_id=scraper.id).one()
+    assert log.status == "failed"
 
 
 def test_run_marks_log_failed_for_domain_without_extractor(db_session):

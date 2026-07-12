@@ -1,6 +1,131 @@
 {
  "components": {
   "schemas": {
+   "ApiKeyCreate": {
+    "properties": {
+     "name": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "ApiKeyCreate",
+    "type": "object"
+   },
+   "ApiKeyCreatedResponse": {
+    "description": "Returned once on creation; carries the plaintext key, never persisted.",
+    "properties": {
+     "created_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Created At"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "key_prefix": {
+      "title": "Key Prefix",
+      "type": "string"
+     },
+     "last_used_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Used At"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "revoked": {
+      "title": "Revoked",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "key_prefix",
+     "revoked",
+     "key"
+    ],
+    "title": "ApiKeyCreatedResponse",
+    "type": "object"
+   },
+   "ApiKeyResponse": {
+    "properties": {
+     "created_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Created At"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "key_prefix": {
+      "title": "Key Prefix",
+      "type": "string"
+     },
+     "last_used_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Used At"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "revoked": {
+      "title": "Revoked",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "key_prefix",
+     "revoked"
+    ],
+    "title": "ApiKeyResponse",
+    "type": "object"
+   },
    "AuditReportResponse": {
     "description": "System audit report response",
     "properties": {
@@ -532,6 +657,29 @@
      "action"
     ],
     "title": "PermissionResponse",
+    "type": "object"
+   },
+   "PreferencesResponse": {
+    "properties": {
+     "preferences": {
+      "title": "Preferences",
+      "type": "object"
+     }
+    },
+    "required": [
+     "preferences"
+    ],
+    "title": "PreferencesResponse",
+    "type": "object"
+   },
+   "PreferencesUpdate": {
+    "properties": {
+     "preferences": {
+      "title": "Preferences",
+      "type": "object"
+     }
+    },
+    "title": "PreferencesUpdate",
     "type": "object"
    },
    "PropertyCreate": {
@@ -1877,6 +2025,77 @@
      "display_name"
     ],
     "title": "RoleResponse",
+    "type": "object"
+   },
+   "ScraperHealthResponse": {
+    "description": "Per-source operational health for the scraper ops desk",
+    "properties": {
+     "consecutive_failures": {
+      "title": "Consecutive Failures",
+      "type": "integer"
+     },
+     "domain": {
+      "title": "Domain",
+      "type": "string"
+     },
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "last_error_message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Error Message"
+     },
+     "last_run": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Run"
+     },
+     "last_status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Status"
+     },
+     "total_listings": {
+      "title": "Total Listings",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "domain",
+     "enabled",
+     "last_run",
+     "last_status",
+     "consecutive_failures",
+     "total_listings",
+     "last_error_message"
+    ],
+    "title": "ScraperHealthResponse",
     "type": "object"
    },
    "ScraperLogResponse": {
@@ -6732,6 +6951,37 @@
     ]
    }
   },
+  "/api/v1/scrapers/health": {
+   "get": {
+    "description": "Per-source scraper health for the operations desk",
+    "operationId": "get_scraper_health_api_v1_scrapers_health_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ScraperHealthResponse"
+         },
+         "title": "Response Get Scraper Health Api V1 Scrapers Health Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Get Scraper Health",
+    "tags": [
+     "Scrapers"
+    ]
+   }
+  },
   "/api/v1/scrapers/logs": {
    "get": {
     "description": "Get scraper logs",
@@ -7141,6 +7391,202 @@
     "summary": "Toggle Scraper",
     "tags": [
      "Scrapers"
+    ]
+   }
+  },
+  "/api/v1/settings": {
+   "get": {
+    "description": "Return the caller's saved preferences, or sensible defaults if unset.",
+    "operationId": "get_preferences_api_v1_settings_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PreferencesResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Get Preferences",
+    "tags": [
+     "Settings"
+    ]
+   },
+   "put": {
+    "description": "Upsert the caller's preferences over the current defaults.",
+    "operationId": "update_preferences_api_v1_settings_put",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PreferencesUpdate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PreferencesResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Update Preferences",
+    "tags": [
+     "Settings"
+    ]
+   }
+  },
+  "/api/v1/settings/api-keys": {
+   "get": {
+    "description": "List the caller's keys without the secret or its hash.",
+    "operationId": "list_api_keys_api_v1_settings_api_keys_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ApiKeyResponse"
+         },
+         "title": "Response List Api Keys Api V1 Settings Api Keys Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "List Api Keys",
+    "tags": [
+     "Settings"
+    ]
+   },
+   "post": {
+    "description": "Generate a key, store only its hash + prefix, return the plaintext once.",
+    "operationId": "create_api_key_api_v1_settings_api_keys_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApiKeyCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApiKeyCreatedResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Create Api Key",
+    "tags": [
+     "Settings"
+    ]
+   }
+  },
+  "/api/v1/settings/api-keys/{key_id}": {
+   "delete": {
+    "description": "Soft-delete (revoke) one of the caller's own keys.",
+    "operationId": "revoke_api_key_api_v1_settings_api_keys__key_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "key_id",
+      "required": true,
+      "schema": {
+       "title": "Key Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApiKeyResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Revoke Api Key",
+    "tags": [
+     "Settings"
     ]
    }
   },

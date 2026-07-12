@@ -334,11 +334,82 @@ def test_scraper_logs_pagination_and_ordering(
         _clear_auth(client)
 
 
+def test_scraper_health_reports_per_source_shape(client: TestClient, db_session):
+    _mock_auth(client)
+    try:
+        created = _create_scraper(client)
+        scraper_id = created["id"]
+
+        now = datetime.utcnow()
+        # Two most-recent runs failed, an older run succeeded.
+        db_session.add_all([
+            ScraperLog(
+                scraper_id=scraper_id,
+                started_at=now,
+                completed_at=now + timedelta(seconds=5),
+                created_at=now,
+                status="success",
+            ),
+            ScraperLog(
+                scraper_id=scraper_id,
+                started_at=now + timedelta(minutes=1),
+                completed_at=now + timedelta(minutes=1, seconds=5),
+                created_at=now + timedelta(minutes=1),
+                status="failed",
+                error_message="first boom",
+            ),
+            ScraperLog(
+                scraper_id=scraper_id,
+                started_at=now + timedelta(minutes=2),
+                completed_at=now + timedelta(minutes=2, seconds=5),
+                created_at=now + timedelta(minutes=2),
+                status="failed",
+                error_message="latest boom",
+            ),
+        ])
+        db_session.commit()
+
+        response = client.get("/api/v1/scrapers/health")
+        assert response.status_code == 200
+        payload = response.json()
+        assert isinstance(payload, list)
+        assert len(payload) == 1
+
+        entry = payload[0]
+        assert set(entry.keys()) == {
+            "id",
+            "domain",
+            "enabled",
+            "last_run",
+            "last_status",
+            "consecutive_failures",
+            "total_listings",
+            "last_error_message",
+        }
+        assert entry["domain"] == VALID_SCRAPER["domain"]
+        assert entry["enabled"] is True
+        assert entry["consecutive_failures"] == 2
+        assert entry["last_error_message"] == "latest boom"
+    finally:
+        _clear_auth(client)
+
+
+def test_scraper_health_returns_empty_list_without_targets(client: TestClient):
+    _mock_auth(client)
+    try:
+        response = client.get("/api/v1/scrapers/health")
+        assert response.status_code == 200
+        assert response.json() == []
+    finally:
+        _clear_auth(client)
+
+
 def test_scraper_routes_require_authentication(client: TestClient):
     endpoints = [
         ("get", "/api/v1/scrapers/"),
         ("post", "/api/v1/scrapers/"),
         ("get", "/api/v1/scrapers/stats"),
+        ("get", "/api/v1/scrapers/health"),
         ("get", "/api/v1/scrapers/logs"),
         ("get", "/api/v1/scrapers/1"),
         ("put", "/api/v1/scrapers/1"),

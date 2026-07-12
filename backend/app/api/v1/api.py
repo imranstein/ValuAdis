@@ -16,6 +16,7 @@ from app.modules.analytics import analytics_router
 from app.modules.audit import audit_router
 from app.modules.auth import auth_router
 from app.modules.users import users_router
+from app.modules.settings import settings_router
 
 # Create main API router
 api_router = APIRouter()
@@ -83,4 +84,10 @@ api_router.include_router(
     validation.router,
     prefix="/validate",
     tags=["Validation"]
+)
+
+api_router.include_router(
+    settings_router,
+    prefix="/settings",
+    tags=["Settings"]
 )

@@ -11,10 +11,12 @@ from app.api.schemas.scraper import (
     ScraperTestResponse
 )
 from app.core.scraper_limits import (
+    SCRAPER_HEALTH_LOG_WINDOW,
     SCRAPER_TEST_SAMPLE_LIMIT,
     SCRAPER_TEST_NAVIGATION_TIMEOUT_MS,
     SCRAPER_TEST_SELECTOR_WAIT_MS,
 )
+from scraper.quality import count_consecutive_failures
 import asyncio
 from playwright.async_api import async_playwright
 
@@ -133,6 +135,36 @@ class ScraperService:
             last_run=last_run,
             avg_success_rate=round(avg_success_rate, 2)
         )
+
+    @staticmethod
+    def get_scraper_health(db: Session) -> List[Dict[str, Any]]:
+        """Per-source health: last run, status, and consecutive failures."""
+        health: List[Dict[str, Any]] = []
+        scrapers = db.query(ScraperTarget).order_by(ScraperTarget.id).all()
+        for scraper in scrapers:
+            recent_logs = (
+                db.query(ScraperLog)
+                .filter(ScraperLog.scraper_id == scraper.id)
+                .order_by(desc(ScraperLog.created_at))
+                .limit(SCRAPER_HEALTH_LOG_WINDOW)
+                .all()
+            )
+            statuses = [log.status for log in recent_logs]
+            last_error_message = next(
+                (log.error_message for log in recent_logs if log.error_message),
+                None,
+            )
+            health.append({
+                "id": scraper.id,
+                "domain": scraper.domain,
+                "enabled": scraper.enabled,
+                "last_run": scraper.last_run,
+                "last_status": scraper.last_status,
+                "consecutive_failures": count_consecutive_failures(statuses),
+                "total_listings": scraper.total_listings or 0,
+                "last_error_message": last_error_message,
+            })
+        return health
 
     @staticmethod
     def get_scraper_logs(
