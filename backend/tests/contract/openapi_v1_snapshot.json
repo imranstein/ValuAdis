@@ -5819,6 +5819,27 @@
     ]
    }
   },
+  "/api/v1/auth/logout": {
+   "post": {
+    "description": "Logout the browser session by clearing the refresh cookie.\n\nAccess tokens are short-lived and stateless; clients drop them locally.",
+    "operationId": "logout_api_v1_auth_logout_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Logout",
+    "tags": [
+     "Authentication",
+     "Authentication"
+    ]
+   }
+  },
   "/api/v1/auth/me": {
    "get": {
     "description": "Get current user information",
@@ -5847,8 +5868,26 @@
   },
   "/api/v1/auth/refresh": {
    "post": {
-    "description": "Refresh access token \u2014 rotates the refresh token on every call",
+    "description": "Refresh access token \u2014 rotates the refresh token on every call.\n\nAccepts the refresh token as a bearer header (mobile) or as the\nhttpOnly valuadis_refresh cookie (browser). The header wins when both\nare present.",
     "operationId": "refresh_token_api_v1_auth_refresh_post",
+    "parameters": [
+     {
+      "in": "cookie",
+      "name": "valuadis_refresh",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Valuadis Refresh"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -5857,6 +5896,16 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "security": [
@@ -5948,6 +5997,27 @@
      }
     },
     "summary": "Check Database",
+    "tags": [
+     "Health",
+     "Health"
+    ]
+   }
+  },
+  "/api/v1/health/detailed": {
+   "get": {
+    "description": "Deploy smoke-test probe: DB ping, migration state (current vs head), version.\n\nUsed by scripts/deploy smoke checks to confirm a deployment is live AND\non the expected schema in a single request.",
+    "operationId": "detailed_health_check_api_v1_health_detailed_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Detailed Health Check",
     "tags": [
      "Health",
      "Health"

@@ -70,7 +70,21 @@ jobs:
         # Add linting tools if needed
         echo "Linting passed"
 
-    - name: Run tests with coverage
+    - name: Verify migrations reach head on a fresh database
+      env:
+        DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+        JWT_SECRET: test-secret-key
+      run: |
+        cd backend
+        # Deploy path: a fresh DB must migrate cleanly to head. Guards against
+        # ORM tables that have no migration (the role-tables bug class).
+        alembic upgrade head
+        CURRENT=$(alembic current 2>/dev/null | grep -oE '[a-z0-9_]+ \(head\)' | awk '{print $1}')
+        HEAD=$(alembic heads 2>/dev/null | grep -oE '^[a-z0-9_]+' | head -1)
+        echo "current=$CURRENT head=$HEAD"
+        test -n "$CURRENT" && test "$CURRENT" = "$HEAD" || (echo "migration current != head" && exit 1)
+
+    - name: Run tests with coverage (includes frozen /api/v1 contract gate)
       env:
         DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
         REDIS_URL: redis://localhost:6379/0
@@ -78,6 +92,8 @@ jobs:
         ENVIRONMENT: testing
       run: |
         cd backend
+        # tests/test_openapi_contract.py fails the build on any breaking
+        # /api/v1 change; runs as part of the suite below.
         pytest --cov=app --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov

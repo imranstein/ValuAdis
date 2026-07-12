@@ -92,6 +92,57 @@ async def full_health_check(
     }
 
 
+@router.get("/detailed", tags=["Health"])
+async def detailed_health_check(db: Session = Depends(get_db)):
+    """Deploy smoke-test probe: DB ping, migration state (current vs head), version.
+
+    Used by scripts/deploy smoke checks to confirm a deployment is live AND
+    on the expected schema in a single request.
+    """
+    version = settings.VERSION if hasattr(settings, "VERSION") else "1.0.0"
+
+    db_ok = False
+    try:
+        db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    current_rev = None
+    try:
+        row = db.execute(text("SELECT version_num FROM alembic_version")).fetchone()
+        current_rev = row[0] if row else None
+    except Exception:
+        current_rev = None
+
+    head_rev = None
+    try:
+        from alembic.config import Config
+        from alembic.script import ScriptDirectory
+
+        alembic_cfg = Config("alembic.ini")
+        head_rev = ScriptDirectory.from_config(alembic_cfg).get_current_head()
+    except Exception:
+        head_rev = None
+
+    migrations_ok = bool(current_rev and head_rev and current_rev == head_rev)
+    healthy = db_ok and migrations_ok
+
+    return {
+        "status": "healthy" if healthy else "unhealthy",
+        "service": "valuadis-api",
+        "version": version,
+        "checks": {
+            "database": {"status": "healthy" if db_ok else "unhealthy"},
+            "migrations": {
+                "status": "healthy" if migrations_ok else "unhealthy",
+                "current": current_rev,
+                "head": head_rev,
+            },
+        },
+    }
+
+
 @router.get("/ready", tags=["Health"])
 async def readiness_check(
     db: Session = Depends(get_db),
