@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:valuadis/core/constants.dart';
+import 'package:valuadis/data/datasources/local/hive_helper.dart';
 
 import 'package:valuadis/bloc/auth/auth_bloc.dart';
 import 'package:valuadis/bloc/auth/auth_event.dart';
@@ -350,6 +356,41 @@ class _FakeValuationSyncRepo extends ValuationRepository {
     markSyncFailureCount += 1;
     return 1;
   }
+}
+
+class _ReleaseGatedAuthRepository extends _StubAuthRepository {
+  @override
+  Future<void> loginOffline() {
+    throw StateError('Offline demo login is unavailable in release builds.');
+  }
+}
+
+class _ScriptedHttpAdapter implements HttpClientAdapter {
+  _ScriptedHttpAdapter(this.onFetch);
+
+  final Future<ResponseBody> Function(RequestOptions options) onFetch;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    return onFetch(options);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+ResponseBody _jsonBody(Object payload, int statusCode) {
+  return ResponseBody.fromString(
+    jsonEncode(payload),
+    statusCode,
+    headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    },
+  );
 }
 
 class _StubSyncApiClient extends ApiClient {
@@ -723,6 +764,143 @@ void main() {
       expect(repo.syncQueryCount, equals(1));
       expect(bloc.state.status, isNot(SyncStatus.failed));
       expect(repo.updateSyncStatusCount, equals(2));
+    });
+  });
+
+  group('M1 token refresh', () {
+    setUp(() async {
+      FlutterSecureStorage.setMockInitialValues({});
+      await HiveHelper.clearAuth();
+    });
+
+    test('EC-M01a 401 refreshes once and transparently retries the request',
+        () async {
+      await HiveHelper.saveTokens(
+        accessToken: 'expired-access',
+        refreshToken: 'refresh-1',
+      );
+      var unauthorizedCalls = 0;
+      var refreshCalls = 0;
+      var apiCalls = 0;
+
+      final client = ApiClient(onUnauthorized: (_) => unauthorizedCalls++);
+      client.debugSetHttpClientAdapter(_ScriptedHttpAdapter((options) async {
+        if (options.path.contains('/auth/refresh')) {
+          refreshCalls += 1;
+          expect(options.headers['Authorization'], 'Bearer refresh-1');
+          return _jsonBody({
+            'success': true,
+            'message': 'Token refreshed',
+            'data': {
+              'access_token': 'access-2',
+              'refresh_token': 'refresh-2',
+            },
+          }, 200);
+        }
+        apiCalls += 1;
+        if (options.headers['Authorization'] == 'Bearer expired-access') {
+          return _jsonBody({'detail': 'Token expired'}, 401);
+        }
+        expect(options.headers['Authorization'], 'Bearer access-2');
+        return _jsonBody({'items': <dynamic>[]}, 200);
+      }));
+
+      final response = await client.get('/properties');
+
+      expect(response.statusCode, 200);
+      expect(refreshCalls, 1);
+      expect(apiCalls, 2);
+      expect(unauthorizedCalls, 0);
+      expect(HiveHelper.getAccessToken(), 'access-2');
+      expect(HiveHelper.getRefreshToken(), 'refresh-2');
+    });
+
+    test('EC-M01b failed refresh clears auth and forces re-login', () async {
+      await HiveHelper.saveTokens(
+        accessToken: 'expired-access',
+        refreshToken: 'stale-refresh',
+      );
+      final unauthorizedMessages = <String>[];
+      var refreshCalls = 0;
+
+      final client = ApiClient(onUnauthorized: unauthorizedMessages.add);
+      client.debugSetHttpClientAdapter(_ScriptedHttpAdapter((options) async {
+        if (options.path.contains('/auth/refresh')) {
+          refreshCalls += 1;
+          return _jsonBody({'detail': 'Invalid refresh token'}, 401);
+        }
+        return _jsonBody({'detail': 'Token expired'}, 401);
+      }));
+
+      await expectLater(
+        client.get('/properties'),
+        throwsA(isA<DioException>()),
+      );
+      expect(refreshCalls, 1);
+      expect(
+        unauthorizedMessages,
+        ['Session expired. Please sign in again.'],
+      );
+      expect(HiveHelper.getAccessToken(), isNull);
+      expect(HiveHelper.getRefreshToken(), isNull);
+    });
+
+    test('EC-M01c retried request that 401s again does not refresh twice',
+        () async {
+      await HiveHelper.saveTokens(
+        accessToken: 'expired-access',
+        refreshToken: 'refresh-1',
+      );
+      var unauthorizedCalls = 0;
+      var refreshCalls = 0;
+
+      final client = ApiClient(onUnauthorized: (_) => unauthorizedCalls++);
+      client.debugSetHttpClientAdapter(_ScriptedHttpAdapter((options) async {
+        if (options.path.contains('/auth/refresh')) {
+          refreshCalls += 1;
+          return _jsonBody({
+            'success': true,
+            'message': 'Token refreshed',
+            'data': {
+              'access_token': 'access-2',
+              'refresh_token': 'refresh-2',
+            },
+          }, 200);
+        }
+        return _jsonBody({'detail': 'Still unauthorized'}, 401);
+      }));
+
+      await expectLater(
+        client.get('/properties'),
+        throwsA(isA<DioException>()),
+      );
+      expect(refreshCalls, 1);
+      expect(unauthorizedCalls, 1);
+      expect(HiveHelper.getAccessToken(), isNull);
+    });
+  });
+
+  group('M2 offline demo gating', () {
+    test('offline demo flag is enabled outside release builds', () {
+      expect(AppConstants.allowOfflineDemo, isTrue);
+    });
+
+    test('AuthBloc surfaces failure when offline demo login is unavailable',
+        () async {
+      final repo = _ReleaseGatedAuthRepository();
+      final bloc = AuthBloc(repo);
+
+      final seen = <AuthState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(AuthOfflineRequested());
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(seen.last.status, AuthStatus.failure);
+      expect(
+        seen.last.message,
+        'Offline demo login is unavailable in release builds.',
+      );
     });
   });
 }

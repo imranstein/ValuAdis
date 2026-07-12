@@ -197,7 +197,7 @@ Goal: from 0/8 proven scenarios to a reliable, monitored, scheduled scraping sub
     { id: "ps-reliability", label: "S3: retries with exponential backoff, per-source rate limiting + robots/ToS respect, structured run records (started/finished/items/errors), Sentry alerts on consecutive failures" },
     { id: "ps-quality", label: "S9 (first cut): dedup by listing fingerprint, price/currency normalization to ETB, drop obvious outliers before insert" },
     { id: "ps-tests", label: "TDD harness: unit tests against saved HTML fixtures per source (no live network in CI) + one live smoke test per source behind a flag", note: "Fixture-based tests make selector breakage a red test, not a silent empty run" },
-    { id: "ps-source-1", label: "Prove source #1 end-to-end: scheduled run → listings in DB → visible in /scrapers UI with run history → E2E scenario green", note: "Go/no-go gate for enabling further sources" },
+    { id: "ps-source-1", label: "Prove source #1 end-to-end: scheduled run → listings in DB → visible in /scrapers UI with run history → E2E scenario green", note: "PARTIAL (2026-07-12): manual live run proven — page 1 of ethiopiapropertycentre.com found 20 / saved 20 to raw_market_listings, rerun saved 0 (dedup). The site had shipped a Tailwind redesign; extract_epc now parses new + legacy markup with fixtures for both. Remaining: scheduler, /scrapers UI verification, E2E scenario" },
     { id: "ps-ui", label: "U4: /scrapers ops desk — per-source health, last success, item counts, failure reasons, manual re-run", note: "Keeps the existing restrained data-operations style; no fake rows" },
     { id: "ps-remaining", label: "Roll out remaining sources one at a time; close all 8 scraper E2E scenarios" },
     { id: "ps-evidence", label: "U5: surface comparable scraped listings on valuation detail/quick-valuation as market evidence", note: "The payoff step — scraper data informing valuers" },
@@ -215,7 +215,7 @@ Goal: from 0/8 proven scenarios to a reliable, monitored, scheduled scraping sub
 <Checklist
   id="phase2-checklist"
   items={[
-    { id: "p2-vehicles", label: "Consolidate vehicles: fold endpoints/vehicles.py + vehicle services into modules/vehicle; /api/v1/vehicles/* and /api/v1/vehicle-data/* stay byte-compatible; delete flat copies" },
+    { id: "p2-vehicles", label: "Consolidate vehicles: fold endpoints/vehicles.py + vehicle services into modules/vehicle; /api/v1/vehicles/* and /api/v1/vehicle-data/* stay byte-compatible; delete flat copies", checked: true, note: "DONE 2026-07-12 (b4ff1ab): flat stack moved verbatim into the module; never-mounted UUID prototype deleted (-2,524 net lines); found+fixed an unconditional 500 on POST /vehicles/{id}/valuation (expiration date read before server_default). Suite 313/17, contract byte-identical" },
     { id: "p2-properties", label: "Extract modules/property: CRUD + spatial queries + CSV export; repository owns all raw PostGIS SQL; spatial regression tests stay green" },
     { id: "p2-valuations", label: "Extract modules/valuation: CRUD, draft→pending→approved state machine, Ethiopian tax calc, certificate PDF, quick valuation, feedback metrics" },
     { id: "p2-scraper-module", label: "Extract modules/scraper (control plane) aligned with the Phase S worker: configs, run history, status endpoints" },
@@ -238,6 +238,41 @@ Goal: from 0/8 proven scenarios to a reliable, monitored, scheduled scraping sub
     { id: "p3-a11y", label: "U2: keyboard-only pass on login, property create, quick valuation; fix focus traps" },
     { id: "p3-error-states", label: "Verify honest empty/error states everywhere (no fake rows — standing project rule)" },
     { id: "p3-refresh-dedup", label: "Deduplicate session boot: a single hard load was observed firing refresh+me several times; trace the extra callers (layout loadCurrentUser vs middleware vs plugin) and collapse to one boot sequence" },
+  ]}
+/>
+
+### Phase R — Rebrand & UI rework (added 2026-07-12 by user request, parallel track)
+
+Direction (decided under delegated autonomy): "Ethiopian civic-tech ledger" — deep forest green + warm gold accent, editorial serif display on the landing page, geometric sans app UI, mono ledger values, cadastral/topographic motifs, WCAG AA, dark-capable admin shell. Token-first: every restyled surface consumes semantic tokens.
+
+<Checklist
+  id="phaseR-checklist"
+  items={[
+    { id: "pr-tokens", label: "Refresh the token system (main.css custom properties + tailwind.config.ts + design-tokens.json in sync); no hardcoded hex in restyled components" },
+    { id: "pr-landing", label: "Landing page full rework (honest capability claims only, existing CTAs/routes kept)" },
+    { id: "pr-login", label: "Login restyle (logic frozen: submit handler, aria-live errors, demo login)" },
+    { id: "pr-shell", label: "Admin shell rework: sidebar, topbar, user card, logout affordance (navigation structure and handleLogout logic frozen)" },
+    { id: "pr-dashboard", label: "Dashboard restyle (real data bindings and honest empty states kept)" },
+    { id: "pr-consistency", label: "Consistency pass over remaining routes (properties, vehicles, valuations, analytics, map, reports, scrapers, users, audit, profile, settings) — inherit tokens, fix stragglers" },
+    { id: "pr-browser-proof", label: "Browser proof: landing, login, dashboard, one registry page in light + dark, mobile viewport spot-check" },
+    { id: "pr-mobile-brand", label: "Flutter app brand alignment (after the mobile audit lands; separate subtask)" },
+  ]}
+/>
+
+### Phase M — Companion mobile app (audited 2026-07-12)
+
+Audit verdict: the Flutter app is an **offline-first field-capture tool** (BLoC + SQLite/Hive + Dio) covering login, property list/detail/create, local valuations, and GPS/polygon maps with **push-only sync**. Contract is clean: `API_BASE_URL + /api/v1`, bearer auth matching the backend envelope, no double-prefix bug. It calls only three endpoints today (`/auth/login`, `POST /properties`, `POST /valuations`). Solid stub-based quality-gate tests exist; nothing hits a live backend.
+
+<Checklist
+  id="phaseM-checklist"
+  items={[
+    { id: "pm-refresh", label: "M1: implement token refresh — the stored refresh token is never used; on 401 the app force-logs-out. Use the existing bearer /auth/refresh; retry-once-on-401 interceptor", note: "Highest-value fix; sessions currently die at access-token expiry mid-fieldwork" },
+    { id: "pm-demo-token", label: "M2: gate loginOffline()'s fake offline-demo-token behind a debug flag so release builds can never send fabricated bearers to the real API" },
+    { id: "pm-sync-pull", label: "M3: two-way sync — pull server properties/valuations for the signed-in valuer (today sync is push-only; server valuation IDs aren't even captured)" },
+    { id: "pm-baseurl", label: "M4: environment config — default localhost:8000 breaks devices/emulators; document --dart-define API_BASE_URL (Android emulator 10.0.2.2) and add a staging profile" },
+    { id: "pm-parity", label: "M5: parity backlog — quick valuation, /auth/me profile, vehicles (decide field-app relevance before building)" },
+    { id: "pm-brand", label: "M6: brand alignment to the new web identity (today: Material green #1B5E20 + blue #0D47A1 + Inter; target: deep green + warm gold, no blue)" },
+    { id: "pm-live-smoke", label: "M7: one live smoke against staging once deployed — login, create property offline, sync, verify row via web app" },
   ]}
 />
 
