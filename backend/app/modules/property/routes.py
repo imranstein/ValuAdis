@@ -264,6 +264,83 @@ async def get_property(
     return PropertyResponse(success=True, data=property.to_dict())
 
 
+@router.get("/{property_id}/market-evidence", tags=["Properties"])
+async def property_market_evidence(
+    property_id: int,
+    limit: int = 12,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """Comparable scraped listings for a property, as valuation evidence.
+
+    Matches raw_market_listings by subcity + property type + a ±40% area band,
+    and returns the comparables plus a price/sqm range and an implied value for
+    the subject property's area. Data comes from the market scraper, never
+    fabricated; an empty list is an honest 'no comparables yet' state.
+    """
+    from statistics import median
+    from app.data.models.market_listing import RawMarketListing
+
+    property_service = PropertyService(db)
+    subject = await property_service.get_property_by_id(
+        property_id=property_id, user_id=current_user_id
+    )
+    if not subject:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    query = db.query(RawMarketListing).filter(
+        RawMarketListing.asking_price_etb.isnot(None),
+        RawMarketListing.asking_price_etb > 0,
+        RawMarketListing.area_sqm.isnot(None),
+        RawMarketListing.area_sqm > 0,
+    )
+    if subject.subcity:
+        query = query.filter(RawMarketListing.location_subcity.ilike(f"%{subject.subcity}%"))
+    if subject.property_type:
+        query = query.filter(RawMarketListing.property_type.ilike(f"%{subject.property_type}%"))
+    if subject.area_sqm:
+        low, high = subject.area_sqm * 0.6, subject.area_sqm * 1.4
+        query = query.filter(RawMarketListing.area_sqm.between(low, high))
+
+    rows = query.order_by(RawMarketListing.scrape_date.desc()).limit(max(1, min(limit, 50))).all()
+
+    comparables = [
+        {
+            "title": r.title,
+            "asking_price_etb": r.asking_price_etb,
+            "area_sqm": r.area_sqm,
+            "price_per_sqm": round(r.asking_price_etb / r.area_sqm, 2) if r.area_sqm else None,
+            "location_subcity": r.location_subcity,
+            "bedrooms": r.bedrooms,
+            "bathrooms": r.bathrooms,
+            "listing_url": r.listing_url,
+        }
+        for r in rows
+    ]
+    per_sqm = [c["price_per_sqm"] for c in comparables if c["price_per_sqm"]]
+    stats = None
+    if per_sqm:
+        med = median(per_sqm)
+        stats = {
+            "count": len(per_sqm),
+            "min_price_per_sqm": round(min(per_sqm), 2),
+            "median_price_per_sqm": round(med, 2),
+            "max_price_per_sqm": round(max(per_sqm), 2),
+            "implied_value_etb": round(med * subject.area_sqm, 2) if subject.area_sqm else None,
+        }
+
+    return {
+        "success": True,
+        "data": {
+            "property_id": property_id,
+            "subject_area_sqm": subject.area_sqm,
+            "subject_subcity": subject.subcity,
+            "comparables": comparables,
+            "statistics": stats,
+        },
+    }
+
+
 @router.put("/{property_id}", response_model=PropertyResponse)
 async def update_property(
     property_id: int,

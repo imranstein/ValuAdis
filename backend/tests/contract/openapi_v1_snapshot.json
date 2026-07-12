@@ -6567,6 +6567,63 @@
     ]
    }
   },
+  "/api/v1/properties/{property_id}/market-evidence": {
+   "get": {
+    "description": "Comparable scraped listings for a property, as valuation evidence.\n\nMatches raw_market_listings by subcity + property type + a \u00b140% area band,\nand returns the comparables plus a price/sqm range and an implied value for\nthe subject property's area. Data comes from the market scraper, never\nfabricated; an empty list is an honest 'no comparables yet' state.",
+    "operationId": "property_market_evidence_api_v1_properties__property_id__market_evidence_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "property_id",
+      "required": true,
+      "schema": {
+       "title": "Property Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 12,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Property Market Evidence",
+    "tags": [
+     "Properties",
+     "Properties"
+    ]
+   }
+  },
   "/api/v1/scrapers/": {
    "get": {
     "description": "Get all scraper targets",
