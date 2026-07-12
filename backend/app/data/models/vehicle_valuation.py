@@ -236,7 +236,10 @@ class VehicleValuation(Base):
     
     def set_expiration_date(self, days_valid=365):
         """Set expiration date for valuation"""
-        self.expires_at = self.valuation_date + timedelta(days=days_valid)
+        # valuation_date is filled by the database server_default, so it is
+        # still None before the first flush; fall back to now in that case.
+        base_date = self.valuation_date or datetime.utcnow()
+        self.expires_at = base_date + timedelta(days=days_valid)
     
     def get_factor_breakdown(self):
         """Get detailed breakdown of all valuation factors"""

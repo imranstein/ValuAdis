@@ -1,440 +1,536 @@
 """
-Vehicle Valuation API Routes
+Vehicles API Routes
 
-FastAPI endpoints for vehicle management and valuation operations.
+Single owner of the /api/v1/vehicles contract after the v2 consolidation.
+
+The vehicle stack previously existed twice:
+- flat: app/api/v1/endpoints/vehicles.py + app/services/vehicle_valuation_service.py
+  + app/schemas/vehicle*.py (the mounted, live contract)
+- module: app/modules/vehicle/{routes,services,repositories,schemas,ai} (an
+  unmounted UUID-based prototype whose fields did not match the real models)
+
+The live flat implementation moved here verbatim; the prototype was deleted.
+NOTE: /statistics/summary must stay declared before /{vehicle_id} (FastAPI
+matches routes in declaration order).
 """
 
-from typing import List, Optional
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+import logging
 
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.data.models.user import User
-from .services import VehicleValuationService
-from .schemas import (
-    VehicleCreate, VehicleUpdate, VehicleResponse, VehicleListResponse,
-    VehicleValuationCreate, VehicleValuationUpdate, VehicleValuationResponse, VehicleValuationListResponse,
-    VehicleAnalysisRequest, VehicleAnalysisResponse,
-    VehicleCertificateRequest, VehicleCertificateResponse
-)
+from app.core.security import get_current_user_id
+from .models import Vehicle, VehicleValuation, VehicleValuationStatus
+from .services import vehicle_valuation_service
+from .schemas import VehicleCreate, VehicleUpdate, VehicleResponse
+from .valuation_schemas import VehicleValuationCreate, VehicleValuationResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
-def get_vehicle_service(db: Session = Depends(get_db)) -> VehicleValuationService:
-    """Dependency injection for vehicle service"""
-    return VehicleValuationService(db)
-
-
-# Vehicle Management Routes
-@router.post("/", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
-def create_vehicle(
+@router.post("/", response_model=VehicleResponse)
+async def create_vehicle(
     vehicle_data: VehicleCreate,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Create a new vehicle record"""
+    """
+    Create a new vehicle record
+    
+    Args:
+        vehicle_data: Vehicle creation data
+        
+    Returns the created vehicle record.
+    """
     try:
-        vehicle = vehicle_service.create_vehicle(vehicle_data, current_user.id)
+        # Check if VIN already exists
+        existing_vin = db.query(Vehicle).filter(Vehicle.vin == vehicle_data.vin).first()
+        if existing_vin:
+            raise HTTPException(
+                status_code=400,
+                detail="Vehicle with this VIN already exists"
+            )
+        
+        # Check if plate number already exists
+        existing_plate = db.query(Vehicle).filter(Vehicle.plate_number == vehicle_data.plate_number).first()
+        if existing_plate:
+            raise HTTPException(
+                status_code=400,
+                detail="Vehicle with this plate number already exists"
+            )
+        
+        # Create vehicle object
+        vehicle = Vehicle(
+            user_id=current_user_id,
+            **vehicle_data.model_dump()
+        )
+
+        db.add(vehicle)
+        db.commit()
+        db.refresh(vehicle)
+
+        logger.info(f"User {current_user_id} created vehicle: {vehicle.vin}")
         return vehicle
-    except ValueError as e:
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating vehicle: {e}")
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=500,
+            detail="Internal server error while creating vehicle"
         )
 
 
-@router.get("/", response_model=VehicleListResponse)
-def list_vehicles(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    query: Optional[str] = Query(None),
-    make: Optional[str] = Query(None),
-    model: Optional[str] = Query(None),
-    year_min: Optional[int] = Query(None),
-    year_max: Optional[int] = Query(None),
-    region: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+@router.get("/", response_model=List[VehicleResponse])
+async def get_user_vehicles(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    make: Optional[str] = Query(None, description="Filter by vehicle make"),
+    model: Optional[str] = Query(None, description="Filter by vehicle model"),
+    year: Optional[int] = Query(None, description="Filter by vehicle year"),
+    region: Optional[str] = Query(None, description="Filter by region"),
+    status: Optional[str] = Query(None, description="Filter by valuation status"),
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """List vehicles with search and filters"""
-    vehicles = vehicle_service.search_vehicles(
-        query=query,
-        make=make,
-        model=model,
-        year_min=year_min,
-        year_max=year_max,
-        region=region,
-        skip=skip,
-        limit=limit
-    )
+    """
+    Get user's vehicles with optional filtering
     
-    # Get total count (simplified - in production, use separate count query)
-    total = len(vehicles)
-    
-    return VehicleListResponse(
-        vehicles=vehicles,
-        total=total,
-        page=skip // limit + 1,
-        per_page=limit,
-        pages=(total + limit - 1) // limit
-    )
+    Returns a list of vehicles belonging to the current user with optional filters.
+    """
+    try:
+        query = db.query(Vehicle).filter(Vehicle.user_id == current_user_id)
+
+        # Apply filters
+        if make:
+            query = query.filter(Vehicle.make.ilike(f"%{make}%"))
+        if model:
+            query = query.filter(Vehicle.model.ilike(f"%{model}%"))
+        if year:
+            query = query.filter(Vehicle.year == year)
+        if region:
+            query = query.filter(Vehicle.region.ilike(f"%{region}%"))
+        if status:
+            # Join with valuations to filter by status
+            query = query.join(VehicleValuation).filter(VehicleValuation.status == status)
+        
+        # Apply pagination
+        vehicles = query.offset(skip).limit(limit).all()
+        
+        logger.info(f"User {current_user_id} retrieved {len(vehicles)} vehicles")
+        return vehicles
+        
+    except Exception as e:
+        logger.error(f"Error retrieving vehicles: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error while retrieving vehicles"
+        )
 
 
-@router.get("/my-vehicles", response_model=VehicleListResponse)
-def get_my_vehicles(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+@router.get("/statistics/summary")
+async def get_vehicle_statistics(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Get current user's vehicles"""
-    vehicles = vehicle_service.get_owner_vehicles(current_user.id, skip, limit)
-    total = vehicle_service.vehicle_repo.count_owner_vehicles(current_user.id)
-    
-    return VehicleListResponse(
-        vehicles=vehicles,
-        total=total,
-        page=skip // limit + 1,
-        per_page=limit,
-        pages=(total + limit - 1) // limit
-    )
+    """
+    Get vehicle statistics summary for the current user
+
+    Returns statistics including total vehicles, total value, and breakdowns.
+    """
+    try:
+        vehicles = db.query(Vehicle).filter(Vehicle.user_id == current_user_id).all()
+        valuations = db.query(VehicleValuation).filter(
+            VehicleValuation.user_id == current_user_id
+        ).all()
+
+        total_vehicles = len(vehicles)
+        total_market_value = sum(v.market_value for v in valuations)
+        total_taxable_value = sum(v.taxable_value for v in valuations)
+
+        make_breakdown = {}
+        for vehicle in vehicles:
+            make = vehicle.make
+            make_breakdown[make] = make_breakdown.get(make, 0) + 1
+
+        year_breakdown = {}
+        for vehicle in vehicles:
+            year = vehicle.year
+            year_breakdown[year] = year_breakdown.get(year, 0) + 1
+
+        region_breakdown = {}
+        for vehicle in vehicles:
+            region = vehicle.region or "Unknown"
+            region_breakdown[region] = region_breakdown.get(region, 0) + 1
+
+        status_breakdown = {}
+        for valuation in valuations:
+            status = valuation.status.value
+            status_breakdown[status] = status_breakdown.get(status, 0) + 1
+
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_valuations = len([
+            v for v in valuations if v.created_at > thirty_days_ago
+        ])
+
+        logger.info(f"User {current_user_id} retrieved vehicle statistics")
+        return {
+            "total_vehicles": total_vehicles,
+            "total_valuations": len(valuations),
+            "total_market_value": total_market_value,
+            "total_taxable_value": total_taxable_value,
+            "average_vehicle_value": total_market_value / len(valuations) if valuations else 0,
+            "recent_valuations": recent_valuations,
+            "make_breakdown": make_breakdown,
+            "year_breakdown": year_breakdown,
+            "region_breakdown": region_breakdown,
+            "status_breakdown": status_breakdown
+        }
+
+    except Exception as e:
+        logger.error(f"Error retrieving vehicle statistics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error while retrieving vehicle statistics"
+        )
 
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
-def get_vehicle(
-    vehicle_id: UUID,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+async def get_vehicle(
+    vehicle_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Get vehicle by ID"""
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
+    """
+    Get a specific vehicle by ID
     
-    # Check ownership or admin access
-    if vehicle.owner_id != current_user.id and not current_user.is_admin:
+    Args:
+        vehicle_id: Vehicle ID
+        
+    Returns the vehicle record if found and belongs to current user.
+    """
+    try:
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
+
+        if not vehicle:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found"
+            )
+
+        logger.info(f"User {current_user_id} retrieved vehicle: {vehicle_id}")
+        return vehicle
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving vehicle {vehicle_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
+            status_code=500,
+            detail=f"Internal server error while retrieving vehicle {vehicle_id}"
         )
-    
-    return vehicle
 
 
 @router.put("/{vehicle_id}", response_model=VehicleResponse)
-def update_vehicle(
-    vehicle_id: UUID,
-    update_data: VehicleUpdate,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+async def update_vehicle(
+    vehicle_id: int,
+    vehicle_data: VehicleUpdate,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Update vehicle information"""
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
+    """
+    Update a vehicle record
     
-    # Check ownership or admin access
-    if vehicle.owner_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
+    Args:
+        vehicle_id: Vehicle ID
+        vehicle_data: Updated vehicle data
+        
+    Returns the updated vehicle record.
+    """
     try:
-        updated_vehicle = vehicle_service.update_vehicle(vehicle_id, update_data)
-        return updated_vehicle
-    except ValueError as e:
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
+
+        if not vehicle:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found"
+            )
+
+        # Check if VIN is being changed and if it already exists
+        if vehicle_data.vin and vehicle_data.vin != vehicle.vin:
+            existing_vin = db.query(Vehicle).filter(
+                and_(Vehicle.vin == vehicle_data.vin, Vehicle.id != vehicle_id)
+            ).first()
+            if existing_vin:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Vehicle with this VIN already exists"
+                )
+        
+        # Check if plate number is being changed and if it already exists
+        if vehicle_data.plate_number and vehicle_data.plate_number != vehicle.plate_number:
+            existing_plate = db.query(Vehicle).filter(
+                and_(Vehicle.plate_number == vehicle_data.plate_number, Vehicle.id != vehicle_id)
+            ).first()
+            if existing_plate:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Vehicle with this plate number already exists"
+                )
+        
+        # Update vehicle with provided data
+        update_data = vehicle_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(vehicle, field, value)
+        
+        db.commit()
+        db.refresh(vehicle)
+        
+        logger.info(f"User {current_user_id} updated vehicle: {vehicle_id}")
+        return vehicle
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating vehicle {vehicle_id}: {e}")
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=500,
+            detail=f"Internal server error while updating vehicle {vehicle_id}"
         )
 
 
-@router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_vehicle(
-    vehicle_id: UUID,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+@router.delete("/{vehicle_id}")
+async def delete_vehicle(
+    vehicle_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Delete a vehicle"""
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
+    """
+    Delete a vehicle record
     
-    # Check ownership or admin access
-    if vehicle.owner_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
-    vehicle_service.delete_vehicle(vehicle_id)
-
-
-# Vehicle Valuation Routes
-@router.post("/{vehicle_id}/valuations", response_model=VehicleValuationResponse)
-def create_valuation(
-    vehicle_id: UUID,
-    valuation_data: VehicleValuationCreate,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Create a vehicle valuation"""
-    # Verify vehicle exists and user has access
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
-    
-    # Only valuers or admins can create valuations
-    if not (current_user.is_valuer or current_user.is_admin):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only valuers can create valuations"
-        )
-    
+    Args:
+        vehicle_id: Vehicle ID
+        
+    Returns success message if vehicle is deleted.
+    """
     try:
-        valuation = vehicle_service.create_valuation(valuation_data, current_user.id)
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
+
+        if not vehicle:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found"
+            )
+
+        db.delete(vehicle)
+        db.commit()
+
+        logger.info(f"User {current_user_id} deleted vehicle: {vehicle_id}")
+        return {"message": "Vehicle deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting vehicle {vehicle_id}: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while deleting vehicle {vehicle_id}"
+        )
+
+
+@router.post("/{vehicle_id}/valuation", response_model=VehicleValuationResponse)
+async def create_vehicle_valuation(
+    vehicle_id: int,
+    valuation_data: Optional[VehicleValuationCreate] = None,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a vehicle valuation
+    
+    Args:
+        vehicle_id: Vehicle ID
+        valuation_data: Optional valuation data (will auto-calculate if not provided)
+        
+    Returns the created vehicle valuation.
+    """
+    try:
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
+
+        if not vehicle:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found"
+            )
+
+        # Check if vehicle can be valued
+        if not vehicle.can_be_valued():
+            raise HTTPException(
+                status_code=400,
+                detail="Vehicle cannot be valued - missing required information"
+            )
+        
+        # Calculate valuation using service
+        valuation_result = vehicle_valuation_service.calculate_vehicle_valuation(vehicle)
+        
+        # Create valuation record
+        valuation = VehicleValuation(
+            vehicle_id=vehicle_id,
+            user_id=current_user_id,
+            vehicle_make=vehicle.make,
+            vehicle_model=vehicle.model,
+            vehicle_year=vehicle.year,
+            vehicle_vin=vehicle.vin,
+            vehicle_plate=vehicle.plate_number,
+            vehicle_mileage=vehicle.mileage,
+            vehicle_region=vehicle.region,
+            base_value=valuation_result["base_value"],
+            market_value=valuation_result["market_value"],
+            taxable_value=valuation_result["taxable_value"],
+            condition_factor=valuation_result["condition_factor"],
+            regional_multiplier=valuation_result["ethiopian_factors"]["regional_multiplier"],
+            import_year_adjustment=valuation_result["ethiopian_factors"]["import_year_adjustment"],
+            customs_duty_factor=valuation_result["ethiopian_factors"]["customs_duty_factor"],
+            make_reliability=valuation_result["ethiopian_factors"]["make_reliability"],
+            fuel_type_adjustment=valuation_result["ethiopian_factors"]["fuel_type_adjustment"],
+            body_type_demand=valuation_result["ethiopian_factors"]["body_type_demand"],
+            ethiopian_factors=valuation_result["ethiopian_factors"],
+            market_position=valuation_result["market_position"],
+            confidence_score=valuation_result["confidence_score"],
+            condition_rating=valuation_result["condition_analysis"]["condition_rating"],
+            age_depreciation=valuation_result["condition_analysis"]["age_depreciation"],
+            mileage_depreciation=valuation_result["condition_analysis"].get("mileage_depreciation", 0),
+            recommendations=valuation_result.get("recommendations", []),
+            data_sources=["NHTSA vPIC API", "Ethiopian Market Data"],
+            valuation_method="automated"
+        )
+        
+        # Set expiration date (1 year from now)
+        valuation.set_expiration_date(365)
+        
+        db.add(valuation)
+        db.commit()
+        db.refresh(valuation)
+        
+        logger.info(f"User {current_user_id} created valuation for vehicle {vehicle_id}: ETB {valuation.market_value}")
         return valuation
-    except ValueError as e:
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating vehicle valuation: {e}")
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=500,
+            detail="Internal server error while creating vehicle valuation"
         )
 
 
-@router.post("/{vehicle_id}/analyze-and-value", response_model=VehicleValuationResponse)
-def analyze_and_value_vehicle(
-    vehicle_id: UUID,
-    include_ai_analysis: bool = Query(True),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+@router.get("/{vehicle_id}/valuations", response_model=List[VehicleValuationResponse])
+async def get_vehicle_valuations(
+    vehicle_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Perform AI-powered analysis and create valuation"""
-    # Verify vehicle exists
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
+    """
+    Get all valuations for a specific vehicle
     
-    # Only valuers or admins can create valuations
-    if not (current_user.is_valuer or current_user.is_admin):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only valuers can create valuations"
-        )
-    
+    Args:
+        vehicle_id: Vehicle ID
+        
+    Returns a list of valuations for the specified vehicle.
+    """
     try:
-        valuation = vehicle_service.analyze_and_value_vehicle(
-            vehicle_id,
-            current_user.id,
-            include_ai_analysis
-        )
-        return valuation
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        # Verify vehicle belongs to user
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
 
+        if not vehicle:
+            raise HTTPException(
+                status_code=404,
+                detail="Vehicle not found"
+            )
 
-@router.get("/{vehicle_id}/valuations", response_model=VehicleValuationListResponse)
-def get_vehicle_valuations(
-    vehicle_id: UUID,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Get all valuations for a vehicle"""
-    # Verify vehicle exists and user has access
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
+        valuations = db.query(VehicleValuation).filter(
+            VehicleValuation.vehicle_id == vehicle_id
+        ).order_by(VehicleValuation.created_at.desc()).all()
+        
+        logger.info(f"User {current_user_id} retrieved {len(valuations)} valuations for vehicle {vehicle_id}")
+        return valuations
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving vehicle valuations: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
+            status_code=500,
+            detail="Internal server error while retrieving vehicle valuations"
         )
-    
-    # Check ownership or admin access
-    if vehicle.owner_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
-    valuations = vehicle_service.get_vehicle_valuations(vehicle_id, skip, limit)
-    total = len(valuations)  # Simplified count
-    
-    return VehicleValuationListResponse(
-        valuations=valuations,
-        total=total,
-        page=skip // limit + 1,
-        per_page=limit,
-        pages=(total + limit - 1) // limit
-    )
 
 
 @router.get("/{vehicle_id}/latest-valuation", response_model=VehicleValuationResponse)
-def get_latest_valuation(
-    vehicle_id: UUID,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
+async def get_latest_vehicle_valuation(
+    vehicle_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    """Get the latest approved valuation for a vehicle"""
-    # Verify vehicle exists and user has access
-    vehicle = vehicle_service.get_vehicle(vehicle_id)
-    if not vehicle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Vehicle not found"
-        )
+    """
+    Get the latest valuation for a specific vehicle
     
-    # Check ownership or admin access
-    if vehicle.owner_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
-    valuation = vehicle_service.get_latest_valuation(vehicle_id)
-    if not valuation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No approved valuation found"
-        )
-    
-    return valuation
+    Args:
+        vehicle_id: Vehicle ID
+        
+    Returns the most recent valuation for the specified vehicle.
+    """
+    try:
+        # Verify vehicle belongs to user
+        vehicle = db.query(Vehicle).filter(
+            and_(Vehicle.id == vehicle_id, Vehicle.user_id == current_user_id)
+        ).first()
 
-
-@router.put("/valuations/{valuation_id}", response_model=VehicleValuationResponse)
-def update_valuation(
-    valuation_id: UUID,
-    update_data: VehicleValuationUpdate,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Update a valuation"""
-    valuation = vehicle_service.get_valuation(valuation_id)
-    if not valuation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Valuation not found"
-        )
-    
-    # Only valuer who created it or admin can update
-    if valuation.valuer_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
-    updated_valuation = vehicle_service.update_valuation(valuation_id, update_data.model_dump(exclude_unset=True))
-    return updated_valuation
-
-
-@router.post("/valuations/{valuation_id}/approve", response_model=VehicleValuationResponse)
-def approve_valuation(
-    valuation_id: UUID,
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Approve a valuation and issue certificate"""
-    # Only admins can approve valuations
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can approve valuations"
-        )
-    
-    valuation = vehicle_service.get_valuation(valuation_id)
-    if not valuation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Valuation not found"
-        )
-    
-    if valuation.status != "submitted":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only submitted valuations can be approved"
-        )
-    
-    approved_valuation = vehicle_service.approve_valuation(valuation_id, current_user.id)
-    return approved_valuation
-
-
-# Analytics Routes
-@router.get("/valuations/statistics")
-def get_valuation_statistics(
-    date_from: Optional[str] = Query(None),
-    date_to: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Get valuation statistics"""
-    # Only admins can access statistics
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
-    # Parse dates (simplified)
-    from datetime import datetime
-    date_from_obj = None
-    date_to_obj = None
-    
-    if date_from:
-        try:
-            date_from_obj = datetime.fromisoformat(date_from)
-        except ValueError:
+        if not vehicle:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid date_from format"
+                status_code=404,
+                detail="Vehicle not found"
             )
-    
-    if date_to:
-        try:
-            date_to_obj = datetime.fromisoformat(date_to)
-        except ValueError:
+
+        valuation = db.query(VehicleValuation).filter(
+            VehicleValuation.vehicle_id == vehicle_id
+        ).order_by(VehicleValuation.created_at.desc()).first()
+        
+        if not valuation:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid date_to format"
+                status_code=404,
+                detail="No valuation found for this vehicle"
             )
-    
-    stats = vehicle_service.get_valuation_statistics(date_from_obj, date_to_obj)
-    return stats
-
-
-@router.get("/market-trends")
-def get_market_trends(
-    make: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
-    vehicle_service: VehicleValuationService = Depends(get_vehicle_service)
-):
-    """Get market trends"""
-    # Only valuers and admins can access market trends
-    if not (current_user.is_valuer or current_user.is_admin):
+        
+        logger.info(f"User {current_user_id} retrieved latest valuation for vehicle {vehicle_id}")
+        return valuation
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving latest vehicle valuation: {e}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
+            status_code=500,
+            detail="Internal server error while retrieving latest vehicle valuation"
         )
-    
-    trends = vehicle_service.get_market_trends(make)
-    return trends
+
