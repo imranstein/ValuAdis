@@ -296,8 +296,9 @@ async def property_market_evidence(
     )
     if subject.subcity:
         query = query.filter(RawMarketListing.location_subcity.ilike(f"%{subject.subcity}%"))
-    if subject.property_type:
-        query = query.filter(RawMarketListing.property_type.ilike(f"%{subject.property_type}%"))
+    # Note: scraped property_type is free text ("Apartment for sale") while the
+    # subject's is an enum ("residential"), so type is not a reliable hard
+    # filter. Subcity + area band are the meaningful comparable dimensions.
     if subject.area_sqm:
         low, high = subject.area_sqm * 0.6, subject.area_sqm * 1.4
         query = query.filter(RawMarketListing.area_sqm.between(low, high))

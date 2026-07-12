@@ -32,6 +32,9 @@
         :property-context="propertyContext"
         class="review-panel-wrapper"
       />
+
+      <!-- Market-evidence comparables from the scraper -->
+      <MarketEvidencePanel :property-id="property.id" :api-base="apiBase" />
     </template>
   </div>
 </template>
@@ -41,6 +44,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PropertyDetailView from '~/components/property/PropertyDetailView.vue'
 import ValuationReviewPanel from '~/components/property/ValuationReviewPanel.vue'
+import MarketEvidencePanel from '~/components/property/MarketEvidencePanel.vue'
 import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
