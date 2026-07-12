@@ -1,6 +1,12 @@
 import { test, expect } from '../setup/fixtures';
 import { TEST_CREDENTIALS, INVALID_CREDENTIALS } from '../config/test-credentials';
 
+function generateExpiredToken(): string {
+  const exp = Math.floor(Date.now() / 1000) - 3600
+  const payload = Buffer.from(JSON.stringify({ exp, sub: 'test-user', role: 'viewer' })).toString('base64url')
+  return `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.invalidsignature`
+}
+
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
@@ -39,15 +45,13 @@ test.describe('Authentication', () => {
     await expect(loginPage.loginButton).toBeVisible();
   });
 
-  test.skip('should login with valid credentials', async ({ loginPage, page }) => {
-    // Skip: API mock for login does not reliably intercept in test context
+  test('should login with valid credentials', async ({ loginPage, page }) => {
     await loginPage.login(TEST_CREDENTIALS.email, TEST_CREDENTIALS.fallbackPassword);
     await page.waitForURL(/\/(dashboard)?$/);
     await expect(page).toHaveURL(/\/(dashboard)?$/);
   });
 
-  test.skip('should show error with invalid credentials', async ({ loginPage }) => {
-    // Skip: Error message selector may not match when API mock returns 401
+  test('should show error with invalid credentials', async ({ loginPage }) => {
     await loginPage.login(INVALID_CREDENTIALS.invalidEmail, INVALID_CREDENTIALS.invalidPassword);
     await expect(loginPage.errorMessage).toBeVisible({ timeout: 8000 });
   });
@@ -79,5 +83,27 @@ test.describe('Authentication', () => {
     await page.context().clearCookies();
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('should reject expired tokens and return to login', async ({ page }) => {
+    const expiredToken = generateExpiredToken()
+
+    await page.evaluate((token) => {
+      localStorage.setItem('valuadis_token', token)
+    }, expiredToken)
+
+    await page.context().addCookies([
+      {
+        name: 'valuadis_token',
+        value: expiredToken,
+        url: 'http://127.0.0.1:3020',
+      },
+    ])
+
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/login/)
+
+    const tokenAfterNav = await page.evaluate(() => localStorage.getItem('valuadis_token'))
+    expect(tokenAfterNav).toBeNull()
   });
 });

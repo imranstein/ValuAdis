@@ -2,6 +2,14 @@ import { test, expect } from '../setup/fixtures';
 
 const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkB2YWx1YWRpcy5jb20iLCJleHAiOjk5OTk5OTk5OTl9.mock-e2e-signature';
 
+function generateExpiredToken(): string {
+  const exp = Math.floor(Date.now() / 1000) - 3600
+  const payload = Buffer.from(
+    JSON.stringify({ exp, sub: '1', role: 'admin', email: 'admin@valuadis.com' }),
+  ).toString('base64url')
+  return `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.invalidsignature`
+}
+
 test.describe('Sprint 6 edge cases', () => {
   test.use({ storageState: 'tests/e2e/.auth/user.json' });
 
@@ -147,5 +155,87 @@ test.describe('Sprint 6 edge cases', () => {
 
     await expect(page.getByTestId('api-key-row')).toHaveCount(2);
     await expect(page.getByTestId('settings-save-status')).toContainText('Settings saved');
+  });
+
+  test('replays protected deep link after re-authentication', async ({ page }) => {
+    let loginRequests = 0
+    await page.route('**/api/v1/auth/login', async (route) => {
+      loginRequests += 1
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          access_token: MOCK_TOKEN,
+          refresh_token: MOCK_TOKEN,
+          token_type: 'bearer',
+          expires_in: 1800,
+        }),
+      })
+    })
+
+    await page.addInitScript((token) => {
+      localStorage.setItem('valuadis_token', token)
+    }, generateExpiredToken())
+
+    await page.goto('/users', { waitUntil: 'domcontentloaded' })
+    await expect(page).toHaveURL(/\/login/)
+    expect(new URL(page.url()).searchParams.get('redirect')).toBe('/users')
+
+    await page.getByLabel('Email').fill('admin@valuadis.com')
+    await page.getByLabel('Password').fill('Admin123!')
+    await page.getByRole('button', { name: 'Sign In' }).click()
+
+    await expect(page).toHaveURL(/\/users/, { timeout: 10000 })
+    expect(loginRequests).toBe(1)
+  });
+
+  test('prevents duplicate login submit while request is in flight', async ({ page }) => {
+    let loginRequests = 0
+    await page.route('**/api/v1/auth/login', async (route) => {
+      loginRequests += 1
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          access_token: MOCK_TOKEN,
+          refresh_token: MOCK_TOKEN,
+          token_type: 'bearer',
+          expires_in: 1800,
+        }),
+      })
+    })
+
+    await page.goto('/login')
+    await page.getByLabel('Email').fill('admin@valuadis.com')
+    await page.getByLabel('Password').fill('Admin123!')
+    await page.getByRole('button', { name: 'Sign In' }).click()
+
+    await page.locator('.login-btn').evaluate((node) => {
+      (node as HTMLButtonElement).click()
+    })
+
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
+    expect(loginRequests).toBe(1)
+  });
+
+  test('blocks non-admin users from admin-only routes', async ({ page }) => {
+    await page.route('**/api/v1/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 7,
+          email: 'valuer@valuadis.com',
+          full_name: 'Valuer User',
+          role: 'valuer',
+          is_admin: false,
+          is_valuer: true,
+          is_active: true,
+        }),
+      })
+    })
+
+    await page.goto('/users', { waitUntil: 'domcontentloaded' })
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
   });
 });

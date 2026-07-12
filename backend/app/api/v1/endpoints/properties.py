@@ -126,7 +126,7 @@ async def create_property(
     
     try:
         property = await property_service.create_property(
-            property_data.dict(),
+            property_data.model_dump(),
             user_id=current_user_id
         )
         return PropertyResponse(success=True, data=property.to_dict())
@@ -155,7 +155,7 @@ async def bulk_import_properties(
     for row_number, row in enumerate(reader, start=2):
         try:
             property_data = _build_property_import_row(row)
-            rows.append(PropertyCreate(**property_data).dict())
+            rows.append(PropertyCreate(**property_data).model_dump())
         except Exception as exc:
             errors.append({"row": row_number, "message": str(exc)})
 
@@ -276,7 +276,7 @@ async def update_property(
         property = await property_service.update_property(
             property_id=property_id,
             user_id=current_user_id,
-            update_data=property_data.dict(exclude_unset=True)
+            update_data=property_data.model_dump(exclude_unset=True)
         )
         
         if not property:

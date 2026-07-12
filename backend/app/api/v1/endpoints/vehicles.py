@@ -59,7 +59,7 @@ async def create_vehicle(
         # Create vehicle object
         vehicle = Vehicle(
             user_id=current_user_id,
-            **vehicle_data.dict()
+            **vehicle_data.model_dump()
         )
 
         db.add(vehicle)
@@ -282,7 +282,7 @@ async def update_vehicle(
                 )
         
         # Update vehicle with provided data
-        update_data = vehicle_data.dict(exclude_unset=True)
+        update_data = vehicle_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(vehicle, field, value)
         

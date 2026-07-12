@@ -11,6 +11,9 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const token = getAccessToken()
   if (!token) {
-    return navigateTo('/login')
+    return navigateTo({
+      path: '/login',
+      query: { redirect: to.fullPath },
+    })
   }
 })

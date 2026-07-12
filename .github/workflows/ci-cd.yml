@@ -134,6 +134,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Verify mobile app exists
+      run: |
+        if [ ! -d mobile ]; then
+          echo "::error::Mobile application directory not found."
+          exit 1
+        fi
+
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:

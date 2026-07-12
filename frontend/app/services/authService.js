@@ -26,10 +26,10 @@ class AuthService
         body: JSON.stringify( credentials )
       } )
 
-      if ( !response.ok )
-      {
-        throw new Error( `Login failed: ${ response.statusText }` )
-      }
+  if ( !response.ok )
+  {
+      throw new Error( `Login failed: ${ response.statusText }` )
+  }
 
       const data = await response.json()
 
@@ -39,11 +39,6 @@ class AuthService
       {
         setAccessToken( token )
       }
-
-      localStorage.setItem( 'valuadis_user', JSON.stringify( {
-        email: credentials.email,
-        created_at: new Date().toISOString()
-      } ) )
 
       return { success: true, data }
     } catch ( error )
@@ -68,7 +63,6 @@ class AuthService
     } finally
     {
       clearAuthTokens()
-      localStorage.removeItem( 'valuadis_user' )
     }
   }
 

@@ -222,7 +222,7 @@ class ValuationService:
 
     def create_valuation(self, valuation_data: ValuationCreate, user_id: int) -> Dict[str, Any]:
         """Create a new valuation record."""
-        property_data  = valuation_data.dict()
+        property_data  = valuation_data.model_dump()
         market_value   = self.calculate_market_value(property_data)
         taxable_value  = self.calculate_taxable_value(market_value)
 

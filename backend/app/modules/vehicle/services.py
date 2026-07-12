@@ -46,7 +46,7 @@ class VehicleValuationService:
             raise ValueError(f"Vehicle with plate {vehicle_data.plate_number} already exists")
         
         # Create vehicle
-        vehicle_dict = vehicle_data.dict()
+        vehicle_dict = vehicle_data.model_dump()
         vehicle_dict["owner_id"] = owner_id
         
         vehicle = self.vehicle_repo.create(vehicle_dict)
@@ -60,7 +60,7 @@ class VehicleValuationService:
     
     def update_vehicle(self, vehicle_id: UUID, update_data: VehicleUpdate) -> Optional[Vehicle]:
         """Update vehicle information"""
-        update_values = update_data.dict(exclude_unset=True)
+        update_values = update_data.model_dump(exclude_unset=True)
 
         # Check if VIN or plate is being changed to an existing one
         if "vin" in update_values:
@@ -100,7 +100,7 @@ class VehicleValuationService:
             raise ValueError(f"Vehicle {valuation_data.vehicle_id} not found")
         
         # Create valuation
-        valuation_dict = valuation_data.dict()
+        valuation_dict = valuation_data.model_dump()
         valuation_dict["valuer_id"] = valuer_id
         valuation_dict["valuation_date"] = datetime.utcnow()
         

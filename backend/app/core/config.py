@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     DB_NAME: str = "valuadis"
     DB_USER: str = "valuadis"
     DB_PASSWORD: str = "password"
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 40
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE_SECONDS: int = 300
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"

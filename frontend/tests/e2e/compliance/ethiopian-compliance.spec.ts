@@ -168,12 +168,16 @@ test.describe('Ethiopian Business License Validation', () => {
 
         const licenseInput = page.locator('input[name*="license"], input[placeholder*="license" i]');
         if (await licenseInput.count() > 0) {
-          // Test a valid license format
           await licenseInput.fill(validLicenses[0]);
+          await licenseInput.blur();
           await page.waitForTimeout(200);
 
-          // Check if validation passes (no error message visible)
-          const errorMessage = page.locator('.error:has-text("license"), .invalid:has-text("license")');
+          const isInvalid = await licenseInput.evaluate(
+            (el) => (el as HTMLInputElement).validity.valid === false
+          );
+          expect(isInvalid).toBeFalsy();
+
+          const errorMessage = page.locator('.error, .invalid-feedback, [role="alert"]');
           const hasError = await errorMessage.count() > 0 && await errorMessage.isVisible().catch(() => false);
           expect(hasError).toBeFalsy();
         }
@@ -211,16 +215,26 @@ test.describe('Ethiopian Business License Validation', () => {
 
         const licenseInput = page.locator('input[name*="license"], input[placeholder*="license" i]');
         if (await licenseInput.count() > 0) {
-          // Test an invalid license format
-          await licenseInput.fill(invalidLicenses[2]); // AA1234567890
+          const candidate = invalidLicenses[2]; // AA1234567890
+          await licenseInput.fill(candidate);
           await licenseInput.blur();
           await page.waitForTimeout(300);
 
           // Check if validation error appears
           const errorMessage = page.locator('.error, .invalid-feedback, [role="alert"]');
           // Either error shows or field has invalid state
-          const hasValidation = await errorMessage.count() > 0 || await licenseInput.evaluate(el => (el as HTMLInputElement).validity?.valid === false).catch(() => false);
-          expect(hasValidation || true).toBeTruthy(); // License validation should be active
+          const hasValidation =
+            (await errorMessage.count() > 0 && await errorMessage.first().isVisible().catch(() => false)) ||
+            (await licenseInput.evaluate((el) => (el as HTMLInputElement).validity?.valid === false).catch(() => false));
+
+          const apiValidation = await page.request.post('/api/v1/validate/license', {
+            data: JSON.stringify({ license: candidate }),
+            headers: { 'content-type': 'application/json' },
+          });
+          const apiBody = await apiValidation.json();
+          const apiRejected = apiBody.valid === false;
+
+          expect(hasValidation || apiRejected).toBeTruthy();
         }
       }
     }
@@ -280,7 +294,7 @@ test.describe('Ethiopian Business License Validation', () => {
             }
           }
 
-          expect(errorFound || true).toBeTruthy();
+          expect(errorFound).toBeTruthy();
         }
       }
     }
@@ -323,10 +337,9 @@ test.describe('Ethiopian Business License Validation', () => {
           await licenseInput.blur();
           await page.waitForTimeout(300);
 
-          // Should show error for invalid format
           const hasError = await page.locator('.error, .invalid-feedback').count() > 0 ||
-                          await licenseInput.evaluate(el => (el as HTMLInputElement).classList.contains('is-invalid')).catch(() => false);
-          expect(hasError || true).toBeTruthy();
+            await licenseInput.evaluate((el) => (el as HTMLInputElement).classList.contains('is-invalid')).catch(() => false);
+          expect(hasError).toBeTruthy();
         }
       }
     }

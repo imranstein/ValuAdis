@@ -294,7 +294,7 @@ async def update_user(
             )
         
         # Update user fields
-        update_data = user_data.dict(exclude_unset=True)
+        update_data = user_data.model_dump(exclude_unset=True)
         
         # Check for uniqueness conflicts on email and phone
         if "email" in update_data:

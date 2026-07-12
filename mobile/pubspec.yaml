@@ -20,6 +20,7 @@ dependencies:
   path: ^1.8.3
   path_provider: ^2.1.1
   hive_flutter: ^1.1.0
+  crypto: ^3.0.4
   # Network & auth
   dio: ^5.4.0
   flutter_secure_storage: ^9.0.0
@@ -27,15 +28,20 @@ dependencies:
   geolocator: ^10.1.0
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
+  image_picker: ^1.0.8
   # Connectivity
   connectivity_plus: ^5.0.2
   # Utils
-  intl: ^0.18.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/splash-art.png

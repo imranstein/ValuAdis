@@ -5,7 +5,8 @@ Pydantic schemas for audit report API validation and serialization
 Supports Ethiopian compliance reporting and system monitoring
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
+import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from enum import Enum
@@ -32,7 +33,8 @@ class DateRangeQuery(BaseModel):
     end_date: Optional[datetime] = Field(None, description="Report end date")
     days_back: Optional[int] = Field(30, description="Days back from end date")
     
-    @validator('days_back')
+    @field_validator("days_back")
+    @classmethod
     def validate_days_back(cls, v):
         if v is not None and v <= 0:
             raise ValueError('days_back must be positive')
@@ -223,13 +225,13 @@ class ScheduleReportRequest(BaseModel):
     start_date: Optional[datetime] = Field(None, description="Report start date")
     end_date: Optional[datetime] = Field(None, description="Report end date")
     
-    @validator('recipients')
+    @field_validator("recipients")
+    @classmethod
     def validate_recipients(cls, v):
         if not v:
             raise ValueError('At least one recipient must be specified')
         
         # Basic email validation
-        import re
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         
         for email in v:
@@ -238,7 +240,8 @@ class ScheduleReportRequest(BaseModel):
         
         return v
     
-    @validator('schedule')
+    @field_validator("schedule")
+    @classmethod
     def validate_schedule(cls, v):
         valid_schedules = ["daily", "weekly", "monthly"]
         if v not in valid_schedules and not v.startswith("cron:"):
@@ -263,7 +266,8 @@ class AuditReportRequest(BaseModel):
     date_range: Optional[DateRangeQuery] = Field(None, description="Date range for report")
     format: str = Field("json", description="Report format")
     
-    @validator('format')
+    @field_validator("format")
+    @classmethod
     def validate_format(cls, v):
         if v.lower() not in ["json", "csv", "pdf"]:
             raise ValueError('Format must be json, csv, or pdf')
@@ -276,7 +280,8 @@ class ComplianceReportRequest(BaseModel):
     municipality_filter: Optional[List[str]] = Field(None, description="Filter by municipalities")
     property_type_filter: Optional[List[str]] = Field(None, description="Filter by property types")
     
-    @validator('municipality_filter')
+    @field_validator("municipality_filter")
+    @classmethod
     def validate_municipalities(cls, v):
         if v:
             valid_municipalities = [
@@ -288,7 +293,8 @@ class ComplianceReportRequest(BaseModel):
                     raise ValueError(f'Invalid municipality: {mun}. Valid: {valid_municipalities}')
         return v
     
-    @validator('property_type_filter')
+    @field_validator("property_type_filter")
+    @classmethod
     def validate_property_types(cls, v):
         if v:
             valid_types = ["residential", "commercial", "agricultural"]

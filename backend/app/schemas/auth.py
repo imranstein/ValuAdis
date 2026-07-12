@@ -4,7 +4,7 @@ Authentication Schemas
 Pydantic models for authentication request/response
 """
 
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional
 
 
@@ -17,20 +17,23 @@ class UserRegister(BaseModel):
     municipality: str
     license_number: str
     
-    @validator('full_name')
+    @field_validator("full_name")
+    @classmethod
     def validate_full_name(cls, v):
         if len(v.strip()) < 3:
             raise ValueError('Full name must be at least 3 characters')
         return v.strip()
     
-    @validator('phone')
+    @field_validator("phone")
+    @classmethod
     def validate_phone(cls, v):
         # Ethiopian phone validation
         if not v.startswith('+2519') and not v.startswith('09'):
             raise ValueError('Invalid Ethiopian phone number format')
         return v
     
-    @validator('password')
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
         import re
         if len(v) < 8:
@@ -69,6 +72,4 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     created_at: str
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

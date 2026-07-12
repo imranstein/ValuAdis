@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Optional, List, Union
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 # Base schemas
@@ -71,9 +71,7 @@ class VehicleResponse(VehicleBase):
     owner_id: int
     is_active: bool
     is_verified: bool
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Vehicle Valuation schemas
@@ -127,9 +125,7 @@ class VehicleValuationResponse(VehicleValuationBase):
     
     # Include vehicle information
     vehicle: Optional[VehicleResponse] = None
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # List responses

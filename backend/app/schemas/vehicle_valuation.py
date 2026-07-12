@@ -5,7 +5,7 @@ Pydantic schemas for vehicle valuation data validation and serialization
 with Ethiopian market-specific factors.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ValidationInfo, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -62,31 +62,35 @@ class VehicleValuationBase(BaseModel):
     recommendations: Optional[List[str]] = Field(None, description="Valuation recommendations")
     notes: Optional[str] = Field(None, max_length=1000, description="Additional notes")
     
-    @validator('taxable_value')
-    def validate_taxable_value(cls, v, values):
+    @field_validator("taxable_value")
+    @classmethod
+    def validate_taxable_value(cls, v, info: ValidationInfo):
         """Validate taxable value is 25% of market value"""
-        if 'market_value' in values:
-            expected_taxable = values['market_value'] * 0.25
+        values = info.data
+        if "market_value" in values:
+            expected_taxable = values["market_value"] * 0.25
             # Allow small rounding differences
             if abs(v - expected_taxable) > 100:  # Allow 100 ETB difference
                 raise ValueError('Taxable value must be 25% of market value')
         return v
     
-    @validator('market_value')
-    def validate_market_value(cls, v, values):
+    @field_validator("market_value")
+    @classmethod
+    def validate_market_value(cls, v, info: ValidationInfo):
         """Validate market value calculation"""
-        if all(k in values for k in ['base_value', 'condition_factor', 'regional_multiplier', 
-                                   'import_year_adjustment', 'customs_duty_factor', 'make_reliability',
-                                   'fuel_type_adjustment', 'body_type_demand']):
-            base = values['base_value']
+        values = info.data
+        if all(k in values for k in ["base_value", "condition_factor", "regional_multiplier", 
+                                   "import_year_adjustment", "customs_duty_factor", "make_reliability",
+                                   "fuel_type_adjustment", "body_type_demand"]):
+            base = values["base_value"]
             total_multiplier = (
-                values['condition_factor'] *
-                values['regional_multiplier'] *
-                values['import_year_adjustment'] *
-                values['customs_duty_factor'] *
-                values['make_reliability'] *
-                values['fuel_type_adjustment'] *
-                values['body_type_demand']
+                values["condition_factor"] *
+                values["regional_multiplier"] *
+                values["import_year_adjustment"] *
+                values["customs_duty_factor"] *
+                values["make_reliability"] *
+                values["fuel_type_adjustment"] *
+                values["body_type_demand"]
             )
             expected_market = base * total_multiplier
             # Allow small rounding differences
@@ -126,9 +130,7 @@ class VehicleValuationResponse(VehicleValuationBase):
     expires_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VehicleValuationSummary(BaseModel):

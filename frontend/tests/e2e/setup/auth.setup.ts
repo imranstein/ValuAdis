@@ -1,22 +1,27 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import { test as setup } from '@playwright/test';
-import { MOCK_TOKEN, setupApiMock } from './api-mock';
+import { MOCK_TOKEN, MOCK_USER } from './api-mock';
 
 const authFile = 'tests/e2e/.auth/user.json';
+const e2eBaseURL = process.env.E2E_BASE_URL || 'http://127.0.0.1:3020';
 
-setup('authenticate', async ({ page }) => {
-  // Register API mocks before any navigation so all requests are intercepted
-  await setupApiMock(page);
+setup('authenticate', async () => {
+  const absolutePath = path.resolve(process.cwd(), authFile);
+  const authState = {
+    cookies: [],
+    origins: [
+      {
+        origin: e2eBaseURL,
+        localStorage: [
+          { name: 'valuadis_token', value: MOCK_TOKEN },
+          { name: 'valuadis_refresh_token', value: MOCK_TOKEN },
+          { name: 'valuadis_user', value: JSON.stringify(MOCK_USER) },
+        ],
+      },
+    ],
+  };
 
-  // Inject token into localStorage before the page loads.
-  // This way Nuxt's auth middleware finds a valid token on first render
-  // and allows access to /dashboard without going through the login form.
-  await page.addInitScript((token) => {
-    localStorage.setItem('valuadis_token', token);
-  }, MOCK_TOKEN);
-
-  await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(/\/dashboard/, { timeout: 15000 });
-
-  await page.context().storageState({ path: authFile });
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(absolutePath, JSON.stringify(authState, null, 2));
 });
-

@@ -3,6 +3,14 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.scraper_limits import (
+    SCRAPER_LIST_DEFAULT_LIMIT,
+    SCRAPER_LIST_MAX_LIMIT,
+    SCRAPER_LOG_DEFAULT_LIMIT,
+    SCRAPER_LOG_MAX_LIMIT,
+    SCRAPER_RUN_MAX_PAGES,
+    SCRAPER_RUN_MAX_TARGET_ITEMS,
+)
 from app.data.models.user import User
 from app.services.scraper_service import ScraperService
 from app.api.schemas.scraper import (
@@ -26,12 +34,14 @@ router = APIRouter()
 @router.get("/", response_model=List[ScraperTargetResponse])
 def get_all_scrapers(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = SCRAPER_LIST_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all scraper targets"""
-    scrapers = ScraperService.get_all_scrapers(db, skip=skip, limit=limit)
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), SCRAPER_LIST_MAX_LIMIT)
+    scrapers = ScraperService.get_all_scrapers(db, skip=safe_skip, limit=safe_limit)
     return scrapers
 
 
@@ -48,12 +58,19 @@ def get_scraper_stats(
 def get_scraper_logs(
     scraper_id: int = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = SCRAPER_LOG_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get scraper logs"""
-    logs = ScraperService.get_scraper_logs(db, scraper_id=scraper_id, skip=skip, limit=limit)
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), SCRAPER_LOG_MAX_LIMIT)
+    logs = ScraperService.get_scraper_logs(
+        db,
+        scraper_id=scraper_id,
+        skip=safe_skip,
+        limit=safe_limit
+    )
     return logs
 
 
@@ -216,9 +233,11 @@ async def run_scraper(
         # Build command
         cmd = ["python3", scraper_script, "--scraper-id", str(scraper_id)]
         if run_data and run_data.max_pages:
-            cmd.extend(["--max-pages", str(run_data.max_pages)])
+            max_pages = min(max(int(run_data.max_pages), 1), SCRAPER_RUN_MAX_PAGES)
+            cmd.extend(["--max-pages", str(max_pages)])
         if run_data and run_data.target_items:
-            cmd.extend(["--limit", str(run_data.target_items)])
+            target_items = min(max(int(run_data.target_items), 1), SCRAPER_RUN_MAX_TARGET_ITEMS)
+            cmd.extend(["--limit", str(target_items)])
 
         # Start process in background
         process = subprocess.Popen(

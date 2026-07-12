@@ -344,7 +344,7 @@ def update_valuation(
             detail="Access denied"
         )
     
-    updated_valuation = vehicle_service.update_valuation(valuation_id, update_data.dict(exclude_unset=True))
+    updated_valuation = vehicle_service.update_valuation(valuation_id, update_data.model_dump(exclude_unset=True))
     return updated_valuation
 
 

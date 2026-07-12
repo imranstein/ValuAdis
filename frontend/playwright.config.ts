@@ -3,6 +3,11 @@ import { defineConfig, devices } from '@playwright/test';
 const e2ePort = process.env.E2E_FRONTEND_PORT || '3020';
 const e2eBaseURL = process.env.E2E_BASE_URL || `http://127.0.0.1:${e2ePort}`;
 const apiBaseURL = process.env.NUXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8020';
+const skipWebServer =
+  process.env.PW_SKIP_WEBSERVER === '1' ||
+  process.env.E2E_SKIP_WEBSERVER === '1';
+const browserChannel = process.env.PW_BROWSER_CHANNEL || undefined;
+const browserUse = browserChannel ? { channel: browserChannel } : {};
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -26,10 +31,11 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: '**/setup/auth.setup.ts',
+      use: { ...devices['Desktop Chrome'], ...browserUse },
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...browserUse },
       dependencies: ['setup'],
     },
     {
@@ -44,7 +50,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
+      use: { ...devices['Pixel 5'], ...browserUse },
       dependencies: ['setup'],
     },
     {
@@ -54,12 +60,14 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: `cd app && NUXT_PUBLIC_API_BASE_URL=${apiBaseURL} npm run dev -- --host 127.0.0.1 --port ${e2ePort}`,
-    url: e2eBaseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    stdout: 'ignore',
-    stderr: 'ignore'
-  },
+  webServer: skipWebServer
+    ? undefined
+    : {
+        command: `cd app && NUXT_PUBLIC_API_BASE_URL=${apiBaseURL} npm run dev -- --host 127.0.0.1 --port ${e2ePort}`,
+        url: e2eBaseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 240000,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
 });

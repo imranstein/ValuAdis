@@ -90,3 +90,38 @@ async def full_health_check(
         "service": "valuadis-api",
         "checks": checks
     }
+
+
+@router.get("/ready", tags=["Health"])
+async def readiness_check(
+    db: Session = Depends(get_db),
+    redis_client = Depends(get_redis)
+):
+    """Readiness check for orchestrators and deployment checks."""
+    checks = {}
+
+    try:
+        db.execute(text("SELECT 1"))
+        checks["database"] = {"status": "healthy"}
+    except Exception:
+        checks["database"] = {"status": "unhealthy"}
+
+    try:
+        redis_client.ping()
+        checks["redis"] = {"status": "healthy"}
+    except Exception as exc:
+        checks["redis"] = {"status": "unhealthy", "error": str(exc)}
+
+    all_ready = all(item["status"] == "healthy" for item in checks.values())
+
+    return {
+        "status": "ready" if all_ready else "not ready",
+        "service": "valuadis-api",
+        "checks": checks,
+    }
+
+
+@router.get("/live", tags=["Health"])
+async def liveness_check():
+    """Liveness check for container and platform health."""
+    return {"status": "alive", "service": "valuadis-api"}

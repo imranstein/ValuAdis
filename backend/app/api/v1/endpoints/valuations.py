@@ -78,7 +78,7 @@ async def create_valuation(
         )
         
         # Convert Pydantic model to dict for service
-        property_data = valuation_data.dict()
+        property_data = valuation_data.model_dump()
         
         # Calculate market value
         market_value = valuation_service.calculate_market_value(property_data)
@@ -253,7 +253,7 @@ async def update_valuation(
             "Updating valuation",
             valuation_id=valuation_id,
             user_id=user_id,
-            updates=valuation_update.dict(exclude_unset=True)
+            updates=valuation_update.model_dump(exclude_unset=True)
         )
         
         # Check if valuation exists and belongs to user
@@ -266,7 +266,7 @@ async def update_valuation(
         
         # Update valuation
         updated_valuation = valuation_service.update_valuation(
-            valuation_id, valuation_update.dict(exclude_unset=True), user_id
+            valuation_id, valuation_update.model_dump(exclude_unset=True), user_id
         )
         
         logger.info("Valuation updated successfully", valuation_id=valuation_id)
@@ -576,7 +576,7 @@ async def calculate_valuation_only(
         )
         
         # Convert Pydantic model to dict for service
-        property_data = valuation_data.dict()
+        property_data = valuation_data.model_dump()
         
         # Calculate market value
         market_value = valuation_service.calculate_market_value(property_data)

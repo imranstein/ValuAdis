@@ -2,7 +2,7 @@
 User Schemas for API Request/Response Models
 """
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -12,9 +12,7 @@ class RoleResponse(BaseModel):
     name: str
     display_name: str
     description: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):
@@ -32,9 +30,7 @@ class UserResponse(BaseModel):
     updated_at: datetime
     roles: List[RoleResponse] = []
     permissions: List[dict] = []
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PermissionResponse(BaseModel):
@@ -45,9 +41,7 @@ class PermissionResponse(BaseModel):
     resource: str
     action: str
     description: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):

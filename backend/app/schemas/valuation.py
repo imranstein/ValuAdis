@@ -4,7 +4,7 @@ Valuation Schemas
 Pydantic models for valuation request/response validation
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import List, Tuple, Optional
 from datetime import date, datetime
 
@@ -21,28 +21,32 @@ class ValuationCreate(BaseModel):
     neighborhood_quality: str = Field("average", description="Neighborhood quality tier")
     construction_year: Optional[int] = Field(None, description="Year of construction for depreciation")
 
-    @validator('property_type')
+    @field_validator("property_type")
+    @classmethod
     def validate_property_type(cls, v):
         allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
         if v not in allowed_types:
             raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
 
-    @validator('condition')
+    @field_validator("condition")
+    @classmethod
     def validate_condition(cls, v):
         allowed = ['excellent', 'good', 'fair', 'poor']
         if v not in allowed:
             raise ValueError(f'Condition must be one of: {", ".join(allowed)}')
         return v
 
-    @validator('neighborhood_quality')
+    @field_validator("neighborhood_quality")
+    @classmethod
     def validate_neighborhood_quality(cls, v):
         allowed = ['prime', 'above_average', 'average', 'below_average', 'developing']
         if v not in allowed:
             raise ValueError(f'neighborhood_quality must be one of: {", ".join(allowed)}')
         return v
 
-    @validator('construction_year')
+    @field_validator("construction_year")
+    @classmethod
     def validate_construction_year(cls, v):
         if v is not None:
             current_year = date.today().year
@@ -50,13 +54,15 @@ class ValuationCreate(BaseModel):
                 raise ValueError(f'construction_year must be between 1800 and {current_year}')
         return v
 
-    @validator('municipality')
+    @field_validator("municipality")
+    @classmethod
     def validate_municipality(cls, v):
         if len(v.strip()) < 2:
             raise ValueError('Municipality name must be at least 2 characters')
         return v.strip()
 
-    @validator('coordinates')
+    @field_validator("coordinates")
+    @classmethod
     def validate_coordinates(cls, v):
         if len(v) < 4:
             raise ValueError('At least 3 coordinate points required to form a polygon')
@@ -82,7 +88,8 @@ class ValuationUpdate(BaseModel):
     taxable_value: Optional[float] = None
     status: Optional[str] = None
     
-    @validator('property_type')
+    @field_validator("property_type")
+    @classmethod
     def validate_property_type(cls, v):
         if v is not None:
             allowed_types = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use']
@@ -90,7 +97,8 @@ class ValuationUpdate(BaseModel):
                 raise ValueError(f'Property type must be one of: {", ".join(allowed_types)}')
         return v
     
-    @validator('area_sqm')
+    @field_validator("area_sqm")
+    @classmethod
     def validate_area_sqm(cls, v):
         if v is not None and v <= 0:
             raise ValueError('Area must be greater than 0')
@@ -126,9 +134,7 @@ class ValuationDetail(BaseModel):
     status: str
     created_at: datetime
     updated_at: Optional[datetime]
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ValuationCalculation(BaseModel):
@@ -152,7 +158,8 @@ class ValuationStatusTransitionRequest(BaseModel):
     status: str = Field(..., description="Target status (pending, approved, archived, rejected)")
     reason: Optional[str] = Field(None, max_length=500, description="Reason for status change (audit trail)")
 
-    @validator("status")
+    @field_validator("status")
+    @classmethod
     def validate_status(cls, v):
         allowed = ["pending", "approved", "archived", "rejected", "draft"]
         if v not in allowed:

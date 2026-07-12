@@ -1,0 +1,330 @@
+# ValuAdis v2 — Hardening, Modular Refactor, Scraper Program & Enhancement Catalog
+
+Ship the ValuAdis core to production on the current FastAPI + Nuxt stack, stage it on cPanel for testing, and run a test-driven in-place modularization ("v2") that never breaks the `/api/v1` contract — while bringing the web-scraper subsystem from unproven (0/8 E2E) to reliable, monitored, production-grade. A full improvements & enhancements catalog (UX + system) is included with priorities.
+
+<Callout id="decisions" tone="decision">
+
+**Decisions locked (2026-07-12):**
+1. **Stack: keep FastAPI** — Laravel rejected for this cycle (full reasoning below).
+2. **cPanel = staging/testing environment**; production runs on the already-scripted Docker VPS stack, which is also the only place the Playwright scrapers can run.
+3. **v2 shape: in-place strangler refactor** into `backend/app/modules/` — no duplicated `v2/` folder.
+4. **Scrapers are in scope** and get their own hardening program (Phase S below) with a staged rollout: one source proven end-to-end at launch week, the rest following per-source.
+
+</Callout>
+
+## Why not Laravel — the concrete issues
+
+The attraction of Laravel is real but narrow: PHP deploys on any cPanel with zero setup. That is the *only* axis where it wins, and this repo has already neutralized it — [CPANEL_APP_DEPLOYMENT.md](../../CPANEL_APP_DEPLOYMENT.md) deploys the current FastAPI backend on cPanel using the built-in **Setup Python App** (Phusion Passenger) feature, no root access needed. So "easily hosted on cPanel" is true for the current stack today.
+
+What a Laravel rewrite would cost, concretely:
+
+<Table
+  id="laravel-costs"
+  columns={["Area", "What exists in FastAPI today", "What Laravel would require"]}
+  rows={[
+    ["Volume", "~16,000 lines of backend Python, 214 passing tests, 12 routers, 10 domain models", "Rewrite all of it; every test rewritten in Pest/PHPUnit from zero — 8–12 weeks realistically"],
+    ["Spatial core", "PostGIS geometry columns + raw ST_DWithin / ST_Transform / ST_Area SQL + shapely/pyproj geodesy", "PHP+PostGIS is possible but second-class; most cPanel PHP hosts pair with MySQL, whose spatial support is weaker — the highest-risk port in the codebase"],
+    ["Scrapers (now in scope!)", "Playwright (Python) drives real browsers", "PHP has no first-class Playwright; Panther/chrome-php are far weaker. Rewriting scrapers in PHP makes your scraper goal harder, not easier"],
+    ["ML valuation", "scikit-learn models + feedback-training loop", "No PHP equivalent; would need a separate Python service anyway — so PHP wouldn't even remove Python from the stack"],
+    ["PDF certificates", "ReportLab + QR, proven output", "Re-implement in dompdf/snappy and re-verify layouts"],
+    ["Background work", "Planned as a worker container on the VPS", "Laravel queues need Redis + supervisor — exactly what shared cPanel doesn't give you, so Laravel gains nothing here either"],
+    ["User-visible benefit", "—", "None. The frontend stays Nuxt either way; users cannot tell what language serves the API"],
+  ]}
+/>
+
+<Callout id="laravel-verdict" tone="risk">
+
+**Bottom line:** the rewrite would spend 2–3 months to arrive exactly where we already are, minus the tests, minus PostGIS confidence, and with a *worse* scraper toolchain — while the deadline is measured in days. If PHP-nativeness ever becomes strategically decisive, the right moment is after v2 modularization, when each domain is a clean portable module. It is not now.
+
+</Callout>
+
+## Verified current state
+
+Grounded in a full codebase inventory plus a live browser walkthrough (backend `:8020` on PostgreSQL, frontend production build `:3000`): landing, login, dashboard (11 properties), property registry (6 under review), vehicles (honest empty state), valuation ledger (1 draft, taxable-value math), analytics, geocoded map (82% coverage), and 4 real export surfaces all work against the live API. Backend release suite: **214 passed / 17 skipped**.
+
+<Table
+  id="findings-table"
+  columns={["Defect found", "Where", "Fixed in"]}
+  rows={[
+    ["Session dies on every reload — tokens memory-only, no refresh cookie", "frontend/app/utils/authToken.ts", "Phase 1"],
+    ["Enter doesn't submit the login form (Sign In is type=\"button\")", "frontend/app/pages/login.vue:43", "Phase 1"],
+    ["nuxt dev 500s: ssr:false + Nuxt 3.21.5 never sets the vite-node IPC env", "frontend dev mode", "Phase 0"],
+    ["/api/v1/health/detailed returns 404", "backend health router", "Phase 1"],
+    ["Vehicle logic duplicated across endpoints/vehicles.py and modules/vehicle", "backend/app", "Phase 2"],
+    ["Scraper suite unproven: 0/8 E2E scenarios; no retries, no monitoring, no scheduling", "scraper_service.py + /scrapers", "Phase S"],
+    ["29/81 E2E scenarios missing (vehicle workflow, compliance reports, bulk import/export, a11y, perf)", "frontend/tests/e2e", "Phases 3 & 5"],
+    ["Alembic history contains two divergent-branch merges", "backend/alembic", "Phase 2"],
+    ["Settings page is local-draft only", "frontend/app/pages/settings.vue", "Phase 5"],
+  ]}
+/>
+
+## Improvements & enhancements catalog
+
+The full answer to "what would enhance the user's experience and elevate the system", ranked. P0 items are inside this release's phases; P1 next sprint; P2 backlog.
+
+### User-experience enhancements
+
+<Table
+  id="ux-enhancements"
+  columns={["#", "Enhancement", "Why it matters", "Priority"]}
+  rows={[
+    ["U1", "Stay signed in across reloads and deep links (httpOnly refresh-cookie + silent refresh)", "Today every refresh logs the user out — the single most felt defect", "P0 — Phase 1"],
+    ["U2", "Keyboard-complete login and forms (Enter submits, aria-live errors, focus management)", "Basic accessibility and speed for daily operators", "P0 — Phase 1/3"],
+    ["U3", "One-click certificate: property → quick valuation → approve → PDF proven as a browser flow", "The core civic deliverable; today proven only via API", "P0 — Phase 3"],
+    ["U4", "Scraper operations desk: live run status, last-success timestamps, per-source health, failure reasons", "Turns the scraper page from a config list into a trustworthy ops surface", "P0 — Phase S"],
+    ["U5", "Market-evidence panel on valuation pages: comparable scraped listings beside the estimate", "Connects scraper data to the valuer's actual decision — the reason scrapers exist", "P1"],
+    ["U6", "Bulk property import with validation preview and row-level errors", "Import page exists but the flow is unproven; municipalities onboard in bulk", "P1"],
+    ["U7", "Notification center backed by real events (valuation approved, scrape failed, report ready)", "Bell icon exists with no real events behind it", "P1"],
+    ["U8", "Saved filters + column preferences on registries; CSV respects active filters", "Daily-driver ergonomics for operators", "P1"],
+    ["U9", "Amharic localization pass (locales/ scaffolding exists)", "Ethiopian civic users; i18n is wired but content is incomplete", "P2"],
+    ["U10", "Mobile app parity review against v2 modules (Flutter client)", "Third client currently drifting", "P2"],
+  ]}
+/>
+
+### System enhancements
+
+<Table
+  id="system-enhancements"
+  columns={["#", "Enhancement", "Why it matters", "Priority"]}
+  rows={[
+    ["S1", "Frozen /api/v1 OpenAPI snapshot + contract-diff test gate", "Makes the whole refactor safe; breaking changes fail CI instead of production", "P0 — Phase 0"],
+    ["S2", "Module-per-domain architecture with per-module tests (pattern proven by modules/vehicle)", "Ends duplicate vehicle stacks; every domain gets one owner, one test suite", "P0 — Phase 2"],
+    ["S3", "Scraper reliability layer: retries with backoff, per-source rate limits, structured run logs, dead-letter records, Sentry alerts", "\"Working perfectly\" is a reliability property, not a feature", "P0 — Phase S"],
+    ["S4", "Scheduled scraping via a dedicated worker container (APScheduler/cron in Docker), never inside web requests", "Playwright must not block API workers; also can't run on cPanel", "P0 — Phase S"],
+    ["S5", "/health/detailed (DB ping, migration head, version) wired into deploy smoke tests", "Deploys become verifiable in one request", "P0 — Phase 1"],
+    ["S6", "Alembic squash to clean baseline + existing check-migration-state.sh gates", "Removes the divergent-merge fragility before it bites a production upgrade", "P0 — Phase 2"],
+    ["S7", "CI runs the full gate (pytest ≥ baseline, typecheck, build, contract diff) on every PR", "ci-cd.yml exists; make the v2 gates the required checks", "P0 — Phase 0"],
+    ["S8", "Dockerized Postgres+PostGIS for dev/test parity (retire SQLite PostGIS stubs from the release path)", "The stub layer fakes ST_* functions; parity kills a whole class of dev-only green tests", "P1"],
+    ["S9", "Scraped-data quality pipeline: dedup, outlier detection, currency normalization before listings feed valuations", "Bad market data silently poisons estimates", "P1"],
+    ["S10", "ML feedback loop: scheduled retraining from valuation_feedback + trust-metric surfacing", "Tables and services exist; the loop was never closed", "P1"],
+    ["S11", "Settings/API-key backend endpoints so /settings stops being draft-only", "Honest today but incomplete", "P1"],
+    ["S12", "Performance baseline: locust stress suite (exists) run on staging each release + slow-query logging", "Catch regressions before civic-scale load", "P2"],
+    ["S13", "Audit-log retention policy + scheduled compliance report delivery", "Compliance surface exists; scheduling is stubbed", "P2"],
+  ]}
+/>
+
+## Architecture
+
+v2 is a **strangler refactor inside the existing app**: one domain at a time is rebuilt into a clean, fully-tested module under `backend/app/modules/`, old flat files are deleted as each module lands, and `/api/v1` never changes shape. Git tags (`v1-baseline`, `v2-complete`) mark the boundary. The scraper worker becomes a separate container sharing the same database and codebase.
+
+<Diagram id="target-architecture" caption="Target topology — API modules stay behind the frozen /api/v1 contract; scrapers move to a dedicated worker container that shares the modules and database.">
+
+```html
+<div class="diagram-panel" data-rough>
+  <div class="diagram-row">
+    <div class="diagram-card"><strong>Nuxt frontend</strong><div class="diagram-muted">static build · cPanel (staging) / VPS (prod)</div></div>
+    <div class="diagram-card"><strong>Flutter mobile</strong><div class="diagram-muted">same /api/v1 contract</div></div>
+  </div>
+  <div class="diagram-card"><strong>FastAPI · /api/v1 (contract frozen)</strong>
+    <div class="diagram-row" style="margin-top:8px">
+      <div class="diagram-node">auth</div>
+      <div class="diagram-node">users</div>
+      <div class="diagram-node">properties</div>
+      <div class="diagram-node">valuations</div>
+      <div class="diagram-node">vehicles</div>
+      <div class="diagram-node">analytics</div>
+      <div class="diagram-node">audit</div>
+      <div class="diagram-node">scrapers (control)</div>
+    </div>
+  </div>
+  <div class="diagram-row">
+    <div class="diagram-card"><strong>Scraper worker container</strong><div class="diagram-muted">Playwright + scheduler + retries · VPS only</div></div>
+    <div class="diagram-card"><strong>PostgreSQL + PostGIS</strong><div class="diagram-muted">squashed Alembic baseline · market_listings shared</div></div>
+  </div>
+</div>
+```
+
+```css
+.diagram-panel { display: flex; flex-direction: column; gap: 12px; }
+.diagram-row { display: flex; gap: 8px; flex-wrap: wrap; }
+```
+
+</Diagram>
+
+**Hosting model:** cPanel hosts the **staging/testing** deployment (Setup Python App + static Nuxt, per the repo's existing guide) — good for tracing, UAT, and demoing. **Production** runs the Docker VPS stack (`docker-compose.prod.yml`, `deploy.sh`) because the scraper worker needs Playwright, a scheduler, and headless-browser dependencies that shared cPanel cannot run. Same code, two targets, both already scripted.
+
+## Phases
+
+Phases 0–4 target the core production release this week. Phase S (scrapers) starts in parallel on day 2 and completes its staged rollout across launch week + the following days. Every task is checkable and maps 1:1 to a subtask JSON for subagent execution.
+
+### Phase 0 — Baseline and guardrails (Day 1, ~half day)
+
+<Checklist
+  id="phase0-checklist"
+  items={[
+    { id: "p0-backend-suite", label: "Run backend/venv/bin/python -m pytest -q; record 214 passed / 17 skipped as the regression gate" },
+    { id: "p0-frontend-gates", label: "Run npm run typecheck and npm run build in frontend/app; record green baseline" },
+    { id: "p0-git-tag", label: "Commit the current working tree (86 modified files) and tag v1-baseline" },
+    { id: "p0-contract-snapshot", label: "Export /openapi.json and commit it as the frozen v1 contract; add the pytest contract-diff fixture (S1)" },
+    { id: "p0-ci-gates", label: "Make pytest ≥ baseline + typecheck + build + contract diff the required CI checks (S7)" },
+    { id: "p0-dev-server", label: "Fix the Nuxt dev loop: pin/patch around the ssr:false vite-node regression or standardize on build+preview (already wired into .claude/launch.json)" },
+  ]}
+/>
+
+### Phase 1 — Production blockers (Days 1–2)
+
+Each fix starts with a failing test.
+
+<Checklist
+  id="phase1-checklist"
+  items={[
+    { id: "p1-refresh-cookie", label: "U1: refresh token as httpOnly SameSite cookie + silent refresh on boot; access token stays in memory; bearer login response unchanged (mobile unaffected)", note: "Tests: refresh-rotation pytest + Playwright reload-keeps-session E2E" },
+    { id: "p1-login-form", label: "U2: Sign In becomes type=submit inside the form; Enter submits; aria-live error region", note: "Test: keyboard-only login E2E" },
+    { id: "p1-health", label: "S5: add /api/v1/health/detailed (DB ping, migration head, version)", note: "Test: pytest response-shape assertion" },
+    { id: "p1-migration-guard", label: "Run scripts/check-migration-state.sh against staging and production DBs; verify current == head (2026_05_18_1200_audit_logs)" },
+    { id: "p1-env-validation", label: "Run scripts/validate-production-env.sh with real values for BOTH targets (cPanel staging + VPS production); NUXT_PUBLIC_API_BASE_URL = API origin only" },
+  ]}
+/>
+
+### Phase S — Scraper program (Days 2–7+, dedicated track)
+
+Goal: from 0/8 proven scenarios to a reliable, monitored, scheduled scraping subsystem feeding real market evidence into valuations. Staged per source: prove one completely before enabling the next.
+
+<Checklist
+  id="phaseS-checklist"
+  items={[
+    { id: "ps-audit", label: "Audit scraper_service.py + scraper configs: enumerate target sources, selectors, and what each run writes to market_listings", note: "Output: a per-source status table committed to the repo" },
+    { id: "ps-worker", label: "S4: extract scraping into a worker container (Playwright + APScheduler) sharing modules + DB; API keeps only control endpoints (start/stop/status/history)", note: "Runs on the VPS; never inside API request handlers" },
+    { id: "ps-reliability", label: "S3: retries with exponential backoff, per-source rate limiting + robots/ToS respect, structured run records (started/finished/items/errors), Sentry alerts on consecutive failures" },
+    { id: "ps-quality", label: "S9 (first cut): dedup by listing fingerprint, price/currency normalization to ETB, drop obvious outliers before insert" },
+    { id: "ps-tests", label: "TDD harness: unit tests against saved HTML fixtures per source (no live network in CI) + one live smoke test per source behind a flag", note: "Fixture-based tests make selector breakage a red test, not a silent empty run" },
+    { id: "ps-source-1", label: "Prove source #1 end-to-end: scheduled run → listings in DB → visible in /scrapers UI with run history → E2E scenario green", note: "Go/no-go gate for enabling further sources" },
+    { id: "ps-ui", label: "U4: /scrapers ops desk — per-source health, last success, item counts, failure reasons, manual re-run", note: "Keeps the existing restrained data-operations style; no fake rows" },
+    { id: "ps-remaining", label: "Roll out remaining sources one at a time; close all 8 scraper E2E scenarios" },
+    { id: "ps-evidence", label: "U5: surface comparable scraped listings on valuation detail/quick-valuation as market evidence", note: "The payoff step — scraper data informing valuers" },
+  ]}
+/>
+
+<Callout id="scraper-honesty" tone="warning">
+
+**Timeline honesty:** the core app can be production-ready this week. "Scrapers working perfectly" is a reliability property that needs days of scheduled runs to demonstrate. Recommendation (per your go-ahead): ship the core release with source #1 proven and monitored, then enable remaining sources per-source over the following days rather than flipping everything on at once and debugging five sites simultaneously in production.
+
+</Callout>
+
+### Phase 2 — Backend v2 modularization (Days 2–4, parallel subagents)
+
+<Checklist
+  id="phase2-checklist"
+  items={[
+    { id: "p2-vehicles", label: "Consolidate vehicles: fold endpoints/vehicles.py + vehicle services into modules/vehicle; /api/v1/vehicles/* and /api/v1/vehicle-data/* stay byte-compatible; delete flat copies" },
+    { id: "p2-properties", label: "Extract modules/property: CRUD + spatial queries + CSV export; repository owns all raw PostGIS SQL; spatial regression tests stay green" },
+    { id: "p2-valuations", label: "Extract modules/valuation: CRUD, draft→pending→approved state machine, Ethiopian tax calc, certificate PDF, quick valuation, feedback metrics" },
+    { id: "p2-scraper-module", label: "Extract modules/scraper (control plane) aligned with the Phase S worker: configs, run history, status endpoints" },
+    { id: "p2-analytics-audit", label: "Extract modules/analytics + modules/audit; keep the /audit/logs missing-table fallback for dev DBs" },
+    { id: "p2-auth-users", label: "Extract modules/auth + modules/users last; is_admin flag + role gates honored consistently" },
+    { id: "p2-alembic", label: "S6: squash Alembic to baseline + head after modules land; fresh-DB rehearsal, then check-migration-state.sh gates" },
+    { id: "p2-delete-dead", label: "Delete superseded flat files, root ad-hoc scripts (test_login.py, test_ui.py, test_db.py), and stale status docs" },
+  ]}
+/>
+
+### Phase 3 — Frontend hardening + E2E completion (Days 3–5, overlaps Phase 2)
+
+<Checklist
+  id="phase3-checklist"
+  items={[
+    { id: "p3-auth-e2e", label: "E2E: reload-keeps-session, deep-link to protected route, logout clears cookie" },
+    { id: "p3-happy-path", label: "U3 E2E: create property → quick valuation → approve → certificate PDF + CSV as browser clicks" },
+    { id: "p3-vehicle-flow", label: "E2E: vehicle register → detail → valuation via /api/v1/vehicles/{id}/valuations" },
+    { id: "p3-compliance", label: "E2E: compliance report generation from /reports" },
+    { id: "p3-a11y", label: "U2: keyboard-only pass on login, property create, quick valuation; fix focus traps" },
+    { id: "p3-error-states", label: "Verify honest empty/error states everywhere (no fake rows — standing project rule)" },
+  ]}
+/>
+
+### Phase 4 — Deploy: cPanel staging, then VPS production (Day 5)
+
+<Checklist
+  id="phase4-checklist"
+  items={[
+    { id: "p4-staging", label: "STAGING on cPanel per CPANEL_APP_DEPLOYMENT.md: Setup Python App + static Nuxt + PostgreSQL; confirm PostGIS extension is available on the host", note: "Staging serves UAT/tracing/testing; scrapers stay off here by design" },
+    { id: "p4-staging-smoke", label: "Staging smoke: /health/detailed, login, dashboard counts, property list, certificate download" },
+    { id: "p4-prod", label: "PRODUCTION on Docker VPS: deploy.sh + docker-compose.prod.yml + scraper worker container; migration gates before and after" },
+    { id: "p4-seed-admin", label: "Create production admin via create_admin.py with a real password — never demo credentials" },
+    { id: "p4-backups", label: "Enable backup.sh + verify_backup.sh on cron; record one restore drill" },
+    { id: "p4-smoke-prod", label: "Production smoke + scraper source #1 first scheduled run verified in run history" },
+  ]}
+/>
+
+### Phase 5 — Next-sprint backlog
+
+<Checklist
+  id="phase5-checklist"
+  items={[
+    { id: "p5-evidence-panel", label: "U5 completion: market-evidence comparables across all valuation surfaces" },
+    { id: "p5-bulk", label: "U6: bulk import validation preview + row-level errors, E2E covered" },
+    { id: "p5-notifications", label: "U7: real notification events (valuation approved, scrape failed, report ready)" },
+    { id: "p5-settings", label: "S11: settings/API-key backend endpoints" },
+    { id: "p5-ml", label: "S10: scheduled ML retraining from valuation_feedback + trust metrics" },
+    { id: "p5-parity", label: "S8: dockerized Postgres+PostGIS dev parity; retire SQLite PostGIS stubs from release path" },
+    { id: "p5-perf", label: "S12: locust stress baseline on staging per release" },
+    { id: "p5-mobile", label: "U10: Flutter client contract review against v2 modules" },
+  ]}
+/>
+
+## Delivery model — TDD with subagents
+
+Every Phase 1/2/3/S checklist item becomes one subtask JSON under `.tmp/tasks/` (existing repo convention) carrying: owned files, acceptance criteria (the failing tests to write first), and done-gates. Execution per subtask: **test-engineer agent** writes failing tests → **coder agent** implements to green → **code-reviewer agent** checks the diff against project rules → orchestrator runs the full gate (pytest ≥ 214 baseline, contract diff clean, typecheck, build) before merge. Disjoint-file subtasks run in parallel; `modules/auth` runs alone at the end. Scraper subtasks use fixture-based tests so CI never depends on live target sites.
+
+<Callout id="tdd-gate" tone="info">
+
+Invariant: **nothing is "done" on claim.** Done = gate ran and passed; for UI tasks the flow was clicked in a browser; for scraper tasks a scheduled run produced verifiable rows and run-history records.
+
+</Callout>
+
+## Risks
+
+<Table
+  id="risk-table"
+  columns={["Risk", "Likelihood", "Mitigation"]}
+  rows={[
+    ["Target sites block or change markup, breaking scrapers post-launch", "High (inherent)", "Fixture tests turn selector drift into red tests; per-source health alerts; staged rollout isolates blast radius"],
+    ["cPanel staging host lacks PostGIS", "Medium", "Checked first in Phase 4; staging can fall back to a second VPS environment while cPanel serves frontend-only UAT"],
+    ["Refresh-cookie change affects Flutter client", "Low", "Bearer login response unchanged; cookie is additive for web"],
+    ["Module extraction breaks an undocumented consumer", "Low-medium", "Contract snapshot diff + full E2E per merge"],
+    ["Alembic squash on a dirty DB", "Medium", "check-migration-state.sh gates both sides; fresh-DB rehearsal first"],
+    ["Scope (scrapers + refactor + release) slips past the week", "Medium-high", "Phases 0/1/4 alone are a shippable core; Phase S is an independent track with per-source gates that can trail the core release without blocking it"],
+  ]}
+/>
+
+### Open Questions
+
+<QuestionForm
+  id="open-questions"
+  questions={[
+    {
+      id: "q-scraper-sources",
+      title: "Which scraper source should be proven first?",
+      subtitle: "Phase S rolls out per-source; the first one becomes the launch-week gate. Name the priority order of target sites (e.g. which Ethiopian listing platforms matter most).",
+      mode: "freeform",
+      placeholder: "e.g. 1) EthiopianProperties 2) Jiji 3) ...",
+    },
+    {
+      id: "q-prod-target",
+      title: "Confirm production topology",
+      subtitle: "cPanel = staging (as you specified). Production needs a host that can run Docker + Playwright.",
+      mode: "single",
+      options: [
+        { id: "vps", label: "Docker VPS (Yegara) — already scripted (recommended)", detail: "deploy.sh + docker-compose.prod.yml + scraper worker container", recommended: true },
+        { id: "other", label: "A different production host", detail: "Tell me what it is and I'll adjust Phase 4" },
+      ],
+      required: true,
+    },
+    {
+      id: "q-launch-scope",
+      title: "Launch-week scraper bar",
+      mode: "single",
+      options: [
+        { id: "one-source", label: "Core release + source #1 proven, rest follow per-source (recommended)", detail: "Ships this week; reliability demonstrated incrementally", recommended: true },
+        { id: "all-sources", label: "Hold the release until all sources are proven", detail: "Realistic finish moves to next week+" },
+      ],
+      required: true,
+    },
+    {
+      id: "q-notes",
+      title: "Anything else the release must include or must not touch?",
+      mode: "freeform",
+      placeholder: "Constraints, must-have features, no-go areas...",
+    },
+  ]}
+  submitLabel="Send answers"
+/>

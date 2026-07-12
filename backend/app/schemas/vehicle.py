@@ -5,7 +5,7 @@ Pydantic schemas for vehicle data validation and serialization
 with Ethiopian market-specific fields.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -69,7 +69,8 @@ class VehicleBase(BaseModel):
     is_active: bool = Field(True, description="Whether vehicle is active")
     is_listed_for_sale: bool = Field(False, description="Whether vehicle is listed for sale")
     
-    @validator('vin')
+    @field_validator("vin")
+    @classmethod
     def validate_vin(cls, v):
         """Validate VIN format"""
         if len(v) != 17:
@@ -82,26 +83,30 @@ class VehicleBase(BaseModel):
         
         return v.upper()
     
-    @validator('plate_number')
+    @field_validator("plate_number")
+    @classmethod
     def validate_plate_number(cls, v):
         """Validate plate number format"""
         if not v.strip():
             raise ValueError('Plate number cannot be empty')
         return v.strip()
     
-    @validator('make', 'model')
+    @field_validator("make", "model")
+    @classmethod
     def normalize_strings(cls, v):
         """Normalize string values"""
         return v.strip().title()
     
-    @validator('color')
+    @field_validator("color")
+    @classmethod
     def normalize_color(cls, v):
         """Normalize color value"""
         if v:
             return v.strip().title()
         return v
     
-    @validator('region', 'city')
+    @field_validator("region", "city")
+    @classmethod
     def normalize_location(cls, v):
         """Normalize location values"""
         if v:
@@ -141,7 +146,8 @@ class VehicleUpdate(BaseModel):
     is_active: Optional[bool] = None
     is_listed_for_sale: Optional[bool] = None
     
-    @validator('vin')
+    @field_validator("vin")
+    @classmethod
     def validate_vin(cls, v):
         """Validate VIN format if provided"""
         if v and len(v) != 17:
@@ -162,9 +168,7 @@ class VehicleResponse(VehicleBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VehicleSearchResult(BaseModel):

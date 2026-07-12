@@ -4,7 +4,7 @@ const accessTokenKey = 'valuadis_token'
 const refreshTokenKey = 'valuadis_refresh_token'
 const userKey = 'valuadis_user'
 
-function getStorage(): Storage | null {
+function getStorage (): Storage | null {
   try {
     if (!process.client || typeof window === 'undefined' || !window.localStorage) return null
     return window.localStorage
@@ -13,66 +13,60 @@ function getStorage(): Storage | null {
   }
 }
 
-function setCookie(key: string, value: string): void {
-  try {
-    if (!process.client || typeof document === 'undefined') return
-    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=86400; SameSite=Lax`
-  } catch {
-    // Some embedded browser contexts expose storage as read-only. Memory storage still covers SPA navigation.
-  }
+function consumeLegacyStorageToken (storage: Storage, key: string): string | null {
+  const token = storage.getItem(key)
+  if (!token) return null
+
+  storage.removeItem(key)
+  return token
 }
 
-function getCookie(key: string): string | null {
-  try {
-    if (!process.client || typeof document === 'undefined') return null
-    const match = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`))
-    return match ? decodeURIComponent(match[1]) : null
-  } catch {
-    return null
-  }
-}
-
-function removeCookie(key: string): void {
-  try {
-    if (!process.client || typeof document === 'undefined') return
-    document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`
-  } catch {
-    // Ignore storage-restricted browser contexts.
-  }
-}
-
-export function setAccessToken(token: string): void {
+export function setAccessToken (token: string): void {
   memoryAccessToken = token
-  getStorage()?.setItem(accessTokenKey, token)
-  setCookie(accessTokenKey, token)
 }
 
-export function getAccessToken(): string | null {
-  return getStorage()?.getItem(accessTokenKey) || memoryAccessToken || getCookie(accessTokenKey)
+export function getAccessToken (): string | null {
+  if (memoryAccessToken) return memoryAccessToken
+
+  const storage = getStorage()
+  if (!storage) return null
+
+  const legacyToken = consumeLegacyStorageToken(storage, accessTokenKey)
+  if (legacyToken) {
+    memoryAccessToken = legacyToken
+    return legacyToken
+  }
+
+  return null
 }
 
-export function removeAccessToken(): void {
+export function removeAccessToken (): void {
   memoryAccessToken = null
-  getStorage()?.removeItem(accessTokenKey)
-  removeCookie(accessTokenKey)
 }
 
-export function setRefreshTokenValue(token: string): void {
+export function setRefreshTokenValue (token: string): void {
   memoryRefreshToken = token
-  getStorage()?.setItem(refreshTokenKey, token)
-  setCookie(refreshTokenKey, token)
 }
 
-export function getRefreshTokenValue(): string | null {
-  return getStorage()?.getItem(refreshTokenKey) || memoryRefreshToken || getCookie(refreshTokenKey)
+export function getRefreshTokenValue (): string | null {
+  if (memoryRefreshToken) return memoryRefreshToken
+
+  const storage = getStorage()
+  if (!storage) return null
+
+  const legacyToken = consumeLegacyStorageToken(storage, refreshTokenKey)
+  if (legacyToken) {
+    memoryRefreshToken = legacyToken
+    return legacyToken
+  }
+
+  return null
 }
 
-export function clearAuthTokens(): void {
+export function clearAuthTokens (): void {
   memoryAccessToken = null
   memoryRefreshToken = null
   getStorage()?.removeItem(accessTokenKey)
   getStorage()?.removeItem(refreshTokenKey)
   getStorage()?.removeItem(userKey)
-  removeCookie(accessTokenKey)
-  removeCookie(refreshTokenKey)
 }

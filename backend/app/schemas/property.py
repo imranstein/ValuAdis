@@ -4,7 +4,7 @@ Property Schemas
 Pydantic models for property request/response - extended for wizard
 """
 
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, Field, ConfigDict
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 
@@ -89,20 +89,23 @@ class PropertyCreate(BaseModel):
     ai_confidence_score: Optional[float] = None
     ai_trust_score_at_time: Optional[float] = None
 
-    @validator('address')
+    @field_validator("address")
+    @classmethod
     def validate_address(cls, v):
         if len(v.strip()) < 5:
             raise ValueError('Address must be at least 5 characters')
         return v.strip()
 
-    @validator('property_type')
+    @field_validator("property_type")
+    @classmethod
     def validate_property_type(cls, v):
         allowed = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use', 'institutional', 'recreational']
         if v not in allowed:
             raise ValueError(f'Property type must be one of: {", ".join(allowed)}')
         return v
 
-    @validator('area_sqm')
+    @field_validator("area_sqm")
+    @classmethod
     def validate_area(cls, v):
         if v <= 0:
             raise ValueError('Area must be greater than 0')
@@ -164,7 +167,8 @@ class PropertyUpdate(BaseModel):
     ai_confidence_score: Optional[float] = None
     ai_trust_score_at_time: Optional[float] = None
 
-    @validator('property_type')
+    @field_validator("property_type")
+    @classmethod
     def validate_property_type(cls, v):
         if v is not None:
             allowed = ['residential', 'commercial', 'industrial', 'agricultural', 'mixed_use', 'institutional', 'recreational']
@@ -206,6 +210,4 @@ class PropertyDetail(BaseModel):
     status: str
     created_at: datetime
     updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
