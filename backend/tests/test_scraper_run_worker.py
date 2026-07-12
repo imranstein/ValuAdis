@@ -29,6 +29,15 @@ FIXTURE_PATH = os.path.join(
 EPC_FIXTURE_LISTING_COUNT = 20
 
 
+@pytest.fixture(autouse=True)
+def _allow_robots_by_default(monkeypatch):
+    """Keep the worker tests network-free: robots.txt reads as allow-all.
+
+    Tests that need a different policy override this within their own body.
+    """
+    monkeypatch.setattr(run_scraper_module, "fetch_robots_txt", lambda *a, **k: "")
+
+
 def _sample_records(count: int = 3):
     return [
         {
@@ -243,6 +252,22 @@ def test_run_marks_log_failed_when_browser_crashes(db_session, monkeypatch):
     assert log.status == "failed"
     assert log.completed_at is not None
     assert "playwright browser missing" in log.error_message
+
+
+def test_run_aborts_and_marks_failed_when_robots_disallows(db_session, monkeypatch):
+    scraper = _create_epc_scraper(db_session)
+    monkeypatch.setattr(
+        run_scraper_module,
+        "fetch_robots_txt",
+        lambda *a, **k: "User-agent: *\nDisallow: /",
+    )
+    runner = ScraperRunner(scraper_id=scraper.id, max_pages=1, db=db_session)
+
+    asyncio.run(runner.run_scraper())
+
+    log = db_session.query(ScraperLog).filter_by(scraper_id=scraper.id).one()
+    assert log.status == "failed"
+    assert "robots.txt disallows" in log.error_message
 
 
 def test_run_marks_log_failed_for_domain_without_extractor(db_session):

@@ -121,6 +121,34 @@ services:
       start_period: 40s
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 
+  # Scraper worker: scheduled market-listing scraping (Playwright + Chromium).
+  # Separate image (Dockerfile.scraper) because only this service needs a
+  # browser. Writes raw_market_listings; has no HTTP surface.
+  scraper-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.scraper
+    container_name: valuadis_scraper_worker
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-valuadis_user}:${PROD_POSTGRES_PASSWORD:?Set PROD_POSTGRES_PASSWORD for production}@db:5432/${POSTGRES_DB:-valuadis}
+      ENVIRONMENT: production
+      SENTRY_DSN: ${PROD_SENTRY_DSN:-}
+    volumes:
+      - ./logs/scraper:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - valuadis_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+
   # Vue.js Frontend
   frontend:
     build:

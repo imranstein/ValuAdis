@@ -94,7 +94,7 @@ def _as_naive_utc(value: Optional[datetime]) -> Optional[datetime]:
     """Normalize aware timestamps (Postgres) and naive ones (SQLite) to naive UTC."""
     if value is None or value.tzinfo is None:
         return value
-    return value.astimezone(tz=None).replace(tzinfo=None) if False else value.replace(tzinfo=None)
+    return value.replace(tzinfo=None)
 
 
 def is_due(

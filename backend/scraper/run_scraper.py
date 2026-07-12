@@ -24,6 +24,7 @@ from app.services.scraper_service import ScraperService
 from playwright.async_api import async_playwright
 
 from scraper.extractors import get_extractor
+from scraper.robots import fetch_robots_txt, is_path_allowed
 
 logging.basicConfig(
     level=logging.INFO,
@@ -111,11 +112,25 @@ class ScraperRunner:
                     f"No extractor registered for domain {scraper.domain}"
                 )
 
+            user_agent = random.choice(USER_AGENTS)
+            first_url = scraper.url_template.format(page=1)
+            robots_txt = fetch_robots_txt(first_url)
+            if robots_txt is not None and not is_path_allowed(
+                robots_txt, user_agent, first_url
+            ):
+                raise RuntimeError(
+                    f"robots.txt disallows scraping {first_url}"
+                )
+            if robots_txt is None:
+                logger.warning(
+                    f"robots.txt unavailable for {scraper.domain}; proceeding"
+                )
+
             async with async_playwright() as playwright:
                 browser = await playwright.chromium.launch(headless=True)
                 try:
                     context = await browser.new_context(
-                        user_agent=random.choice(USER_AGENTS),
+                        user_agent=user_agent,
                         viewport={"width": 1280, "height": 720},
                     )
                     page = await context.new_page()
