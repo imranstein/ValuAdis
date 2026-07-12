@@ -122,7 +122,10 @@ python -m uvicorn app.main:app --reload  # dev server (localhost:8000)
 - The Postgres dev database admin credential is `admin@valuadis.com` / `password123` (root `create_admin.py`), not the old SQLite `admin123` seed. Demo login needs `NUXT_PUBLIC_DEMO_LOGIN_EMAIL/PASSWORD` set when the preview server starts.
 - Frontend auth tokens are memory-only (`frontend/app/utils/authToken.ts`): any hard reload or deep link logs the user out. Fixing this via an httpOnly refresh-cookie flow is Phase 1 of the v2 plan.
 - The login form's Sign In button is `type="button"`, so Enter does not submit — click it. Flagged as a Phase 1 fix.
-- The v2 stack decision and refactor plan (keep FastAPI, reject Laravel rewrite, strangler modularization into `backend/app/modules/`) lives at `plans/valuadis-v2-refactor/plan.mdx`; implementation is gated on the user's answers to its open questions.
+- The v2 stack decision and refactor plan (keep FastAPI, reject Laravel rewrite, strangler modularization into `backend/app/modules/`) lives at `plans/valuadis-v2-refactor/plan.mdx`; the user delegated all open decisions, and execution is underway (see the plan's Decisions callout and phase checklists).
+- The live frontend auth service is `frontend/app/services/authService.ts`; a dead `.js` twin used to shadow it and was deleted. Bare `~/services/authService` imports resolve to `.ts` first — never reintroduce the duplicate.
+- Browser sessions persist via an httpOnly `valuadis_refresh` cookie (set on login/refresh, rotated with a jti claim, cleared by `POST /api/v1/auth/logout`). The frontend boots through an idempotent `authStore.initialize()` awaited in `global-auth.global.ts`; logout must go through the store, not `clearAuthTokens()` alone, or the cookie resurrects the session.
+- The `/api/v1` OpenAPI contract is frozen in `backend/tests/contract/openapi_v1_snapshot.json` and enforced by `backend/tests/test_openapi_contract.py`: additions allowed, removals/changes fail the suite. Regenerate the snapshot only for an intentional, reviewed contract change. Full-suite gate as of this session: 262 passed / 17 skipped.
 
 # context-mode — MANDATORY routing rules
 

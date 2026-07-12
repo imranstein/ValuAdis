@@ -4,6 +4,7 @@ Scraper API Integration Contracts
 Tests for scraper lifecycle endpoints used by the web scraper tab.
 """
 
+import sys
 from unittest.mock import Mock
 
 from datetime import datetime, timedelta
@@ -156,7 +157,7 @@ def test_scraper_run_starts_background_job(client: TestClient, monkeypatch: pyte
         body = run_response.json()
         assert body["success"] is True
         assert body["log_id"] is not None
-        assert popen_calls and popen_calls[0]["cmd"][0] == "python3"
+        assert popen_calls and popen_calls[0]["cmd"][0] == sys.executable
 
         logs = client.get(f"/api/v1/scrapers/logs?scraper_id={scraper_id}")
         assert logs.status_code == 200

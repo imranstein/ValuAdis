@@ -27,6 +27,7 @@ from datetime import datetime
 import asyncio
 import subprocess
 import os
+import sys
 
 router = APIRouter()
 
@@ -230,8 +231,9 @@ async def run_scraper(
         backend_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         scraper_script = os.path.join(backend_path, "scraper", "run_scraper.py")
 
-        # Build command
-        cmd = ["python3", scraper_script, "--scraper-id", str(scraper_id)]
+        # Build command. Use the API's interpreter so the worker runs in the
+        # same environment (Playwright, BeautifulSoup, app dependencies).
+        cmd = [sys.executable, scraper_script, "--scraper-id", str(scraper_id)]
         if run_data and run_data.max_pages:
             max_pages = min(max(int(run_data.max_pages), 1), SCRAPER_RUN_MAX_PAGES)
             cmd.extend(["--max-pages", str(max_pages)])

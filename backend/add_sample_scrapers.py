@@ -21,56 +21,70 @@ def add_sample_scrapers():
     db = SessionLocal()
     
     try:
-        # Sample property scrapers
+        # Real Ethiopian property portals. Domains must match the keys in
+        # scraper/extractors.py EXTRACTORS so the run worker uses the
+        # site-specific extractor. Selectors are informational fallbacks only.
         property_scrapers = [
             {
-                'domain': 'addisproperty.gov.et',
-                'url_template': 'https://addisproperty.gov.et/listings?page={page}',
+                'domain': 'ethiopiapropertycentre.com',
+                'url_template': 'https://ethiopiapropertycentre.com/for-sale?page={page}',
                 'enabled': True,
                 'selectors': {
-                    'property_title': '.property-title',
-                    'price': '.price',
-                    'location': '.location',
-                    'bedrooms': '.bedrooms',
-                    'bathrooms': '.bathrooms'
+                    'item': 'div.wp-block.property.list',
+                    'title': '.wp-block-title h3',
+                    'price': 'span.price',
+                    'location': 'address'
                 },
                 'schedule': 'daily',
-                'max_pages': 50,
-                'last_status': 'success',
-                'total_listings': 156,
-                'last_run': now
+                'max_pages': 10
             },
             {
-                'domain': 'ethioproperty.com',
-                'url_template': 'https://ethioproperty.com/properties?page={page}',
-                'enabled': True,
-                'selectors': {
-                    'property_title': '.listing-title',
-                    'price': '.listing-price',
-                    'location': '.listing-location',
-                    'bedrooms': '.beds',
-                    'bathrooms': '.baths'
-                },
-                'schedule': 'twice_daily',
-                'max_pages': 30,
-                'last_status': 'success',
-                'total_listings': 89,
-                'last_run': now
-            },
-            {
-                'domain': 'mekelleproperty.et',
-                'url_template': 'https://mekelleproperty.et/listings?page={page}',
+                'domain': 'jiji.com.et',
+                'url_template': 'https://jiji.com.et/real-estate?page={page}',
                 'enabled': False,
                 'selectors': {
-                    'property_title': '.title',
-                    'price': '.price-tag',
-                    'location': '.address'
+                    'item': '.b-list-advert-base',
+                    'title': '.qa-advert-title',
+                    'price': '.qa-advert-price'
                 },
                 'schedule': 'daily',
-                'max_pages': 20,
-                'last_status': 'error',
-                'total_listings': 45,
-                'last_run': now
+                'max_pages': 10
+            },
+            {
+                'domain': 'zegebeya.com',
+                'url_template': 'https://zegebeya.com/property-search/page/{page}/',
+                'enabled': False,
+                'selectors': {
+                    'item': '.rh_list_card__wrap',
+                    'title': 'h3 a',
+                    'price': '.rh_prop_card__price'
+                },
+                'schedule': 'daily',
+                'max_pages': 10
+            },
+            {
+                'domain': 'ethiopianproperties.com',
+                'url_template': 'https://www.ethiopianproperties.com/property-search/page/{page}/',
+                'enabled': False,
+                'selectors': {
+                    'item': 'article.property',
+                    'title': 'h3 a',
+                    'price': '.price'
+                },
+                'schedule': 'daily',
+                'max_pages': 10
+            },
+            {
+                'domain': 'livingethio.com',
+                'url_template': 'https://livingethio.com/properties?page={page}',
+                'enabled': False,
+                'selectors': {
+                    'item': '.p-card',
+                    'title': '.p-card-title',
+                    'price': '.price'
+                },
+                'schedule': 'daily',
+                'max_pages': 10
             }
         ]
         
@@ -118,7 +132,6 @@ def add_sample_scrapers():
                 print(f"Property scraper for {scraper_data['domain']} already exists, skipping")
                 continue
             scraper = ScraperTarget(**scraper_data)
-            scraper.last_run = now
             db.add(scraper)
         
         # Add vehicle scrapers (check for duplicates)
@@ -128,7 +141,6 @@ def add_sample_scrapers():
                 print(f"Vehicle scraper for {scraper_data['domain']} already exists, skipping")
                 continue
             scraper = ScraperTarget(**scraper_data)
-            scraper.last_run = now
             db.add(scraper)
         
         db.commit()
