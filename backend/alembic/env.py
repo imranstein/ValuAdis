@@ -11,7 +11,10 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import Base
-from app.data.models import user, property, valuation
+# Import the full models package so every table is registered on Base.metadata;
+# importing only a subset here is why the role/permission tables were missing
+# from autogenerate and never got a migration.
+import app.data.models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
