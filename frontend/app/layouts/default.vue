@@ -153,7 +153,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions.js'
-import { clearAuthTokens, getAccessToken } from '~/utils/authToken'
+import { getAccessToken } from '~/utils/authToken'
 
 const router = useRouter()
 const route = useRoute()
@@ -352,7 +352,9 @@ function navigateToQuickLink(path: string) {
 }
 
 function handleLogout() {
-  clearAuthTokens()
+  // Store logout clears the httpOnly refresh cookie server-side too;
+  // clearing only local tokens would let the cookie resurrect the session.
+  useAuthStore().logout()
   router.push('/login')
 }
 

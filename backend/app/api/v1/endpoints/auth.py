@@ -4,7 +4,7 @@ Authentication Endpoints
 JWT authentication for ValuAdis users
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -26,6 +26,34 @@ from app.services.auth_service import AuthService
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
+
+# httpOnly refresh cookie for browser session persistence.
+# Path-limited so the browser only sends it to the refresh endpoint.
+REFRESH_COOKIE_NAME = "valuadis_refresh"
+REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
+SECONDS_PER_DAY = 24 * 60 * 60
+
+
+def set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * SECONDS_PER_DAY,
+        path=REFRESH_COOKIE_PATH,
+        httponly=True,
+        samesite="lax",
+        secure=settings.ENVIRONMENT == "production",
+    )
+
+
+def clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        path=REFRESH_COOKIE_PATH,
+        httponly=True,
+        samesite="lax",
+        secure=settings.ENVIRONMENT == "production",
+    )
 
 
 def token_envelope(tokens: TokenResponse, message: str):
@@ -86,11 +114,12 @@ async def register(
 @router.post("/login", tags=["Authentication"])
 async def login(
     user_credentials: UserLogin,
+    response: Response,
     db: Session = Depends(get_db)
 ):
     """Login user and return JWT tokens"""
     auth_service = AuthService(db)
-    
+
     # Authenticate user
     try:
         user = await auth_service.authenticate_user(
@@ -99,11 +128,14 @@ async def login(
         )
     except AuthenticationException as exc:
         return error_envelope(status.HTTP_401_UNAUTHORIZED, str(exc))
-    
+
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
+
+    # Browser session persistence; JSON body stays unchanged for mobile clients
+    set_refresh_cookie(response, refresh_token)
+
     return token_envelope(
         TokenResponse(
             access_token=access_token,
@@ -117,11 +149,25 @@ async def login(
 
 @router.post("/refresh", tags=["Authentication"])
 async def refresh_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    response: Response,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    refresh_cookie: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ):
-    """Refresh access token — rotates the refresh token on every call"""
+    """Refresh access token — rotates the refresh token on every call.
+
+    Accepts the refresh token as a bearer header (mobile) or as the
+    httpOnly valuadis_refresh cookie (browser). The header wins when both
+    are present.
+    """
+    raw_token = credentials.credentials if credentials else refresh_cookie
+    if not raw_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing refresh token"
+        )
+
     try:
-        payload = verify_token(credentials.credentials)
+        payload = verify_token(raw_token)
 
         # Reject access tokens used as refresh tokens
         if payload.get("type") != "refresh":
@@ -141,6 +187,8 @@ async def refresh_token(
         access_token = create_access_token(data={"sub": user_id})
         new_refresh_token = create_refresh_token(data={"sub": user_id})
 
+        set_refresh_cookie(response, new_refresh_token)
+
         return token_envelope(
             TokenResponse(
                 access_token=access_token,
@@ -158,6 +206,16 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
+
+
+@router.post("/logout", tags=["Authentication"])
+async def logout(response: Response):
+    """Logout the browser session by clearing the refresh cookie.
+
+    Access tokens are short-lived and stateless; clients drop them locally.
+    """
+    clear_refresh_cookie(response)
+    return {"success": True, "message": "Logged out"}
 
 
 @router.get("/me", tags=["Authentication"])

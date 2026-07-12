@@ -6,6 +6,7 @@ JWT authentication, password hashing, and security utilities
 
 from datetime import datetime, timedelta
 from typing import Optional, Union
+from uuid import uuid4
 from jose import JWTError, jwt
 import bcrypt
 import base64
@@ -70,7 +71,8 @@ def create_refresh_token(data: dict) -> str:
     """Create JWT refresh token"""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
+    # jti makes every refresh token unique so rotation always changes the value
+    to_encode.update({"exp": expire, "type": "refresh", "jti": str(uuid4())})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 

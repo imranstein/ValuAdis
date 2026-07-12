@@ -36,15 +36,14 @@
           />
         </div>
 
-        <div v-if="errorMessage" class="login-error">
+        <div v-if="errorMessage" class="login-error" role="alert" aria-live="assertive">
           <p>{{ errorMessage }}</p>
         </div>
 
         <button
-          type="button"
+          type="submit"
           class="login-btn"
           :disabled="authStore.loading"
-          @click="handleLogin"
         >
           {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
         </button>

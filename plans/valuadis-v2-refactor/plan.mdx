@@ -9,6 +9,15 @@ Ship the ValuAdis core to production on the current FastAPI + Nuxt stack, stage 
 2. **cPanel = staging/testing environment**; production runs on the already-scripted Docker VPS stack, which is also the only place the Playwright scrapers can run.
 3. **v2 shape: in-place strangler refactor** into `backend/app/modules/` — no duplicated `v2/` folder.
 4. **Scrapers are in scope** and get their own hardening program (Phase S below) with a staged rollout: one source proven end-to-end at launch week, the rest following per-source.
+5. **Production = Docker VPS (Yegara)**, staging/UAT = cPanel (decided under delegated autonomy).
+6. **Scraper source #1 = ethiopiapropertycentre.com** — the audit found it has the richest already-written extractor (price, address, area, beds/baths, type) against a stable server-rendered layout, with an HTML dump on disk to serve as the offline test fixture. jiji.com.et is source #2 (volume, but thinner fields).
+7. **Launch bar = core release + source #1 proven this week**; remaining sources enabled per-source in the following days.
+
+</Callout>
+
+<Callout id="scraper-audit-finding" tone="warning">
+
+**Audit finding that reshapes Phase S:** the codebase contains *two disconnected scraper implementations*. Real hand-tuned extractors for all 5 Ethiopian portals exist in `backend/scraper/extractors.py` but are orphaned — never imported by the run path. The active `run_scraper.py` uses generic DB-stored selectors and writes scraped rows directly into the **Property registry** (hard-coded `user_id=2`) instead of the purpose-built `raw_market_listings` table, which nothing writes to. Phase S therefore starts by rewiring the run path to the real extractors and the correct table — that work reuses existing code rather than writing scrapers from scratch.
 
 </Callout>
 
@@ -228,6 +237,7 @@ Goal: from 0/8 proven scenarios to a reliable, monitored, scheduled scraping sub
     { id: "p3-compliance", label: "E2E: compliance report generation from /reports" },
     { id: "p3-a11y", label: "U2: keyboard-only pass on login, property create, quick valuation; fix focus traps" },
     { id: "p3-error-states", label: "Verify honest empty/error states everywhere (no fake rows — standing project rule)" },
+    { id: "p3-refresh-dedup", label: "Deduplicate session boot: a single hard load was observed firing refresh+me several times; trace the extra callers (layout loadCurrentUser vs middleware vs plugin) and collapse to one boot sequence" },
   ]}
 />
 
@@ -288,36 +298,24 @@ Invariant: **nothing is "done" on claim.** Done = gate ran and passed; for UI ta
 
 ### Open Questions
 
+All previously open questions were decided under delegated autonomy and folded into the Decisions callout at the top. What remains open needs information only the team has:
+
 <QuestionForm
   id="open-questions"
   questions={[
     {
-      id: "q-scraper-sources",
-      title: "Which scraper source should be proven first?",
-      subtitle: "Phase S rolls out per-source; the first one becomes the launch-week gate. Name the priority order of target sites (e.g. which Ethiopian listing platforms matter most).",
+      id: "q-vps-access",
+      title: "Production VPS access",
+      subtitle: "Phase 4 needs the Yegara VPS host/credentials (or confirmation the existing deploy.sh target is current) and the production domain.",
       mode: "freeform",
-      placeholder: "e.g. 1) EthiopianProperties 2) Jiji 3) ...",
+      placeholder: "Host, SSH access method, domain...",
     },
     {
-      id: "q-prod-target",
-      title: "Confirm production topology",
-      subtitle: "cPanel = staging (as you specified). Production needs a host that can run Docker + Playwright.",
-      mode: "single",
-      options: [
-        { id: "vps", label: "Docker VPS (Yegara) — already scripted (recommended)", detail: "deploy.sh + docker-compose.prod.yml + scraper worker container", recommended: true },
-        { id: "other", label: "A different production host", detail: "Tell me what it is and I'll adjust Phase 4" },
-      ],
-      required: true,
-    },
-    {
-      id: "q-launch-scope",
-      title: "Launch-week scraper bar",
-      mode: "single",
-      options: [
-        { id: "one-source", label: "Core release + source #1 proven, rest follow per-source (recommended)", detail: "Ships this week; reliability demonstrated incrementally", recommended: true },
-        { id: "all-sources", label: "Hold the release until all sources are proven", detail: "Realistic finish moves to next week+" },
-      ],
-      required: true,
+      id: "q-cpanel-access",
+      title: "cPanel staging account",
+      subtitle: "Confirm the cPanel account for staging (valuadis.vulcanig.net per the existing guide?) and whether its PostgreSQL offers the PostGIS extension.",
+      mode: "freeform",
+      placeholder: "cPanel URL/account, PostGIS availability if known...",
     },
     {
       id: "q-notes",

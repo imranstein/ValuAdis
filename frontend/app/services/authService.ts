@@ -20,6 +20,7 @@ class AuthService {
     const res = await fetch(`${baseURL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(credentials),
     })
     if (!res.ok) {
@@ -38,6 +39,7 @@ class AuthService {
     const res = await fetch(`${baseURL}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -70,16 +72,15 @@ class AuthService {
   async refreshToken(): Promise<AuthTokens> {
     const config = useRuntimeConfig()
     const baseURL = config.public.apiBaseUrl as string
+    // Bearer header when an in-memory refresh token exists; otherwise rely on
+    // the httpOnly valuadis_refresh cookie (browser session restore on reload).
     const refreshTok = this.getRefreshToken()
-    if (!refreshTok) {
-      throw new Error('No refresh token available')
-    }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (refreshTok) headers.Authorization = `Bearer ${refreshTok}`
     const res = await fetch(`${baseURL}/api/v1/auth/refresh`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${refreshTok}`,
-      },
+      headers,
+      credentials: 'include',
     })
     if (!res.ok) {
       throw new Error(`Token refresh failed: ${res.status} ${res.statusText}`)
@@ -116,6 +117,13 @@ class AuthService {
   }
 
   logout(): void {
+    const config = useRuntimeConfig()
+    const baseURL = config.public.apiBaseUrl as string
+    // Clear the httpOnly refresh cookie server-side; local state clears regardless
+    fetch(`${baseURL}/api/v1/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => {})
     clearAuthTokens()
   }
 }
