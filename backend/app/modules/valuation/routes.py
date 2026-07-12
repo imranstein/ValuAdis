@@ -11,11 +11,11 @@ from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
 import io
 import csv
-from app.services.valuation_service import ValuationService
+from .services import ValuationService
 from app.services.spatial_service import SpatialService
-from app.services.certificate_service import CertificateService
+from .certificate_service import CertificateService
 from app.services.auth_service import AuthService
-from app.schemas.valuation import (
+from .schemas import (
     ValuationCreate, ValuationUpdate, ValuationResponse,
     ValuationListResponse, ValuationDetail, ValuationCalculation,
     ValuationOverrideRequest, ValuationStatusTransitionRequest,

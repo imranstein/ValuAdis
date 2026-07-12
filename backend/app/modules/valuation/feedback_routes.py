@@ -13,7 +13,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user, get_current_user_id
-from app.services import valuation_feedback_service as svc
+from . import feedback_service as svc
 
 router = APIRouter()
 

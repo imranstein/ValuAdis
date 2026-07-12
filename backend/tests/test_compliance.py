@@ -9,7 +9,7 @@ Validates Ethiopian property tax rules:
 
 import pytest
 from decimal import Decimal
-from app.services.valuation_service import ValuationService
+from app.modules.valuation import ValuationService
 from app.services.spatial_service import SpatialService
 
 

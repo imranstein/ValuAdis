@@ -12,7 +12,7 @@ from decimal import Decimal
 
 from app.core.exceptions import PropertyValidationError
 from app.services.spatial_service import SpatialService
-from app.services.valuation_service import ValuationService
+from app.modules.valuation import ValuationService
 
 
 # ---------------------------------------------------------------------------

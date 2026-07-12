@@ -6,7 +6,7 @@ Tests for Wave 3B: Valuation status state machine and API endpoint
 
 import pytest
 from unittest.mock import MagicMock, patch
-from app.services.valuation_service import ValuationService
+from app.modules.valuation import ValuationService
 from app.data.models.valuation import ValuationStatus
 from app.core.exceptions import ValuAdisException
 

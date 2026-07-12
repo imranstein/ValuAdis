@@ -9,7 +9,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Dict, Any, Optional, Tuple, List
 from app.services.spatial_service import SpatialService
 from app.core.exceptions import ValuAdisException, PropertyValidationError
-from app.schemas.valuation import ValuationCreate
+from .schemas import ValuationCreate
 from sqlalchemy.orm import Session
 import structlog
 
