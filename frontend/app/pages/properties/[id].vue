@@ -205,7 +205,7 @@ async function loadTrustMetrics() {
 }
 
 .loading-overlay p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 1rem;
 }
 

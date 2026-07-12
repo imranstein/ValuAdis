@@ -118,12 +118,14 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBaseUrl
 const selectedPeriod = ref('year')
 
+// Canvas (chart.js) cannot resolve CSS vars, so these mirror the civic-ledger
+// token hex values directly. Keep in sync with assets/css/main.css.
 const chartColors = {
-  green: '#078160',
-  blue: '#1E3A8A',
-  orange: '#EA580C',
-  gold: '#F59E0B',
-  slate: '#475569',
+  green: '#235c43',
+  blue: '#33566a',
+  orange: '#c79a3e',
+  gold: '#8a5f14',
+  slate: '#5c665d',
 }
 
 const dashboard = ref({
@@ -211,16 +213,16 @@ const baseChartOptions = {
 const lineChartOptions = computed(() => ({
   ...baseChartOptions,
   scales: {
-    x: { ticks: { color: '#64748b' }, grid: { display: false } },
-    y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(148, 163, 184, 0.18)' } },
+    x: { ticks: { color: '#5c665d' }, grid: { display: false } },
+    y: { beginAtZero: true, ticks: { color: '#5c665d' }, grid: { color: 'rgba(148, 163, 184, 0.18)' } },
   },
 }))
 
 const barChartOptions = computed(() => ({
   ...baseChartOptions,
   scales: {
-    x: { ticks: { color: '#64748b' }, grid: { display: false } },
-    y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(148, 163, 184, 0.18)' } },
+    x: { ticks: { color: '#5c665d' }, grid: { display: false } },
+    y: { beginAtZero: true, ticks: { color: '#5c665d' }, grid: { color: 'rgba(148, 163, 184, 0.18)' } },
   },
 }))
 
@@ -327,35 +329,35 @@ useHead({
 <style scoped>
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
 .stat-card { padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); position: relative; overflow: hidden; }
-.stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 0.5rem; }
+.stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 0.5rem; }
 .stat-value { font-family: var(--display); font-size: 1.75rem; font-weight: 700; color: var(--ink); margin: 0 0 1rem; }
 .stat-badge-wrap { display: flex; align-items: center; gap: 0.5rem; }
 .stat-badge { font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 9999px; }
-.badge-green { background: #d1fae5; color: #065f46; }
-.badge-indigo { background: #e0e7ff; color: #4b41e1; }
-.badge-amber { background: #fef3c7; color: #92400e; }
-.stat-sub { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
+.badge-green { background: var(--green-soft); color: var(--green-dark); }
+.badge-indigo { background: var(--blue-soft); color: var(--blue); }
+.badge-amber { background: var(--amber-soft); color: var(--gold); }
+.stat-sub { font-size: 0.7rem; color: var(--muted); font-style: italic; }
 
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .chart-card { padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .chart-card.wide { grid-column: 1 / -1; }
 .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .chart-title { font-family: var(--display); font-size: 1.1rem; font-weight: 700; color: var(--ink); margin: 0; }
-.chart-filter { padding: 0.35rem 0.75rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.75rem; color: #475569; }
+.chart-filter { padding: 0.35rem 0.75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: 0.5rem; font-size: 0.75rem; color: var(--muted); }
 .chart-area { min-height: 220px; }
 .analytics-chart { height: 220px; width: 100%; display: block; }
 .chart-legend { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 0.35rem; }
 .legend-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; }
-.legend-label { font-size: 0.75rem; color: #475569; }
-.legend-value { font-size: 0.75rem; font-weight: 700; color: #191c1e; }
+.legend-label { font-size: 0.75rem; color: var(--muted); }
+.legend-value { font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); }
 
 .region-list { display: flex; flex-direction: column; gap: 1rem; }
 .region-item { display: flex; align-items: center; gap: 1rem; }
 .region-info { width: 180px; display: flex; justify-content: space-between; }
-.region-name { font-size: 0.875rem; font-weight: 500; color: #191c1e; }
-.region-value { font-size: 0.875rem; color: #64748b; }
-.region-bar { flex: 1; height: 0.5rem; background: #f1f5f9; border-radius: 9999px; overflow: hidden; }
-.region-fill { height: 100%; background: #006948; border-radius: 9999px; }
-.region-pct { width: 40px; text-align: right; font-size: 0.875rem; font-weight: 600; color: #191c1e; }
+.region-name { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); }
+.region-value { font-size: 0.875rem; color: var(--muted); }
+.region-bar { flex: 1; height: 0.5rem; background: var(--surface-2); border-radius: 9999px; overflow: hidden; }
+.region-fill { height: 100%; background: var(--green); border-radius: 9999px; }
+.region-pct { width: 40px; text-align: right; font-size: 0.875rem; font-weight: 600; color: var(--ink-soft); }
 </style>

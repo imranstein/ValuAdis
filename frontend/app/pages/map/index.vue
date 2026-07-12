@@ -368,7 +368,7 @@ useHead({
   background:
     radial-gradient(circle at 32% 38%, rgba(31, 107, 79, 0.2), transparent 22%),
     radial-gradient(circle at 72% 52%, rgba(156, 107, 29, 0.18), transparent 20%),
-    linear-gradient(135deg, #e7ede5 0%, #f8f6ec 42%, #dfe9e3 100%);
+    linear-gradient(135deg, var(--green-soft) 0%, var(--surface) 42%, var(--green-soft) 100%);
 }
 
 .map-grid-lines {
@@ -476,7 +476,7 @@ useHead({
 .inspection-panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #f7f9f5;
+  background: var(--surface);
   padding: 16px;
 }
 

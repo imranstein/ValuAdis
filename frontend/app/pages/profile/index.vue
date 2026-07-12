@@ -250,8 +250,8 @@ function actionClass(action: string) {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #0f3d35;
-  color: #fff;
+  background: var(--green-dark);
+  color: var(--shell-ink);
   font-weight: 800;
   letter-spacing: 0.04em;
 }
@@ -260,7 +260,7 @@ function actionClass(action: string) {
 .metric-label,
 .profile-list dt {
   margin: 0;
-  color: #66756f;
+  color: var(--muted);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -274,7 +274,7 @@ function actionClass(action: string) {
 
 .profile-role {
   margin: 0;
-  color: #52615b;
+  color: var(--ink-soft);
 }
 
 .profile-status-row,
@@ -308,7 +308,7 @@ function actionClass(action: string) {
 .profile-list dd {
   margin: 0;
   text-align: right;
-  color: #17211d;
+  color: var(--ink);
   font-weight: 650;
 }
 

@@ -88,8 +88,8 @@ onMounted(async () => {
 
 .loading-state {
   display: flex; flex-direction: column; align-items: center; gap: 1rem;
-  padding: 4rem; background: white; border-radius: 12px;
-  border: 1px solid #e2e8f0; color: #64748b;
+  padding: 4rem; background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--line); color: var(--muted);
 }
 
 @media (max-width: 640px) {
