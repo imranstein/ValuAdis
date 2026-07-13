@@ -269,6 +269,22 @@ class _FlowApiClient extends ApiClient {
   Future<Response> post(String path, {dynamic data}) {
     return handlePost(path, data);
   }
+
+  /// Pull requests return an empty server payload so the two-way sync stays
+  /// network-free; these flow tests only exercise the push path.
+  @override
+  Future<Response<dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return Future.value(
+      Response<dynamic>(
+        requestOptions: RequestOptions(path: path),
+        statusCode: 200,
+        data: {'success': true, 'data': <dynamic>[]},
+      ),
+    );
+  }
 }
 
 Widget _buildFlowApp({

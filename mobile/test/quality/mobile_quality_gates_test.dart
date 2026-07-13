@@ -368,6 +368,46 @@ class _FakeValuationSyncRepo extends ValuationRepository {
   }
 }
 
+/// In-memory property repository that overrides only the storage primitives,
+/// so the production [PropertyRepository.upsertFromServer] conflict logic runs
+/// unchanged (insert-new / refresh-synced / skip-unsynced) without a database.
+/// getPendingSync returns empty so these tests isolate the pull phase.
+class _PullPropertyRepo extends PropertyRepository {
+  _PullPropertyRepo(this._items);
+
+  final List<Property> _items;
+  int _nextId = 1000;
+
+  List<Property> get items => List<Property>.unmodifiable(_items);
+
+  @override
+  Future<List<Property>> getPendingSync() async => const [];
+
+  @override
+  Future<List<Property>> getAllProperties() async => List<Property>.from(_items);
+
+  @override
+  Future<Property?> getByServerId(int serverId) async {
+    final matches = _items.where((p) => p.serverId == serverId);
+    return matches.isEmpty ? null : matches.first;
+  }
+
+  @override
+  Future<int> createProperty(Property property) async {
+    final item = property.copyWith(id: _nextId++);
+    _items.add(item);
+    return item.id!;
+  }
+
+  @override
+  Future<int> updateProperty(Property property) async {
+    final index = _items.indexWhere((p) => p.id == property.id);
+    if (index == -1) return 0;
+    _items[index] = property;
+    return 1;
+  }
+}
+
 class _ReleaseGatedAuthRepository extends _StubAuthRepository {
   @override
   Future<void> loginOffline() {
@@ -404,14 +444,34 @@ ResponseBody _jsonBody(Object payload, int statusCode) {
 }
 
 class _StubSyncApiClient extends ApiClient {
-  _StubSyncApiClient(this.handlePost);
+  _StubSyncApiClient(this.handlePost, {this.handleGet});
 
   final Future<Response<dynamic>> Function(String path, dynamic data)
       handlePost;
 
+  /// Pull requests are stubbed too so the two-way sync stays network-free.
+  /// Defaults to an empty server payload when a test does not script pulls.
+  final Future<Response<dynamic>> Function(String path)? handleGet;
+
   @override
   Future<Response> post(String path, {dynamic data}) {
     return handlePost(path, data);
+  }
+
+  @override
+  Future<Response<dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    final scripted = handleGet;
+    if (scripted != null) return scripted(path);
+    return Future.value(
+      Response<dynamic>(
+        requestOptions: RequestOptions(path: path),
+        statusCode: 200,
+        data: {'success': true, 'data': <dynamic>[]},
+      ),
+    );
   }
 }
 
@@ -1077,6 +1137,169 @@ void main() {
         seen.last.message,
         'Unable to process the request. Please check your input.',
       );
+    });
+  });
+
+  group('M3 two-way sync (server -> device pull)', () {
+    Response<dynamic> serverList(String path, List<Map<String, dynamic>> data) {
+      return Response<dynamic>(
+        requestOptions: RequestOptions(path: path),
+        statusCode: 200,
+        data: {'success': true, 'data': data},
+      );
+    }
+
+    _StubSyncApiClient pullApi(
+      List<Map<String, dynamic>> properties, {
+      bool failPull = false,
+    }) {
+      return _StubSyncApiClient(
+        (path, _) async => Response(
+          requestOptions: RequestOptions(path: path),
+          statusCode: 200,
+          data: <String, dynamic>{},
+        ),
+        handleGet: (path) async {
+          if (failPull) {
+            throw DioException(
+              requestOptions: RequestOptions(path: path),
+              type: DioExceptionType.connectionError,
+            );
+          }
+          if (path.contains('propert')) {
+            return serverList(path, properties);
+          }
+          return serverList(path, const []);
+        },
+      );
+    }
+
+    Future<SyncBloc> runSync(
+      PropertyRepository propertyRepository,
+      _StubSyncApiClient api,
+    ) async {
+      await _mockConnectivityCheck('wifi');
+      final bloc = SyncBloc(
+        propertyRepository,
+        _FakeValuationSyncRepo(const []),
+        api,
+        Connectivity(),
+      );
+      bloc.add(const ConnectivityChanged(true));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      bloc.add(SyncTriggered());
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      return bloc;
+    }
+
+    test('pull inserts new server records into local storage', () async {
+      final repo = _PullPropertyRepo([]);
+      final api = pullApi([
+        {
+          'id': 101,
+          'address': 'Server Property A',
+          'property_type': 'residential',
+          'area_sqm': 120,
+          'created_at': '2026-01-01T00:00:00Z',
+          'updated_at': '2026-01-01T00:00:00Z',
+        },
+        {
+          'id': 102,
+          'address': 'Server Property B',
+          'property_type': 'commercial',
+          'area_sqm': 240,
+          'created_at': '2026-01-02T00:00:00Z',
+          'updated_at': '2026-01-02T00:00:00Z',
+        },
+      ]);
+
+      final bloc = await runSync(repo, api);
+
+      expect(
+        repo.items.map((p) => p.serverId).toList(),
+        containsAll(<int>[101, 102]),
+      );
+      expect(bloc.state.status, SyncStatus.synced);
+    });
+
+    test('pull updates an existing local record matched by server id', () async {
+      final repo = _PullPropertyRepo([
+        const Property(
+          id: 1,
+          serverId: 50,
+          address: 'Stale address',
+          propertyType: 'residential',
+          areaSqm: 100,
+          syncStatus: 'synced',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        ),
+      ]);
+      final api = pullApi([
+        {
+          'id': 50,
+          'address': 'Refreshed address',
+          'property_type': 'residential',
+          'area_sqm': 175,
+          'created_at': '2026-01-01T00:00:00Z',
+          'updated_at': '2026-03-01T00:00:00Z',
+        },
+      ]);
+
+      await runSync(repo, api);
+
+      expect(repo.items.length, equals(1));
+      expect(repo.items.single.address, equals('Refreshed address'));
+    });
+
+    test('pull does not overwrite a local unsynced record', () async {
+      final repo = _PullPropertyRepo([
+        const Property(
+          id: 2,
+          serverId: 61,
+          address: 'Local unsynced edit',
+          propertyType: 'residential',
+          areaSqm: 90,
+          syncStatus: 'pending',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-04-01T00:00:00Z',
+        ),
+      ]);
+      final api = pullApi([
+        {
+          'id': 61,
+          'address': 'Server version should be ignored',
+          'property_type': 'commercial',
+          'area_sqm': 500,
+          'created_at': '2026-01-01T00:00:00Z',
+          'updated_at': '2026-03-01T00:00:00Z',
+        },
+      ]);
+
+      await runSync(repo, api);
+
+      expect(repo.items.single.address, equals('Local unsynced edit'));
+    });
+
+    test('pull failure leaves local data intact and emits failed state', () async {
+      final repo = _PullPropertyRepo([
+        const Property(
+          id: 3,
+          serverId: 70,
+          address: 'Preserved on pull failure',
+          propertyType: 'residential',
+          areaSqm: 110,
+          syncStatus: 'synced',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        ),
+      ]);
+      final api = pullApi(const [], failPull: true);
+
+      final bloc = await runSync(repo, api);
+
+      expect(repo.items.single.address, equals('Preserved on pull failure'));
+      expect(bloc.state.status, SyncStatus.failed);
     });
   });
 }
