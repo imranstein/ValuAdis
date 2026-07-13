@@ -1,7 +1,9 @@
-version: "3.8"
-
 services:
-  # PostgreSQL with PostGIS
+  # PostgreSQL with PostGIS (real dev/staging/prod database engine).
+  # Mirrors docker-compose.prod.yml so the full Alembic chain — including
+  # migration 001's `CREATE EXTENSION postgis` — runs identically in local dev.
+  # This is the supported local database; the SQLite spatial stubs in
+  # backend/app/core/dev_schema.py are for lightweight unit tests only.
   db:
     image: postgis/postgis:15-3.3
     container_name: valuadis_db
@@ -9,8 +11,11 @@ services:
       POSTGRES_DB: valuadis
       POSTGRES_USER: valuadis_user
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Host 5433 avoids clashing with a native Homebrew Postgres on 5432.
+    # The DATABASE_URL used from the host therefore targets localhost:5433.
     ports:
       - "5433:5432"
     networks:
@@ -20,6 +25,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Redis Cache
   redis:

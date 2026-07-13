@@ -79,6 +79,50 @@ docker-compose up -d
 # - Redis: localhost:6379
 ```
 
+### Local database (Docker)
+
+Run the backend against a real **Postgres + PostGIS** engine locally so the
+full Alembic chain — including migration `001`'s `CREATE EXTENSION postgis` —
+applies exactly as it does in staging and production. This replaces relying on
+the SQLite PostGIS-function stubs (`backend/app/core/dev_schema.py`), which
+exist for lightweight unit tests only and are **not** a release-path database.
+
+**One command** (starts the db, waits for healthy, runs migrations):
+
+```bash
+./scripts/dev-db-up.sh
+```
+
+**Or step by step:**
+
+```bash
+# 1. Start only the Postgres + PostGIS service (named volume, healthcheck)
+docker compose up -d db
+
+# 2. Apply the full migration chain against it
+#    Host port is 5433 to avoid clashing with a native Postgres on 5432.
+cd backend
+DATABASE_URL="postgresql://valuadis_user:changeme@localhost:5433/valuadis" \
+  alembic upgrade head
+
+# 3. Seed an admin user (see backend/create_admin.py)
+DATABASE_URL="postgresql://valuadis_user:changeme@localhost:5433/valuadis" \
+  python create_admin.py
+
+# 4. Run the API against the same database
+DATABASE_URL="postgresql://valuadis_user:changeme@localhost:5433/valuadis" \
+  uvicorn app.main:app --reload
+```
+
+Credentials come from the `db` service in `docker-compose.yml`
+(`valuadis_user` / `${DB_PASSWORD:-changeme}` / `valuadis`). Override the
+password by exporting `DB_PASSWORD` before `docker compose up`.
+
+```bash
+docker compose stop db   # stop, keep data
+docker compose down -v   # stop and delete the postgres_data volume (full reset)
+```
+
 ### Production Deployment
 
 For production deployment on Yegara.com, see the [Deployment Guide](./DEPLOYMENT_README.md).
