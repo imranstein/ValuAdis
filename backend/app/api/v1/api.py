@@ -17,6 +17,7 @@ from app.modules.audit import audit_router
 from app.modules.auth import auth_router
 from app.modules.users import users_router
 from app.modules.settings import settings_router
+from app.modules.notifications import notifications_router
 
 # Create main API router
 api_router = APIRouter()
@@ -90,4 +91,10 @@ api_router.include_router(
     settings_router,
     prefix="/settings",
     tags=["Settings"]
+)
+
+api_router.include_router(
+    notifications_router,
+    prefix="/notifications",
+    tags=["Notifications"]
 )

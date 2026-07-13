@@ -66,10 +66,9 @@
           </div>
           <label class="field">
             <span>System language</span>
-            <select v-model="systemLanguage">
-              <option>English (International)</option>
-              <option>Amharic</option>
-              <option>Afaan Oromo</option>
+            <select v-model="systemLanguage" @change="applyLanguage">
+              <option value="en">English (International)</option>
+              <option value="am">Amharic (አማርኛ)</option>
             </select>
           </label>
         </div>
@@ -173,8 +172,15 @@
 import { computed, onMounted, ref } from 'vue'
 import authService from '~/services/authService'
 import { getAccessToken } from '~/utils/authToken'
+import { useI18n } from '~/composables/useI18n'
 
 definePageMeta({ middleware: ['auth', 'admin'] })
+
+const { setLocale, locale } = useI18n()
+
+function applyLanguage() {
+  setLocale(systemLanguage.value === 'am' ? 'am' : 'en')
+}
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBaseUrl
@@ -192,7 +198,7 @@ async function settingsFetch(path, options = {}) {
 
 const darkMode = ref(false)
 const dataDensity = ref('compact')
-const systemLanguage = ref('English (International)')
+const systemLanguage = ref(locale.value)
 const daysSincePasswordChange = ref('unknown')
 const saveStatus = ref('Loading…')
 const profileLoadError = ref('')

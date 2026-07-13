@@ -366,6 +366,10 @@ export async function setupApiMock(page: Page) {
     await route.fulfill(mockJson(listResponse([])));
   });
 
+  await page.route('**/api/v1/notifications**', async (route) => {
+    await route.fulfill(mockJson({ count: 0, notifications: [] }));
+  });
+
   await page.route('**/api/v1/valuation-feedback**', async (route) => {
     await route.fulfill(mockJson({}));
   });

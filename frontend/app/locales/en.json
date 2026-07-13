@@ -41,9 +41,14 @@
   "nav": {
     "dashboard": "Dashboard",
     "properties": "Properties",
+    "vehicles": "Vehicles",
     "valuations": "Valuations",
     "quickValuation": "Quick Valuation",
     "analytics": "Analytics",
+    "propertyMap": "Property Map",
+    "reports": "Reports",
+    "scrapers": "Scrapers",
+    "users": "Users",
     "audit": "Audit & Compliance",
     "settings": "Settings",
     "profile": "Profile"

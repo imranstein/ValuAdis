@@ -61,8 +61,9 @@
           <button class="action-btn" type="button" aria-label="Search" @click="toggleSearch">
             <i class="pi pi-search" aria-hidden="true"></i>
           </button>
-          <button class="action-btn" type="button" aria-label="Notifications" @click="toggleNotifications">
+          <button class="action-btn notif-btn" type="button" aria-label="Notifications" @click="toggleNotifications">
             <i class="pi pi-bell" aria-hidden="true"></i>
+            <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
           <button class="header-avatar" type="button" aria-label="Profile menu" @click="toggleProfileMenu">
             {{ userInitials }}
@@ -153,7 +154,10 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions.js'
+import { useI18n } from '~/composables/useI18n'
 import { getAccessToken } from '~/utils/authToken'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -191,29 +195,29 @@ const navigation = computed<NavigationGroup[]>(() => [
   {
     label: 'Workspace',
     items: [
-      { label: 'Dashboard', to: '/dashboard', icon: 'pi pi-home' },
-      { label: 'Properties', to: '/properties', icon: 'pi pi-building' },
-      { label: 'Vehicles', to: '/vehicles', icon: 'pi pi-car' },
-      { label: 'Valuations', to: '/valuations', icon: 'pi pi-calculator' },
-      { label: 'Quick Valuation', to: '/valuations/quick', icon: 'pi pi-bolt' }
+      { label: t('nav.dashboard'), to: '/dashboard', icon: 'pi pi-home' },
+      { label: t('nav.properties'), to: '/properties', icon: 'pi pi-building' },
+      { label: t('nav.vehicles'), to: '/vehicles', icon: 'pi pi-car' },
+      { label: t('nav.valuations'), to: '/valuations', icon: 'pi pi-calculator' },
+      { label: t('nav.quickValuation'), to: '/valuations/quick', icon: 'pi pi-bolt' }
     ]
   },
   {
     label: 'Intelligence',
     items: [
-      { label: 'Analytics', to: '/analytics', icon: 'pi pi-chart-bar' },
-      { label: 'Property Map', to: '/map', icon: 'pi pi-map' },
-      { label: 'Reports', to: '/reports', icon: 'pi pi-file-pdf' }
+      { label: t('nav.analytics'), to: '/analytics', icon: 'pi pi-chart-bar' },
+      { label: t('nav.propertyMap'), to: '/map', icon: 'pi pi-map' },
+      { label: t('nav.reports'), to: '/reports', icon: 'pi pi-file-pdf' }
     ]
   },
   {
     label: 'Administration',
     admin: true,
     items: [
-      { label: 'Scrapers', to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
-      { label: 'Users', to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
-      { label: 'Settings', to: '/settings', icon: 'pi pi-cog' },
-      { label: 'Audit Log', to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
+      { label: t('nav.scrapers'), to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
+      { label: t('nav.users'), to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
+      { label: t('nav.settings'), to: '/settings', icon: 'pi pi-cog' },
+      { label: t('nav.audit'), to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
     ]
   }
 ])
@@ -248,6 +252,7 @@ const pageTitle = computed(() => pages[route.path]?.title || 'ValuAdis')
 const pageSubtitle = computed(() => pages[route.path]?.subtitle || 'Civic property valuation platform.')
 
 const notifications = ref<Array<{ id: number; title: string; message: string; time: string; read: boolean }>>([])
+const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
 
 const userInitials = computed(() => {
   if (!userName.value) return 'VA'
@@ -339,6 +344,28 @@ function markAllAsRead() {
   })
 }
 
+async function loadNotifications() {
+  const token = getAccessToken()
+  if (!token) return
+  try {
+    const config = useRuntimeConfig()
+    const res = await fetch(`${config.public.apiBaseUrl}/api/v1/notifications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const body = await res.json()
+    notifications.value = (body.notifications || []).map((n: any, index: number) => ({
+      id: index,
+      title: n.title,
+      message: n.message,
+      time: n.timestamp ? new Date(n.timestamp).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '',
+      read: false,
+    }))
+  } catch {
+    // Honest empty state on failure; never fabricate notifications.
+  }
+}
+
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 function debouncedSearch() {
@@ -361,8 +388,28 @@ function handleLogout() {
 onMounted(() => {
   loadUserData()
   loadCurrentUser()
+  loadNotifications()
 })
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
 })
 </script>
+
+<style scoped>
+.notif-btn { position: relative; }
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--red, #9d3a28);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+</style>
