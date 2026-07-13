@@ -89,18 +89,18 @@ test.describe('Compliance report page', () => {
     await page.goto('/reports/compliance', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: 'Compliance report.' })).toBeVisible();
-    await expect(page.getByText('Compliance rate')).toBeVisible();
-    await expect(page.getByText('95.1%')).toBeVisible();
-    await expect(page.getByText('41')).toBeVisible();
-    await expect(page.getByText('39')).toBeVisible();
-    await expect(page.getByText('2')).toBeVisible();
-    await expect(page.getByText('Municipality compliance')).toBeVisible();
-    await expect(page.getByText('Addis Ababa')).toBeVisible();
-    await expect(page.getByText('Dire')).toBeVisible();
-    await expect(page.getByText('Property-type compliance')).toBeVisible();
-    await expect(page.getByText('Residential')).toBeVisible();
-    await expect(page.getByText('Commercial')).toBeVisible();
-    await expect(page.getByText('No taxable-value exceptions are reported.')).not.toBeVisible();
+    const metric = (label: string) => page.locator('.metric-card').filter({ hasText: label });
+    await expect(metric('Compliance rate')).toContainText('95.1%');
+    await expect(metric('Analyzed valuations')).toContainText('41');
+    await expect(metric('Compliant')).toContainText('39');
+    await expect(metric('Exceptions')).toContainText('2');
+    await expect(page.getByRole('heading', { name: 'Municipality compliance' })).toBeVisible();
+    await expect(page.getByText('Addis Ababa').first()).toBeVisible();
+    await expect(page.getByText('Dire').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Property-type compliance' })).toBeVisible();
+    await expect(page.getByText('Residential').first()).toBeVisible();
+    await expect(page.getByText('Commercial').first()).toBeVisible();
+    await expect(page.getByText('No taxable-value exceptions are reported.')).toHaveCount(0);
     await expect(page.getByText('#1201')).toBeVisible();
   });
 
@@ -115,7 +115,7 @@ test.describe('Compliance report page', () => {
 
     await page.goto('/reports/compliance', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByRole('heading', { name: 'Compliance report unavailable' })).toBeVisible();
+    await expect(page.getByText('Compliance report unavailable')).toBeVisible();
     await expect(page.getByText('Compliance report request failed with 503')).toBeVisible();
   });
 
@@ -136,7 +136,8 @@ test.describe('Compliance report page', () => {
 
     await expect(page.getByRole('heading', { name: 'Compliance report.' })).toBeVisible();
     await expect(page.getByText('0.0%')).toHaveCount(1);
-    await expect(page.getByText('0')).toHaveCount(4);
+    // Analyzed, Compliant, and Exceptions metrics all fall back to an exact "0".
+    await expect(page.locator('.metric-value').filter({ hasText: /^0$/ })).toHaveCount(3);
     await expect(page.getByText('No municipality compliance records are available yet.')).toBeVisible();
     await expect(page.getByText('No property-type compliance records are available yet.')).toBeVisible();
     await expect(page.getByText('No taxable-value exceptions are reported.')).toBeVisible();

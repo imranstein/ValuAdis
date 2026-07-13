@@ -1,9 +1,16 @@
 import { test, expect } from '../setup/fixtures';
+import { MOCK_TOKEN } from '../setup/api-mock';
 
 test.describe('Basic Navigation - Phase 1 Foundation', () => {
   test.use({ storageState: 'tests/e2e/.auth/user.json' });
 
   test.beforeEach(async ({ page }) => {
+    // Re-seed the token on every navigation. getAccessToken() consumes the
+    // storageState token on first read, so multi-navigation flows would
+    // otherwise depend on refresh-cookie timing; this keeps auth deterministic.
+    await page.addInitScript((token) => {
+      localStorage.setItem('valuadis_token', token);
+    }, MOCK_TOKEN);
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
   });

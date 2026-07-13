@@ -23,17 +23,9 @@ test.describe('Ethiopian Compliance - Proclamation 1365/2025', () => {
     }
   });
 
-  test('should have Proclamation 1365/2025 compliance toggle', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const valuationTab = page.locator('button:has-text("Valuation")');
-    await valuationTab.click();
-    await page.waitForTimeout(300);
-    
-    const proclamationToggle = page.locator('input[type="checkbox"]:near(:text("Proclamation 1365"))');
-    if (await proclamationToggle.count() > 0) {
-      await expect(proclamationToggle).toBeVisible();
-    }
+  test('should reference Proclamation 1365/2025 in the valuation workflow', async ({ page }) => {
+    await page.goto('/valuations/quick', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText(/Proclamation 1365\/2025/i)).toBeVisible();
   });
 
   test('should validate Ethiopian property types', async ({ page }) => {
@@ -107,17 +99,12 @@ test.describe('Ethiopian Compliance - Proclamation 1365/2025', () => {
     }
   });
 
-  test('should display required documentation for Ethiopian compliance', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const valuationTab = page.locator('button:has-text("Valuation")');
-    await valuationTab.click();
-    await page.waitForTimeout(300);
-    
-    const documentationSection = page.locator('label:has-text("Required Documentation"), h3:has-text("Documentation")');
-    if (await documentationSection.count() > 0) {
-      await expect(documentationSection.first()).toBeVisible();
-    }
+  test('should offer Ethiopian municipalities in the property registry filter', async ({ page }) => {
+    await page.goto('/properties', { waitUntil: 'domcontentloaded' });
+    const municipalityFilter = page.locator('select[aria-label="Filter by municipality"]');
+    await expect(municipalityFilter).toBeVisible();
+    const options = await municipalityFilter.locator('option').allTextContents();
+    expect(options.some((opt) => /Addis Ababa|Mekelle|Bahir Dar|Dire Dawa/.test(opt))).toBeTruthy();
   });
 
   test('should validate property ownership documentation', async ({ page }) => {
@@ -349,28 +336,11 @@ test.describe('Ethiopian Business License Validation', () => {
 test.describe('Ethiopian Market Data Integration', () => {
   test.use({ storageState: 'tests/e2e/.auth/user.json' });
 
-  test('should display Ethiopian property sources in scraper', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const scraperTab = page.locator('button:has-text("Web Scraper")');
-    await scraperTab.click();
-    await page.waitForTimeout(300);
-    
-    const table = page.locator('table');
-    if (await table.count() > 0) {
-      const tableText = await table.textContent();
-      
-      const ethiopianSources = [
-        'livingethio.com',
-        'ethiopiapropertycentre.com',
-        'ethiopianproperties.com',
-        'zegebeya.com',
-        'jiji.com.et'
-      ];
-      
-      const hasEthiopianSource = ethiopianSources.some(source => tableText?.includes(source));
-      expect(hasEthiopianSource).toBeTruthy();
-    }
+  test('should expose the property-scraper data-operations surface', async ({ page }) => {
+    await page.goto('/scrapers', { waitUntil: 'domcontentloaded' });
+    // The scraper surface is now its own admin route; verify it renders rather
+    // than living behind a settings tab.
+    await expect(page.locator('h1').first()).toContainText(/scraper/i);
   });
 
   test('should validate Ethiopian property listing data', async ({ page }) => {

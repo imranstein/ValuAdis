@@ -2,7 +2,7 @@
   "cookies": [],
   "origins": [
     {
-      "origin": "http://127.0.0.1:3020",
+      "origin": "http://localhost:3020",
       "localStorage": [
         {
           "name": "valuadis_token",

@@ -1,8 +1,15 @@
 import { test, expect } from '../setup/fixtures';
+import { setUnauthenticated } from '../setup/api-mock';
 import { LoginPage } from '../page-objects/LoginPage';
 import { TEST_CREDENTIALS } from '../config/test-credentials';
 
 test.describe('Responsive Design', () => {
+  // Every test starts from the login screen, so the mock must report a
+  // logged-out session (otherwise session-restore redirects /login to /dashboard).
+  test.beforeEach(async ({ page }) => {
+    setUnauthenticated(page);
+  });
+
   test('should display login page correctly on desktop viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     const loginPage = new LoginPage(page);

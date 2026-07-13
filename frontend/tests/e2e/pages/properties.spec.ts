@@ -32,16 +32,10 @@ test.describe('Properties Management', () => {
     expect(rowCount).toBeGreaterThanOrEqual(0);
   });
 
-  test('should filter properties', async ({ propertiesPage, page }) => {
-    const filterButton = propertiesPage.filterButton;
-    
-    if (await filterButton.count() > 0) {
-      await filterButton.click();
-      await page.waitForTimeout(300);
-      
-      const filterPanel = page.locator('.filter-panel, .filters');
-      await expect(filterPanel).toBeVisible();
-    }
+  test('should filter properties by municipality', async ({ page }) => {
+    const dataRows = page.locator('tbody tr:not(:has(td[colspan]))');
+    await page.locator('select[aria-label="Filter by municipality"]').selectOption('Mekelle');
+    await expect(dataRows.first()).toContainText('Mekelle');
   });
 
   test('should open add property page', async ({ propertiesPage, page }) => {

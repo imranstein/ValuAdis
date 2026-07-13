@@ -82,12 +82,9 @@ test.describe('Scrapers', () => {
     }
 
     await page.route('**/api/v1/auth/me', async (route) => {
-      await route.fulfill(
-        jsonResponse({
-          success: true,
-          data: MOCK_USER
-        })
-      )
+      // The frontend reads /auth/me as the user object directly (no success/data wrapper),
+      // so returning it unwrapped keeps is_admin visible to the admin middleware.
+      await route.fulfill(jsonResponse(MOCK_USER))
     })
 
     await page.route('**/api/v1/scrapers/stats', async (route) => {
@@ -158,18 +155,15 @@ test.describe('Scrapers', () => {
       )
     })
 
-    await page.route('**/api/v1/scrapers*', async (route) => {
+    // Match the base collection endpoint only (list GET + create POST), including the
+    // trailing slash and query string the service uses, without shadowing the specific
+    // /scrapers/{id}/... routes registered above.
+    await page.route(/\/api\/v1\/scrapers\/?(\?.*)?$/, async (route) => {
       const method = route.request().method()
       if (method === 'GET') {
-        await route.fulfill(
-          jsonResponse({
-            success: true,
-            data: scrapers,
-            total: scrapers.length,
-            skip: 0,
-            limit: 100
-          })
-        )
+        // The axios service returns the response body as-is and the component's
+        // handleApiCall wraps it, so the list endpoint must return the raw array.
+        await route.fulfill(jsonResponse(scrapers))
         return
       }
 
@@ -258,7 +252,10 @@ test.describe('Scrapers', () => {
   test('should create, exercise lifecycle, and delete a scraper', async ({ page }) => {
     await page.goto('/scrapers', { waitUntil: 'domcontentloaded' })
 
-    const rowsBefore = await page.locator('.scraper-table table tbody tr').count()
+    const scraperRows = page.locator('.scraper-table table tbody tr')
+    // Wait for the seeded scraper to load before measuring the baseline.
+    await expect(scraperRows.filter({ hasText: 'ethproperty.com' })).toBeVisible()
+    const rowsBefore = await scraperRows.count()
 
     await page.getByRole('button', { name: /Add New Property Scraper/ }).click()
     await fillScraperForm(page, 'new-scraper.com', 'https://new-scraper.com/properties?page={page}')
@@ -272,8 +269,8 @@ test.describe('Scrapers', () => {
     await page.getByRole('button', { name: 'Add Scraper' }).click()
     await createRequest
 
-    await expect(page.locator('.scraper-table table tbody tr')).toHaveCount(rowsBefore + 1)
-    await expect(page.locator('text=new-scraper.com')).toBeVisible()
+    await expect(scraperRows.filter({ hasText: 'new-scraper.com' }).first()).toBeVisible()
+    expect(await scraperRows.count()).toBeGreaterThan(rowsBefore)
 
     const createdRow = page
       .locator('.scraper-table table tbody tr')

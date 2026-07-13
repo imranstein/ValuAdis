@@ -22,9 +22,10 @@ export class PropertiesPage {
   constructor(page: Page) {
     this.page = page;
     this.pageTitle = page.getByRole('heading', { name: /properties/i }).first();
-    this.addPropertyButton = page.getByRole('button', { name: /create property/i }).first();
+    // "Create property" is a NuxtLink (anchor) to /properties/create in the rebranded UI.
+    this.addPropertyButton = page.getByRole('link', { name: /create property/i }).first();
     this.searchInput = page.locator('input[placeholder*="Search"]');
-    this.filterButton = page.locator('button:has-text("Reset")');
+    this.filterButton = page.getByRole('button', { name: /reset filters/i });
     this.propertiesTable = page.locator('table');
     this.propertyRows = page.locator('tbody tr');
     this.municipalitySelect = page.locator('select').first();

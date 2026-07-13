@@ -43,8 +43,10 @@ test.describe('Vehicle workflow', () => {
 
     await page.locator('input[placeholder*="e.g., Toyota"]').fill('Toyota');
     await page.locator('input[placeholder*="e.g., Corolla"]').fill('Corolla');
-    await page.locator('input[placeholder*="e.g., 2020"]').fill('2022');
-    await page.locator('input[placeholder*="17-character VIN"]').fill('1HGCM82633A004352');
+    // Two fields share this placeholder (vehicle year + import year); the first is the vehicle year.
+    await page.locator('input[placeholder*="e.g., 2020"]').first().fill('2022');
+    // Deliberately 16 characters so client-side validation blocks the submit before any API call.
+    await page.getByPlaceholder('17-character VIN', { exact: true }).fill('1HGCM82633A00435');
     await page.locator('input[placeholder*="e.g., AA-123-BC"]').fill('AA-123-BC');
 
     await page.evaluate(() => {
@@ -62,8 +64,10 @@ test.describe('Vehicle workflow', () => {
 
     await page.getByRole('button', { name: 'Save Vehicle' }).click();
 
+    // The specific VIN error renders inline; the submit status shows a summary.
+    await expect(page.getByText('VIN must be 17 characters')).toBeVisible();
     await expect(page.getByTestId('vehicle-create-status')).toContainText(
-      'VIN must be 17 characters',
+      'Review the highlighted fields before saving',
     );
     expect(createCallCount).toBe(0);
   });
@@ -116,7 +120,8 @@ test.describe('Vehicle workflow', () => {
       await route.fulfill(jsonResponse(MOCK_USER));
     });
 
-    await page.route('**/api/v1/vehicles*', async (route) => {
+    // Double-star so sub-paths (/vehicles/{id}, /{id}/valuations, /{id}/valuation) are intercepted.
+    await page.route('**/api/v1/vehicles**', async (route) => {
       const url = route.request().url();
       const method = route.request().method();
 
@@ -165,8 +170,9 @@ test.describe('Vehicle workflow', () => {
 
     await page.locator('input[placeholder*="e.g., Toyota"]').fill('Toyota');
     await page.locator('input[placeholder*="e.g., Corolla"]').fill('Corolla');
-    await page.locator('input[placeholder*="e.g., 2020"]').fill('2022');
-    await page.locator('input[placeholder*="17-character VIN"]').fill(vehicle.vin);
+    // Two fields share this placeholder (vehicle year + import year); the first is the vehicle year.
+    await page.locator('input[placeholder*="e.g., 2020"]').first().fill('2022');
+    await page.getByPlaceholder('17-character VIN', { exact: true }).fill(vehicle.vin);
     await page.locator('input[placeholder*="e.g., AA-123-BC"]').fill(vehicle.plate_number);
 
     await page.evaluate(() => {
@@ -187,14 +193,17 @@ test.describe('Vehicle workflow', () => {
 
     await page.goto('/vehicles', { waitUntil: 'domcontentloaded' });
     const row = page.getByRole('row', { name: vehicle.vin }).first();
-    await expect(row).toBeVisible({ timeout: 5000 });
+    // Generous timeout: list fetch + hydration can lag under parallel-worker load.
+    await expect(row).toBeVisible({ timeout: 15000 });
 
     await row.locator('button[aria-label="View vehicle"]').click();
     await expect(page).toHaveURL(new RegExp(`/vehicles/${vehicle.id}`));
 
-    await page.getByRole('button', { name: 'New Valuation' }).first().click();
+    const newValuationButton = page.getByRole('button', { name: 'New Valuation' }).first();
+    await expect(newValuationButton).toBeVisible({ timeout: 15000 });
+    await newValuationButton.click();
     await expect.poll(() => valuationCreated).toBeTruthy();
     await expect(page.getByText('Latest Valuation')).toBeVisible();
-    await expect(page.getByText('Market Value')).toBeVisible();
+    await expect(page.getByText('Market Value').first()).toBeVisible();
   });
 });

@@ -18,14 +18,15 @@ test.describe('Dashboard', () => {
   });
 
   test('should display all stat cards with values', async ({ page }) => {
-    const statCards = page.locator('.stat-card');
+    const statCards = page.locator('.metric-card');
+    await expect(statCards.first()).toBeVisible();
     const count = await statCards.count();
-    
+
     for (let i = 0; i < count; i++) {
       const card = statCards.nth(i);
       await expect(card).toBeVisible();
-      
-      const value = card.locator('h3, .stat-value');
+
+      const value = card.locator('.metric-value');
       await expect(value).toBeVisible();
     }
   });
@@ -56,10 +57,10 @@ test.describe('Dashboard', () => {
 
   test('should have responsive layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    
-    const statsCards = page.locator('.stat-card');
+
+    const statsCards = page.locator('.metric-card');
     const count = await statsCards.count();
-    
+
     for (let i = 0; i < count; i++) {
       await expect(statsCards.nth(i)).toBeVisible();
     }
@@ -67,11 +68,11 @@ test.describe('Dashboard', () => {
 
   test('should refresh data when clicking refresh button', async ({ page }) => {
     const refreshButton = page.locator('button:has-text("Refresh"), button[title*="Refresh"]');
-    
+
     if (await refreshButton.count() > 0) {
       await refreshButton.first().click();
       await page.waitForTimeout(500);
-      await expect(page.locator('.stat-card').first()).toBeVisible();
+      await expect(page.locator('.metric-card').first()).toBeVisible();
     }
   });
 });
