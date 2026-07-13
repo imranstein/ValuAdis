@@ -14,15 +14,20 @@ import 'package:valuadis/bloc/property/property_state.dart';
 import 'package:valuadis/bloc/sync/sync_bloc.dart';
 import 'package:valuadis/bloc/sync/sync_event.dart';
 import 'package:valuadis/bloc/sync/sync_state.dart';
+import 'package:valuadis/bloc/quick_valuation/quick_valuation_bloc.dart';
 import 'package:valuadis/bloc/valuation/valuation_bloc.dart';
 import 'package:valuadis/bloc/valuation/valuation_event.dart';
+import 'package:valuadis/bloc/vehicle/vehicle_bloc.dart';
 import 'package:valuadis/data/models/valuation.dart';
 import 'package:valuadis/data/models/photo.dart';
 import 'package:valuadis/data/models/property.dart';
+import 'package:valuadis/data/models/vehicle.dart';
 import 'package:valuadis/data/repositories/auth_repository.dart';
 import 'package:valuadis/data/repositories/property_repository.dart';
 import 'package:valuadis/data/repositories/photo_repository.dart';
+import 'package:valuadis/data/repositories/quick_valuation_repository.dart';
 import 'package:valuadis/data/repositories/valuation_repository.dart';
+import 'package:valuadis/data/repositories/vehicle_repository.dart';
 import 'package:valuadis/data/datasources/remote/api_client.dart';
 import 'package:valuadis/presentation/bloc_providers.dart';
 import 'package:valuadis/presentation/screens/login_screen.dart';
@@ -311,6 +316,10 @@ Widget _buildFlowApp({
           create: (_) => valuationBloc,
         ),
         BlocProvider<SyncBloc>(create: (_) => syncBloc),
+        BlocProvider<VehicleBloc>(create: (_) => _testVehicleBloc()),
+        BlocProvider<QuickValuationBloc>(
+          create: (_) => _testQuickValuationBloc(),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -528,6 +537,22 @@ class _TestSyncValuationRepository extends ValuationRepository {}
 
 class _TestApiClient extends ApiClient {}
 
+class _TestVehicleRepository extends VehicleRepository {
+  _TestVehicleRepository() : super(_TestApiClient());
+
+  @override
+  Future<List<Vehicle>> getVehicles() async => const [];
+}
+
+class _TestQuickValuationRepository extends QuickValuationRepository {
+  _TestQuickValuationRepository() : super(_TestApiClient());
+}
+
+VehicleBloc _testVehicleBloc() => VehicleBloc(_TestVehicleRepository());
+
+QuickValuationBloc _testQuickValuationBloc() =>
+    QuickValuationBloc(_TestQuickValuationRepository());
+
 class _TestSyncBloc extends SyncBloc {
   _TestSyncBloc()
       : super(
@@ -567,6 +592,12 @@ Widget _buildPropertyListScreen({required SyncBloc syncBloc}) {
         ),
         BlocProvider<ValuationBloc>(
           create: (_) => _TestValuationBloc(),
+        ),
+        BlocProvider<VehicleBloc>(
+          create: (_) => _testVehicleBloc(),
+        ),
+        BlocProvider<QuickValuationBloc>(
+          create: (_) => _testQuickValuationBloc(),
         ),
       ],
       child: const PropertyListScreen(),

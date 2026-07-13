@@ -17,12 +17,22 @@ import 'package:valuadis/bloc/property/property_event.dart';
 import 'package:valuadis/bloc/sync/sync_bloc.dart';
 import 'package:valuadis/bloc/sync/sync_event.dart';
 import 'package:valuadis/bloc/sync/sync_state.dart';
+import 'package:valuadis/bloc/quick_valuation/quick_valuation_bloc.dart';
+import 'package:valuadis/bloc/quick_valuation/quick_valuation_event.dart';
+import 'package:valuadis/bloc/quick_valuation/quick_valuation_state.dart';
+import 'package:valuadis/bloc/vehicle/vehicle_bloc.dart';
+import 'package:valuadis/bloc/vehicle/vehicle_event.dart';
+import 'package:valuadis/bloc/vehicle/vehicle_state.dart';
 import 'package:valuadis/data/datasources/remote/api_client.dart';
 import 'package:valuadis/data/models/property.dart';
+import 'package:valuadis/data/models/quick_valuation.dart';
 import 'package:valuadis/data/models/valuation.dart';
+import 'package:valuadis/data/models/vehicle.dart';
 import 'package:valuadis/data/repositories/auth_repository.dart';
 import 'package:valuadis/data/repositories/property_repository.dart';
+import 'package:valuadis/data/repositories/quick_valuation_repository.dart';
 import 'package:valuadis/data/repositories/valuation_repository.dart';
+import 'package:valuadis/data/repositories/vehicle_repository.dart';
 
 const _connectivityMethodChannel = MethodChannel(
   'dev.fluttercommunity.plus/connectivity',
@@ -403,6 +413,63 @@ class _StubSyncApiClient extends ApiClient {
   Future<Response> post(String path, {dynamic data}) {
     return handlePost(path, data);
   }
+}
+
+class _StubVehicleRepository extends VehicleRepository {
+  _StubVehicleRepository({this.vehicles = const [], this.error})
+      : super(ApiClient());
+
+  final List<Vehicle> vehicles;
+  final Object? error;
+  bool getVehiclesCalled = false;
+  int? detailRequestedId;
+
+  @override
+  Future<List<Vehicle>> getVehicles() async {
+    getVehiclesCalled = true;
+    final failure = error;
+    if (failure != null) throw failure;
+    return vehicles;
+  }
+
+  @override
+  Future<Vehicle> getVehicleById(int id) async {
+    detailRequestedId = id;
+    final failure = error;
+    if (failure != null) throw failure;
+    return vehicles.firstWhere((vehicle) => vehicle.id == id);
+  }
+}
+
+class _StubQuickValuationRepository extends QuickValuationRepository {
+  _StubQuickValuationRepository({this.result, this.error})
+      : super(ApiClient());
+
+  final QuickValuationResult? result;
+  final Object? error;
+  QuickValuationRequest? lastRequest;
+
+  @override
+  Future<QuickValuationResult> calculate(QuickValuationRequest request) async {
+    lastRequest = request;
+    final failure = error;
+    if (failure != null) throw failure;
+    return result!;
+  }
+}
+
+Vehicle _buildVehicle(int id) {
+  return Vehicle(
+    id: id,
+    userId: 1,
+    make: 'Toyota',
+    model: 'Corolla',
+    year: 2020,
+    vin: '1HGCM82633A004352',
+    plateNumber: 'AA-12345',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+  );
 }
 
 void main() {
@@ -900,6 +967,115 @@ void main() {
       expect(
         seen.last.message,
         'Offline demo login is unavailable in release builds.',
+      );
+    });
+  });
+
+  group('12.3 Vehicle bloc', () {
+    test('VehicleBloc load success emits loaded with vehicles', () async {
+      final repo = _StubVehicleRepository(vehicles: [_buildVehicle(1)]);
+      final bloc = VehicleBloc(repo);
+
+      final seen = <VehicleState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(LoadVehicles());
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(repo.getVehiclesCalled, isTrue);
+      expect(seen.any((state) => state.status == VehicleStatus.loading), isTrue);
+      final loaded = seen.last;
+      expect(loaded.status, VehicleStatus.loaded);
+      expect(loaded.vehicles.single.displayName, 'Toyota Corolla (2020)');
+    });
+
+    test('VehicleBloc load failure emits error with message', () async {
+      final repo = _StubVehicleRepository(
+        error: DioException(
+          requestOptions: RequestOptions(path: '/vehicles'),
+          error: 'Server unavailable. Try again shortly.',
+        ),
+      );
+      final bloc = VehicleBloc(repo);
+
+      final seen = <VehicleState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(LoadVehicles());
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(seen.last.status, VehicleStatus.error);
+      expect(seen.last.message, 'Server unavailable. Try again shortly.');
+    });
+
+    test('VehicleBloc detail load fetches by id via GET /vehicles/{id}',
+        () async {
+      final repo = _StubVehicleRepository(vehicles: [_buildVehicle(7)]);
+      final bloc = VehicleBloc(repo);
+
+      final seen = <VehicleState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(const LoadVehicleDetail(7));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(repo.detailRequestedId, 7);
+      expect(seen.last.detailStatus, VehicleDetailStatus.loaded);
+      expect(seen.last.selected?.id, 7);
+    });
+  });
+
+  group('12.4 Quick valuation bloc', () {
+    test('QuickValuationBloc success emits result with market/taxable value',
+        () async {
+      const result = QuickValuationResult(
+        marketValue: 1000000,
+        taxableValue: 250000,
+        baseRate: 1000,
+        multiplier: 1.0,
+      );
+      final repo = _StubQuickValuationRepository(result: result);
+      final bloc = QuickValuationBloc(repo);
+
+      final seen = <QuickValuationState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(
+        const QuickValuationRequested(
+          QuickValuationRequest(municipality: 'Addis Ababa', areaSqm: 100),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(repo.lastRequest?.municipality, 'Addis Ababa');
+      expect(seen.any((s) => s.status == QuickValuationStatus.loading), isTrue);
+      expect(seen.last.status, QuickValuationStatus.success);
+      expect(seen.last.result?.taxableValue, 250000);
+    });
+
+    test('QuickValuationBloc failure emits failure with message', () async {
+      final repo = _StubQuickValuationRepository(
+        error: DioException(
+          requestOptions: RequestOptions(path: '/valuations/quick'),
+          error: 'Unable to process the request. Please check your input.',
+        ),
+      );
+      final bloc = QuickValuationBloc(repo);
+
+      final seen = <QuickValuationState>[];
+      final sub = bloc.stream.listen(seen.add);
+      bloc.add(
+        const QuickValuationRequested(
+          QuickValuationRequest(municipality: 'Addis Ababa', areaSqm: 100),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await sub.cancel();
+
+      expect(seen.last.status, QuickValuationStatus.failure);
+      expect(
+        seen.last.message,
+        'Unable to process the request. Please check your input.',
       );
     });
   });
