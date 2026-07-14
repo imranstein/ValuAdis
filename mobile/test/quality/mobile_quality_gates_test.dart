@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:valuadis/core/constants.dart';
+import 'package:valuadis/core/geo.dart';
 import 'package:valuadis/data/datasources/local/hive_helper.dart';
 
 import 'package:valuadis/bloc/auth/auth_bloc.dart';
@@ -1300,6 +1301,74 @@ void main() {
 
       expect(repo.items.single.address, equals('Preserved on pull failure'));
       expect(bloc.state.status, SyncStatus.failed);
+    });
+  });
+
+  group('M-sync property create payload', () {
+    test('property push payload sends municipality and WKT-derived coordinates',
+        () async {
+      const wkt =
+          'POLYGON((38.790000 9.000000, 38.796430 9.000000, 38.796430 9.006351, 38.790000 9.006351, 38.790000 9.000000))';
+      final propertyRepository = _FakePropertySyncRepo([
+        const Property(
+          id: 5,
+          address: 'Bole parcel',
+          municipality: 'Dire Dawa',
+          propertyType: 'residential',
+          boundary: wkt,
+          areaSqm: 500000,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        ),
+      ]);
+
+      Map<String, dynamic>? capturedPayload;
+      final api = _StubSyncApiClient((path, data) async {
+        if (path.contains('propert')) {
+          capturedPayload = Map<String, dynamic>.from(data as Map);
+        }
+        return Response(
+          requestOptions: RequestOptions(path: path),
+          statusCode: 200,
+          data: path.contains('propert') ? {'id': 501} : <String, dynamic>{},
+        );
+      });
+
+      await _mockConnectivityCheck('wifi');
+      final bloc = SyncBloc(
+        propertyRepository,
+        _FakeValuationSyncRepo(const []),
+        api,
+        Connectivity(),
+      );
+      bloc.add(const ConnectivityChanged(true));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      bloc.add(SyncTriggered());
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(capturedPayload, isNotNull);
+      expect(capturedPayload!['municipality'], equals('Dire Dawa'));
+
+      final coordinates = capturedPayload!['coordinates'] as List;
+      expect(coordinates, isNotEmpty);
+      expect((coordinates.first as List).length, equals(2));
+    });
+
+    test('polygonAreaSqm returns a realistic area for a small parcel', () {
+      // ~0.5 km^2 square near Bole, Addis Ababa. Passed as an open ring; the
+      // helper closes it. The old shoelace omitted the closing edge and
+      // returned ~1.5 billion sqm for exactly this parcel.
+      final ring = <List<double>>[
+        [38.790000, 9.000000],
+        [38.796430, 9.000000],
+        [38.796430, 9.006351],
+        [38.790000, 9.006351],
+      ];
+
+      final area = polygonAreaSqm(ring);
+
+      expect(area, greaterThan(400000));
+      expect(area, lessThan(600000));
     });
   });
 }

@@ -21,9 +21,20 @@ class PropertyCreateScreen extends StatefulWidget {
 }
 
 class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
+  static const List<String> _municipalities = [
+    'Addis Ababa',
+    'Dire Dawa',
+    'Adama',
+    'Bahir Dar',
+    'Hawassa',
+    'Mekelle',
+    'Gondar',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
   final _propertyTypeController = TextEditingController(text: 'residential');
+  String _municipality = 'Addis Ababa';
   String? _boundaryWkt;
   double _areaSqm = 0.0;
 
@@ -55,6 +66,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     final now = DateTime.now().toIso8601String();
     final property = Property(
       address: address,
+      municipality: _municipality,
       propertyType: propertyType,
       boundary: _boundaryWkt,
       areaSqm: _areaSqm > 0 ? _areaSqm : 0,
@@ -95,6 +107,27 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                     ),
                     validator: (v) =>
                         (v == null || v.isEmpty) ? 'Enter address' : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  DropdownButtonFormField<String>(
+                    initialValue: _municipality,
+                    decoration: const InputDecoration(
+                      labelText: 'Municipality',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _municipalities
+                        .map(
+                          (name) => DropdownMenuItem(
+                            value: name,
+                            child: Text(name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _municipality = value);
+                      }
+                    },
                   ),
                   const SizedBox(height: AppSpacing.md),
                   TextFormField(

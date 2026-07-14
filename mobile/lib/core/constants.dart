@@ -5,7 +5,7 @@ class AppConstants {
 
   static const String appName = 'ValuAdis';
   static const String dbName = 'valuadis.db';
-  static const int dbVersion = 3;
+  static const int dbVersion = 4;
 
   static const double defaultMapLat = 9.0320;
   static const double defaultMapLon = 38.7578;

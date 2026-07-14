@@ -43,6 +43,20 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       await _addValuationServerIdColumn(db);
     }
+
+    if (oldVersion < 4) {
+      await _addPropertyMunicipalityColumn(db);
+    }
+  }
+
+  Future<void> _addPropertyMunicipalityColumn(Database db) async {
+    final exists = (await db.rawQuery('PRAGMA table_info(properties)'))
+        .any((row) => row['name'] == 'municipality');
+    if (!exists) {
+      await db.execute(
+        "ALTER TABLE properties ADD COLUMN municipality TEXT NOT NULL DEFAULT 'Addis Ababa'",
+      );
+    }
   }
 
   Future<void> _ensureBaseTables(Database db) async {
@@ -51,6 +65,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         server_id INTEGER,
         address TEXT NOT NULL,
+        municipality TEXT NOT NULL DEFAULT 'Addis Ababa',
         property_type TEXT NOT NULL,
         boundary TEXT,
         area_sqm REAL NOT NULL,
@@ -149,6 +164,7 @@ class DatabaseHelper {
         id $idType,
         server_id INTEGER,
         address $textType,
+        municipality TEXT NOT NULL DEFAULT 'Addis Ababa',
         property_type $textType,
         boundary TEXT,
         area_sqm $realType,

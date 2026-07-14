@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/geo.dart';
 import '../../data/models/property.dart';
 import '../../data/models/valuation.dart';
 import '../../data/datasources/remote/api_client.dart';
@@ -216,6 +217,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     return Property(
       serverId: map['id'] as int,
       address: (map['address'] as String?) ?? '',
+      municipality: (map['municipality'] as String?) ?? 'Addis Ababa',
       propertyType: (map['property_type'] as String?) ?? 'residential',
       boundary: map['boundary'] as String?,
       areaSqm: (map['area_sqm'] as num?)?.toDouble() ?? 0,
@@ -454,11 +456,14 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   }
 
   Map<String, dynamic> _propertyToJson(Property p) {
+    final coordinates = parseWktPolygon(p.boundary);
     return {
       'address': p.address,
+      'municipality': p.municipality,
       'property_type': p.propertyType,
       'area_sqm': p.areaSqm,
       if (p.boundary != null) 'boundary': p.boundary,
+      if (coordinates.isNotEmpty) 'coordinates': coordinates,
     };
   }
 

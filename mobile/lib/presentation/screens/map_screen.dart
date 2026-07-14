@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/constants.dart';
+import '../../core/geo.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_ui.dart';
 
@@ -61,14 +62,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   double _calculateArea(List<LatLng> points) {
-    double area = 0.0;
-    for (int i = 0; i < points.length - 1; i++) {
-      area +=
-          points[i].longitude * points[i + 1].latitude -
-          points[i + 1].longitude * points[i].latitude;
-    }
-    area = (area.abs() / 2.0) * 111320 * 111320;
-    return area;
+    return polygonAreaSqm(
+      points.map((p) => [p.longitude, p.latitude]).toList(),
+    );
   }
 
   @override

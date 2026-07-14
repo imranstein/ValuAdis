@@ -4,6 +4,7 @@ class Property extends Equatable {
   final int? id;
   final int? serverId;
   final String address;
+  final String municipality;
   final String propertyType;
   final String? boundary;
   final double areaSqm;
@@ -15,6 +16,7 @@ class Property extends Equatable {
     this.id,
     this.serverId,
     required this.address,
+    this.municipality = 'Addis Ababa',
     required this.propertyType,
     this.boundary,
     required this.areaSqm,
@@ -28,6 +30,7 @@ class Property extends Equatable {
       'id': id,
       'server_id': serverId,
       'address': address,
+      'municipality': municipality,
       'property_type': propertyType,
       'boundary': boundary,
       'area_sqm': areaSqm,
@@ -42,6 +45,7 @@ class Property extends Equatable {
       id: map['id'] as int?,
       serverId: map['server_id'] as int?,
       address: map['address'] as String,
+      municipality: map['municipality'] as String? ?? 'Addis Ababa',
       propertyType: map['property_type'] as String,
       boundary: map['boundary'] as String?,
       areaSqm: (map['area_sqm'] as num).toDouble(),
@@ -55,6 +59,7 @@ class Property extends Equatable {
     int? id,
     int? serverId,
     String? address,
+    String? municipality,
     String? propertyType,
     String? boundary,
     double? areaSqm,
@@ -66,6 +71,7 @@ class Property extends Equatable {
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
       address: address ?? this.address,
+      municipality: municipality ?? this.municipality,
       propertyType: propertyType ?? this.propertyType,
       boundary: boundary ?? this.boundary,
       areaSqm: areaSqm ?? this.areaSqm,
@@ -80,6 +86,7 @@ class Property extends Equatable {
         id,
         serverId,
         address,
+        municipality,
         propertyType,
         boundary,
         areaSqm,
