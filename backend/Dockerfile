@@ -27,7 +27,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create uploads directory
-RUN mkdir -p uploads/photos uploads/certificates uploads/qr
+RUN mkdir -p uploads/photos uploads/certificates uploads/qr logs
+
+# Run as an unprivileged user; only writable dirs are chowned
+RUN useradd -m app \
+    && chown -R app:app /app/uploads /app/logs
+USER app
 
 # Expose port
 EXPOSE 8000

@@ -72,13 +72,12 @@ class PropertyRepository(BaseRepository[Property]):
         """Find properties within a given radius using PostGIS"""
         # Convert radius from km to meters
         radius_meters = radius_km * 1000
-        
-        # Create point geometry
-        point = f"ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)"
-        
-        # Build query
+
+        # Build query with bound parameters (never interpolate into SQL)
         query = self.db.query(Property).filter(
-            text(f"ST_DWithin(boundary, {point}, {radius_meters})")
+            text(
+                "ST_DWithin(boundary, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), :radius_meters)"
+            ).bindparams(lon=lon, lat=lat, radius_meters=radius_meters)
         )
         
         if user_id:

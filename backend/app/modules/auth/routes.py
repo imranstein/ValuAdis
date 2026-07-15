@@ -21,6 +21,7 @@ from app.core.security import (
     validate_ethiopian_phone_number
 )
 from app.core.exceptions import AuthenticationException, ValidationException
+from app.core.token_denylist import denylist_jti, is_jti_denylisted
 from .schemas import UserLogin, UserRegister, TokenResponse
 from app.services.auth_service import AuthService
 
@@ -28,9 +29,10 @@ router = APIRouter()
 security = HTTPBearer(auto_error=False)
 
 # httpOnly refresh cookie for browser session persistence.
-# Path-limited so the browser only sends it to the refresh endpoint.
+# Path-limited to the auth routes so refresh receives it and logout can
+# revoke the presented token's jti server-side.
 REFRESH_COOKIE_NAME = "valuadis_refresh"
-REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
+REFRESH_COOKIE_PATH = "/api/v1/auth"
 SECONDS_PER_DAY = 24 * 60 * 60
 
 
@@ -183,9 +185,19 @@ async def refresh_token(
                 detail="Invalid token"
             )
 
+        # Revoked (logged-out or already-rotated) tokens must not refresh
+        if is_jti_denylisted(payload.get("jti")):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token revoked"
+            )
+
         # Issue fresh access + refresh tokens (rotation)
         access_token = create_access_token(data={"sub": user_id})
         new_refresh_token = create_refresh_token(data={"sub": user_id})
+
+        # Reuse detection: the old token is single-use once rotation succeeds
+        denylist_jti(payload.get("jti"), payload.get("exp"))
 
         set_refresh_cookie(response, new_refresh_token)
 
@@ -209,11 +221,25 @@ async def refresh_token(
 
 
 @router.post("/logout", tags=["Authentication"])
-async def logout(response: Response):
+async def logout(
+    response: Response,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    refresh_cookie: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+):
     """Logout the browser session by clearing the refresh cookie.
 
-    Access tokens are short-lived and stateless; clients drop them locally.
+    The presented refresh token (cookie or bearer header) is denylisted so
+    it cannot be replayed. Access tokens are short-lived and stateless;
+    clients drop them locally.
     """
+    raw_token = credentials.credentials if credentials else refresh_cookie
+    if raw_token:
+        try:
+            payload = verify_token(raw_token)
+            if payload.get("type") == "refresh":
+                denylist_jti(payload.get("jti"), payload.get("exp"))
+        except HTTPException:
+            pass  # Logout always succeeds; an invalid token needs no revocation
     clear_refresh_cookie(response)
     return {"success": True, "message": "Logged out"}
 

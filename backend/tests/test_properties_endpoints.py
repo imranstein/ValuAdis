@@ -178,3 +178,17 @@ class TestBulkImportValidation:
         )
 
         assert response.status_code == 400
+
+    def test_bulk_import_rejects_oversized_file(self, client: TestClient, test_user_data, monkeypatch):
+        from app.core.config import settings
+
+        monkeypatch.setattr(settings, "MAX_FILE_SIZE", 16)
+        headers = _auth_headers(client, test_user_data)
+
+        response = client.post(
+            "/api/v1/properties/bulk-import",
+            headers=headers,
+            files={"file": ("properties.csv", "address,municipality\n" * 10, "text/csv")},
+        )
+
+        assert response.status_code == 413

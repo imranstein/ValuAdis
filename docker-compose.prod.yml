@@ -148,6 +148,13 @@ services:
           cpus: '1.0'
         reservations:
           memory: 512M
+    # No HTTP surface: healthy means the scheduler process is alive.
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f scraper/scheduler.py || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Vue.js Frontend
   frontend:

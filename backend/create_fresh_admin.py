@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create fresh admin user with known password"""
+"""Recreate the admin user with credentials from ADMIN_EMAIL / ADMIN_PASSWORD"""
 
 import asyncio
 import sys
@@ -15,10 +15,15 @@ from app.core.security import get_password_hash
 
 async def create_fresh_admin():
     """Create fresh admin user"""
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@valuadis.com")
+    admin_password = os.environ.get("ADMIN_PASSWORD")
+    if not admin_password:
+        sys.exit("Error: ADMIN_PASSWORD environment variable must be set")
+
     db = SessionLocal()
     try:
         # Delete existing admin user
-        existing_admin = db.query(User).filter(User.email == "admin@valuadis.com").first()
+        existing_admin = db.query(User).filter(User.email == admin_email).first()
         if existing_admin:
             # Delete properties first to avoid foreign key issues
             from app.data.models.property import Property
@@ -26,11 +31,11 @@ async def create_fresh_admin():
             db.delete(existing_admin)
             db.commit()
             print("Deleted existing admin user and their properties")
-        
+
         # Create new admin user
         user = User(
-            email="admin@valuadis.com",
-            password_hash=get_password_hash("admin123"),
+            email=admin_email,
+            password_hash=get_password_hash(admin_password),
             full_name="System Admin",
             phone="+251911000001",
             municipality="Addis Ababa",
@@ -44,13 +49,12 @@ async def create_fresh_admin():
         db.add(user)
         db.commit()
         db.refresh(user)
-        
+
         print(f"✅ Created fresh admin user:")
-        print(f"   Email: admin@valuadis.com")
-        print(f"   Password: admin123")
+        print(f"   Email: {admin_email}")
         print(f"   ID: {user.id}")
         print(f"   Is Admin: {user.is_admin}")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         db.rollback()

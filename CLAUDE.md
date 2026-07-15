@@ -115,6 +115,18 @@ python -m uvicorn app.main:app --reload  # dev server (localhost:8000)
 - If the Nuxt preview turns blank after a build, restart the Node preview server before debugging route code. Rebuilding `.output` while `node .output/server/index.mjs` is still running can leave the server with a stale manifest and blank hard-loads.
 - Use `backend/venv/bin/python -m pytest -q` for full backend release confidence on this machine. System Python currently fails before collection because it does not have `shapely`, while the project venv passes the maintained suite.
 
+### 2026-07-15
+
+- The refresh cookie path is `/api/v1/auth` (widened from `/api/v1/auth/refresh`) so browser logout can revoke server-side. Logout/rotation denylist the refresh jti via `backend/app/core/token_denylist.py` (Redis, in-process fallback); reusing a rotated or logged-out refresh token returns 401.
+- `verify_password` is bcrypt-only and fails closed — no plaintext or SHA-256 fallback. Non-bcrypt stored hashes can no longer log in.
+- Admin bootstrap scripts (`create_admin.py`, `backend/create_admin.py`, `backend/create_fresh_admin.py`) require `ADMIN_PASSWORD` (and accept `ADMIN_EMAIL`) from the environment; there are no hardcoded credentials anywhere.
+- Frontend error reporting is `plugins/sentry.client.ts` — a zero-dependency Sentry envelope-API reporter gated on `NUXT_PUBLIC_SENTRY_DSN` (npm registry was unreachable when @sentry/vue was attempted; swap in the SDK if breadcrumbs/tracing are ever needed). Root `error.vue` exists and uses the civic-ledger tokens.
+- Mobile application id is `com.valuadis.app` on both platforms (was `com.example.valuadis` — old `adb run-as com.example.valuadis` debug commands must use the new id). Android release builds use the `android/key.properties` signing pattern with debug fallback, minify+shrink+proguard enabled.
+- Mobile release builds throw at startup unless `--dart-define=API_BASE_URL=<real origin>` is provided (localhost/10.0.2.2 rejected in release) — `AppConstants.resolveApiBaseUrl` is the tested guard.
+- SyncBloc has an in-flight guard: concurrent `SyncTriggered` events during an active sync are ignored (fixes the double-push seen in live testing).
+- Backend containers run as non-root `app` user; the scraper image relocates Playwright browsers to `/ms-playwright`. The prod scraper-worker has a `pgrep`-based healthcheck.
+- Full 7-pillars audit + remediation record: `plans/valuadis-v2-refactor/7-pillars-audit.md`. Post-fix gates: backend 427 passed/17 skipped, frontend typecheck + 18 unit, flutter 58/58.
+
 ### 2026-07-12
 
 - `nuxt dev` is broken on Nuxt 3.21.5 with `ssr: false`: the vite-node IPC env (`NUXT_VITE_NODE_OPTIONS`) is only set in the SSR `vite:serverCreated` hook, which never fires, so every route 500s with "Vite Node IPC socket path not configured". Local preview workflow is `npm run build` then `PORT=3000 node .output/server/index.mjs` (wired into `.claude/launch.json`).

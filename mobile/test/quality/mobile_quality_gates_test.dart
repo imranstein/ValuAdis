@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -728,6 +729,56 @@ void main() {
         bloc.state.status,
         anyOf(SyncStatus.synced, SyncStatus.syncing),
       );
+    });
+
+    test('SyncBloc ignores a second SyncTriggered while a sync is in flight',
+        () async {
+      final propertyRepository = _FakePropertySyncRepo([
+        const Property(
+          id: 41,
+          address: 'In-flight guard property',
+          propertyType: 'House',
+          areaSqm: 60,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        ),
+      ]);
+      final valuationRepository = _FakeValuationSyncRepo(const []);
+
+      final firstPushStarted = Completer<void>();
+      final releaseFirstPush = Completer<void>();
+      final api = _StubSyncApiClient((path, _) async {
+        if (!firstPushStarted.isCompleted) {
+          firstPushStarted.complete();
+        }
+        await releaseFirstPush.future;
+        return Response(
+          requestOptions: RequestOptions(path: path),
+          statusCode: 200,
+          data: path.contains('properties') ? {'id': 401} : <String, dynamic>{},
+        );
+      });
+
+      await _mockConnectivityCheck('wifi');
+      final bloc = SyncBloc(
+        propertyRepository,
+        valuationRepository,
+        api,
+        Connectivity(),
+      );
+      bloc.add(const ConnectivityChanged(true));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      bloc.add(SyncTriggered());
+      await firstPushStarted.future;
+      bloc.add(SyncTriggered());
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      releaseFirstPush.complete();
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(propertyRepository.loadPendingCount, equals(1));
+      expect(bloc.state.status, SyncStatus.synced);
     });
 
     test('EC-M01 surfaces session expiry as auth failure state', () async {

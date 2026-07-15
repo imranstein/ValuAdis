@@ -20,6 +20,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   final Connectivity _connectivity;
   StreamSubscription<dynamic>? _connectivitySub;
   Timer? _periodicTimer;
+  bool _syncInProgress = false;
 
   SyncBloc(
     this._propertyRepository,
@@ -93,6 +94,20 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     SyncTriggered event,
     Emitter<SyncState> emit,
   ) async {
+    // Rapid manual/connectivity triggers must not double-push the same
+    // pending records; a trigger during an active sync is simply ignored.
+    if (_syncInProgress) {
+      return;
+    }
+    _syncInProgress = true;
+    try {
+      await _runSync(emit);
+    } finally {
+      _syncInProgress = false;
+    }
+  }
+
+  Future<void> _runSync(Emitter<SyncState> emit) async {
     if (!state.isOnline) {
       emit(
         SyncState(

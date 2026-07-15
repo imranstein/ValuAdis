@@ -10,12 +10,17 @@ from app.core.database import SessionLocal
 from app.data.models.user import User
 
 async def main():
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@valuadis.com")
+    admin_password = os.environ.get("ADMIN_PASSWORD")
+    if not admin_password:
+        sys.exit("Error: ADMIN_PASSWORD environment variable must be set")
+
     db = SessionLocal()
     try:
         from app.core.security import get_password_hash
         user = User(
-            email="admin@valuadis.com",
-            password_hash=get_password_hash("Admin123!"),
+            email=admin_email,
+            password_hash=get_password_hash(admin_password),
             full_name="System Admin",
             phone="+251911000000",
             municipality="Addis Ababa",

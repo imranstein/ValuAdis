@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from typing import List, Tuple
 import csv
 import io
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.core.exceptions import SpatialOperationException, ValidationException
@@ -27,6 +28,8 @@ from .schemas import (
 from .services import PropertyService
 
 router = APIRouter()
+
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
 def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:
@@ -148,7 +151,19 @@ async def bulk_import_properties(
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
-    content = (await file.read()).decode("utf-8-sig")
+    # Read in chunks so an oversized upload is aborted, not buffered whole
+    chunks = []
+    total_size = 0
+    while chunk := await file.read(UPLOAD_CHUNK_SIZE):
+        total_size += len(chunk)
+        if total_size > settings.MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds maximum size of {settings.MAX_FILE_SIZE} bytes",
+            )
+        chunks.append(chunk)
+
+    content = b"".join(chunks).decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(content))
     property_service = PropertyService(db)
     rows = []

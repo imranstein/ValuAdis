@@ -62,7 +62,8 @@ export default defineNuxtConfig({
       mapDefaultLng: process.env.NUXT_PUBLIC_MAP_DEFAULT_LNG || '38.7578',
       defaultLanguage: process.env.NUXT_PUBLIC_DEFAULT_LANGUAGE || 'en',
       demoLoginEmail: process.env.NUXT_PUBLIC_DEMO_LOGIN_EMAIL || '',
-      demoLoginPassword: process.env.NUXT_PUBLIC_DEMO_LOGIN_PASSWORD || ''
+      demoLoginPassword: process.env.NUXT_PUBLIC_DEMO_LOGIN_PASSWORD || '',
+      sentryDsn: ''
     }
   },
 

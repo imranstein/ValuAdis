@@ -179,7 +179,7 @@ class TestAuthentication:
 
 
 REFRESH_COOKIE_NAME = "valuadis_refresh"
-REFRESH_COOKIE_PATH = "/api/v1/auth/refresh"
+REFRESH_COOKIE_PATH = "/api/v1/auth"
 
 
 def _register_and_login(client: TestClient, test_user_data) -> dict:
@@ -209,7 +209,7 @@ class TestRefreshCookieSession:
     """httpOnly refresh cookie: set on login, rotated on refresh, cleared on logout"""
 
     def test_login_sets_httponly_refresh_cookie(self, client: TestClient, test_user_data):
-        """Login sets valuadis_refresh as httpOnly SameSite=Lax cookie scoped to refresh path"""
+        """Login sets valuadis_refresh as httpOnly SameSite=Lax cookie scoped to the auth routes"""
         response = _register_and_login(client, test_user_data)
 
         set_cookie = _get_refresh_set_cookie(response).lower()
@@ -309,3 +309,88 @@ class TestRefreshCookieSession:
         response = client.post("/api/v1/auth/refresh")
 
         assert response.status_code == 401
+
+
+class TestRefreshTokenRevocation:
+    """jti denylist: logout and rotation make the presented refresh token single-use"""
+
+    def test_refresh_with_logged_out_token_fails(self, client: TestClient, test_user_data):
+        """A refresh token presented at logout is denylisted and cannot refresh again"""
+        login_response = _register_and_login(client, test_user_data)
+        refresh_token = login_response.json()["data"]["refresh_token"]
+        client.cookies.clear()
+
+        logout_response = client.post(
+            "/api/v1/auth/logout",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
+        assert logout_response.status_code == 200
+
+        response = client.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
+
+        assert response.status_code == 401
+
+    def test_rotated_refresh_token_cannot_be_reused(self, client: TestClient, test_user_data):
+        """After rotation the old refresh token is denylisted (reuse detection)"""
+        login_response = _register_and_login(client, test_user_data)
+        old_refresh_token = login_response.json()["data"]["refresh_token"]
+        client.cookies.clear()
+
+        first_refresh = client.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {old_refresh_token}"},
+        )
+        assert first_refresh.status_code == 200
+
+        reuse_response = client.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {old_refresh_token}"},
+        )
+
+        assert reuse_response.status_code == 401
+
+    def test_rotated_token_chain_stays_usable(self, client: TestClient, test_user_data):
+        """The newest refresh token from a rotation keeps working"""
+        login_response = _register_and_login(client, test_user_data)
+        refresh_token = login_response.json()["data"]["refresh_token"]
+        client.cookies.clear()
+
+        first_refresh = client.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
+        new_refresh_token = first_refresh.json()["data"]["refresh_token"]
+        client.cookies.clear()
+
+        second_refresh = client.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {new_refresh_token}"},
+        )
+
+        assert second_refresh.status_code == 200
+
+    def test_browser_logout_via_cookie_denylists_refresh_token(self, client: TestClient, test_user_data):
+        """Cookie-only logout (no bearer) revokes the jti: replaying the cookie fails"""
+        login_response = _register_and_login(client, test_user_data)
+        refresh_token = login_response.json()["data"]["refresh_token"]
+
+        logout_response = client.post("/api/v1/auth/logout")
+        assert logout_response.status_code == 200
+
+        # Simulate an attacker replaying the captured cookie value
+        client.cookies.set(REFRESH_COOKIE_NAME, refresh_token, path=REFRESH_COOKIE_PATH)
+        response = client.post("/api/v1/auth/refresh")
+
+        assert response.status_code == 401
+
+    def test_logout_with_invalid_token_still_succeeds(self, client: TestClient):
+        """Logout never fails on a garbage token; it simply has nothing to revoke"""
+        response = client.post(
+            "/api/v1/auth/logout",
+            headers={"Authorization": "Bearer not-a-jwt"},
+        )
+
+        assert response.status_code == 200

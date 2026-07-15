@@ -6,12 +6,14 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Geospatial libs (shared with the API image — app modules import shapely/geo)
+# procps provides pgrep for the compose healthcheck.
 RUN apt-get update && apt-get install -y \
     gdal-bin \
     libgdal-dev \
     libgeos-dev \
     libproj-dev \
     build-essential \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 ENV GDAL_CONFIG=/usr/bin/gdal-config
@@ -21,10 +23,18 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Chromium + its OS dependencies for headless scraping.
+# Chromium + its OS dependencies for headless scraping. A shared browser
+# path keeps the install usable by the unprivileged runtime user.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN playwright install --with-deps chromium
 
 COPY . .
+
+# Run as an unprivileged user; only writable dirs are chowned
+RUN mkdir -p logs \
+    && useradd -m app \
+    && chown -R app:app /app/logs /ms-playwright
+USER app
 
 # Long-running scheduler; runs enabled ScraperTarget rows on their schedule.
 CMD ["python", "scraper/scheduler.py"]

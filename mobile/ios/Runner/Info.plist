@@ -10,6 +10,8 @@
 	<string>Photo library access is used to attach existing photos to properties.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Photo add access is used to save captured property photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is used to capture the GPS coordinates of properties during field valuation.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
