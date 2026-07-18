@@ -9,7 +9,7 @@ owner PII (name/email/phone/user id, Fayda ID) can never leak through a
 field that was never declared. Enforced by tests/test_rental_public_serializer.py.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -114,6 +114,88 @@ class ListingResponse(BaseModel):
 
 
 class ListingListResponse(BaseModel):
+    success: bool
+    data: Optional[List[dict]] = None
+    total: Optional[int] = None
+    skip: Optional[int] = None
+    limit: Optional[int] = None
+    message: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Applications (Phase C)
+# ---------------------------------------------------------------------------
+
+class ApplicationCreate(BaseModel):
+    """Renter applies at an offered rent. The band check is server-side; a
+    valid-looking number here is not trusted until re-validated against the
+    listing's frozen band."""
+
+    offered_rent: float = Field(..., gt=0, description="Offer in ETB/month; must be within the published band")
+    message: Optional[str] = Field(None, max_length=1000, description="Optional note to the owner")
+
+
+class ApplicationDecisionRequest(BaseModel):
+    """Owner accept/reject action on an application."""
+
+    action: str = Field(..., description="'accept' or 'reject'")
+    reason: Optional[str] = Field(None, max_length=1000)
+
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, v):
+        if v not in ("accept", "reject"):
+            raise ValueError("action must be 'accept' or 'reject'")
+        return v
+
+
+# ---------------------------------------------------------------------------
+# Contracts + deposits (Phase C)
+# ---------------------------------------------------------------------------
+
+class ContractCreate(BaseModel):
+    """Officer registers a contract from an accepted application.
+
+    monthly_rent is captured server-side from the accepted offer (not taken
+    from the client). Only the tenancy terms an officer legitimately sets are
+    accepted here.
+    """
+
+    application_id: int = Field(..., description="An accepted application to contract")
+    start_date: date = Field(..., description="Tenancy start date")
+    end_date: date = Field(..., description="Tenancy end date (after start_date)")
+    deposit_amount: Optional[float] = Field(
+        None, gt=0, description="Defaults to 2 x monthly rent (first + last month) if omitted"
+    )
+    deposit_reason: Optional[str] = Field(
+        None, max_length=1000, description="Mandatory audited reason when overriding the default deposit"
+    )
+
+    @field_validator("end_date")
+    @classmethod
+    def validate_dates(cls, v, info):
+        start = info.data.get("start_date")
+        if start is not None and v <= start:
+            raise ValueError("end_date must be after start_date")
+        return v
+
+
+class DepositRecordRequest(BaseModel):
+    """Officer records a deposit receipt. A matching amount activates the
+    contract; a mismatch is rejected, never silently accepted."""
+
+    deposit_receipt_ref: str = Field(..., min_length=3, max_length=120, description="Telebirr/CBE transaction reference")
+    amount: float = Field(..., gt=0, description="Amount on the receipt; must equal the contract deposit_amount")
+    paid_on: Optional[date] = Field(None, description="Date the deposit was paid")
+
+
+class ContractResponse(BaseModel):
+    success: bool
+    data: Optional[dict] = None
+    message: Optional[str] = None
+
+
+class ContractListResponse(BaseModel):
     success: bool
     data: Optional[List[dict]] = None
     total: Optional[int] = None

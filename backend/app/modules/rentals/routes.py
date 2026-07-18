@@ -8,9 +8,12 @@ Owner (property_owner role): create listing, my-listings, withdraw.
 Officer (rental_officer role): review queue, publish/adjust/reject, owner verify.
 """
 
+import io
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
@@ -32,8 +35,18 @@ from app.core.security import (
 from app.data.models.role import Role
 from app.data.models.user import User
 from app.modules.auth.routes import set_refresh_cookie
+from app.modules.valuation.certificate_service import CertificateService
 from app.services.auth_service import AuthService
+from .application_service import RentalApplicationService
+from .contract_service import TenancyContractService
+from .exceptions import BandViolationError, RateLimitError
 from .schemas import (
+    ApplicationCreate,
+    ApplicationDecisionRequest,
+    ContractCreate,
+    ContractListResponse,
+    ContractResponse,
+    DepositRecordRequest,
     ListingCreate,
     ListingListResponse,
     ListingResponse,
@@ -107,8 +120,29 @@ def require_rental_officer(
     )
 
 
+def require_renter(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> User:
+    user = _load_user(current_user_id, db)
+    if user.is_admin or _has_role(user, ROLE_RENTER):
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only renters can perform this action",
+    )
+
+
 def get_rentals_service(db: Session = Depends(get_db)) -> RentalListingService:
     return RentalListingService(db)
+
+
+def get_application_service(db: Session = Depends(get_db)) -> RentalApplicationService:
+    return RentalApplicationService(db)
+
+
+def get_contract_service(db: Session = Depends(get_db)) -> TenancyContractService:
+    return TenancyContractService(db)
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +411,238 @@ async def verify_owner(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except ValuAdisException as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Applications (Phase C)
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/listings/{public_id}/applications",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ContractResponse,
+    tags=["Rentals"],
+)
+async def apply_to_listing(
+    public_id: str,
+    body: ApplicationCreate,
+    renter: User = Depends(require_renter),
+    service: RentalApplicationService = Depends(get_application_service),
+):
+    """Renter applies at an offered rent. The offer is validated server-side
+    against the listing's frozen band; an out-of-band offer is a 422."""
+    try:
+        result = service.apply(public_id, renter, body.offered_rent, body.message)
+        return ContractResponse(success=True, data=result, message="Application submitted")
+    except BandViolationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except RateLimitError as exc:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc))
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/my-applications", response_model=ContractListResponse, tags=["Rentals"])
+async def my_applications(
+    skip: int = 0,
+    limit: int = 20,
+    current_user_id: int = Depends(get_current_user_id),
+    service: RentalApplicationService = Depends(get_application_service),
+):
+    """The authenticated renter's applications (any status)."""
+    applications, total = service.get_renter_applications(current_user_id, skip, max(1, min(limit, 100)))
+    return ContractListResponse(success=True, data=applications, total=total, skip=skip, limit=limit)
+
+
+@router.get("/listings/{public_id}/applications", response_model=ContractListResponse, tags=["Rentals"])
+async def listing_applications(
+    public_id: str,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    service: RentalApplicationService = Depends(get_application_service),
+):
+    """Applications on a listing — the owner, or a rental officer preparing
+    the contract from the accepted application."""
+    actor = _load_user(current_user_id, db)
+    try:
+        applications = service.get_owner_listing_applications(public_id, actor)
+        return ContractListResponse(success=True, data=applications, total=len(applications))
+    except AuthorizationException as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.post("/applications/{application_id}/decision", response_model=ContractResponse, tags=["Rentals"])
+async def decide_application(
+    application_id: int,
+    body: ApplicationDecisionRequest,
+    owner: User = Depends(require_property_owner),
+    service: RentalApplicationService = Depends(get_application_service),
+):
+    """Owner accepts or rejects an application. Accepting auto-rejects the
+    pending siblings and moves the listing to `rented`."""
+    try:
+        result = service.decide(application_id, owner, body.action, body.reason)
+        return ContractResponse(success=True, data=result, message=f"Application {body.action}ed")
+    except AuthorizationException as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Contracts + deposits (Phase C, officer)
+# ---------------------------------------------------------------------------
+
+@router.post("/contracts", status_code=status.HTTP_201_CREATED, response_model=ContractResponse, tags=["Rentals"])
+async def create_contract(
+    body: ContractCreate,
+    officer: User = Depends(require_rental_officer),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """Officer registers a tenancy contract from an accepted application.
+    Generates the registry contract number; the contract stays `draft` until
+    a matching deposit receipt is recorded."""
+    try:
+        result = service.create_contract(
+            body.application_id,
+            officer,
+            body.start_date,
+            body.end_date,
+            body.deposit_amount,
+            body.deposit_reason,
+        )
+        return ContractResponse(success=True, data=result, message="Contract registered (draft)")
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/contracts", response_model=ContractListResponse, tags=["Rentals"])
+async def list_contracts(
+    skip: int = 0,
+    limit: int = 20,
+    officer: User = Depends(require_rental_officer),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """Contracts registry (officer only)."""
+    contracts, total = service.list_contracts(skip, max(1, min(limit, 100)))
+    return ContractListResponse(success=True, data=contracts, total=total, skip=skip, limit=limit)
+
+
+@router.get("/my-contracts", response_model=ContractListResponse, tags=["Rentals"])
+async def my_contracts(
+    skip: int = 0,
+    limit: int = 100,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """Contracts where the authenticated user is the owner or renter party."""
+    user = _load_user(current_user_id, db)
+    contracts, _ = service.list_contracts(0, 1000)
+    contract_objs = {c["contract_no"]: c for c in contracts}
+    visible = []
+    for contract_no in contract_objs:
+        contract = service.get_contract(contract_no)
+        if contract and service.can_view_contract(contract, user):
+            visible.append(contract_objs[contract_no])
+    page = visible[skip: skip + max(1, min(limit, 100))]
+    return ContractListResponse(success=True, data=page, total=len(visible), skip=skip, limit=limit)
+
+
+@router.post("/contracts/{contract_no}/deposit", response_model=ContractResponse, tags=["Rentals"])
+async def record_deposit(
+    contract_no: str,
+    body: DepositRecordRequest,
+    officer: User = Depends(require_rental_officer),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """Officer records a deposit receipt. A matching amount activates the
+    contract (draft → active); a mismatch is rejected."""
+    try:
+        result = service.record_deposit(
+            contract_no, officer, body.deposit_receipt_ref, body.amount, body.paid_on
+        )
+        return ContractResponse(success=True, data=result, message="Deposit recorded; contract active")
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/contracts/{contract_no}/pdf", tags=["Rentals"])
+async def download_contract_pdf(
+    contract_no: str,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """Download the registered tenancy contract PDF. Visible to the owner or
+    renter party, or a rental officer."""
+    user = _load_user(current_user_id, db)
+    contract = service.get_contract(contract_no)
+    if contract is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found")
+    if not service.can_view_contract(contract, user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a party to this contract")
+
+    context = service.build_pdf_context(contract)
+    cert_service = CertificateService()
+    pdf_bytes = await run_in_threadpool(
+        cert_service.generate_tenancy_contract,
+        context["contract"],
+        context["owner"],
+        context["renter"],
+        context["property_data"],
+        context["rent_context"],
+    )
+    filename = f"ValuAdis_Contract_{contract_no}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/listings/{public_id}/agreement", tags=["Rentals"])
+async def download_listing_agreement(
+    public_id: str,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    service: RentalListingService = Depends(get_rentals_service),
+):
+    """Download the owner ↔ administration listing agreement PDF generated at
+    publish time. Visible to the listing owner or a rental officer."""
+    actor = _load_user(current_user_id, db)
+    try:
+        context = service.build_listing_agreement_context(public_id, actor)
+    except AuthorizationException as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValuAdisException as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+    cert_service = CertificateService()
+    pdf_bytes = await run_in_threadpool(
+        cert_service.generate_listing_agreement,
+        context["listing"],
+        context["owner"],
+        context["property_data"],
+    )
+    filename = f"ValuAdis_ListingAgreement_{public_id}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def _error(status_code: int, message: str):

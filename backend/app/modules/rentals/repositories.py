@@ -4,12 +4,21 @@ Rental Listing Repository
 Data access layer for rental listing operations.
 """
 
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.data.repositories.base import BaseRepository
-from .models import RentalListing, RentalListingStatus
+from .models import (
+    ACTIVE_APPLICATION_STATUSES,
+    RentalApplication,
+    RentalApplicationStatus,
+    RentalListing,
+    RentalListingStatus,
+    TenancyContract,
+)
 
 
 class RentalListingRepository(BaseRepository[RentalListing]):
@@ -107,3 +116,105 @@ class RentalListingRepository(BaseRepository[RentalListing]):
             )
             .first()
         )
+
+
+class RentalApplicationRepository(BaseRepository[RentalApplication]):
+    def __init__(self, db: Session):
+        super().__init__(RentalApplication, db)
+
+    def get_by_id(self, application_id: int) -> Optional[RentalApplication]:
+        return (
+            self.db.query(RentalApplication)
+            .options(joinedload(RentalApplication.listing), joinedload(RentalApplication.renter))
+            .filter(RentalApplication.id == application_id)
+            .first()
+        )
+
+    def get_active_for_renter_on_listing(
+        self, listing_id: int, renter_user_id: int
+    ) -> Optional[RentalApplication]:
+        return (
+            self.db.query(RentalApplication)
+            .filter(
+                RentalApplication.listing_id == listing_id,
+                RentalApplication.renter_user_id == renter_user_id,
+                RentalApplication.status.in_(ACTIVE_APPLICATION_STATUSES),
+            )
+            .first()
+        )
+
+    def get_listing_applications(self, listing_id: int) -> List[RentalApplication]:
+        return (
+            self.db.query(RentalApplication)
+            .options(joinedload(RentalApplication.renter))
+            .filter(RentalApplication.listing_id == listing_id)
+            .order_by(RentalApplication.created_at.desc())
+            .all()
+        )
+
+    def get_pending_siblings(self, listing_id: int, exclude_id: int) -> List[RentalApplication]:
+        return (
+            self.db.query(RentalApplication)
+            .filter(
+                RentalApplication.listing_id == listing_id,
+                RentalApplication.id != exclude_id,
+                RentalApplication.status == RentalApplicationStatus.PENDING.value,
+            )
+            .all()
+        )
+
+    def get_renter_applications(
+        self, renter_user_id: int, skip: int = 0, limit: int = 20
+    ) -> Tuple[List[RentalApplication], int]:
+        query = (
+            self.db.query(RentalApplication)
+            .options(joinedload(RentalApplication.listing))
+            .filter(RentalApplication.renter_user_id == renter_user_id)
+            .order_by(RentalApplication.created_at.desc())
+        )
+        total = query.count()
+        return query.offset(skip).limit(limit).all(), total
+
+    def count_recent_for_renter(self, renter_user_id: int, window_seconds: int) -> int:
+        since = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
+        return (
+            self.db.query(func.count(RentalApplication.id))
+            .filter(
+                RentalApplication.renter_user_id == renter_user_id,
+                RentalApplication.created_at >= since,
+            )
+            .scalar()
+            or 0
+        )
+
+
+class TenancyContractRepository(BaseRepository[TenancyContract]):
+    def __init__(self, db: Session):
+        super().__init__(TenancyContract, db)
+
+    def get_by_contract_no(self, contract_no: str) -> Optional[TenancyContract]:
+        return (
+            self.db.query(TenancyContract)
+            .options(
+                joinedload(TenancyContract.listing),
+                joinedload(TenancyContract.application),
+            )
+            .filter(TenancyContract.contract_no == contract_no)
+            .first()
+        )
+
+    def get_for_application(self, application_id: int) -> Optional[TenancyContract]:
+        return (
+            self.db.query(TenancyContract)
+            .filter(TenancyContract.application_id == application_id)
+            .first()
+        )
+
+    def list_all(self, skip: int = 0, limit: int = 20) -> Tuple[List[TenancyContract], int]:
+        query = (
+            self.db.query(TenancyContract)
+            .options(joinedload(TenancyContract.listing))
+            .order_by(TenancyContract.created_at.desc())
+        )
+        total = query.count()
+        return query.offset(skip).limit(limit).all(), total
