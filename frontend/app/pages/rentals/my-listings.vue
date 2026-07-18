@@ -113,6 +113,25 @@
                   <i class="pi pi-external-link" aria-hidden="true"></i>
                 </NuxtLink>
                 <button
+                  v-if="['published', 'rented'].includes(listing.status)"
+                  class="icon-button inline"
+                  type="button"
+                  aria-label="View applications"
+                  @click="openApplications(listing)"
+                >
+                  <i class="pi pi-users" aria-hidden="true"></i>
+                </button>
+                <button
+                  v-if="listing.listing_agreement_pdf"
+                  class="icon-button inline"
+                  type="button"
+                  aria-label="Download listing agreement"
+                  :disabled="acting"
+                  @click="downloadAgreement(listing)"
+                >
+                  <i class="pi pi-file-pdf" aria-hidden="true"></i>
+                </button>
+                <button
                   v-if="['pending_review', 'published'].includes(listing.status)"
                   class="icon-button inline"
                   type="button"
@@ -128,12 +147,77 @@
         </table>
       </div>
     </section>
+
+    <section v-if="applicationsFor" class="table-panel applications-panel" aria-label="Listing applications">
+      <div class="panel-head table-head">
+        <div>
+          <h3 class="panel-title">Applications for {{ applicationsFor.public_id }}</h3>
+          <p class="panel-subtitle">
+            Accepting one application rejects the others and marks the listing as rented; a rental
+            officer then registers the contract.
+          </p>
+        </div>
+        <button class="icon-button" type="button" aria-label="Close applications" @click="applicationsFor = null">
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div v-if="applicationsError" class="state-panel error-state" role="alert">
+        <strong>Applications unavailable</strong>
+        <span>{{ applicationsError }}</span>
+      </div>
+      <p v-if="decisionNotice" class="inline-notice" role="status">{{ decisionNotice }}</p>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Renter</th>
+              <th class="text-right">Offer</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th class="text-right">Decision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loadingApplications">
+              <td colspan="5">Loading applications…</td>
+            </tr>
+            <tr v-else-if="listingApplications.length === 0">
+              <td colspan="5">No applications yet for this listing.</td>
+            </tr>
+            <tr v-for="app in listingApplications" v-else :key="app.id">
+              <td>
+                <strong>{{ app.renter_name || 'Renter' }}</strong>
+                <span>{{ app.renter_phone || '' }}</span>
+              </td>
+              <td class="text-right num">{{ formatEtb(app.offered_rent) }}</td>
+              <td>{{ app.message || '—' }}</td>
+              <td>
+                <span class="status-pill" :class="applicationStatusClass(app.status)">{{ labelize(app.status) }}</span>
+              </td>
+              <td class="text-right">
+                <template v-if="app.status === 'pending'">
+                  <button class="btn-primary btn-compact" type="button" :disabled="acting" @click="decide(app, 'accept')">
+                    Accept
+                  </button>
+                  <button class="btn-secondary btn-compact" type="button" :disabled="acting" @click="decide(app, 'reject')">
+                    Reject
+                  </button>
+                </template>
+                <template v-else>—</template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import rentalService, { type OwnerListing } from '~/services/rentalService'
+import rentalService, { type OwnerApplication, type OwnerListing } from '~/services/rentalService'
 import { getAccessToken } from '~/utils/authToken'
 
 definePageMeta({ middleware: 'auth' })
@@ -156,6 +240,12 @@ const createError = ref('')
 const createNotice = ref('')
 const acting = ref(false)
 const ownerUnverified = ref(false)
+
+const applicationsFor = ref<OwnerListing | null>(null)
+const listingApplications = ref<OwnerApplication[]>([])
+const loadingApplications = ref(false)
+const applicationsError = ref('')
+const decisionNotice = ref('')
 
 const availableProperties = computed(() => {
   const activeIds = new Set(
@@ -237,6 +327,68 @@ async function withdraw(listing: OwnerListing) {
   } finally {
     acting.value = false
   }
+}
+
+async function openApplications(listing: OwnerListing) {
+  applicationsFor.value = listing
+  loadingApplications.value = true
+  applicationsError.value = ''
+  decisionNotice.value = ''
+  try {
+    listingApplications.value = await rentalService.listingApplications(listing.public_id)
+  } catch (error) {
+    applicationsError.value = error instanceof Error ? error.message : 'Could not load applications.'
+    listingApplications.value = []
+  } finally {
+    loadingApplications.value = false
+  }
+}
+
+async function decide(app: OwnerApplication, action: 'accept' | 'reject') {
+  acting.value = true
+  applicationsError.value = ''
+  decisionNotice.value = ''
+  try {
+    await rentalService.decideApplication(app.id, action)
+    decisionNotice.value =
+      action === 'accept'
+        ? 'Application accepted. Other pending applications were auto-rejected; a rental officer will register the contract.'
+        : 'Application rejected.'
+    if (applicationsFor.value) {
+      listingApplications.value = await rentalService.listingApplications(applicationsFor.value.public_id)
+    }
+    await loadListings()
+  } catch (error) {
+    applicationsError.value = error instanceof Error ? error.message : 'Decision failed.'
+  } finally {
+    acting.value = false
+  }
+}
+
+async function downloadAgreement(listing: OwnerListing) {
+  acting.value = true
+  listingsError.value = ''
+  try {
+    const blob = await rentalService.downloadListingAgreement(listing.public_id)
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `ValuAdis_ListingAgreement_${listing.public_id}.pdf`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    listingsError.value = error instanceof Error ? error.message : 'Could not download the agreement.'
+  } finally {
+    acting.value = false
+  }
+}
+
+function applicationStatusClass(status: string) {
+  if (status === 'accepted') return 'good'
+  if (status === 'pending') return 'warn'
+  return 'bad'
 }
 
 function statusClass(status: string) {
@@ -325,6 +477,17 @@ function formatEtb(value: number) {
   color: var(--ink-soft);
   font-size: 13px;
   padding: var(--space-3) var(--space-4);
+}
+
+.applications-panel .panel-subtitle {
+  max-width: 560px;
+}
+
+.btn-compact {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+  margin-left: 8px;
 }
 
 @media (max-width: 720px) {

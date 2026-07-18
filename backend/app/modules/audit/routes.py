@@ -95,7 +95,10 @@ async def get_audit_logs(
         action_lower = (r.action or "VIEW").lower()
         logs.append({
             "id": r.id,
-            "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+            # SQLite raw SQL returns timestamps as strings; Postgres returns
+            # datetimes. Normalize both (session rule: normalize SQLite
+            # numeric/date values before returning reports).
+            "timestamp": r.timestamp.isoformat() if hasattr(r.timestamp, "isoformat") else (r.timestamp or None),
             "user_id": r.user_id,
             "user_name": users.get(r.user_id, "System") if r.user_id else "System",
             "action_type": action_lower,

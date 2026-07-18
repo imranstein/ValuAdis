@@ -126,6 +126,62 @@
     "title": "ApiKeyResponse",
     "type": "object"
    },
+   "ApplicationCreate": {
+    "description": "Renter applies at an offered rent. The band check is server-side; a\nvalid-looking number here is not trusted until re-validated against the\nlisting's frozen band.",
+    "properties": {
+     "message": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Optional note to the owner",
+      "title": "Message"
+     },
+     "offered_rent": {
+      "description": "Offer in ETB/month; must be within the published band",
+      "exclusiveMinimum": 0.0,
+      "title": "Offered Rent",
+      "type": "number"
+     }
+    },
+    "required": [
+     "offered_rent"
+    ],
+    "title": "ApplicationCreate",
+    "type": "object"
+   },
+   "ApplicationDecisionRequest": {
+    "description": "Owner accept/reject action on an application.",
+    "properties": {
+     "action": {
+      "description": "'accept' or 'reject'",
+      "title": "Action",
+      "type": "string"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "required": [
+     "action"
+    ],
+    "title": "ApplicationDecisionRequest",
+    "type": "object"
+   },
    "AuditReportResponse": {
     "description": "System audit report response",
     "properties": {
@@ -324,6 +380,167 @@
     "title": "ConditionRating",
     "type": "string"
    },
+   "ContractCreate": {
+    "description": "Officer registers a contract from an accepted application.\n\nmonthly_rent is captured server-side from the accepted offer (not taken\nfrom the client). Only the tenancy terms an officer legitimately sets are\naccepted here.",
+    "properties": {
+     "application_id": {
+      "description": "An accepted application to contract",
+      "title": "Application Id",
+      "type": "integer"
+     },
+     "deposit_amount": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Defaults to 2 x monthly rent (first + last month) if omitted",
+      "title": "Deposit Amount"
+     },
+     "deposit_reason": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Mandatory audited reason when overriding the default deposit",
+      "title": "Deposit Reason"
+     },
+     "end_date": {
+      "description": "Tenancy end date (after start_date)",
+      "format": "date",
+      "title": "End Date",
+      "type": "string"
+     },
+     "start_date": {
+      "description": "Tenancy start date",
+      "format": "date",
+      "title": "Start Date",
+      "type": "string"
+     }
+    },
+    "required": [
+     "application_id",
+     "start_date",
+     "end_date"
+    ],
+    "title": "ContractCreate",
+    "type": "object"
+   },
+   "ContractListResponse": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "object"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "limit": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Limit"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "skip": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Skip"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     },
+     "total": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total"
+     }
+    },
+    "required": [
+     "success"
+    ],
+    "title": "ContractListResponse",
+    "type": "object"
+   },
+   "ContractResponse": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success"
+    ],
+    "title": "ContractResponse",
+    "type": "object"
+   },
    "DataIntegrityReport": {
     "description": "Data integrity validation report",
     "properties": {
@@ -349,6 +566,43 @@
      "duplicate_data"
     ],
     "title": "DataIntegrityReport",
+    "type": "object"
+   },
+   "DepositRecordRequest": {
+    "description": "Officer records a deposit receipt. A matching amount activates the\ncontract; a mismatch is rejected, never silently accepted.",
+    "properties": {
+     "amount": {
+      "description": "Amount on the receipt; must equal the contract deposit_amount",
+      "exclusiveMinimum": 0.0,
+      "title": "Amount",
+      "type": "number"
+     },
+     "deposit_receipt_ref": {
+      "description": "Telebirr/CBE transaction reference",
+      "maxLength": 120,
+      "minLength": 3,
+      "title": "Deposit Receipt Ref",
+      "type": "string"
+     },
+     "paid_on": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Date the deposit was paid",
+      "title": "Paid On"
+     }
+    },
+    "required": [
+     "deposit_receipt_ref",
+     "amount"
+    ],
+    "title": "DepositRecordRequest",
     "type": "object"
    },
    "EthiopianComplianceMetrics": {
@@ -2422,6 +2676,94 @@
      "data"
     ],
     "title": "PublicListingResponse",
+    "type": "object"
+   },
+   "RenewalCheckRequest": {
+    "description": "Proposed renewal rent for an active contract. Validated server-side\nagainst the configured legal cap over the contract's current rent.",
+    "properties": {
+     "proposed_rent": {
+      "description": "Proposed renewal rent in ETB/month",
+      "exclusiveMinimum": 0.0,
+      "title": "Proposed Rent",
+      "type": "number"
+     }
+    },
+    "required": [
+     "proposed_rent"
+    ],
+    "title": "RenewalCheckRequest",
+    "type": "object"
+   },
+   "RentIndexResponse": {
+    "properties": {
+     "data": {
+      "items": {
+       "$ref": "#/components/schemas/RentIndexRow"
+      },
+      "title": "Data",
+      "type": "array"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success",
+     "data"
+    ],
+    "title": "RentIndexResponse",
+    "type": "object"
+   },
+   "RentIndexRow": {
+    "additionalProperties": false,
+    "description": "One published district/subtype/bedrooms median for a period.\nsample_size below the suppression threshold never reaches this model \u2014\nthe service filters those rows out before serialization.",
+    "properties": {
+     "bedrooms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bedrooms"
+     },
+     "district": {
+      "title": "District",
+      "type": "string"
+     },
+     "median_rent": {
+      "title": "Median Rent",
+      "type": "number"
+     },
+     "period": {
+      "title": "Period",
+      "type": "string"
+     },
+     "property_subtype": {
+      "title": "Property Subtype",
+      "type": "string"
+     },
+     "sample_size": {
+      "title": "Sample Size",
+      "type": "integer"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "district",
+     "property_subtype",
+     "median_rent",
+     "sample_size",
+     "source",
+     "period"
+    ],
+    "title": "RentIndexRow",
     "type": "object"
    },
    "ReportMetadata": {
@@ -7453,9 +7795,430 @@
     ]
    }
   },
+  "/api/v1/rentals/applications/{application_id}/decision": {
+   "post": {
+    "description": "Owner accepts or rejects an application. Accepting auto-rejects the\npending siblings and moves the listing to `rented`.",
+    "operationId": "decide_application_api_v1_rentals_applications__application_id__decision_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "application_id",
+      "required": true,
+      "schema": {
+       "title": "Application Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApplicationDecisionRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Decide Application",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts": {
+   "get": {
+    "description": "Contracts registry (officer only).",
+    "operationId": "list_contracts_api_v1_rentals_contracts_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "skip",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "title": "Skip",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "List Contracts",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   },
+   "post": {
+    "description": "Officer registers a tenancy contract from an accepted application.\nGenerates the registry contract number; the contract stays `draft` until\na matching deposit receipt is recorded.",
+    "operationId": "create_contract_api_v1_rentals_contracts_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ContractCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Create Contract",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts/export": {
+   "get": {
+    "description": "CSV export of the contracts registry \u2014 the tax-base deliverable for\nthe administration (rental_officer only; party IDs are intentionally\nincluded, unlike every public serializer in this module).",
+    "operationId": "export_contracts_api_v1_rentals_contracts_export_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Export Contracts",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts/{contract_no}/deposit": {
+   "post": {
+    "description": "Officer records a deposit receipt. A matching amount activates the\ncontract (draft \u2192 active); a mismatch is rejected.",
+    "operationId": "record_deposit_api_v1_rentals_contracts__contract_no__deposit_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "contract_no",
+      "required": true,
+      "schema": {
+       "title": "Contract No",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DepositRecordRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Record Deposit",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts/{contract_no}/pdf": {
+   "get": {
+    "description": "Download the registered tenancy contract PDF. Visible to the owner or\nrenter party, or a rental officer.",
+    "operationId": "download_contract_pdf_api_v1_rentals_contracts__contract_no__pdf_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "contract_no",
+      "required": true,
+      "schema": {
+       "title": "Contract No",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Download Contract Pdf",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts/{contract_no}/renewal": {
+   "post": {
+    "description": "Contract-shape stub: validates a proposed renewal rent against the\nconfigured legal cap over the contract's current rent. Settles the API\nshape now; the full renewal workflow (a new contract record, signatures,\nPDF) is post-pilot (plan decision).",
+    "operationId": "check_contract_renewal_api_v1_rentals_contracts__contract_no__renewal_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "contract_no",
+      "required": true,
+      "schema": {
+       "title": "Contract No",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RenewalCheckRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Check Contract Renewal",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/index": {
+   "get": {
+    "description": "Public district rent index. Groups below the minimum-sample threshold\nare absent from the response, never zeroed or estimated \u2014 an empty\nresult for a filter is the honest \"insufficient data yet\" state.",
+    "operationId": "rent_index_api_v1_rentals_index_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "district",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "District"
+      }
+     },
+     {
+      "in": "query",
+      "name": "property_subtype",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Property Subtype"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RentIndexResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Rent Index",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
   "/api/v1/rentals/listings": {
    "get": {
-    "description": "Published-listing search (public, PII-redacted).\n\nWith ?status_filter=pending_review (or any non-published status) this\nbecomes the officer review queue and requires a rental_officer bearer\ntoken.",
+    "description": "Published-listing search (public, PII-redacted).\n\nWith an explicit ?status=\u2026 (any value, including published) this\nbecomes the officer review queue \u2014 full listing detail including owner\nverification state \u2014 and requires a rental_officer bearer token.\nPublic browsing never needs the status param; it always sees published\nlistings only, through the redacted serializer.",
     "operationId": "browse_listings_api_v1_rentals_listings_get",
     "parameters": [
      {
@@ -7697,6 +8460,159 @@
     ]
    }
   },
+  "/api/v1/rentals/listings/{public_id}/agreement": {
+   "get": {
+    "description": "Download the owner \u2194 administration listing agreement PDF generated at\npublish time. Visible to the listing owner or a rental officer.",
+    "operationId": "download_listing_agreement_api_v1_rentals_listings__public_id__agreement_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Download Listing Agreement",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/listings/{public_id}/applications": {
+   "get": {
+    "description": "Applications on a listing \u2014 the owner, or a rental officer preparing\nthe contract from the accepted application.",
+    "operationId": "listing_applications_api_v1_rentals_listings__public_id__applications_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Listing Applications",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   },
+   "post": {
+    "description": "Renter applies at an offered rent. The offer is validated server-side\nagainst the listing's frozen band; an out-of-band offer is a 422.",
+    "operationId": "apply_to_listing_api_v1_rentals_listings__public_id__applications_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApplicationCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Apply To Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
   "/api/v1/rentals/listings/{public_id}/review": {
    "patch": {
     "description": "Officer review action: publish, adjust_band (mandatory reason), or\nreject (mandatory reason). All actions are audit-logged; band values\nfreeze on publish.",
@@ -7809,6 +8725,126 @@
      }
     ],
     "summary": "Withdraw Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/my-applications": {
+   "get": {
+    "description": "The authenticated renter's applications (any status).",
+    "operationId": "my_applications_api_v1_rentals_my_applications_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "skip",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "title": "Skip",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "My Applications",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/my-contracts": {
+   "get": {
+    "description": "Contracts where the authenticated user is the owner or renter party.",
+    "operationId": "my_contracts_api_v1_rentals_my_contracts_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "skip",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "title": "Skip",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 100,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ContractListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "My Contracts",
     "tags": [
      "Rentals",
      "Rentals"

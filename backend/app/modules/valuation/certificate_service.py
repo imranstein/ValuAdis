@@ -41,6 +41,18 @@ _LIGHT  = colors.HexColor("#F3F4F6")   # Table row background
 _BORDER = colors.HexColor("#D1D5DB")   # Subtle border
 
 
+def _fmt_date(value: Any) -> str:
+    """Format dates/ISO strings for PDF display; falls back to a dash."""
+    if not value:
+        return "—"
+    if hasattr(value, "strftime"):
+        return value.strftime("%d %B %Y")
+    try:
+        return datetime.fromisoformat(str(value)).strftime("%d %B %Y")
+    except ValueError:
+        return str(value)
+
+
 class CertificateService:
     """Generates PDF valuation certificates compliant with Proclamation 1365/2025."""
 
@@ -141,6 +153,304 @@ class CertificateService:
 
         doc.build(story, onFirstPage=self._add_page_border, onLaterPages=self._add_page_border)
         return buffer.getvalue()
+
+    # ------------------------------------------------------------------
+    # Rentals (Phase C): tenancy contract + owner listing agreement
+    # ------------------------------------------------------------------
+
+    # Addis Ababa 2026/27 rent-increase cap (Proclamation 1320/2024 directive).
+    RENEWAL_CAP_PERCENT: float = 11.5
+
+    # Footer marker required on rentals legal PDFs until counsel signs off.
+    PILOT_LEGAL_FOOTER = "PILOT DRAFT — PENDING LEGAL REVIEW"
+
+    def generate_tenancy_contract(
+        self,
+        contract: Dict[str, Any],
+        owner: Dict[str, Any],
+        renter: Dict[str, Any],
+        property_data: Dict[str, Any],
+        rent_context: Dict[str, Any],
+    ) -> bytes:
+        """Generate the registered tenancy contract PDF from the Proclamation
+        1320/2024 model-contract structure.
+
+        Args:
+            contract:     Contract dict (contract_no, monthly_rent, start_date,
+                          end_date, deposit_amount, deposit_receipt_ref, status).
+            owner:        {"full_name", "fayda_id_number", "phone"} of the lessor.
+            renter:       {"full_name", "fayda_id_number", "phone"} of the lessee.
+            property_data: Property record dict (address, municipality, area_sqm, …).
+            rent_context: {"band_min", "band_max", "valuation_reference"} for the
+                          published band and its backing valuation.
+        """
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1.5 * cm,
+            leftMargin=1.5 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=2 * cm,
+            title=f"Tenancy Contract – {contract.get('contract_no', '')}",
+            author="ValuAdis / Addis Ababa Housing Administration",
+            subject="Registered Tenancy Contract – Proclamation 1320/2024",
+        )
+        styles = self._build_styles()
+        story = self._build_contract_story(styles, contract, owner, renter, property_data, rent_context)
+        doc.build(story, onFirstPage=self._add_rentals_page_frame, onLaterPages=self._add_rentals_page_frame)
+        return buffer.getvalue()
+
+    def generate_listing_agreement(
+        self,
+        listing: Dict[str, Any],
+        owner: Dict[str, Any],
+        property_data: Dict[str, Any],
+    ) -> bytes:
+        """Generate the owner ↔ administration listing agreement PDF produced
+        at publish time.
+
+        Args:
+            listing:      {"public_id", "suggested_rent", "band_min", "band_max"}.
+            owner:        {"full_name", "fayda_id_number", "phone"}.
+            property_data: Property record dict (address, municipality, area_sqm, …).
+        """
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1.5 * cm,
+            leftMargin=1.5 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=2 * cm,
+            title=f"Listing Agreement – {listing.get('public_id', '')}",
+            author="ValuAdis / Addis Ababa Housing Administration",
+            subject="Rental Listing Agreement – Proclamation 1320/2024",
+        )
+        styles = self._build_styles()
+        story = self._build_listing_agreement_story(styles, listing, owner, property_data)
+        doc.build(story, onFirstPage=self._add_rentals_page_frame, onLaterPages=self._add_rentals_page_frame)
+        return buffer.getvalue()
+
+    def _build_contract_story(
+        self,
+        styles: dict,
+        contract: Dict[str, Any],
+        owner: Dict[str, Any],
+        renter: Dict[str, Any],
+        prop: Dict[str, Any],
+        rent_context: Dict[str, Any],
+    ) -> list:
+        story: list = []
+        story += self._build_header(styles, contract.get("contract_no", "—"))
+        story.append(Spacer(1, 0.3 * cm))
+        story.append(HRFlowable(width="100%", thickness=2, color=_GREEN))
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("REGISTERED TENANCY CONTRACT", styles["cert_title"]))
+        story.append(Paragraph(
+            "Model contract under the Rent Control and Administration Proclamation "
+            "No. 1320/2024 — Addis Ababa Housing Administration",
+            styles["subtitle"],
+        ))
+        story.append(Spacer(1, 0.5 * cm))
+
+        meta = [
+            ["Contract No.", contract.get("contract_no", "—"), "Status", str(contract.get("status", "draft")).upper()],
+            ["Start Date", _fmt_date(contract.get("start_date")), "End Date", _fmt_date(contract.get("end_date"))],
+        ]
+        story += [self._meta_grid(meta)]
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("PARTIES", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        party_rows = [
+            ["", "Lessor (Owner)", "Lessee (Renter)"],
+            ["Full Name", owner.get("full_name", "—"), renter.get("full_name", "—")],
+            ["Fayda ID", owner.get("fayda_id_number") or "—", renter.get("fayda_id_number") or "—"],
+            ["Phone", owner.get("phone") or "—", renter.get("phone") or "—"],
+        ]
+        t = Table(party_rows, colWidths=["22%", "39%", "39%"])
+        t.setStyle(self._detail_table_style())
+        story.append(t)
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("PROPERTY", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        prop_rows = [
+            ["Address", prop.get("address", "—")],
+            ["Municipality / Sub-city", f"{prop.get('municipality', '—')} / {prop.get('subcity', '—')}"],
+            ["Type", str(prop.get("property_type", "—")).replace("_", " ").title()],
+            ["Area (sqm)", f"{float(prop.get('area_sqm', 0)):,.2f} m²"],
+        ]
+        pt = Table(prop_rows, colWidths=["30%", "70%"])
+        pt.setStyle(self._detail_table_style())
+        story.append(pt)
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("RENT, BAND & DEPOSIT", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        monthly = float(contract.get("monthly_rent", 0))
+        deposit = float(contract.get("deposit_amount", 0))
+        rent_rows = [
+            ["Monthly Rent (ETB)", f"{monthly:,.2f}"],
+            ["Published Band (ETB/month)",
+             f"{float(rent_context.get('band_min', 0)):,.2f} – {float(rent_context.get('band_max', 0)):,.2f}"],
+            ["Valuation Reference", str(rent_context.get("valuation_reference", "—"))],
+            ["Deposit (ETB)", f"{deposit:,.2f}"],
+            ["Deposit Receipt Ref", contract.get("deposit_receipt_ref") or "Pending — contract inactive until recorded"],
+        ]
+        rt = Table(rent_rows, colWidths=["40%", "60%"])
+        rt.setStyle(self._detail_table_style())
+        story.append(rt)
+        story.append(Spacer(1, 0.5 * cm))
+
+        story.append(HRFlowable(width="100%", thickness=1, color=_BORDER))
+        story.append(Spacer(1, 0.3 * cm))
+        clause = (
+            "<b>Rent increase cap.</b> Any renewal of this tenancy is subject to the maximum "
+            f"annual rent increase in force for Addis Ababa, currently <b>{self.RENEWAL_CAP_PERCENT:.1f}%</b>, "
+            "under the Rent Control and Administration Proclamation No. 1320/2024 and the Addis "
+            "Ababa directive for 2026/27. <b>Deposit.</b> The deposit is recorded against this "
+            "registered contract as evidence; it is not held in custody by the administration in "
+            "this phase. The contract is legally active only once the deposit receipt is recorded. "
+            "This document reproduces the parties' identity and the registered price; alteration "
+            "renders it void."
+        )
+        story.append(Paragraph(clause, styles["legal"]))
+        story.append(Spacer(1, 0.5 * cm))
+
+        story += self._build_signature_row(styles, ["Lessor (Owner)", "Lessee (Renter)", "Rental Officer"])
+        return story
+
+    def _build_listing_agreement_story(
+        self,
+        styles: dict,
+        listing: Dict[str, Any],
+        owner: Dict[str, Any],
+        prop: Dict[str, Any],
+    ) -> list:
+        story: list = []
+        story += self._build_header(styles, listing.get("public_id", "—"))
+        story.append(Spacer(1, 0.3 * cm))
+        story.append(HRFlowable(width="100%", thickness=2, color=_GREEN))
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("RENTAL LISTING AGREEMENT", styles["cert_title"]))
+        story.append(Paragraph(
+            "Owner and Addis Ababa Housing Administration — listing terms under "
+            "Proclamation No. 1320/2024",
+            styles["subtitle"],
+        ))
+        story.append(Spacer(1, 0.5 * cm))
+
+        meta = [
+            ["Listing No.", listing.get("public_id", "—"), "Published", _fmt_date(listing.get("published_at"))],
+        ]
+        story += [self._meta_grid(meta)]
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("OWNER", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        owner_rows = [
+            ["Full Name", owner.get("full_name", "—")],
+            ["Fayda ID", owner.get("fayda_id_number") or "—"],
+            ["Phone", owner.get("phone") or "—"],
+        ]
+        ot = Table(owner_rows, colWidths=["30%", "70%"])
+        ot.setStyle(self._detail_table_style())
+        story.append(ot)
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("PROPERTY & PUBLISHED BAND", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        band_rows = [
+            ["Address", prop.get("address", "—")],
+            ["Municipality / Sub-city", f"{prop.get('municipality', '—')} / {prop.get('subcity', '—')}"],
+            ["Area (sqm)", f"{float(prop.get('area_sqm', 0)):,.2f} m²"],
+            ["Suggested Rent (ETB/month)", f"{float(listing.get('suggested_rent', 0)):,.2f}"],
+            ["Published Band (ETB/month)",
+             f"{float(listing.get('band_min', 0)):,.2f} – {float(listing.get('band_max', 0)):,.2f}"],
+        ]
+        bt = Table(band_rows, colWidths=["40%", "60%"])
+        bt.setStyle(self._detail_table_style())
+        story.append(bt)
+        story.append(Spacer(1, 0.5 * cm))
+
+        story.append(HRFlowable(width="100%", thickness=1, color=_BORDER))
+        story.append(Spacer(1, 0.3 * cm))
+        terms = (
+            "The owner authorises the Addis Ababa Housing Administration to publish this property "
+            "on the public rental registry at the band shown above, which is frozen at publication "
+            "and backed by an approved rent valuation. Applications are accepted only within this "
+            "band. The owner confirms the property is residential and eligible under Proclamation "
+            "No. 1320/2024, and that the ownership details provided are accurate."
+        )
+        story.append(Paragraph(terms, styles["legal"]))
+        story.append(Spacer(1, 0.5 * cm))
+
+        story += self._build_signature_row(styles, ["Owner", "Rental Officer"])
+        return story
+
+    def _meta_grid(self, data: list) -> Table:
+        # Normalise to 4 columns per row for a consistent green label grid.
+        col_widths = ["22%", "28%", "22%", "28%"]
+        t = Table(data, colWidths=col_widths)
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (0, -1), _GREEN),
+            ("BACKGROUND", (2, 0), (2, -1), _GREEN),
+            ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+            ("TEXTCOLOR", (2, 0), (2, -1), colors.white),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+            ("FONTNAME", (2, 0), (2, -1), "Helvetica-Bold"),
+            ("GRID", (0, 0), (-1, -1), 0.5, _BORDER),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        return t
+
+    def _build_signature_row(self, styles: dict, labels: list) -> list:
+        cells = []
+        for label in labels:
+            cells.append(Table(
+                [
+                    [Spacer(1, 1.2 * cm)],
+                    [HRFlowable(width=4.5 * cm, thickness=1, color=colors.black)],
+                    [Paragraph(label, styles["sig_label"])],
+                    [Paragraph("Signature / Date", styles["sig_label"])],
+                ],
+                colWidths=["100%"],
+            ))
+        width = f"{100 // len(labels)}%"
+        row = Table([cells], colWidths=[width] * len(labels))
+        row.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ]))
+        return [row]
+
+    def _add_rentals_page_frame(self, canvas, doc):
+        canvas.saveState()
+        w, h = A4
+        canvas.setStrokeColor(_GREEN)
+        canvas.setLineWidth(3)
+        canvas.rect(8 * mm, 8 * mm, w - 16 * mm, h - 16 * mm)
+        canvas.setStrokeColor(_GOLD)
+        canvas.setLineWidth(1)
+        canvas.rect(10 * mm, 10 * mm, w - 20 * mm, h - 20 * mm)
+        canvas.setFont("Helvetica-Bold", 7)
+        canvas.setFillColor(colors.HexColor("#9D3A28"))
+        canvas.drawCentredString(w / 2, 11 * mm, self.PILOT_LEGAL_FOOTER)
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(colors.HexColor("#9CA3AF"))
+        canvas.drawCentredString(
+            w / 2, 6 * mm,
+            f"ValuAdis / Addis Ababa Housing Administration | Proclamation 1320/2024 | Page {doc.page}",
+        )
+        canvas.restoreState()
 
     # ------------------------------------------------------------------
     # Story construction helpers

@@ -34,6 +34,11 @@ PUBLIC_ID_REGION = "AA"
 PUBLIC_ID_KIND = "LST"
 PUBLIC_ID_MAX_ATTEMPTS = 20
 
+# Listing-agreement PDF is generated on demand; the stored value is the
+# retrieval path (no third-party file store in this phase), mirroring how
+# valuation certificates are served.
+LISTING_AGREEMENT_PATH_TEMPLATE = "/api/v1/rentals/listings/{public_id}/agreement"
+
 # Proclamation 1320/2024 covers residential rentals only; commercial and
 # other premises must be impossible to list. mixed_use is excluded until a
 # legal reading says its residential portion qualifies.
@@ -220,6 +225,9 @@ class RentalListingService:
                 "status": RentalListingStatus.PUBLISHED.value,
                 "published_at": datetime.now(timezone.utc),
                 "requires_officer_review": False,
+                # Owner ↔ administration listing agreement is produced at
+                # publish time; the path is the on-demand retrieval endpoint.
+                "listing_agreement_pdf": LISTING_AGREEMENT_PATH_TEMPLATE.format(public_id=listing.public_id),
             },
         )
         self._audit(
@@ -314,6 +322,40 @@ class RentalListingService:
             return None
         return self.to_public_listing(listing)
 
+    def build_listing_agreement_context(self, public_id: str, actor: User) -> Dict[str, Any]:
+        """Assemble the listing-agreement PDF context. Restricted to the
+        listing owner or a rental officer."""
+        listing = self.repo.get_by_public_id(public_id)
+        if not listing:
+            raise ValuAdisException("Listing not found")
+        if not listing.listing_agreement_pdf:
+            raise ValidationException("The listing agreement is generated at publish time.")
+        if listing.owner_user_id != actor.id and not _is_rental_officer(actor):
+            raise AuthorizationException("Only the listing owner or a rental officer can download this agreement.")
+
+        owner = self.db.query(User).filter(User.id == listing.owner_user_id).first()
+        prop = listing.property
+        return {
+            "listing": {
+                "public_id": listing.public_id,
+                "suggested_rent": listing.suggested_rent,
+                "band_min": listing.band_min,
+                "band_max": listing.band_max,
+                "published_at": listing.published_at,
+            },
+            "owner": {
+                "full_name": owner.full_name if owner else "—",
+                "fayda_id_number": owner.fayda_id_number if owner else None,
+                "phone": owner.phone if owner else None,
+            },
+            "property_data": {
+                "address": prop.address if prop else "—",
+                "municipality": prop.municipality if prop else "—",
+                "subcity": prop.subcity if prop else "—",
+                "area_sqm": prop.area_sqm if prop else 0,
+            },
+        }
+
     # ------------------------------------------------------------------
     # Serializers
     # ------------------------------------------------------------------
@@ -359,6 +401,7 @@ class RentalListingService:
             "requires_officer_review": listing.requires_officer_review,
             "status": listing.status,
             "review_reason": listing.review_reason,
+            "listing_agreement_pdf": listing.listing_agreement_pdf,
             "published_at": listing.published_at.isoformat() if listing.published_at else None,
             "created_at": listing.created_at.isoformat() if listing.created_at else None,
         }

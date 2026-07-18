@@ -6,8 +6,8 @@
         <span>ValuAdis Rentals</span>
       </NuxtLink>
       <div class="rent-nav-links">
-        <NuxtLink to="/rent" class="active">Listings</NuxtLink>
-        <NuxtLink to="/rent/index">Rent index</NuxtLink>
+        <NuxtLink to="/rent">Listings</NuxtLink>
+        <NuxtLink to="/rent/index" class="active">Rent index</NuxtLink>
         <NuxtLink to="/rent/signup">Citizen signup</NuxtLink>
         <NuxtLink to="/login" class="rent-login">Workspace sign in</NuxtLink>
       </div>
@@ -15,149 +15,148 @@
 
     <header class="rent-hero">
       <p class="rent-kicker">Addis Ababa Housing Administration pilot &mdash; Bole &amp; Yeka</p>
-      <h1>Registered rental listings at honest, published prices.</h1>
+      <h1>The public district rent index.</h1>
       <p class="rent-lede">
-        Every listing is verified by a rental officer and published inside a valuation-backed
-        rent band under Proclamation 1320/2024. No brokers, no key money.
+        Median monthly rent by sub-city, property type, and bedroom count, computed from
+        registered tenancy contracts under Proclamation 1320/2024. A district only appears once
+        enough contracts are registered to protect any single household's privacy — small
+        samples are withheld, never estimated or fabricated.
       </p>
     </header>
 
-    <section class="rent-toolbar" aria-label="Listing filters">
+    <section class="rent-toolbar" aria-label="Index filters">
       <div class="rent-search-field">
         <i class="pi pi-search" aria-hidden="true"></i>
         <input
           v-model="district"
           type="search"
           placeholder="Sub-city (e.g. Bole, Yeka)"
-          @keyup.enter="loadListings"
+          @keyup.enter="loadIndex"
         />
       </div>
-      <select v-model="bedrooms" class="rent-filter-select" aria-label="Bedrooms">
-        <option value="">Any bedrooms</option>
-        <option v-for="n in 5" :key="n" :value="String(n)">{{ n }} bedroom{{ n > 1 ? 's' : '' }}</option>
+      <select v-model="propertySubtype" class="rent-filter-select" aria-label="Property type">
+        <option value="">Any property type</option>
+        <option value="apartment">Apartment</option>
+        <option value="villa">Villa / house</option>
+        <option value="condominium">Condominium</option>
       </select>
-      <input
-        v-model="maxRent"
-        type="number"
-        min="0"
-        class="rent-filter-select"
-        placeholder="Max monthly rent (ETB)"
-        aria-label="Maximum monthly rent"
-      />
-      <button class="rent-btn-primary" type="button" @click="loadListings">Search</button>
+      <button class="rent-btn-primary" type="button" @click="loadIndex">Filter</button>
     </section>
 
-    <section class="rent-results" aria-label="Search results">
-      <div v-if="loading" class="rent-state">Loading published listings…</div>
+    <section class="rent-results" aria-label="Rent index results">
+      <div v-if="loading" class="rent-state">Loading the rent index…</div>
 
       <div v-else-if="errorMessage" class="rent-state rent-state-error" role="alert">
-        <strong>Listings unavailable</strong>
+        <strong>Rent index unavailable</strong>
         <span>{{ errorMessage }}</span>
       </div>
 
-      <div v-else-if="listings.length === 0" class="rent-state">
-        <strong>No published listings match these filters.</strong>
+      <div v-else-if="Object.keys(groupedByDistrict).length === 0" class="rent-state">
+        <strong>Insufficient data{{ district ? ` for ${district}` : '' }} yet.</strong>
         <span>
-          Listings appear here after a rental officer verifies and publishes them.
-          Check back soon or widen your filters.
+          Not enough registered tenancy contracts exist in this district to publish a reliable
+          median without risking any single household's privacy. Check back as more contracts
+          register, or browse the listings directly.
         </span>
       </div>
 
-      <div v-else class="rent-grid">
-        <NuxtLink
-          v-for="listing in listings"
-          :key="listing.public_id"
-          :to="`/rent/${listing.public_id}`"
-          class="rent-card"
-        >
-          <div class="rent-card-head">
-            <span class="rent-card-id">{{ listing.public_id }}</span>
-            <span class="rent-cert-badge" title="Backed by an approved rent valuation">
-              <i class="pi pi-verified" aria-hidden="true"></i>
-              Valuation certified
-            </span>
+      <div v-else class="index-groups">
+        <article v-for="(rows, districtName) in groupedByDistrict" :key="districtName" class="index-card">
+          <h2>{{ districtName }}</h2>
+          <div class="index-table-wrap">
+            <table class="index-table">
+              <thead>
+                <tr>
+                  <th>Property type</th>
+                  <th>Bedrooms</th>
+                  <th class="text-right">Median rent</th>
+                  <th class="text-right">Sample size</th>
+                  <th>Period</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in rows" :key="i">
+                  <td>{{ formatSubtype(row.property_subtype) }}</td>
+                  <td>{{ row.bedrooms != null ? row.bedrooms : 'All' }}</td>
+                  <td class="text-right num">{{ formatEtb(row.median_rent) }}/mo</td>
+                  <td class="text-right num">{{ row.sample_size }} contracts</td>
+                  <td>{{ row.period }}</td>
+                  <td class="index-source">{{ formatSource(row.source) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <h2>{{ listing.property.address }}</h2>
-          <p class="rent-card-location">
-            {{ listing.property.subcity || listing.property.municipality }}
-            · {{ formatSubtype(listing.property) }}
-            · {{ formatArea(listing.property.area_sqm) }} m²
-            <template v-if="listing.property.number_of_bedrooms">
-              · {{ listing.property.number_of_bedrooms }} bd
-            </template>
-          </p>
-          <div class="rent-card-band">
-            <div>
-              <span>Suggested rent</span>
-              <strong>{{ formatEtb(listing.suggested_rent) }}/mo</strong>
-            </div>
-            <div>
-              <span>Published band</span>
-              <strong>{{ formatEtb(listing.band_min) }} – {{ formatEtb(listing.band_max) }}</strong>
-            </div>
-          </div>
-        </NuxtLink>
+        </article>
       </div>
-
-      <p v-if="!loading && !errorMessage" class="rent-count">
-        {{ total }} published listing{{ total === 1 ? '' : 's' }} from the registry.
-      </p>
     </section>
 
     <footer class="rent-footer">
       <span>ValuAdis &mdash; government-mediated rental registry</span>
-      <NuxtLink to="/rent/signup">Register as owner or renter</NuxtLink>
+      <NuxtLink to="/rent">Browse published listings</NuxtLink>
     </footer>
   </main>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import rentalService, { type PublicListing } from '~/services/rentalService'
+import { computed, onMounted, ref } from 'vue'
+import rentalService, { type RentIndexRow } from '~/services/rentalService'
 
-definePageMeta({ layout: 'landing' })
+// Nuxt's file-based router builds a route's NAME by joining every path
+// segment (including literal "index" segments), while only stripping
+// "index" from the PATH. A sibling pages/rent/index.vue (route name
+// "rent/index", path "/rent") therefore collides by name with a nested
+// pages/rent/index/index.vue (also name "rent/index"), and the scanner
+// silently nests the second file as a child of the first, breaking both
+// routes. Keeping this file flat (no "index" segment at all) and setting an
+// explicit path is what actually makes it reachable at /rent/index.
+definePageMeta({ layout: 'landing', path: '/rent/index' })
 
 const district = ref('')
-const bedrooms = ref('')
-const maxRent = ref('')
+const propertySubtype = ref('')
 const loading = ref(true)
 const errorMessage = ref('')
-const listings = ref<PublicListing[]>([])
-const total = ref(0)
+const rows = ref<RentIndexRow[]>([])
 
-onMounted(loadListings)
+onMounted(loadIndex)
 
-async function loadListings() {
+async function loadIndex() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const result = await rentalService.searchPublished({
+    rows.value = await rentalService.getRentIndex({
       district: district.value.trim() || undefined,
-      bedrooms: bedrooms.value ? Number(bedrooms.value) : undefined,
-      band_max: maxRent.value ? Number(maxRent.value) : undefined,
+      property_subtype: propertySubtype.value || undefined,
     })
-    listings.value = result.data
-    total.value = result.total
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not load listings.'
-    listings.value = []
-    total.value = 0
+    errorMessage.value = error instanceof Error ? error.message : 'Could not load the rent index.'
+    rows.value = []
   } finally {
     loading.value = false
   }
 }
 
+const groupedByDistrict = computed(() => {
+  const groups: Record<string, RentIndexRow[]> = {}
+  for (const row of rows.value) {
+    if (!groups[row.district]) groups[row.district] = []
+    groups[row.district].push(row)
+  }
+  return groups
+})
+
 function formatEtb(value: number) {
   return `ETB ${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
 }
 
-function formatSubtype(property: PublicListing['property']) {
-  const subtype = property.property_subtype || property.property_type
-  return String(subtype).replace(/_/g, ' ')
+function formatSubtype(value: string) {
+  return String(value || '').replace(/_/g, ' ')
 }
 
-function formatArea(value: number) {
-  return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
+function formatSource(source: string) {
+  if (source === 'contracts') return 'Registered contracts'
+  if (source === 'listings') return 'Published listings'
+  return 'Blended'
 }
 </script>
 
@@ -248,13 +247,13 @@ function formatArea(value: number) {
 .rent-hero h1 {
   margin: 0;
   font-family: var(--serif);
-  font-size: clamp(38px, 5.5vw, 64px);
+  font-size: clamp(34px, 5vw, 56px);
   font-weight: 600;
   line-height: 1.04;
 }
 
 .rent-lede {
-  max-width: 640px;
+  max-width: 680px;
   margin: var(--space-5) 0 0;
   color: var(--ink-soft);
   font-size: 17px;
@@ -263,7 +262,7 @@ function formatArea(value: number) {
 
 .rent-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(150px, 200px) minmax(180px, 220px) auto;
+  grid-template-columns: minmax(240px, 1fr) minmax(180px, 240px) auto;
   gap: 10px;
   align-items: center;
   margin: 0 clamp(18px, 5vw, 64px);
@@ -324,7 +323,7 @@ function formatArea(value: number) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  max-width: 560px;
+  max-width: 620px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -336,100 +335,68 @@ function formatArea(value: number) {
   color: var(--red, #9d3a28);
 }
 
-.rent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-4);
-}
-
-.rent-card {
+.index-groups {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-5);
+}
+
+.index-card {
   border: 1px solid var(--line);
   border-top: 2px solid var(--gold-bright);
   border-radius: var(--radius);
   background: var(--surface);
   padding: var(--space-5);
-  color: var(--ink);
-  text-decoration: none;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-fast) var(--ease), box-shadow var(--duration-normal) var(--ease);
 }
 
-.rent-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+.index-card h2 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
 }
 
-.rent-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+.index-table-wrap {
+  overflow-x: auto;
 }
 
-.rent-card-id {
+.index-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.index-table th {
+  text-align: left;
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.rent-cert-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--green);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
 }
 
-.rent-card h2 {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.2;
+.index-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+  color: var(--ink-soft);
 }
 
-.rent-card-location {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
+.index-table .text-right {
+  text-align: right;
 }
 
-.rent-card-band {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-  border-top: 1px solid var(--line);
-  padding-top: var(--space-3);
-}
-
-.rent-card-band span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.rent-card-band strong {
-  display: block;
-  margin-top: 4px;
+.index-table .num {
   color: var(--green);
   font-family: var(--mono);
-  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 
-.rent-count {
-  margin: var(--space-5) 0 0;
+.index-source {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .rent-footer {
