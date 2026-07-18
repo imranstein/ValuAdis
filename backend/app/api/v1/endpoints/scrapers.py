@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.rbac import require_staff
 from app.core.scraper_limits import (
     SCRAPER_LIST_DEFAULT_LIMIT,
     SCRAPER_LIST_MAX_LIMIT,
@@ -38,7 +38,7 @@ def get_all_scrapers(
     skip: int = 0,
     limit: int = SCRAPER_LIST_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get all scraper targets"""
     safe_skip = max(skip, 0)
@@ -50,7 +50,7 @@ def get_all_scrapers(
 @router.get("/stats", response_model=ScraperStatsResponse)
 def get_scraper_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper statistics"""
     return ScraperService.get_scraper_stats(db)
@@ -59,7 +59,7 @@ def get_scraper_stats(
 @router.get("/health", response_model=List[ScraperHealthResponse])
 def get_scraper_health(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Per-source scraper health for the operations desk"""
     return ScraperService.get_scraper_health(db)
@@ -71,7 +71,7 @@ def get_scraper_logs(
     skip: int = 0,
     limit: int = SCRAPER_LOG_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper logs"""
     safe_skip = max(skip, 0)
@@ -89,7 +89,7 @@ def get_scraper_logs(
 def get_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper by ID"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)
@@ -105,7 +105,7 @@ def get_scraper(
 def create_scraper(
     scraper_data: ScraperTargetCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Create new scraper target"""
     # Check if domain already exists
@@ -125,7 +125,7 @@ def update_scraper(
     scraper_id: int,
     scraper_data: ScraperTargetUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Update scraper target"""
     # Check if domain is being changed and if it already exists
@@ -150,7 +150,7 @@ def update_scraper(
 def delete_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Delete scraper target"""
     success = ScraperService.delete_scraper(db, scraper_id)
@@ -166,7 +166,7 @@ def delete_scraper(
 def toggle_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Toggle scraper enabled status"""
     scraper = ScraperService.toggle_scraper(db, scraper_id)
@@ -183,7 +183,7 @@ async def test_scraper(
     scraper_id: int,
     test_data: ScraperTestRequest = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Test scraper configuration"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)
@@ -210,7 +210,7 @@ async def run_scraper(
     scraper_id: int,
     run_data: ScraperRunRequest = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Manually trigger scraper run"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)

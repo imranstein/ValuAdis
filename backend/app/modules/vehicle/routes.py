@@ -22,7 +22,8 @@ from datetime import datetime, timedelta
 import logging
 
 from app.core.database import get_db
-from app.core.security import get_current_user_id
+from app.core.rbac import require_staff
+from app.data.models.user import User
 from .models import Vehicle, VehicleValuation, VehicleValuationStatus
 from .services import vehicle_valuation_service
 from .schemas import VehicleCreate, VehicleUpdate, VehicleResponse
@@ -33,10 +34,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
+def _staff_user_id(actor: User = Depends(require_staff)) -> int:
+    """Vehicles are a staff-shell surface (Phase E permission matrix)."""
+    return actor.id
+
+
 @router.post("/", response_model=VehicleResponse)
 async def create_vehicle(
     vehicle_data: VehicleCreate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -97,7 +103,7 @@ async def get_user_vehicles(
     year: Optional[int] = Query(None, description="Filter by vehicle year"),
     region: Optional[str] = Query(None, description="Filter by region"),
     status: Optional[str] = Query(None, description="Filter by valuation status"),
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -137,7 +143,7 @@ async def get_user_vehicles(
 
 @router.get("/statistics/summary")
 async def get_vehicle_statistics(
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -205,7 +211,7 @@ async def get_vehicle_statistics(
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(
     vehicle_id: int,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -244,7 +250,7 @@ async def get_vehicle(
 async def update_vehicle(
     vehicle_id: int,
     vehicle_data: VehicleUpdate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -314,7 +320,7 @@ async def update_vehicle(
 @router.delete("/{vehicle_id}")
 async def delete_vehicle(
     vehicle_id: int,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -357,7 +363,7 @@ async def delete_vehicle(
 async def create_vehicle_valuation(
     vehicle_id: int,
     valuation_data: Optional[VehicleValuationCreate] = None,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -446,7 +452,7 @@ async def create_vehicle_valuation(
 @router.get("/{vehicle_id}/valuations", response_model=List[VehicleValuationResponse])
 async def get_vehicle_valuations(
     vehicle_id: int,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -489,7 +495,7 @@ async def get_vehicle_valuations(
 @router.get("/{vehicle_id}/latest-valuation", response_model=VehicleValuationResponse)
 async def get_latest_vehicle_valuation(
     vehicle_id: int,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db)
 ):
     """

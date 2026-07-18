@@ -13,7 +13,8 @@ from typing import Optional
 import json
 
 from app.core.database import get_db
-from app.core.security import get_current_user_id
+from app.core.rbac import is_staff, load_current_user, require_staff
+from app.data.models.user import User
 from .services import AuditService
 from .schemas import (
     AuditReportResponse,
@@ -36,18 +37,25 @@ async def get_audit_logs(
     end_date: Optional[datetime] = Query(None),
     action: Optional[str] = Query(None),
     module: Optional[str] = Query(None),
-    _: int = Depends(get_current_user_id),
+    actor: User = Depends(load_current_user),
     db: Session = Depends(get_db),
 ):
     """
     List audit log entries for the audit log viewer UI.
     Supports filtering by date range, action, and module (table_name).
+
+    Staff see the full platform ledger (the /audit dashboard surface).
+    Non-staff (rental officers, citizens) are scoped to their own actions
+    only — this is the personal "activity" feed the /profile page renders,
+    not the staff audit surface (Phase E permission matrix).
     """
     from sqlalchemy import text
-    from app.data.models.user import User
 
     conditions = []
     params = {"skip": skip, "limit": limit}
+    if not is_staff(actor):
+        conditions.append("al.user_id = :actor_id")
+        params["actor_id"] = actor.id
     if start_date:
         conditions.append("al.timestamp >= :start_date")
         params["start_date"] = start_date
@@ -120,7 +128,7 @@ async def generate_system_audit_report(
     start_date: Optional[datetime] = Query(None, description="Report start date"),
     end_date: Optional[datetime] = Query(None, description="Report end date"),
     days_back: Optional[int] = Query(30, description="Days back from end date"),
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """
@@ -174,7 +182,7 @@ async def generate_system_audit_report(
 
 @router.get("/compliance", response_model=ComplianceReportResponse)
 async def generate_ethiopian_compliance_report(
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """
@@ -217,7 +225,7 @@ async def generate_ethiopian_compliance_report(
 
 @router.get("/summary", response_model=SummaryReportResponse)
 async def generate_summary_report(
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """
@@ -263,7 +271,7 @@ async def export_audit_report(
     end_date: Optional[datetime] = Query(None, description="Report end date"),
     days_back: Optional[int] = Query(30, description="Days back from end date"),
     format: str = Query("json", description="Export format (json)"),
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """
@@ -337,7 +345,7 @@ async def export_audit_report(
 
 
 @router.get("/health")
-async def audit_system_health(db: Session = Depends(get_db)):
+async def audit_system_health(db: Session = Depends(get_db), _: User = Depends(require_staff)):
     """
     Check audit system health and availability
     
@@ -383,7 +391,7 @@ async def audit_system_health(db: Session = Depends(get_db)):
 @router.get("/metrics")
 async def get_audit_metrics(
     metric_type: str = Query("overview", description="Type of metrics to retrieve"),
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """
@@ -452,7 +460,7 @@ async def schedule_audit_report(
     recipients: list[str],
     start_date: Optional[datetime] = Query(None, description="Report start date"),
     end_date: Optional[datetime] = Query(None, description="Report end date"),
-    _: int = Depends(get_current_user_id),
+    _: User = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
     """

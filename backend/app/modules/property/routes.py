@@ -16,6 +16,8 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.core.exceptions import SpatialOperationException, ValidationException
+from app.core.rbac import is_property_owner, is_rental_officer, is_staff, load_current_user, require_staff
+from app.data.models.user import User
 from app.services.spatial_service import SpatialService
 from .schemas import (
     PropertyCreate,
@@ -30,6 +32,30 @@ from .services import PropertyService
 router = APIRouter()
 
 UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+
+# ---------------------------------------------------------------------------
+# Role guards (Phase E permission matrix: "Own properties" row)
+#
+# Staff: full CRUD across all properties. Rental officers: read across all
+# properties (needed to review a listing's linked property), never write.
+# Property owners: full CRUD on their own properties only (needed to
+# register/edit a listing's underlying property). Renters: no access.
+# ---------------------------------------------------------------------------
+
+def _property_reader(user: User = Depends(load_current_user)) -> User:
+    if is_staff(user) or is_rental_officer(user) or is_property_owner(user):
+        return user
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for property records")
+
+
+def _property_writer(user: User = Depends(load_current_user)) -> User:
+    if is_staff(user) or is_property_owner(user):
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only staff or property owners can modify properties",
+    )
 
 
 def _to_tuples(coords: List[List[float]]) -> List[Tuple[float, float]]:
@@ -124,15 +150,15 @@ async def check_overlap(
 async def create_property(
     property_data: PropertyCreate,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    actor: User = Depends(_property_writer),
 ):
-    """Create new property with GPS boundary"""
+    """Create new property with GPS boundary (staff or property owner)"""
     property_service = PropertyService(db)
-    
+
     try:
         property = await property_service.create_property(
             property_data.model_dump(),
-            user_id=current_user_id
+            user_id=actor.id
         )
         return PropertyResponse(success=True, data=property.to_dict())
     except (ValueError, ValidationException, SpatialOperationException) as e:
@@ -145,9 +171,10 @@ async def create_property(
 async def bulk_import_properties(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
 ):
-    """Import properties from a CSV file."""
+    """Import properties from a CSV file (staff ops tool)."""
+    current_user_id = actor.id
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
@@ -198,14 +225,14 @@ async def bulk_import_properties(
 async def export_properties(
     format: str = "csv",
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
 ):
-    """Export properties as CSV"""
+    """Export properties as CSV (staff ops tool)"""
     if format.lower() != "csv":
         raise HTTPException(status_code=400, detail="Only CSV format is supported")
     property_service = PropertyService(db)
     properties, _ = await property_service.get_user_properties(
-        user_id=current_user_id, skip=0, limit=10000
+        user_id=actor.id, skip=0, limit=10000, scope_all=True
     )
     output = io.StringIO()
     writer = csv.writer(output)
@@ -236,17 +263,20 @@ async def get_properties(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    actor: User = Depends(_property_reader),
 ):
-    """Get user's properties with pagination"""
+    """List properties. Staff and rental officers see all; property owners
+    see only their own (Phase E permission matrix)."""
     property_service = PropertyService(db)
-    
+    scope_all = is_staff(actor) or is_rental_officer(actor)
+
     properties, total = await property_service.get_user_properties(
-        user_id=current_user_id,
+        user_id=actor.id,
         skip=skip,
-        limit=limit
+        limit=limit,
+        scope_all=scope_all,
     )
-    
+
     return PropertyListResponse(
         success=True,
         data=[p.to_dict() for p in properties],
@@ -260,16 +290,19 @@ async def get_properties(
 async def get_property(
     property_id: int,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    actor: User = Depends(_property_reader),
 ):
-    """Get specific property by ID"""
+    """Get specific property by ID. Staff and rental officers can read any
+    property; owners only their own (Phase E permission matrix)."""
     property_service = PropertyService(db)
-    
+    scope_all = is_staff(actor) or is_rental_officer(actor)
+
     property = await property_service.get_property_by_id(
         property_id=property_id,
-        user_id=current_user_id
+        user_id=actor.id,
+        scope_all=scope_all,
     )
-    
+
     if not property:
         raise HTTPException(
             status_code=404,
@@ -284,7 +317,7 @@ async def property_market_evidence(
     property_id: int,
     limit: int = 12,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(_property_reader),
 ):
     """Comparable scraped listings for a property, as valuation evidence.
 
@@ -297,8 +330,9 @@ async def property_market_evidence(
     from app.data.models.market_listing import RawMarketListing
 
     property_service = PropertyService(db)
+    scope_all = is_staff(actor) or is_rental_officer(actor)
     subject = await property_service.get_property_by_id(
-        property_id=property_id, user_id=current_user_id
+        property_id=property_id, user_id=actor.id, scope_all=scope_all
     )
     if not subject:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -362,18 +396,20 @@ async def update_property(
     property_id: int,
     property_data: PropertyUpdate,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    actor: User = Depends(_property_writer),
 ):
-    """Update property information"""
+    """Update property information. Staff can edit any property; owners
+    only their own (Phase E permission matrix)."""
     property_service = PropertyService(db)
-    
+
     try:
         property = await property_service.update_property(
             property_id=property_id,
-            user_id=current_user_id,
-            update_data=property_data.model_dump(exclude_unset=True)
+            user_id=actor.id,
+            update_data=property_data.model_dump(exclude_unset=True),
+            scope_all=is_staff(actor),
         )
-        
+
         if not property:
             raise HTTPException(
                 status_code=404,
@@ -389,16 +425,18 @@ async def update_property(
 async def delete_property(
     property_id: int,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    actor: User = Depends(_property_writer),
 ):
-    """Delete property"""
+    """Delete property. Staff can delete any property; owners only their
+    own (Phase E permission matrix)."""
     property_service = PropertyService(db)
-    
+
     success = await property_service.delete_property(
         property_id=property_id,
-        user_id=current_user_id
+        user_id=actor.id,
+        scope_all=is_staff(actor),
     )
-    
+
     if not success:
         raise HTTPException(
             status_code=404,

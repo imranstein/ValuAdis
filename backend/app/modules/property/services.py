@@ -82,24 +82,29 @@ class PropertyService:
         
         return f"{muni_code}-{year}-{random_num}"
     
-    async def get_property_by_id(self, property_id: int, user_id: int) -> Optional[Property]:
-        """Get property by ID (user must be owner)"""
-        return self.property_repo.get_by_user_and_id(property_id, user_id)
-    
+    async def get_property_by_id(
+        self, property_id: int, user_id: int, scope_all: bool = False
+    ) -> Optional[Property]:
+        """Get property by ID. Owner-scoped unless scope_all (staff/
+        rental_officer read access — Phase E permission matrix)."""
+        return self.property_repo.get_by_user_and_id(property_id, user_id, scope_all=scope_all)
+
     async def get_user_properties(
         self,
         user_id: int,
         skip: int = 0,
-        limit: int = 20
+        limit: int = 20,
+        scope_all: bool = False,
     ) -> Tuple[List[Property], int]:
-        """Get user's properties with pagination"""
-        return self.property_repo.get_user_properties(user_id, skip, limit)
-    
+        """Get properties with pagination. Owner-scoped unless scope_all."""
+        return self.property_repo.get_user_properties(user_id, skip, limit, scope_all=scope_all)
+
     async def update_property(
         self,
         property_id: int,
         user_id: int,
-        update_data: dict
+        update_data: dict,
+        scope_all: bool = False,
     ) -> Optional[Property]:
         """Update property information"""
         # If coordinates are provided, recalculate area and boundary
@@ -121,11 +126,11 @@ class PropertyService:
             # Remove coordinates as they're now stored in boundary
             del update_data["coordinates"]
         
-        return self.property_repo.update_property(property_id, user_id, update_data)
-    
-    async def delete_property(self, property_id: int, user_id: int) -> bool:
-        """Delete property (user must be owner)"""
-        return self.property_repo.delete_property(property_id, user_id)
+        return self.property_repo.update_property(property_id, user_id, update_data, scope_all=scope_all)
+
+    async def delete_property(self, property_id: int, user_id: int, scope_all: bool = False) -> bool:
+        """Delete property. Owner-scoped unless scope_all (staff)."""
+        return self.property_repo.delete_property(property_id, user_id, scope_all=scope_all)
     
     async def find_nearby_properties(
         self,

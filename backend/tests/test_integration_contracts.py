@@ -8,7 +8,29 @@ from sqlalchemy import text
 from app.core.config import Settings, validate_production_settings
 
 
-def test_dashboard_contract_returns_empty_metrics(client):
+def _ensure_staff_user(db_session, user_id=1):
+    """Back a get_current_user_id override with a real staff User row —
+    Phase E's staff guards (app.core.rbac.load_current_user) load the actor
+    from the DB, not just the token subject."""
+    if db_session.query(User).filter(User.id == user_id).first() is None:
+        db_session.add(
+            User(
+                id=user_id,
+                email=f"contract-test-{user_id}@example.com",
+                full_name="Contract Test Staff",
+                phone=f"+2519{user_id:08d}",
+                password_hash="hashed",
+                municipality="Addis Ababa",
+                license_number=f"VAL-TEST-CONTRACT-{user_id}",
+                is_active=True,
+                is_verified=True,
+            )
+        )
+        db_session.commit()
+
+
+def test_dashboard_contract_returns_empty_metrics(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     response = client.get("/api/v1/analytics/dashboard?period=month")
@@ -17,7 +39,8 @@ def test_dashboard_contract_returns_empty_metrics(client):
     assert response.json()["valuations"]["total"] == 0
 
 
-def test_vehicle_summary_contract_returns_empty_metrics(client):
+def test_vehicle_summary_contract_returns_empty_metrics(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     response = client.get("/api/v1/vehicles/statistics/summary")
@@ -49,7 +72,8 @@ def test_admin_flag_can_read_user_registry(client, db_session):
     assert response.status_code == 200
 
 
-def test_audit_logs_contract_returns_empty_ledger(client):
+def test_audit_logs_contract_returns_empty_ledger(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     response = client.get("/api/v1/audit/logs")
@@ -67,7 +91,8 @@ def test_audit_reports_require_authentication(client):
     assert response.status_code == 401
 
 
-def test_compliance_report_contract_returns_schema(client):
+def test_compliance_report_contract_returns_schema(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     response = client.get("/api/v1/audit/compliance")
@@ -81,6 +106,7 @@ def test_compliance_report_contract_returns_schema(client):
 
 
 def test_compliance_report_handles_existing_valuations(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     user = User(
@@ -123,6 +149,7 @@ def test_compliance_report_handles_existing_valuations(client, db_session):
 
 
 def test_compliance_report_handles_string_created_at(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     db_session.execute(text(
@@ -181,7 +208,8 @@ def test_valuation_preview_endpoints_require_authentication(client):
     assert metrics_response.status_code == 401
 
 
-def test_valuation_detail_contract_returns_envelope(client):
+def test_valuation_detail_contract_returns_envelope(client, db_session):
+    _ensure_staff_user(db_session)
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
     create_response = client.post(

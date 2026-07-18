@@ -140,7 +140,12 @@ async function handleLogin() {
 
 function getRedirectPath() {
   const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect
-  if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) return '/dashboard'
+  if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) {
+    // Phase E: land each persona on its own shell home instead of always
+    // /dashboard, which citizens (owner/renter/officer) can't reach.
+    const { homePath } = usePersona()
+    return homePath.value
+  }
   return redirect
 }
 

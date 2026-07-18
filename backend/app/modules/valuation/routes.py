@@ -23,6 +23,7 @@ from .schemas import (
 from app.core.exceptions import ValuAdisException, PropertyValidationError
 from app.core.security import get_current_user_id
 from app.core.database import get_db
+from app.core.rbac import require_staff
 from app.data.models.user import User
 from sqlalchemy.orm import Session
 import structlog
@@ -61,14 +62,17 @@ def get_valuation_service(db: Session = Depends(get_db)) -> ValuationService:
 @router.post("/", response_model=ValuationResponse, status_code=status.HTTP_201_CREATED, tags=["Valuations"])
 async def create_valuation(
     valuation_data: ValuationCreate,
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
-    Create a new property valuation
-    
+    Create a new property valuation (staff shell — Phase E permission
+    matrix; citizens' rent valuations are auto-created by the rentals
+    module's service layer, never through this endpoint)
+
     Calculates market value and taxable value per Ethiopian standards
     """
+    user_id = actor.id
     try:
         logger.info(
             "Creating valuation",
@@ -129,13 +133,13 @@ async def create_valuation(
 @router.get("/export", tags=["Valuations"])
 async def export_valuations(
     format: str = "csv",
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service),
 ):
-    """Export valuations as CSV"""
+    """Export valuations as CSV (staff shell — Phase E permission matrix)"""
     if format.lower() != "csv":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only CSV format is supported")
-    valuations, _ = valuation_service.get_user_valuations(user_id=user_id, skip=0, limit=10000)
+    valuations, _ = valuation_service.get_user_valuations(user_id=actor.id, skip=0, limit=10000)
     output = io.StringIO()
     writer = csv.writer(output)
     headers = ["id", "property_id", "property_type", "municipality", "area_sqm", "market_value", "taxable_value", "status", "valuation_date", "created_at"]
@@ -203,12 +207,15 @@ async def get_valuation(
 async def get_user_valuations(
     skip: int = 0,
     limit: int = 100,
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
-    Get all valuations for the current user
+    List valuations (staff shell — Phase E permission matrix). Citizens
+    read their own valuations individually via GET /{valuation_id}, which
+    stays ownership-scoped instead of exposing a list surface.
     """
+    user_id = actor.id
     try:
         logger.info("Fetching user valuations", user_id=user_id, skip=skip, limit=limit)
         
@@ -242,12 +249,14 @@ async def get_user_valuations(
 async def update_valuation(
     valuation_id: int,
     valuation_update: ValuationUpdate,
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
-    Update a valuation (status changes only)
+    Update a valuation (status changes only) — staff shell (Phase E
+    permission matrix)
     """
+    user_id = actor.id
     try:
         logger.info(
             "Updating valuation",
@@ -290,12 +299,13 @@ async def update_valuation(
 @router.delete("/{valuation_id}", response_model=ValuationResponse, tags=["Valuations"])
 async def delete_valuation(
     valuation_id: int,
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service)
 ):
     """
-    Delete a valuation
+    Delete a valuation — staff shell (Phase E permission matrix)
     """
+    user_id = actor.id
     try:
         logger.info("Deleting valuation", valuation_id=valuation_id, user_id=user_id)
         
@@ -454,11 +464,14 @@ async def override_valuation(
 async def transition_valuation_status(
     valuation_id: int,
     transition_data: ValuationStatusTransitionRequest,
-    user_id: int = Depends(get_current_user_id),
+    actor: User = Depends(require_staff),
     valuation_service: ValuationService = Depends(get_valuation_service),
 ):
     """
-    Transition a valuation to a new status.
+    Transition a valuation to a new status — staff shell (Phase E permission
+    matrix). Rent-valuation transitions during officer publish go through
+    ValuationService.transition_status() directly from the rentals module,
+    bypassing this HTTP route, so this gate does not affect that flow.
 
     Valid transitions:
     - draft → pending
@@ -467,6 +480,7 @@ async def transition_valuation_status(
 
     Invalid transitions are rejected with HTTP 400.
     """
+    user_id = actor.id
     try:
         logger.info(
             "Transitioning valuation status",

@@ -154,6 +154,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions.js'
+import { usePersona } from '~/composables/usePersona'
 import { useI18n } from '~/composables/useI18n'
 import { getAccessToken } from '~/utils/authToken'
 
@@ -167,6 +168,7 @@ const {
   canManageUsers,
   hasPermission
 } = usePermissions()
+const { persona } = usePersona()
 
 const sidebarOpen = ref(false)
 const showNotifications = ref(false)
@@ -191,7 +193,12 @@ type NavigationGroup = {
   items: NavigationItem[]
 }
 
-const navigation = computed<NavigationGroup[]>(() => [
+// Phase E: role-scoped nav. Staff keep the full pre-rentals workspace (plus
+// the rentals module, since staff/admin has full access there too).
+// Officers, owners, and renters each get a citizen/officer shell scoped to
+// only the routes their persona is allowed to reach — no staff nav items,
+// per the permission matrix (plans/valuadis-rentals/tasks/phase-e.md).
+const STAFF_NAVIGATION: NavigationGroup[] = [
   {
     label: 'Workspace',
     items: [
@@ -230,7 +237,55 @@ const navigation = computed<NavigationGroup[]>(() => [
       { label: t('nav.audit'), to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
     ]
   }
-])
+]
+
+const OFFICER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
+      { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const OWNER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
+      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
+      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const RENTER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
+      { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
+      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const navigation = computed<NavigationGroup[]>(() => {
+  switch (persona.value) {
+    case 'officer':
+      return OFFICER_NAVIGATION
+    case 'owner':
+      return OWNER_NAVIGATION
+    case 'renter':
+      return RENTER_NAVIGATION
+    default:
+      return STAFF_NAVIGATION
+  }
+})
 
 const visibleNavigation = computed(() => {
   return navigation.value
