@@ -195,9 +195,10 @@ if (process.client) {
     }
   })
   
-  // Load MarkerCluster
+  // Load MarkerCluster — the plugin patches the global L namespace; its
+  // module.default is not the constructor, so prefer L.MarkerClusterGroup.
   import('leaflet.markercluster').then(module => {
-    MarkerClusterGroup = module.default
+    MarkerClusterGroup = (L && L.MarkerClusterGroup) || module.MarkerClusterGroup || module.default
   })
   
   // Load HeatMap
@@ -305,11 +306,13 @@ const initMap = async () => {
     attribution: '© OpenStreetMap contributors | Ethiopian Property Valuation Platform',
     maxZoom: 18
   }).addTo(map.value)
-  
-  // Add property markers
-  addPropertyMarkers()
-  
-  loading.value = false
+
+  // Add property markers; a marker failure must not strand the loading overlay
+  try {
+    addPropertyMarkers()
+  } finally {
+    loading.value = false
+  }
 }
 
 // Create custom marker icon based on property type
@@ -358,7 +361,7 @@ const addPropertyMarkers = () => {
   markers.value = []
   
   // Create marker cluster if enabled
-  if (clusteringEnabled.value && MarkerClusterGroup) {
+  if (clusteringEnabled.value && typeof MarkerClusterGroup === 'function') {
     markerCluster.value = new MarkerClusterGroup({
       iconCreateFunction: function(cluster) {
         const count = cluster.getChildCount()

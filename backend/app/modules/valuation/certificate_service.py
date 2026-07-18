@@ -94,6 +94,54 @@ class CertificateService:
         doc.build(story, onFirstPage=self._add_page_border, onLaterPages=self._add_page_border)
         return buffer.getvalue()
 
+    def generate_rent_certificate(
+        self,
+        valuation: Dict[str, Any],
+        property_data: Dict[str, Any],
+        owner_name: str,
+        rent_result: Dict[str, Any],
+        certificate_number: Optional[str] = None,
+    ) -> bytes:
+        """
+        Generate a rent-valuation certificate PDF: property summary,
+        suggested monthly rent, the published ±10% band, confidence, and a
+        validity note. Same approved-only gate (enforced by the caller,
+        matching the sale certificate route convention) and PDF pipeline
+        as generate_certificate().
+
+        Args:
+            valuation:    Valuation record dict (id, status, purpose, …).
+            property_data: Property record dict (address, municipality, …).
+            owner_name:   Full name of the registered property owner.
+            rent_result:  Output of ValuationService.get_rent_valuation()
+                          (suggested_rent, band_min, band_max, confidence,
+                          requires_officer_review).
+            certificate_number: Human-readable cert ID; auto-generated if None.
+        """
+        if certificate_number is None:
+            certificate_number = self._generate_rent_certificate_number(valuation.get("id"))
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1.5 * cm,
+            leftMargin=1.5 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=2 * cm,
+            title=f"Rent Valuation Certificate – {certificate_number}",
+            author="ValuAdis – Ethiopian Property Valuation Platform",
+            subject="Rent Valuation Certificate",
+        )
+
+        styles = self._build_styles()
+        story = self._build_rent_story(
+            styles, valuation, property_data, owner_name, certificate_number, rent_result
+        )
+
+        doc.build(story, onFirstPage=self._add_page_border, onLaterPages=self._add_page_border)
+        return buffer.getvalue()
+
     # ------------------------------------------------------------------
     # Story construction helpers
     # ------------------------------------------------------------------
@@ -151,6 +199,52 @@ class CertificateService:
         story.append(Spacer(1, 0.4 * cm))
 
         # --- QR code + signature side by side ---
+        story += self._build_bottom_row(styles, cert_number)
+
+        return story
+
+    def _build_rent_story(
+        self,
+        styles: dict,
+        valuation: Dict[str, Any],
+        property_data: Dict[str, Any],
+        owner_name: str,
+        cert_number: str,
+        rent_result: Dict[str, Any],
+    ) -> list:
+        story: list = []
+
+        story += self._build_header(styles, cert_number)
+        story.append(Spacer(1, 0.3 * cm))
+        story.append(HRFlowable(width="100%", thickness=2, color=_GREEN))
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("RENT VALUATION CERTIFICATE", styles["cert_title"]))
+        story.append(Paragraph(
+            "Suggested monthly rent and published band — Ethiopian Rent Control and "
+            "Administration Proclamation No. 1320/2024",
+            styles["subtitle"],
+        ))
+        story.append(Spacer(1, 0.5 * cm))
+
+        story += self._build_meta_table(styles, cert_number, valuation)
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("PROPERTY OWNER", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        story += self._build_owner_table(styles, owner_name, property_data)
+        story.append(Spacer(1, 0.4 * cm))
+
+        story.append(Paragraph("RENT VALUATION SUMMARY", styles["section_heading"]))
+        story.append(Spacer(1, 0.2 * cm))
+        story += self._build_rent_financial_table(styles, rent_result)
+        story.append(Spacer(1, 0.5 * cm))
+
+        story.append(HRFlowable(width="100%", thickness=1, color=_BORDER))
+        story.append(Spacer(1, 0.3 * cm))
+        story += self._build_rent_validity_notice(styles, rent_result)
+        story.append(Spacer(1, 0.4 * cm))
+
         story += self._build_bottom_row(styles, cert_number)
 
         return story
@@ -278,6 +372,53 @@ class CertificateService:
             ("RIGHTPADDING",  (1, 0), (1, -1),  8),
         ]))
         return [t]
+
+    # --- Rent valuation summary ------------------------------------------
+
+    def _build_rent_financial_table(self, styles: dict, rent_result: Dict[str, Any]) -> list:
+        suggested_rent = float(rent_result.get("suggested_rent", 0))
+        band_min       = float(rent_result.get("band_min", 0))
+        band_max       = float(rent_result.get("band_max", 0))
+        confidence     = float(rent_result.get("confidence", 0))
+
+        rows = [
+            ["Suggested Monthly Rent (ETB)", f"{suggested_rent:,.2f}"],
+            ["Published Band (ETB/month)", f"{band_min:,.2f} – {band_max:,.2f}"],
+            ["Confidence Score", f"{confidence * 100:.0f}%"],
+        ]
+        t = Table(rows, colWidths=["60%", "40%"])
+        t.setStyle(TableStyle([
+            ("FONTNAME",      (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE",      (0, 0), (-1, -1), 10),
+            ("FONTNAME",      (0, 0), (0, 0),   "Helvetica-Bold"),
+            ("FONTNAME",      (1, 0), (1, 0),   "Helvetica-Bold"),
+            ("BACKGROUND",    (0, 0), (-1, 0),  _GOLD),
+            ("BACKGROUND",    (0, 1), (-1, -1), colors.HexColor("#E8F5F1")),
+            ("ALIGN",         (1, 0), (1, -1),  "RIGHT"),
+            ("GRID",          (0, 0), (-1, -1), 0.5, _BORDER),
+            ("TOPPADDING",    (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING",  (1, 0), (1, -1),  8),
+        ]))
+        return [t]
+
+    def _build_rent_validity_notice(self, styles: dict, rent_result: Dict[str, Any]) -> list:
+        review_note = (
+            " This estimate carries a below-floor confidence score and "
+            "requires rental officer review before publication."
+            if rent_result.get("requires_officer_review")
+            else ""
+        )
+        text = (
+            "This certificate presents a system-generated rent valuation issued in support "
+            "of the tenancy registration process under <b>Proclamation No. 1320/2024</b> of "
+            "the Federal Democratic Republic of Ethiopia. The suggested rent and published "
+            "band are valid for <b>90 days</b> from the issue date and are not a substitute "
+            "for a registered tenancy contract." + review_note +
+            " For verification, scan the QR code below or visit <b>valuadis.et/verify</b>."
+        )
+        return [Paragraph(text, styles["legal"])]
 
     # --- Legal notice ---------------------------------------------------
 
@@ -429,6 +570,13 @@ class CertificateService:
         uid_seg = str(uuid.uuid4()).split("-")[0].upper()
         vid     = f"{valuation_id:05d}" if isinstance(valuation_id, int) else "00000"
         return f"ETH-VAL-{year}-{vid}-{uid_seg}"
+
+    @staticmethod
+    def _generate_rent_certificate_number(valuation_id: Any) -> str:
+        year    = date.today().year
+        uid_seg = str(uuid.uuid4()).split("-")[0].upper()
+        vid     = f"{valuation_id:05d}" if isinstance(valuation_id, int) else "00000"
+        return f"ETH-RENT-{year}-{vid}-{uid_seg}"
 
     @staticmethod
     def _add_page_border(canvas, doc):

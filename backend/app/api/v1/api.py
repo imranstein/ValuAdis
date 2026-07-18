@@ -18,6 +18,7 @@ from app.modules.auth import auth_router
 from app.modules.users import users_router
 from app.modules.settings import settings_router
 from app.modules.notifications import notifications_router
+from app.modules.rentals import rentals_router
 
 # Create main API router
 api_router = APIRouter()
@@ -97,4 +98,10 @@ api_router.include_router(
     notifications_router,
     prefix="/notifications",
     tags=["Notifications"]
+)
+
+api_router.include_router(
+    rentals_router,
+    prefix="/rentals",
+    tags=["Rentals"]
 )

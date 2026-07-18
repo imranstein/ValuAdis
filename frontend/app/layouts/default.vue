@@ -203,6 +203,13 @@ const navigation = computed<NavigationGroup[]>(() => [
     ]
   },
   {
+    label: 'Rentals',
+    items: [
+      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
+      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' }
+    ]
+  },
+  {
     label: 'Intelligence',
     items: [
       { label: t('nav.analytics'), to: '/analytics', icon: 'pi pi-chart-bar' },
@@ -238,6 +245,8 @@ const pages: Record<string, { title: string; subtitle: string }> = {
   '/vehicles': { title: 'Vehicles', subtitle: 'Fleet assets, registration state, and valuation records.' },
   '/valuations': { title: 'Valuations', subtitle: 'Pricing decisions, audit state, and valuation history.' },
   '/valuations/quick': { title: 'Quick Valuation', subtitle: 'Rapid estimate workflow for field and desk review.' },
+  '/rentals': { title: 'Rental Review Queue', subtitle: 'Verify owners, review rent bands, and publish registry listings.' },
+  '/rentals/my-listings': { title: 'My Rental Listings', subtitle: 'Register properties for rent and track officer review.' },
   '/analytics': { title: 'Analytics', subtitle: 'Market movement, municipal coverage, and compliance signals.' },
   '/map': { title: 'Property Map', subtitle: 'Geographic review of registered assets and boundaries.' },
   '/reports': { title: 'Reports', subtitle: 'Generate civic records, valuation summaries, and exports.' },
