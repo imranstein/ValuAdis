@@ -99,11 +99,47 @@
 
           <div class="apply-panel">
             <h3>Apply for this listing</h3>
-            <p>
-              Applications open in the next registry release. Renters will apply at any amount
-              inside the published band through their registered citizen account.
-            </p>
-            <NuxtLink to="/rent/signup" class="rent-btn-primary">Register as a renter</NuxtLink>
+
+            <template v-if="!isAuthenticated">
+              <p>
+                Applications are made through a registered citizen account, at any amount inside
+                the published band.
+              </p>
+              <NuxtLink to="/rent/signup" class="rent-btn-primary">Register as a renter</NuxtLink>
+            </template>
+
+            <template v-else-if="applicationResult">
+              <p class="apply-success" role="status">
+                Application submitted at {{ formatEtb(applicationResult.offered_rent) }}/mo.
+                Status: {{ labelize(applicationResult.status) }}. Track it under
+                <NuxtLink to="/rentals/my-applications">my applications</NuxtLink>.
+              </p>
+            </template>
+
+            <form v-else class="apply-form" @submit.prevent="submitApplication">
+              <label class="apply-field">
+                <span>Your offer (ETB/month, {{ formatEtb(listing.band_min) }} – {{ formatEtb(listing.band_max) }})</span>
+                <input
+                  v-model.number="offeredRent"
+                  type="number"
+                  required
+                  :min="listing.band_min"
+                  :max="listing.band_max"
+                  step="any"
+                />
+              </label>
+              <p v-if="offerOutsideBand" class="apply-error" role="alert">
+                Offers outside the published band are rejected by the registry.
+              </p>
+              <label class="apply-field">
+                <span>Message to the owner (optional)</span>
+                <textarea v-model="applicationMessage" rows="2" maxlength="1000"></textarea>
+              </label>
+              <p v-if="applyError" class="apply-error" role="alert">{{ applyError }}</p>
+              <button class="rent-btn-primary" type="submit" :disabled="applying || offerOutsideBand">
+                {{ applying ? 'Submitting…' : 'Apply within band' }}
+              </button>
+            </form>
           </div>
         </section>
 
@@ -133,8 +169,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import rentalService, { type PublicListing } from '~/services/rentalService'
+import rentalService, { type PublicListing, type RenterApplication } from '~/services/rentalService'
 import PropertyMap from '~/components/map/PropertyMap.vue'
+import { getAccessToken } from '~/utils/authToken'
 
 definePageMeta({ layout: 'landing' })
 
@@ -142,6 +179,35 @@ const route = useRoute()
 const loading = ref(true)
 const errorMessage = ref('')
 const listing = ref<PublicListing | null>(null)
+
+const isAuthenticated = ref(false)
+const offeredRent = ref<number | null>(null)
+const applicationMessage = ref('')
+const applying = ref(false)
+const applyError = ref('')
+const applicationResult = ref<RenterApplication | null>(null)
+
+const offerOutsideBand = computed(() => {
+  if (!listing.value || offeredRent.value == null) return false
+  return offeredRent.value < listing.value.band_min || offeredRent.value > listing.value.band_max
+})
+
+async function submitApplication() {
+  if (!listing.value || offeredRent.value == null) return
+  applying.value = true
+  applyError.value = ''
+  try {
+    applicationResult.value = await rentalService.applyToListing(
+      listing.value.public_id,
+      offeredRent.value,
+      applicationMessage.value || undefined,
+    )
+  } catch (error) {
+    applyError.value = error instanceof Error ? error.message : 'Application failed.'
+  } finally {
+    applying.value = false
+  }
+}
 
 const mapProperties = computed(() => {
   const prop = listing.value?.property
@@ -168,8 +234,10 @@ const mapCenter = computed(() => {
 })
 
 onMounted(async () => {
+  isAuthenticated.value = Boolean(getAccessToken())
   try {
     listing.value = await rentalService.getPublicListing(String(route.params.publicId))
+    if (listing.value) offeredRent.value = listing.value.suggested_rent
   } catch (error) {
     errorMessage.value =
       error instanceof Error && error.message.includes('404')
@@ -452,6 +520,66 @@ function formatArea(value: number) {
   line-height: 1.55;
 }
 
+.apply-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.apply-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.apply-field span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.apply-field input,
+.apply-field textarea {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-family: inherit;
+}
+
+.apply-field input:focus,
+.apply-field textarea:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.apply-error {
+  margin: 0;
+  color: var(--red, #9d3a28);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.apply-success {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: var(--space-4);
+}
+
+.apply-success a {
+  color: var(--green);
+  font-weight: 700;
+}
+
 .rent-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -463,6 +591,12 @@ function formatArea(value: number) {
   font-weight: 700;
   padding: 0 var(--space-5);
   text-decoration: none;
+  cursor: pointer;
+}
+
+.rent-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .rent-btn-primary:hover {

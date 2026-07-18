@@ -39,6 +39,7 @@ export interface OwnerListing {
   requires_officer_review: boolean
   status: string
   review_reason?: string | null
+  listing_agreement_pdf?: string | null
   published_at?: string | null
   created_at?: string | null
 }
@@ -62,6 +63,47 @@ export interface ListingSearchFilters {
   band_max?: number
   skip?: number
   limit?: number
+}
+
+export interface RenterApplication {
+  id: number
+  listing_public_id: string | null
+  listing_status?: string | null
+  property_address?: string | null
+  offered_rent: number
+  band_min?: number | null
+  band_max?: number | null
+  status: string
+  message?: string | null
+  created_at?: string | null
+}
+
+export interface OwnerApplication {
+  id: number
+  listing_public_id: string | null
+  offered_rent: number
+  status: string
+  message?: string | null
+  renter_name?: string | null
+  renter_phone?: string | null
+  decided_at?: string | null
+  created_at?: string | null
+}
+
+export interface TenancyContract {
+  contract_no: string
+  listing_public_id: string | null
+  application_id: number
+  monthly_rent: number
+  start_date: string | null
+  end_date: string | null
+  deposit_amount: number
+  deposit_receipt_ref?: string | null
+  deposit_paid_on?: string | null
+  status: string
+  activated_at?: string | null
+  contract_pdf?: string | null
+  created_at?: string | null
 }
 
 interface ListEnvelope<T> {
@@ -164,6 +206,103 @@ class RentalService {
     })
     const body = await this.parse(response)
     return body.data
+  }
+
+  async applyToListing(publicId: string, offeredRent: number, message?: string): Promise<RenterApplication> {
+    const response = await fetch(`${this.base()}/listings/${encodeURIComponent(publicId)}/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify({ offered_rent: offeredRent, message: message || null }),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async myApplications(skip = 0, limit = 50): Promise<ListEnvelope<RenterApplication>> {
+    const response = await fetch(`${this.base()}/my-applications?skip=${skip}&limit=${limit}`, {
+      headers: this.authHeaders(),
+    })
+    return this.parse(response)
+  }
+
+  async listingApplications(publicId: string): Promise<OwnerApplication[]> {
+    const response = await fetch(`${this.base()}/listings/${encodeURIComponent(publicId)}/applications`, {
+      headers: this.authHeaders(),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async decideApplication(applicationId: number, action: 'accept' | 'reject', reason?: string): Promise<OwnerApplication> {
+    const response = await fetch(`${this.base()}/applications/${applicationId}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify({ action, reason: reason || null }),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async createContract(payload: {
+    application_id: number
+    start_date: string
+    end_date: string
+    deposit_amount?: number
+    deposit_reason?: string
+  }): Promise<TenancyContract> {
+    const response = await fetch(`${this.base()}/contracts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify(payload),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async listContracts(skip = 0, limit = 50): Promise<ListEnvelope<TenancyContract>> {
+    const response = await fetch(`${this.base()}/contracts?skip=${skip}&limit=${limit}`, {
+      headers: this.authHeaders(),
+    })
+    return this.parse(response)
+  }
+
+  async myContracts(skip = 0, limit = 50): Promise<ListEnvelope<TenancyContract>> {
+    const response = await fetch(`${this.base()}/my-contracts?skip=${skip}&limit=${limit}`, {
+      headers: this.authHeaders(),
+    })
+    return this.parse(response)
+  }
+
+  async recordDeposit(contractNo: string, receiptRef: string, amount: number, paidOn?: string): Promise<TenancyContract> {
+    const response = await fetch(`${this.base()}/contracts/${encodeURIComponent(contractNo)}/deposit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify({ deposit_receipt_ref: receiptRef, amount, paid_on: paidOn || null }),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async downloadContractPdf(contractNo: string): Promise<Blob> {
+    const response = await fetch(`${this.base()}/contracts/${encodeURIComponent(contractNo)}/pdf`, {
+      headers: this.authHeaders(),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      throw new Error(body.detail || `Download failed with ${response.status}`)
+    }
+    return response.blob()
+  }
+
+  async downloadListingAgreement(publicId: string): Promise<Blob> {
+    const response = await fetch(`${this.base()}/listings/${encodeURIComponent(publicId)}/agreement`, {
+      headers: this.authHeaders(),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      throw new Error(body.detail || `Download failed with ${response.status}`)
+    }
+    return response.blob()
   }
 
   async citizenSignup(payload: {
