@@ -29,7 +29,7 @@ class User(Base):
     # self-registration captures a Fayda ID; a property_owner account must
     # be verified by a rental_officer before their first listing can
     # publish (app/modules/rentals/services.py).
-    fayda_id_number = Column(String(50), nullable=True)
+    fayda_id_number = Column(String(50), nullable=True, unique=True, index=True)
     owner_verified = Column(Boolean, default=False, server_default=false(), nullable=False)
     owner_verified_at = Column(DateTime(timezone=True), nullable=True)
 

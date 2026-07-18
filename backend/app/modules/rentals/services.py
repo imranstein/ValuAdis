@@ -34,18 +34,10 @@ PUBLIC_ID_REGION = "AA"
 PUBLIC_ID_KIND = "LST"
 PUBLIC_ID_MAX_ATTEMPTS = 20
 
-# Valuation.property_type is the narrow enum (residential/commercial/
-# agricultural); Property.property_type is wider. Non-mapped types value as
-# their closest economic category.
-_PROPERTY_TYPE_TO_VALUATION = {
-    "residential": "residential",
-    "commercial": "commercial",
-    "agricultural": "agricultural",
-    "industrial": "commercial",
-    "mixed_use": "commercial",
-    "institutional": "commercial",
-    "recreational": "residential",
-}
+# Proclamation 1320/2024 covers residential rentals only; commercial and
+# other premises must be impossible to list. mixed_use is excluded until a
+# legal reading says its residential portion qualifies.
+RENTABLE_PROPERTY_TYPES = ("residential",)
 
 
 class RentalListingService:
@@ -72,6 +64,12 @@ class RentalListingService:
         )
         if not prop:
             raise ValidationException("Property not found or not owned by you")
+
+        if prop.property_type not in RENTABLE_PROPERTY_TYPES:
+            raise ValidationException(
+                "Only residential properties can be listed for rent "
+                "(Rent Control and Administration Proclamation No. 1320/2024)"
+            )
 
         existing = self.repo.get_active_listing_for_property(property_id)
         if existing:
@@ -389,7 +387,8 @@ class RentalListingService:
     # ------------------------------------------------------------------
 
     def _create_rent_valuation(self, prop: Property, owner_user_id: int) -> Tuple[Dict[str, Any], Valuation]:
-        valuation_type = _PROPERTY_TYPE_TO_VALUATION.get(prop.property_type, "residential")
+        # create_listing guarantees residential-only before this point.
+        valuation_type = "residential"
         property_data = {
             "municipality": prop.municipality,
             "area_sqm": prop.area_sqm,

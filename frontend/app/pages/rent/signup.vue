@@ -84,7 +84,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import rentalService from '~/services/rentalService'
-import { setAccessToken, setRefreshTokenValue } from '~/utils/authToken'
+import { setAccessToken } from '~/utils/authToken'
 
 definePageMeta({ layout: 'landing' })
 
@@ -109,7 +109,6 @@ async function submit() {
   try {
     const result = await rentalService.citizenSignup({ ...form })
     setAccessToken(result.access_token)
-    if (result.refresh_token) setRefreshTokenValue(result.refresh_token)
     const authStore = useAuthStore()
     authStore.activeSession = true
     await authStore.fetchCurrentUser().catch(() => {})

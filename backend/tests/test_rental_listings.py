@@ -454,3 +454,39 @@ class TestOwnerListings:
             headers=_headers(renter_token),
         )
         assert response.status_code == 403
+
+
+class TestReviewCheckpointFixes:
+    """Regression tests for the review-1 checkpoint fixes."""
+
+    def test_signup_sets_refresh_cookie_and_omits_body_token(self, client):
+        response = client.post("/api/v1/rentals/signup", json=OWNER_SIGNUP)
+        assert response.status_code == 201
+        data = response.json()["data"]
+        assert "refresh_token" not in data
+        assert response.cookies.get("valuadis_refresh")
+
+    def test_fayda_id_unique_at_database_level(self, client, db_session):
+        from sqlalchemy.exc import IntegrityError
+
+        _signup(client, OWNER_SIGNUP)
+        _signup(client, RENTER_SIGNUP)
+        second = db_session.query(User).filter(User.email == RENTER_SIGNUP["email"]).first()
+        second.fayda_id_number = OWNER_SIGNUP["fayda_id_number"]
+        with pytest.raises(IntegrityError):
+            db_session.commit()
+        db_session.rollback()
+
+    def test_commercial_property_cannot_be_listed(self, client, owner_token):
+        payload = {**PROPERTY_PAYLOAD, "property_type": "commercial", "property_subtype": "office"}
+        response = client.post("/api/v1/properties", json=payload, headers=_headers(owner_token))
+        assert response.status_code == 201, response.text
+        property_id = response.json()["data"]["id"]
+
+        response = client.post(
+            "/api/v1/rentals/listings",
+            json={"property_id": property_id},
+            headers=_headers(owner_token),
+        )
+        assert response.status_code == 400
+        assert "residential" in response.json()["detail"].lower()

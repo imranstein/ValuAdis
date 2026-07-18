@@ -174,7 +174,7 @@ class RentalService {
     municipality: string
     fayda_id_number: string
     account_type: 'renter' | 'property_owner'
-  }): Promise<{ access_token: string; refresh_token: string; account_type: string; owner_verified: boolean }> {
+  }): Promise<{ access_token: string; account_type: string; owner_verified: boolean }> {
     const response = await fetch(`${this.base()}/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

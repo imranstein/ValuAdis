@@ -10,7 +10,7 @@ Officer (rental_officer role): review queue, publish/adjust/reject, owner verify
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
@@ -31,6 +31,7 @@ from app.core.security import (
 )
 from app.data.models.role import Role
 from app.data.models.user import User
+from app.modules.auth.routes import set_refresh_cookie
 from app.services.auth_service import AuthService
 from .schemas import (
     ListingCreate,
@@ -171,7 +172,7 @@ def _get_or_create_role(db: Session, name: str) -> Role:
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, tags=["Rentals"])
-async def citizen_signup(signup: CitizenSignup, db: Session = Depends(get_db)):
+async def citizen_signup(signup: CitizenSignup, response: Response, db: Session = Depends(get_db)):
     """Citizen signup with Fayda ID capture. Renter by default; property
     owners remain unverified until a rental officer verifies them."""
     if not validate_ethiopian_phone_number(signup.phone):
@@ -205,13 +206,14 @@ async def citizen_signup(signup: CitizenSignup, db: Session = Depends(get_db)):
     db.commit()
 
     access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    # Refresh travels only in the httpOnly cookie (same flow as /auth/login);
+    # a body copy would be JS-readable and would not survive a reload.
+    set_refresh_cookie(response, create_refresh_token(data={"sub": str(user.id)}))
     return {
         "success": True,
         "message": "Registration successful",
         "data": {
             "access_token": access_token,
-            "refresh_token": refresh_token,
             "token_type": "bearer",
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             "account_type": signup.account_type,
