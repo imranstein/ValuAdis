@@ -3222,6 +3222,30 @@
    "ValuationCalculation": {
     "description": "Valuation calculation result",
     "properties": {
+     "band_max": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Upper bound of the suggested rent band (purpose='rent')",
+      "title": "Band Max"
+     },
+     "band_min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Lower bound of the suggested rent band (purpose='rent')",
+      "title": "Band Min"
+     },
      "base_rate": {
       "description": "Base rate per sqm used",
       "title": "Base Rate",
@@ -3232,6 +3256,18 @@
       "title": "Calculation Date",
       "type": "string"
      },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Blended confidence score 0..1 (purpose='rent')",
+      "title": "Confidence"
+     },
      "market_value": {
       "description": "Calculated market value in ETB",
       "title": "Market Value",
@@ -3241,6 +3277,36 @@
       "description": "Property type multiplier applied",
       "title": "Multiplier",
       "type": "number"
+     },
+     "purpose": {
+      "default": "sale",
+      "description": "'sale' or 'rent'",
+      "title": "Purpose",
+      "type": "string"
+     },
+     "requires_officer_review": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "True when confidence is below the review floor (purpose='rent')",
+      "title": "Requires Officer Review"
+     },
+     "suggested_rent": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Suggested monthly rent in ETB (purpose='rent')",
+      "title": "Suggested Rent"
      },
      "taxable_value": {
       "description": "25% of market value per Proclamation 1365/2025",
@@ -3322,6 +3388,12 @@
      "property_type": {
       "description": "Type of property (residential, commercial, agricultural)",
       "title": "Property Type",
+      "type": "string"
+     },
+     "purpose": {
+      "default": "sale",
+      "description": "Valuation purpose: 'sale' (market value, default) or 'rent' (suggested monthly rent + band)",
+      "title": "Purpose",
       "type": "string"
      }
     },
@@ -6040,8 +6112,26 @@
   },
   "/api/v1/auth/logout": {
    "post": {
-    "description": "Logout the browser session by clearing the refresh cookie.\n\nAccess tokens are short-lived and stateless; clients drop them locally.",
+    "description": "Logout the browser session by clearing the refresh cookie.\n\nThe presented refresh token (cookie or bearer header) is denylisted so\nit cannot be replayed. Access tokens are short-lived and stateless;\nclients drop them locally.",
     "operationId": "logout_api_v1_auth_logout_post",
+    "parameters": [
+     {
+      "in": "cookie",
+      "name": "valuadis_refresh",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Valuadis Refresh"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -6050,8 +6140,23 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
     "summary": "Logout",
     "tags": [
      "Authentication",
@@ -8135,7 +8240,7 @@
   },
   "/api/v1/valuations/calculate": {
    "post": {
-    "description": "Calculate valuation without saving to database\n\nUseful for preview calculations",
+    "description": "Calculate valuation without saving to database\n\nUseful for preview calculations. Optional `purpose` field on the\nrequest: 'sale' (default, market value) or 'rent' (suggested monthly\nrent + band); existing 'sale' callers are unaffected.",
     "operationId": "calculate_valuation_only_api_v1_valuations_calculate_post",
     "requestBody": {
      "content": {
@@ -8231,7 +8336,7 @@
   },
   "/api/v1/valuations/quick": {
    "post": {
-    "description": "Quick valuation without requiring existing property\n\nUseful for standalone valuation calculations",
+    "description": "Quick valuation without requiring existing property\n\nUseful for standalone valuation calculations. Optional `purpose`\nfield: 'sale' (default, market value) or 'rent' (suggested monthly\nrent + band); existing 'sale' callers are unaffected.",
     "operationId": "quick_valuation_api_v1_valuations_quick_post",
     "requestBody": {
      "content": {

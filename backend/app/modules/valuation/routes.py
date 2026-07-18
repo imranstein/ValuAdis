@@ -373,16 +373,32 @@ async def download_certificate(
         }
 
         cert_service = CertificateService()
+        is_rent = valuation.get("purpose") == "rent"
         # ReportLab is CPU-bound; run in a threadpool to avoid blocking the
         # async event loop under concurrent load.
-        pdf_bytes = await run_in_threadpool(
-            cert_service.generate_certificate,
-            valuation,
-            property_data,
-            owner_name,
-        )
+        if is_rent:
+            # Rent fields (suggested_rent/band/confidence) are not persisted
+            # columns on Valuation in Phase A — recompute live from the
+            # stored property data, same as /valuations/quick and
+            # /valuations/calculate do for purpose='rent'.
+            rent_result = valuation_service.get_rent_valuation(property_data)
+            pdf_bytes = await run_in_threadpool(
+                cert_service.generate_rent_certificate,
+                valuation,
+                property_data,
+                owner_name,
+                rent_result,
+            )
+        else:
+            pdf_bytes = await run_in_threadpool(
+                cert_service.generate_certificate,
+                valuation,
+                property_data,
+                owner_name,
+            )
 
-        filename = f"ValuAdis_Certificate_{valuation_id}.pdf"
+        prefix = "RentCertificate" if is_rent else "Certificate"
+        filename = f"ValuAdis_{prefix}_{valuation_id}.pdf"
         return StreamingResponse(
             io.BytesIO(pdf_bytes),
             media_type="application/pdf",
@@ -490,7 +506,12 @@ async def transition_valuation_status(
         )
 
 
-@router.post("/quick", response_model=ValuationCalculation, tags=["Valuations"])
+@router.post(
+    "/quick",
+    response_model=ValuationCalculation,
+    response_model_exclude_none=True,
+    tags=["Valuations"],
+)
 async def quick_valuation(
     valuation_data: dict,
     _: int = Depends(get_current_user_id),
@@ -498,17 +519,24 @@ async def quick_valuation(
 ):
     """
     Quick valuation without requiring existing property
-    
-    Useful for standalone valuation calculations
+
+    Useful for standalone valuation calculations. Optional `purpose`
+    field: 'sale' (default, market value) or 'rent' (suggested monthly
+    rent + band); existing 'sale' callers are unaffected.
     """
     try:
+        purpose = valuation_data.get("purpose", "sale")
+        if purpose not in ("sale", "rent"):
+            raise PropertyValidationError("purpose must be 'sale' or 'rent'")
+
         logger.info(
             "Quick valuation calculation",
             property_type=valuation_data.get("property_type"),
             municipality=valuation_data.get("municipality"),
-            area_sqm=valuation_data.get("area_sqm")
+            area_sqm=valuation_data.get("area_sqm"),
+            purpose=purpose,
         )
-        
+
         # Add default coordinates if not provided
         if "coordinates" not in valuation_data:
             # Default to Addis Ababa coordinates as closed polygon [longitude, latitude]
@@ -518,32 +546,51 @@ async def quick_valuation(
                 [38.7500, 9.0000],
                 [38.7000, 9.0000]
             ]
-        
+
         # Add default property_id if not provided
         if "property_id" not in valuation_data:
             valuation_data["property_id"] = 0  # Use 0 for quick valuations
-        
+
         # Calculate market value
         market_value = valuation_service.calculate_market_value(valuation_data)
-        
+
         # Calculate taxable value (25% per Proclamation 1365/2025)
         taxable_value = valuation_service.calculate_taxable_value(market_value)
-        
-        calculation_result = ValuationCalculation(
-            market_value=float(market_value),
-            taxable_value=float(taxable_value),
-            base_rate=float(valuation_service._base_rates.get(valuation_data.get("municipality"), 0)),
-            multiplier=float(valuation_service._property_type_multipliers.get(valuation_data.get("property_type"), 1.0))
-        )
-        
+
+        base_rate = float(valuation_service._base_rates.get(valuation_data.get("municipality"), 0))
+        multiplier = float(valuation_service._property_type_multipliers.get(valuation_data.get("property_type"), 1.0))
+
+        if purpose == "rent":
+            rent_result = valuation_service.get_rent_valuation(valuation_data, market_value=market_value)
+            calculation_result = ValuationCalculation(
+                market_value=float(market_value),
+                taxable_value=float(taxable_value),
+                base_rate=base_rate,
+                multiplier=multiplier,
+                purpose="rent",
+                suggested_rent=rent_result["suggested_rent"],
+                band_min=rent_result["band_min"],
+                band_max=rent_result["band_max"],
+                confidence=rent_result["confidence"],
+                requires_officer_review=rent_result["requires_officer_review"],
+            )
+        else:
+            calculation_result = ValuationCalculation(
+                market_value=float(market_value),
+                taxable_value=float(taxable_value),
+                base_rate=base_rate,
+                multiplier=multiplier,
+            )
+
         logger.info(
             "Quick valuation calculation completed",
             market_value=float(market_value),
-            taxable_value=float(taxable_value)
+            taxable_value=float(taxable_value),
+            purpose=purpose,
         )
-        
+
         return calculation_result
-        
+
     except (PropertyValidationError, ValuAdisException) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -565,44 +612,66 @@ async def calculate_valuation_only(
 ):
     """
     Calculate valuation without saving to database
-    
-    Useful for preview calculations
+
+    Useful for preview calculations. Optional `purpose` field on the
+    request: 'sale' (default, market value) or 'rent' (suggested monthly
+    rent + band); existing 'sale' callers are unaffected.
     """
     try:
         logger.info(
             "Calculating valuation preview",
             property_id=valuation_data.property_id,
-            municipality=valuation_data.municipality
+            municipality=valuation_data.municipality,
+            purpose=valuation_data.purpose,
         )
-        
+
         # Convert Pydantic model to dict for service
         property_data = valuation_data.model_dump()
-        
+
         # Calculate market value
         market_value = valuation_service.calculate_market_value(property_data)
-        
+
         # Calculate taxable value (25% per Proclamation 1365/2025)
         taxable_value = valuation_service.calculate_taxable_value(market_value)
-        
-        calculation_result = ValuationCalculation(
-            market_value=float(market_value),
-            taxable_value=float(taxable_value),
-            base_rate=float(valuation_service._base_rates.get(valuation_data.municipality, 0)),
-            multiplier=float(valuation_service._property_type_multipliers.get(valuation_data.property_type, 1.0))
-        )
-        
+
+        base_rate = float(valuation_service._base_rates.get(valuation_data.municipality, 0))
+        multiplier = float(valuation_service._property_type_multipliers.get(valuation_data.property_type, 1.0))
+
+        if valuation_data.purpose == "rent":
+            rent_result = valuation_service.get_rent_valuation(property_data, market_value=market_value)
+            calculation_result = ValuationCalculation(
+                market_value=float(market_value),
+                taxable_value=float(taxable_value),
+                base_rate=base_rate,
+                multiplier=multiplier,
+                purpose="rent",
+                suggested_rent=rent_result["suggested_rent"],
+                band_min=rent_result["band_min"],
+                band_max=rent_result["band_max"],
+                confidence=rent_result["confidence"],
+                requires_officer_review=rent_result["requires_officer_review"],
+            )
+        else:
+            calculation_result = ValuationCalculation(
+                market_value=float(market_value),
+                taxable_value=float(taxable_value),
+                base_rate=base_rate,
+                multiplier=multiplier,
+            )
+
         logger.info(
             "Valuation calculation completed",
             market_value=float(market_value),
-            taxable_value=float(taxable_value)
+            taxable_value=float(taxable_value),
+            purpose=valuation_data.purpose,
         )
-        
+
         return ValuationResponse(
             success=True,
-            data=calculation_result.model_dump(),
+            data=calculation_result.model_dump(exclude_none=True),
             message="Valuation calculated successfully",
         )
-        
+
     except (PropertyValidationError, ValuAdisException) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

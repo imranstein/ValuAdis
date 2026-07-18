@@ -6,6 +6,7 @@ and Proclamation 1365/2025 compliance requirements.
 """
 
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from statistics import median
 from typing import Dict, Any, Optional, Tuple, List
 from app.services.spatial_service import SpatialService
 from app.core.exceptions import ValuAdisException, PropertyValidationError
@@ -23,6 +24,40 @@ class ValuationService:
     Implements market value and taxable value calculations per
     Proclamation 1365/2025 requirements.
     """
+
+    # ------------------------------------------------------------------
+    # Rent valuation constants (plans/valuadis-rentals/plan.mdx, Phase A)
+    # ------------------------------------------------------------------
+
+    # Published band = suggested rent ± 10%, frozen on the listing at
+    # publish time (Phase B concern; this is the band the engine computes).
+    RENT_BAND_PCT: Decimal = Decimal("0.10")
+
+    # Below this blended confidence score, the result is not precise
+    # enough to publish unattended and must be reviewed by a rental
+    # officer before a listing/band is finalized.
+    RENT_CONFIDENCE_FLOOR: Decimal = Decimal("0.50")
+
+    # Comp count at/above which the comps method contributes its maximum
+    # share of the confidence score. Confidence scales linearly up to it.
+    RENT_COMPS_FOR_FULL_CONFIDENCE: int = 5
+
+    # Confidence contribution when both estimate methods agree/are present
+    # vs. only one, before the comp-count-weighted bonus is added.
+    RENT_CONFIDENCE_BASE_BOTH_METHODS: Decimal = Decimal("0.60")
+    RENT_CONFIDENCE_BASE_RATIO_ONLY: Decimal = Decimal("0.40")
+    RENT_CONFIDENCE_BASE_COMPS_ONLY: Decimal = Decimal("0.50")
+    RENT_CONFIDENCE_COMP_COUNT_WEIGHT: Decimal = Decimal("0.40")
+
+    # Trend adjustment is capped to a modest nudge — it reflects short-run
+    # market momentum, not a replacement for the ratio/comps estimate.
+    RENT_MAX_TREND_ADJUSTMENT: Decimal = Decimal("0.05")
+
+    # Conservative citywide fallback ratio (~7.2% annual gross residential
+    # yield / 12) used when a district has no rent-tagged market listings
+    # yet. app.data.seeders.rent_ratio_seeder imports this constant so the
+    # seeded config and the runtime fallback never drift apart.
+    RENT_RATIO_CITYWIDE_FALLBACK: Decimal = Decimal("0.006")
 
     def __init__(self, spatial_service: SpatialService, db: Optional[Session] = None):
         self._spatial_service = spatial_service
@@ -383,6 +418,219 @@ class ValuationService:
             "taxable_value": updated.taxable_value,
             "status": updated.status.value if hasattr(updated.status, "value") else str(updated.status),
         }
+
+    # ------------------------------------------------------------------
+    # Rent valuation (Phase A — plans/valuadis-rentals/plan.mdx)
+    #
+    # Suggested rent blends: (a) the ratio method — market value × a
+    # district rent-to-price ratio, (b) direct comps — median asking rent
+    # of comparable rental listings, and (c) a trend adjustment. The pure
+    # math lives in small testable methods with no DB/network access;
+    # get_rent_valuation() is the only method that touches the database,
+    # to fetch the district ratio, comps, and trend inputs.
+    # ------------------------------------------------------------------
+
+    def calculate_rent_from_ratio(self, market_value: Decimal, ratio: Decimal) -> Decimal:
+        """Ratio method: suggested monthly rent = market_value × district ratio."""
+        return (market_value * ratio).quantize(Decimal("0.01"))
+
+    def calculate_rent_from_comps(self, comp_rents: List[Decimal]) -> Optional[Decimal]:
+        """Direct comps method: median asking rent of comparable listings."""
+        if not comp_rents:
+            return None
+        return Decimal(str(median(comp_rents))).quantize(Decimal("0.01"))
+
+    def apply_rent_trend_adjustment(self, base_rent: Decimal, trend_pct: Decimal) -> Decimal:
+        """
+        Apply a period-over-period trend percentage to the blended rent
+        estimate, capped at RENT_MAX_TREND_ADJUSTMENT in either direction.
+        """
+        capped = max(-self.RENT_MAX_TREND_ADJUSTMENT, min(self.RENT_MAX_TREND_ADJUSTMENT, trend_pct))
+        return (base_rent * (Decimal("1") + capped)).quantize(Decimal("0.01"))
+
+    def blend_rent_estimates(
+        self,
+        ratio_estimate: Optional[Decimal],
+        comps_estimate: Optional[Decimal],
+        comp_count: int,
+    ) -> Tuple[Decimal, Decimal]:
+        """
+        Blend the ratio-method and comps-method estimates into a single
+        suggested rent plus a 0..1 confidence score.
+
+        - Both methods present: simple average, confidence starts high.
+        - Only one method present: use it, confidence starts lower.
+        - Neither present: caller error — at least the ratio method must
+          always be available (every district has a ratio, real or
+          fallback).
+        """
+        if ratio_estimate is None and comps_estimate is None:
+            raise PropertyValidationError("At least one rent estimate method must produce a value")
+
+        if ratio_estimate is not None and comps_estimate is not None:
+            blended = ((ratio_estimate + comps_estimate) / Decimal("2")).quantize(Decimal("0.01"))
+            base_confidence = self.RENT_CONFIDENCE_BASE_BOTH_METHODS
+        elif comps_estimate is not None:
+            blended = comps_estimate
+            base_confidence = self.RENT_CONFIDENCE_BASE_COMPS_ONLY
+        else:
+            blended = ratio_estimate
+            base_confidence = self.RENT_CONFIDENCE_BASE_RATIO_ONLY
+
+        comp_weight = min(
+            Decimal(comp_count) / Decimal(self.RENT_COMPS_FOR_FULL_CONFIDENCE),
+            Decimal("1"),
+        ) * self.RENT_CONFIDENCE_COMP_COUNT_WEIGHT
+        confidence = min(base_confidence + comp_weight, Decimal("1")).quantize(Decimal("0.01"))
+
+        return blended, confidence
+
+    def calculate_rent_band(self, suggested_rent: Decimal) -> Tuple[Decimal, Decimal]:
+        """Published band = suggested rent ± RENT_BAND_PCT."""
+        band_min = (suggested_rent * (Decimal("1") - self.RENT_BAND_PCT)).quantize(Decimal("0.01"))
+        band_max = (suggested_rent * (Decimal("1") + self.RENT_BAND_PCT)).quantize(Decimal("0.01"))
+        return band_min, band_max
+
+    def calculate_rent_valuation(
+        self,
+        market_value: Decimal,
+        ratio: Decimal,
+        comp_rents: List[Decimal],
+        trend_pct: Decimal = Decimal("0"),
+    ) -> Dict[str, Any]:
+        """
+        Pure orchestrator: given a market value, a district ratio, a list
+        of comparable rents, and a trend percentage, compute the full rent
+        valuation result. No DB or network access — safe to unit test with
+        plain Decimal inputs.
+        """
+        ratio_estimate = self.calculate_rent_from_ratio(market_value, ratio)
+        comps_estimate = self.calculate_rent_from_comps(comp_rents)
+        blended, confidence = self.blend_rent_estimates(ratio_estimate, comps_estimate, len(comp_rents))
+        suggested_rent = self.apply_rent_trend_adjustment(blended, trend_pct)
+        band_min, band_max = self.calculate_rent_band(suggested_rent)
+        requires_officer_review = confidence < self.RENT_CONFIDENCE_FLOOR
+
+        return {
+            "suggested_rent": float(suggested_rent),
+            "band_min": float(band_min),
+            "band_max": float(band_max),
+            "confidence": float(confidence),
+            "requires_officer_review": requires_officer_review,
+            "comp_count": len(comp_rents),
+            "ratio_estimate": float(ratio_estimate),
+            "comps_estimate": float(comps_estimate) if comps_estimate is not None else None,
+        }
+
+    def get_rent_valuation(
+        self, property_data: Dict[str, Any], market_value: Optional[Decimal] = None
+    ) -> Dict[str, Any]:
+        """
+        DB-backed rent valuation for a property: resolves the district
+        ratio, comparable rents, and trend from the database (falling back
+        to conservative defaults when no DB session is available), then
+        delegates to the pure calculate_rent_valuation() for the math.
+        """
+        if market_value is None:
+            market_value = self.calculate_market_value(property_data)
+
+        municipality = property_data["municipality"]
+        ratio = self._get_district_rent_ratio(municipality)
+        comp_rents = self._get_comparable_rents(property_data)
+        trend_pct = self._calculate_rent_trend_pct(municipality)
+
+        result = self.calculate_rent_valuation(market_value, ratio, comp_rents, trend_pct)
+        result["base_market_value"] = float(market_value)
+        result["district_ratio"] = float(ratio)
+        return result
+
+    def _get_district_rent_ratio(self, municipality: str) -> Decimal:
+        """Look up the seeded rent-to-price ratio for a district, or fall back."""
+        if self.db is not None:
+            from app.data.models.district_rent_ratio import DistrictRentRatio
+
+            row = (
+                self.db.query(DistrictRentRatio)
+                .filter(DistrictRentRatio.district == municipality)
+                .first()
+            )
+            if row is not None:
+                return Decimal(str(row.monthly_rent_to_price_ratio))
+        return self.RENT_RATIO_CITYWIDE_FALLBACK
+
+    def _get_comparable_rents(self, property_data: Dict[str, Any], limit: int = 50) -> List[Decimal]:
+        """
+        Median-comps input: asking rents from raw_market_listings rows
+        tagged listing_type='rent' in the same district/subtype. Returns
+        an empty list (not an error) when no such rows exist yet — the
+        scraper does not populate rent-tagged rows until a later phase,
+        so the confidence score correctly stays low via blend_rent_estimates
+        until real comps exist.
+        """
+        if self.db is None:
+            return []
+
+        from app.data.models.market_listing import RawMarketListing
+
+        query = self.db.query(RawMarketListing).filter(
+            RawMarketListing.listing_type == "rent",
+            RawMarketListing.asking_price_etb.isnot(None),
+            RawMarketListing.asking_price_etb > 0,
+        )
+
+        municipality = property_data.get("municipality")
+        if municipality:
+            query = query.filter(RawMarketListing.location_subcity.ilike(f"%{municipality}%"))
+
+        property_type = property_data.get("property_type")
+        if property_type:
+            query = query.filter(RawMarketListing.property_type == property_type)
+
+        rows = query.order_by(RawMarketListing.scrape_date.desc()).limit(limit).all()
+        return [Decimal(str(row.asking_price_etb)) for row in rows]
+
+    def _calculate_rent_trend_pct(self, municipality: str) -> Decimal:
+        """
+        Period-over-period trend, mirroring the growth-rate pattern used
+        by the analytics trends endpoint (app/modules/analytics/routes.py):
+        compare the average market_value of the earliest and latest
+        calendar-month cohorts of historical valuations for the district.
+        Capped at RENT_MAX_TREND_ADJUSTMENT. Returns 0 with insufficient
+        history or no DB session.
+        """
+        if self.db is None:
+            return Decimal("0")
+
+        from app.data.models.valuation import Valuation
+
+        rows = (
+            self.db.query(Valuation.valuation_date, Valuation.market_value)
+            .filter(Valuation.municipality == municipality, Valuation.market_value.isnot(None))
+            .order_by(Valuation.valuation_date.asc())
+            .all()
+        )
+
+        monthly: Dict[Tuple[int, int], List[Decimal]] = {}
+        for valuation_date, market_value in rows:
+            if not valuation_date:
+                continue
+            key = (valuation_date.year, valuation_date.month)
+            monthly.setdefault(key, []).append(Decimal(str(market_value)))
+
+        if len(monthly) < 2:
+            return Decimal("0")
+
+        periods = sorted(monthly.keys())
+        first_values = monthly[periods[0]]
+        last_values = monthly[periods[-1]]
+        first_avg = sum(first_values) / Decimal(len(first_values))
+        last_avg = sum(last_values) / Decimal(len(last_values))
+
+        if first_avg <= 0:
+            return Decimal("0")
+
+        raw_pct = (last_avg - first_avg) / first_avg
+        return max(-self.RENT_MAX_TREND_ADJUSTMENT, min(self.RENT_MAX_TREND_ADJUSTMENT, raw_pct))
 
     # ------------------------------------------------------------------
     # Private helpers

@@ -20,6 +20,18 @@ class ValuationCreate(BaseModel):
     condition: str = Field("good", description="Property condition grade (excellent/good/fair/poor)")
     neighborhood_quality: str = Field("average", description="Neighborhood quality tier")
     construction_year: Optional[int] = Field(None, description="Year of construction for depreciation")
+    purpose: str = Field(
+        "sale",
+        description="Valuation purpose: 'sale' (market value, default) or 'rent' (suggested monthly rent + band)",
+    )
+
+    @field_validator("purpose")
+    @classmethod
+    def validate_purpose(cls, v):
+        allowed = ["sale", "rent"]
+        if v not in allowed:
+            raise ValueError(f'purpose must be one of: {", ".join(allowed)}')
+        return v
 
     @field_validator("property_type")
     @classmethod
@@ -144,6 +156,17 @@ class ValuationCalculation(BaseModel):
     base_rate: float = Field(..., description="Base rate per sqm used")
     multiplier: float = Field(..., description="Property type multiplier applied")
     calculation_date: datetime = Field(default_factory=datetime.now)
+    purpose: str = Field("sale", description="'sale' or 'rent'")
+    # Populated only when purpose='rent'; omitted from sale responses via
+    # response_model_exclude_none so existing 'sale' callers see an
+    # unchanged payload shape.
+    suggested_rent: Optional[float] = Field(None, description="Suggested monthly rent in ETB (purpose='rent')")
+    band_min: Optional[float] = Field(None, description="Lower bound of the suggested rent band (purpose='rent')")
+    band_max: Optional[float] = Field(None, description="Upper bound of the suggested rent band (purpose='rent')")
+    confidence: Optional[float] = Field(None, description="Blended confidence score 0..1 (purpose='rent')")
+    requires_officer_review: Optional[bool] = Field(
+        None, description="True when confidence is below the review floor (purpose='rent')"
+    )
 
 
 class ValuationOverrideRequest(BaseModel):
