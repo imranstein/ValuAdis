@@ -282,5 +282,6 @@ async def get_current_user(
         "is_admin": user.is_admin,
         "role": primary_role,
         "roles": role_names,
+        "owner_verified": bool(user.owner_verified),
         "created_at": user.created_at
     }

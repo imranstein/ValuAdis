@@ -16,10 +16,15 @@ from app.data.models.property import Property
 from app.data.models.valuation import Valuation
 from app.data.models.user import User
 from app.services.ml_service import ml_service
-from app.core.security import get_current_user_id
+from app.core.rbac import require_staff
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _staff_user_id(actor: User = Depends(require_staff)) -> int:
+    """Analytics is a staff-shell surface (Phase E permission matrix)."""
+    return actor.id
 
 @router.get("/dashboard")
 async def get_dashboard_stats(
@@ -27,7 +32,7 @@ async def get_dashboard_stats(
     municipality: Optional[str] = Query(None, description="Filter by municipality"),
     property_type: Optional[str] = Query(None, description="Filter by property type"),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """
     Get comprehensive dashboard statistics.
@@ -166,7 +171,7 @@ async def get_dashboard_stats(
 async def get_property_type_distribution(
     period: str = Query("month", description="Time period"),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get distribution of properties by type with Ethiopian context."""
     try:
@@ -251,7 +256,7 @@ async def get_property_type_distribution(
 async def get_municipality_analytics(
     period: str = Query("month", description="Time period"),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get detailed analytics for Ethiopian municipalities."""
     try:
@@ -367,7 +372,7 @@ async def get_municipality_analytics(
 async def get_valuation_trends(
     period: str = Query("year", description="Time period"),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get valuation trends over time with Ethiopian market context."""
     try:
@@ -464,7 +469,7 @@ async def get_valuation_trends(
 @router.get("/market-insights")
 async def get_market_insights(
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get comprehensive market insights for Ethiopian property market."""
     try:
@@ -553,7 +558,7 @@ async def predict_property_value(
     property_data: Dict[str, Any],
     prediction_horizon: int = Query(12, description="Prediction horizon in months"),
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """
     Predict property value using ML algorithms.
@@ -595,7 +600,7 @@ async def predict_property_value(
 @router.get("/performance")
 async def get_performance_metrics(
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get system performance metrics."""
     try:
@@ -640,7 +645,7 @@ async def get_performance_metrics(
 @router.get("/engagement")
 async def get_user_engagement_metrics(
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user_id: int = Depends(_staff_user_id)
 ):
     """Get user engagement and behavior metrics."""
     try:

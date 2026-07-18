@@ -6473,6 +6473,11 @@
       "description": "Successful Response"
      }
     },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
     "summary": "Audit System Health",
     "tags": [
      "Audit",
@@ -6482,7 +6487,7 @@
   },
   "/api/v1/audit/logs": {
    "get": {
-    "description": "List audit log entries for the audit log viewer UI.\nSupports filtering by date range, action, and module (table_name).",
+    "description": "List audit log entries for the audit log viewer UI.\nSupports filtering by date range, action, and module (table_name).\n\nStaff see the full platform ledger (the /audit dashboard surface).\nNon-staff (rental officers, citizens) are scoped to their own actions\nonly \u2014 this is the personal \"activity\" feed the /profile page renders,\nnot the staff audit surface (Phase E permission matrix).",
     "operationId": "get_audit_logs_api_v1_audit_logs_get",
     "parameters": [
      {
@@ -7302,7 +7307,7 @@
   },
   "/api/v1/properties": {
    "get": {
-    "description": "Get user's properties with pagination",
+    "description": "List properties. Staff and rental officers see all; property owners\nsee only their own (Phase E permission matrix).",
     "operationId": "get_properties_api_v1_properties_get",
     "parameters": [
      {
@@ -7359,7 +7364,7 @@
     ]
    },
    "post": {
-    "description": "Create new property with GPS boundary",
+    "description": "Create new property with GPS boundary (staff or property owner)",
     "operationId": "create_property_api_v1_properties_post",
     "requestBody": {
      "content": {
@@ -7406,7 +7411,7 @@
   },
   "/api/v1/properties/bulk-import": {
    "post": {
-    "description": "Import properties from a CSV file.",
+    "description": "Import properties from a CSV file (staff ops tool).",
     "operationId": "bulk_import_properties_api_v1_properties_bulk_import_post",
     "requestBody": {
      "content": {
@@ -7452,7 +7457,7 @@
   },
   "/api/v1/properties/export": {
    "get": {
-    "description": "Export properties as CSV",
+    "description": "Export properties as CSV (staff ops tool)",
     "operationId": "export_properties_api_v1_properties_export_get",
     "parameters": [
      {
@@ -7592,7 +7597,7 @@
   },
   "/api/v1/properties/{property_id}": {
    "delete": {
-    "description": "Delete property",
+    "description": "Delete property. Staff can delete any property; owners only their\nown (Phase E permission matrix).",
     "operationId": "delete_property_api_v1_properties__property_id__delete",
     "parameters": [
      {
@@ -7636,7 +7641,7 @@
     ]
    },
    "get": {
-    "description": "Get specific property by ID",
+    "description": "Get specific property by ID. Staff and rental officers can read any\nproperty; owners only their own (Phase E permission matrix).",
     "operationId": "get_property_api_v1_properties__property_id__get",
     "parameters": [
      {
@@ -7682,7 +7687,7 @@
     ]
    },
    "put": {
-    "description": "Update property information",
+    "description": "Update property information. Staff can edit any property; owners\nonly their own (Phase E permission matrix).",
     "operationId": "update_property_api_v1_properties__property_id__put",
     "parameters": [
      {
@@ -9965,7 +9970,7 @@
   },
   "/api/v1/users/{user_id}": {
    "put": {
-    "description": "Update user information\nRequires user update permission",
+    "description": "Update user information \u2014 staff shell (Phase E permission matrix).\nUser management is an admin/staff tool; citizens have no self-service\nedit surface in the app today, so this stays staff-only rather than\nallowing a raw self-update that could touch privileged fields.",
     "operationId": "update_user_api_v1_users__user_id__put",
     "parameters": [
      {
@@ -10158,7 +10163,7 @@
   },
   "/api/v1/valuations/": {
    "get": {
-    "description": "Get all valuations for the current user",
+    "description": "List valuations (staff shell \u2014 Phase E permission matrix). Citizens\nread their own valuations individually via GET /{valuation_id}, which\nstays ownership-scoped instead of exposing a list surface.",
     "operationId": "get_user_valuations_api_v1_valuations__get",
     "parameters": [
      {
@@ -10216,7 +10221,7 @@
     ]
    },
    "post": {
-    "description": "Create a new property valuation\n\nCalculates market value and taxable value per Ethiopian standards",
+    "description": "Create a new property valuation (staff shell \u2014 Phase E permission\nmatrix; citizens' rent valuations are auto-created by the rentals\nmodule's service layer, never through this endpoint)\n\nCalculates market value and taxable value per Ethiopian standards",
     "operationId": "create_valuation_api_v1_valuations__post",
     "requestBody": {
      "content": {
@@ -10312,7 +10317,7 @@
   },
   "/api/v1/valuations/export": {
    "get": {
-    "description": "Export valuations as CSV",
+    "description": "Export valuations as CSV (staff shell \u2014 Phase E permission matrix)",
     "operationId": "export_valuations_api_v1_valuations_export_get",
     "parameters": [
      {
@@ -10409,7 +10414,7 @@
   },
   "/api/v1/valuations/{valuation_id}": {
    "delete": {
-    "description": "Delete a valuation",
+    "description": "Delete a valuation \u2014 staff shell (Phase E permission matrix)",
     "operationId": "delete_valuation_api_v1_valuations__valuation_id__delete",
     "parameters": [
      {
@@ -10503,7 +10508,7 @@
     ]
    },
    "put": {
-    "description": "Update a valuation (status changes only)",
+    "description": "Update a valuation (status changes only) \u2014 staff shell (Phase E\npermission matrix)",
     "operationId": "update_valuation_api_v1_valuations__valuation_id__put",
     "parameters": [
      {
@@ -10668,7 +10673,7 @@
   },
   "/api/v1/valuations/{valuation_id}/status": {
    "patch": {
-    "description": "Transition a valuation to a new status.\n\nValid transitions:\n- draft \u2192 pending\n- pending \u2192 approved | rejected\n- approved \u2192 archived\n\nInvalid transitions are rejected with HTTP 400.",
+    "description": "Transition a valuation to a new status \u2014 staff shell (Phase E permission\nmatrix). Rent-valuation transitions during officer publish go through\nValuationService.transition_status() directly from the rentals module,\nbypassing this HTTP route, so this gate does not affect that flow.\n\nValid transitions:\n- draft \u2192 pending\n- pending \u2192 approved | rejected\n- approved \u2192 archived\n\nInvalid transitions are rejected with HTTP 400.",
     "operationId": "transition_valuation_status_api_v1_valuations__valuation_id__status_patch",
     "parameters": [
      {

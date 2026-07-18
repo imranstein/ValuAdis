@@ -14,8 +14,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user_id
+from app.core.rbac import require_staff
 from app.data.models.settings import ApiKey, UserSetting
+from app.data.models.user import User
 
 from .schemas import (
     DEFAULT_PREFERENCES,
@@ -31,13 +32,18 @@ router = APIRouter()
 KEY_PREFIX_LENGTH = 8
 
 
+def _staff_user_id(actor: User = Depends(require_staff)) -> int:
+    """Settings is a staff-shell surface (Phase E permission matrix)."""
+    return actor.id
+
+
 def _hash_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
 @router.get("", response_model=PreferencesResponse)
 def get_preferences(
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db),
 ) -> PreferencesResponse:
     """Return the caller's saved preferences, or sensible defaults if unset."""
@@ -54,7 +60,7 @@ def get_preferences(
 @router.put("", response_model=PreferencesResponse)
 def update_preferences(
     payload: PreferencesUpdate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db),
 ) -> PreferencesResponse:
     """Upsert the caller's preferences over the current defaults."""
@@ -81,7 +87,7 @@ def update_preferences(
 )
 def create_api_key(
     payload: ApiKeyCreate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db),
 ) -> ApiKeyCreatedResponse:
     """Generate a key, store only its hash + prefix, return the plaintext once."""
@@ -109,7 +115,7 @@ def create_api_key(
 
 @router.get("/api-keys", response_model=list[ApiKeyResponse])
 def list_api_keys(
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db),
 ) -> list[ApiKey]:
     """List the caller's keys without the secret or its hash."""
@@ -124,7 +130,7 @@ def list_api_keys(
 @router.delete("/api-keys/{key_id}", response_model=ApiKeyResponse)
 def revoke_api_key(
     key_id: int,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(_staff_user_id),
     db: Session = Depends(get_db),
 ) -> ApiKey:
     """Soft-delete (revoke) one of the caller's own keys."""

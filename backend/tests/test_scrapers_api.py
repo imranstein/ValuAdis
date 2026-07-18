@@ -39,7 +39,27 @@ VALID_SCRAPER = {
 }
 
 
-def _mock_auth(client: TestClient):
+def _mock_auth(client: TestClient, db_session):
+    """Point the auth dependency at user_id=1 and back it with a real staff
+    User row — Phase E's staff guards load the user from the DB (is_admin/
+    roles), not just the token subject."""
+    from app.data.models.user import User
+
+    if db_session.query(User).filter(User.id == 1).first() is None:
+        db_session.add(
+            User(
+                id=1,
+                email="scraper-test-1@example.com",
+                full_name="Scraper Test Staff",
+                phone="+251900000001",
+                password_hash="hashed",
+                municipality="Addis Ababa",
+                license_number="VAL-TEST-SCRAPER-1",
+                is_active=True,
+                is_verified=True,
+            )
+        )
+        db_session.commit()
     client.app.dependency_overrides[get_current_user] = lambda: 1
     client.app.dependency_overrides[get_current_user_id] = lambda: 1
 
@@ -71,8 +91,8 @@ def _create_scraper_logs(db_session, scraper_id: int, count: int = 3):
     db_session.commit()
 
 
-def test_scraper_create_and_list_end_to_end(client: TestClient):
-    _mock_auth(client)
+def test_scraper_create_and_list_end_to_end(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         payload = _create_scraper(client)
         assert payload["id"] > 0
@@ -88,8 +108,8 @@ def test_scraper_create_and_list_end_to_end(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_duplicate_domain_is_rejected(client: TestClient):
-    _mock_auth(client)
+def test_scraper_duplicate_domain_is_rejected(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         _create_scraper(client)
         duplicate = client.post("/api/v1/scrapers/", json=VALID_SCRAPER)
@@ -99,8 +119,8 @@ def test_scraper_duplicate_domain_is_rejected(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_toggle_and_stats(client: TestClient):
-    _mock_auth(client)
+def test_scraper_toggle_and_stats(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -122,8 +142,8 @@ def test_scraper_toggle_and_stats(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_run_rejects_disabled_scraper(client: TestClient):
-    _mock_auth(client)
+def test_scraper_run_rejects_disabled_scraper(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -136,8 +156,8 @@ def test_scraper_run_rejects_disabled_scraper(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_run_starts_background_job(client: TestClient, monkeypatch: pytest.MonkeyPatch):
-    _mock_auth(client)
+def test_scraper_run_starts_background_job(client: TestClient, monkeypatch: pytest.MonkeyPatch, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -167,8 +187,8 @@ def test_scraper_run_starts_background_job(client: TestClient, monkeypatch: pyte
         _clear_auth(client)
 
 
-def test_scraper_invalid_payload_is_rejected(client: TestClient):
-    _mock_auth(client)
+def test_scraper_invalid_payload_is_rejected(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         invalid_payload = dict(VALID_SCRAPER)
         invalid_payload["url_template"] = "https://invalid.com/listings?page"
@@ -179,8 +199,8 @@ def test_scraper_invalid_payload_is_rejected(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_update_rejects_duplicate_domain(client: TestClient):
-    _mock_auth(client)
+def test_scraper_update_rejects_duplicate_domain(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         _create_scraper(client)
         other = dict(VALID_SCRAPER)
@@ -197,8 +217,8 @@ def test_scraper_update_rejects_duplicate_domain(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_delete_removes_target_and_404_when_missing(client: TestClient):
-    _mock_auth(client)
+def test_scraper_delete_removes_target_and_404_when_missing(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -215,8 +235,8 @@ def test_scraper_delete_removes_target_and_404_when_missing(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_test_endpoint_accepts_override_payload(client: TestClient, monkeypatch: pytest.MonkeyPatch):
-    _mock_auth(client)
+def test_scraper_test_endpoint_accepts_override_payload(client: TestClient, monkeypatch: pytest.MonkeyPatch, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -254,8 +274,8 @@ def test_scraper_test_endpoint_accepts_override_payload(client: TestClient, monk
         _clear_auth(client)
 
 
-def test_scraper_run_failure_marks_log_as_failed(client: TestClient, monkeypatch: pytest.MonkeyPatch):
-    _mock_auth(client)
+def test_scraper_run_failure_marks_log_as_failed(client: TestClient, monkeypatch: pytest.MonkeyPatch, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -282,7 +302,7 @@ def test_scraper_stats_reflects_totals_and_success_rate(
     client: TestClient,
     db_session
 ):
-    _mock_auth(client)
+    _mock_auth(client, db_session)
     try:
         first = _create_scraper(client)
         second_payload = dict(VALID_SCRAPER)
@@ -310,7 +330,7 @@ def test_scraper_logs_pagination_and_ordering(
     client: TestClient,
     db_session
 ):
-    _mock_auth(client)
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -335,7 +355,7 @@ def test_scraper_logs_pagination_and_ordering(
 
 
 def test_scraper_health_reports_per_source_shape(client: TestClient, db_session):
-    _mock_auth(client)
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]
@@ -394,8 +414,8 @@ def test_scraper_health_reports_per_source_shape(client: TestClient, db_session)
         _clear_auth(client)
 
 
-def test_scraper_health_returns_empty_list_without_targets(client: TestClient):
-    _mock_auth(client)
+def test_scraper_health_returns_empty_list_without_targets(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         response = client.get("/api/v1/scrapers/health")
         assert response.status_code == 200
@@ -404,7 +424,7 @@ def test_scraper_health_returns_empty_list_without_targets(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_routes_require_authentication(client: TestClient):
+def test_scraper_routes_require_authentication(client: TestClient, db_session):
     endpoints = [
         ("get", "/api/v1/scrapers/"),
         ("post", "/api/v1/scrapers/"),
@@ -424,8 +444,8 @@ def test_scraper_routes_require_authentication(client: TestClient):
         assert response.status_code == 401
 
 
-def test_scraper_api_responses_include_security_headers(client: TestClient):
-    _mock_auth(client)
+def test_scraper_api_responses_include_security_headers(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         _create_scraper(client)
 
@@ -439,8 +459,8 @@ def test_scraper_api_responses_include_security_headers(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_list_limit_is_capped(client: TestClient):
-    _mock_auth(client)
+def test_scraper_list_limit_is_capped(client: TestClient, db_session):
+    _mock_auth(client, db_session)
     try:
         for idx in range(205):
             payload = dict(VALID_SCRAPER)
@@ -457,8 +477,8 @@ def test_scraper_list_limit_is_capped(client: TestClient):
         _clear_auth(client)
 
 
-def test_scraper_run_payload_is_capped_to_safe_limits(client: TestClient, monkeypatch: pytest.MonkeyPatch):
-    _mock_auth(client)
+def test_scraper_run_payload_is_capped_to_safe_limits(client: TestClient, monkeypatch: pytest.MonkeyPatch, db_session):
+    _mock_auth(client, db_session)
     try:
         created = _create_scraper(client)
         scraper_id = created["id"]

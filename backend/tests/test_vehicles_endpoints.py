@@ -24,7 +24,27 @@ VEHICLE_PAYLOAD = {
 }
 
 
-def _auth(client, user_id=1):
+def _auth(client, db_session, user_id=1):
+    """Point the auth dependency at user_id and make sure a real staff
+    User row backs it — Phase E's staff guards load the user from the DB
+    (is_admin/roles), not just the token subject."""
+    from app.data.models.user import User
+
+    if db_session.query(User).filter(User.id == user_id).first() is None:
+        db_session.add(
+            User(
+                id=user_id,
+                email=f"vehicle-test-{user_id}@example.com",
+                full_name="Vehicle Test Staff",
+                phone=f"+2519{user_id:08d}",
+                password_hash="hashed",
+                municipality="Addis Ababa",
+                license_number=f"VAL-TEST-{user_id}",
+                is_active=True,
+                is_verified=True,
+            )
+        )
+        db_session.commit()
     client.app.dependency_overrides[get_current_user_id] = lambda: user_id
 
 
@@ -33,8 +53,8 @@ def _create_vehicle(client, **overrides):
     return client.post("/api/v1/vehicles/", json=payload)
 
 
-def test_create_vehicle_returns_contract_shape(client):
-    _auth(client)
+def test_create_vehicle_returns_contract_shape(client, db_session):
+    _auth(client, db_session)
 
     response = _create_vehicle(client)
 
@@ -46,8 +66,8 @@ def test_create_vehicle_returns_contract_shape(client):
     assert body["vin"] == "JH4KA8260MC000000"
 
 
-def test_create_vehicle_rejects_duplicate_vin(client):
-    _auth(client)
+def test_create_vehicle_rejects_duplicate_vin(client, db_session):
+    _auth(client, db_session)
     _create_vehicle(client)
 
     response = _create_vehicle(client, plate_number="AA-99999")
@@ -56,8 +76,8 @@ def test_create_vehicle_rejects_duplicate_vin(client):
     assert "VIN" in response.json()["detail"]
 
 
-def test_create_vehicle_rejects_duplicate_plate(client):
-    _auth(client)
+def test_create_vehicle_rejects_duplicate_plate(client, db_session):
+    _auth(client, db_session)
     _create_vehicle(client)
 
     response = _create_vehicle(client, vin="JH4KA8260MC000001")
@@ -66,8 +86,8 @@ def test_create_vehicle_rejects_duplicate_plate(client):
     assert "plate" in response.json()["detail"].lower()
 
 
-def test_list_vehicles_returns_user_vehicles(client):
-    _auth(client)
+def test_list_vehicles_returns_user_vehicles(client, db_session):
+    _auth(client, db_session)
     _create_vehicle(client)
 
     response = client.get("/api/v1/vehicles/")
@@ -76,8 +96,8 @@ def test_list_vehicles_returns_user_vehicles(client):
     assert len(response.json()) == 1
 
 
-def test_list_vehicles_filters_by_make(client):
-    _auth(client)
+def test_list_vehicles_filters_by_make(client, db_session):
+    _auth(client, db_session)
     _create_vehicle(client)
 
     response = client.get("/api/v1/vehicles/?make=Nissan")
@@ -86,8 +106,8 @@ def test_list_vehicles_filters_by_make(client):
     assert response.json() == []
 
 
-def test_get_vehicle_by_id(client):
-    _auth(client)
+def test_get_vehicle_by_id(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
 
     response = client.get(f"/api/v1/vehicles/{vehicle_id}")
@@ -96,16 +116,16 @@ def test_get_vehicle_by_id(client):
     assert response.json()["id"] == vehicle_id
 
 
-def test_get_unknown_vehicle_returns_404(client):
-    _auth(client)
+def test_get_unknown_vehicle_returns_404(client, db_session):
+    _auth(client, db_session)
 
     response = client.get("/api/v1/vehicles/9999")
 
     assert response.status_code == 404
 
 
-def test_update_vehicle_changes_fields(client):
-    _auth(client)
+def test_update_vehicle_changes_fields(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
 
     response = client.put(
@@ -116,8 +136,8 @@ def test_update_vehicle_changes_fields(client):
     assert response.json()["color"] == "Silver"
 
 
-def test_delete_vehicle_returns_message_then_404(client):
-    _auth(client)
+def test_delete_vehicle_returns_message_then_404(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
 
     delete_response = client.delete(f"/api/v1/vehicles/{vehicle_id}")
@@ -127,8 +147,8 @@ def test_delete_vehicle_returns_message_then_404(client):
     assert client.get(f"/api/v1/vehicles/{vehicle_id}").status_code == 404
 
 
-def test_create_valuation_calculates_ethiopian_taxable_value(client):
-    _auth(client)
+def test_create_valuation_calculates_ethiopian_taxable_value(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
 
     response = client.post(f"/api/v1/vehicles/{vehicle_id}/valuation")
@@ -139,8 +159,8 @@ def test_create_valuation_calculates_ethiopian_taxable_value(client):
     assert body["taxable_value"] == round(body["market_value"] * 0.25, 2)
 
 
-def test_list_vehicle_valuations(client):
-    _auth(client)
+def test_list_vehicle_valuations(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
     client.post(f"/api/v1/vehicles/{vehicle_id}/valuation")
 
@@ -150,8 +170,8 @@ def test_list_vehicle_valuations(client):
     assert len(response.json()) == 1
 
 
-def test_latest_valuation_returns_most_recent(client):
-    _auth(client)
+def test_latest_valuation_returns_most_recent(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
     client.post(f"/api/v1/vehicles/{vehicle_id}/valuation")
 
@@ -161,8 +181,8 @@ def test_latest_valuation_returns_most_recent(client):
     assert response.json()["vehicle_id"] == vehicle_id
 
 
-def test_latest_valuation_without_valuations_returns_404(client):
-    _auth(client)
+def test_latest_valuation_without_valuations_returns_404(client, db_session):
+    _auth(client, db_session)
     vehicle_id = _create_vehicle(client).json()["id"]
 
     response = client.get(f"/api/v1/vehicles/{vehicle_id}/latest-valuation")
@@ -170,8 +190,8 @@ def test_latest_valuation_without_valuations_returns_404(client):
     assert response.status_code == 404
 
 
-def test_statistics_summary_counts_created_vehicles(client):
-    _auth(client)
+def test_statistics_summary_counts_created_vehicles(client, db_session):
+    _auth(client, db_session)
     _create_vehicle(client)
 
     response = client.get("/api/v1/vehicles/statistics/summary")

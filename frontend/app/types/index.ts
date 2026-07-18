@@ -8,6 +8,9 @@ export interface User {
   role?: 'valuer' | 'reviewer' | 'firm_admin' | 'municipal_admin' | 'system_admin'
   is_admin?: boolean
   roles?: string[]
+  // Rentals module (Phase B): set once a rental_officer verifies a
+  // property_owner citizen account. Only meaningful for owner personas.
+  owner_verified?: boolean
   is_active?: boolean
   created_at: string
   updated_at?: string

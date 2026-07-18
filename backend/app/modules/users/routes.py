@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import get_current_user_id, get_password_hash
+from app.core.rbac import require_staff
 from app.data.models.user import User
 from app.data.models.role import Role, Permission, UserRole, user_roles, role_permissions
 from .schemas import UserResponse, UserCreate, UserUpdate, RoleResponse, PermissionResponse
@@ -256,35 +257,16 @@ async def update_user(
     user_id: int,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id)
+    current_user: User = Depends(require_staff),
 ):
     """
-    Update user information
-    Requires user update permission
+    Update user information — staff shell (Phase E permission matrix).
+    User management is an admin/staff tool; citizens have no self-service
+    edit surface in the app today, so this stays staff-only rather than
+    allowing a raw self-update that could touch privileged fields.
     """
+    current_user_id = current_user.id
     try:
-        # Check permissions
-        current_user = db.query(User).filter(User.id == current_user_id).first()
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Current user not found"
-            )
-        
-        # Users can update their own info, or admins can update any user
-        can_update = current_user_id == user_id
-        if not can_update:
-            for user_role in current_user.roles:
-                if user_role.name in ["system_admin", "firm_admin", "municipal_admin"]:
-                    can_update = True
-                    break
-        
-        if not can_update:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions to update user"
-            )
-        
         # Get user to update
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
