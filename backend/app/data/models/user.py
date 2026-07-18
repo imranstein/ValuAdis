@@ -4,7 +4,7 @@ User Model
 ValuAdis user account model for Ethiopian property valuers
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, false
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -24,9 +24,18 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     is_valuer = Column(Boolean, default=False)
+
+    # Rentals module (plans/valuadis-rentals/plan.mdx, Phase B): citizen
+    # self-registration captures a Fayda ID; a property_owner account must
+    # be verified by a rental_officer before their first listing can
+    # publish (app/modules/rentals/services.py).
+    fayda_id_number = Column(String(50), nullable=True)
+    owner_verified = Column(Boolean, default=False, server_default=false(), nullable=False)
+    owner_verified_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
+
     # Relationships
     properties = relationship("Property", back_populates="user")
     valuations = relationship("Valuation", back_populates="user")

@@ -170,6 +170,56 @@
     "title": "Body_bulk_import_properties_api_v1_properties_bulk_import_post",
     "type": "object"
    },
+   "CitizenSignup": {
+    "description": "Citizen self-registration for the rental registry.\n\nKept separate from /auth/register (the valuer registration contract is\nfrozen). Captures the Fayda national ID; new accounts default to the\nrenter role, and property_owner accounts stay unverified until a\nrental officer verifies them.",
+    "properties": {
+     "account_type": {
+      "default": "renter",
+      "description": "'renter' (default) or 'property_owner'",
+      "title": "Account Type",
+      "type": "string"
+     },
+     "email": {
+      "format": "email",
+      "title": "Email",
+      "type": "string"
+     },
+     "fayda_id_number": {
+      "maxLength": 50,
+      "minLength": 6,
+      "title": "Fayda Id Number",
+      "type": "string"
+     },
+     "full_name": {
+      "minLength": 3,
+      "title": "Full Name",
+      "type": "string"
+     },
+     "municipality": {
+      "minLength": 2,
+      "title": "Municipality",
+      "type": "string"
+     },
+     "password": {
+      "title": "Password",
+      "type": "string"
+     },
+     "phone": {
+      "title": "Phone",
+      "type": "string"
+     }
+    },
+    "required": [
+     "email",
+     "full_name",
+     "phone",
+     "password",
+     "municipality",
+     "fayda_id_number"
+    ],
+    "title": "CitizenSignup",
+    "type": "object"
+   },
    "ComplianceReportResponse": {
     "description": "Ethiopian compliance report response",
     "properties": {
@@ -531,6 +581,212 @@
     "title": "LicenseValidationResponse",
     "type": "object"
    },
+   "ListingCreate": {
+    "description": "Owner registers an existing property for rent.",
+    "properties": {
+     "notes": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Optional note to the review officer",
+      "title": "Notes"
+     },
+     "property_id": {
+      "description": "Existing property to list for rent",
+      "title": "Property Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "property_id"
+    ],
+    "title": "ListingCreate",
+    "type": "object"
+   },
+   "ListingListResponse": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "object"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "limit": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Limit"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "skip": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Skip"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     },
+     "total": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total"
+     }
+    },
+    "required": [
+     "success"
+    ],
+    "title": "ListingListResponse",
+    "type": "object"
+   },
+   "ListingResponse": {
+    "properties": {
+     "data": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Data"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success"
+    ],
+    "title": "ListingResponse",
+    "type": "object"
+   },
+   "ListingReviewRequest": {
+    "description": "Officer review action on a pending listing.",
+    "properties": {
+     "action": {
+      "description": "'publish', 'adjust_band', or 'reject'",
+      "title": "Action",
+      "type": "string"
+     },
+     "band_max": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Adjusted band upper bound (adjust_band)",
+      "title": "Band Max"
+     },
+     "band_min": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Adjusted band lower bound (adjust_band)",
+      "title": "Band Min"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Mandatory for adjust_band and reject",
+      "title": "Reason"
+     }
+    },
+    "required": [
+     "action"
+    ],
+    "title": "ListingReviewRequest",
+    "type": "object"
+   },
+   "ListingWithdrawRequest": {
+    "properties": {
+     "reason": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "title": "ListingWithdrawRequest",
+    "type": "object"
+   },
    "MarketPosition": {
     "description": "Market position enumeration",
     "enum": [
@@ -570,6 +826,21 @@
      "coordinates_b"
     ],
     "title": "OverlapRequest",
+    "type": "object"
+   },
+   "OwnerVerifyRequest": {
+    "description": "Officer verifies a citizen account as a property owner.",
+    "properties": {
+     "user_id": {
+      "description": "User to verify as property owner",
+      "title": "User Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "user_id"
+    ],
+    "title": "OwnerVerifyRequest",
     "type": "object"
    },
    "PerformanceMetrics": {
@@ -1943,6 +2214,214 @@
      }
     },
     "title": "PropertyUpdate",
+    "type": "object"
+   },
+   "PublicListing": {
+    "additionalProperties": false,
+    "description": "A published listing as seen by anonymous renters. Closed model \u2014\nowner identity, user ids, and internal integer PKs are not fields.",
+    "properties": {
+     "band_max": {
+      "title": "Band Max",
+      "type": "number"
+     },
+     "band_min": {
+      "title": "Band Min",
+      "type": "number"
+     },
+     "has_valuation_certificate": {
+      "default": true,
+      "title": "Has Valuation Certificate",
+      "type": "boolean"
+     },
+     "property": {
+      "$ref": "#/components/schemas/PublicListingProperty"
+     },
+     "public_id": {
+      "title": "Public Id",
+      "type": "string"
+     },
+     "published_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Published At"
+     },
+     "suggested_rent": {
+      "title": "Suggested Rent",
+      "type": "number"
+     }
+    },
+    "required": [
+     "public_id",
+     "suggested_rent",
+     "band_min",
+     "band_max",
+     "property"
+    ],
+    "title": "PublicListing",
+    "type": "object"
+   },
+   "PublicListingProperty": {
+    "additionalProperties": false,
+    "description": "Property facts safe for the public listing surface. No ownership data.",
+    "properties": {
+     "address": {
+      "title": "Address",
+      "type": "string"
+     },
+     "area_sqm": {
+      "title": "Area Sqm",
+      "type": "number"
+     },
+     "building_area_sqm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Building Area Sqm"
+     },
+     "condition": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Condition"
+     },
+     "latitude": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latitude"
+     },
+     "longitude": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Longitude"
+     },
+     "municipality": {
+      "title": "Municipality",
+      "type": "string"
+     },
+     "number_of_bathrooms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Number Of Bathrooms"
+     },
+     "number_of_bedrooms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Number Of Bedrooms"
+     },
+     "number_of_floors": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Number Of Floors"
+     },
+     "property_subtype": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Property Subtype"
+     },
+     "property_type": {
+      "title": "Property Type",
+      "type": "string"
+     },
+     "subcity": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Subcity"
+     },
+     "year_built": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Year Built"
+     }
+    },
+    "required": [
+     "address",
+     "municipality",
+     "property_type",
+     "area_sqm"
+    ],
+    "title": "PublicListingProperty",
+    "type": "object"
+   },
+   "PublicListingResponse": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/PublicListing"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success",
+     "data"
+    ],
+    "title": "PublicListingResponse",
     "type": "object"
    },
    "ReportMetadata": {
@@ -6971,6 +7450,515 @@
     "tags": [
      "Properties",
      "Properties"
+    ]
+   }
+  },
+  "/api/v1/rentals/listings": {
+   "get": {
+    "description": "Published-listing search (public, PII-redacted).\n\nWith ?status_filter=pending_review (or any non-published status) this\nbecomes the officer review queue and requires a rental_officer bearer\ntoken.",
+    "operationId": "browse_listings_api_v1_rentals_listings_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "status",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Status"
+      }
+     },
+     {
+      "in": "query",
+      "name": "district",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "District"
+      }
+     },
+     {
+      "in": "query",
+      "name": "property_subtype",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Property Subtype"
+      }
+     },
+     {
+      "in": "query",
+      "name": "bedrooms",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Bedrooms"
+      }
+     },
+     {
+      "in": "query",
+      "name": "band_min",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Band Min"
+      }
+     },
+     {
+      "in": "query",
+      "name": "band_max",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Band Max"
+      }
+     },
+     {
+      "in": "query",
+      "name": "skip",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "title": "Skip",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "summary": "Browse Listings",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   },
+   "post": {
+    "description": "Owner registers an existing property for rent (auto rent valuation,\nlisting enters pending_review with the suggested band).",
+    "operationId": "create_listing_api_v1_rentals_listings_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ListingCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ListingResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Create Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/listings/{public_id}": {
+   "get": {
+    "description": "Public listing detail. Unpublished listings are a public 404.",
+    "operationId": "get_listing_api_v1_rentals_listings__public_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PublicListingResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/listings/{public_id}/review": {
+   "patch": {
+    "description": "Officer review action: publish, adjust_band (mandatory reason), or\nreject (mandatory reason). All actions are audit-logged; band values\nfreeze on publish.",
+    "operationId": "review_listing_api_v1_rentals_listings__public_id__review_patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ListingReviewRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ListingResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Review Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/listings/{public_id}/withdraw": {
+   "post": {
+    "description": "Withdraw a listing (owner or officer). A published listing must be\nwithdrawn before its band can be reviewed again.",
+    "operationId": "withdraw_listing_api_v1_rentals_listings__public_id__withdraw_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "public_id",
+      "required": true,
+      "schema": {
+       "title": "Public Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ListingWithdrawRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ListingResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Withdraw Listing",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/my-listings": {
+   "get": {
+    "description": "Authenticated owner's listings (any status).",
+    "operationId": "my_listings_api_v1_rentals_my_listings_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "skip",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "title": "Skip",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ListingListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "My Listings",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/owners/verify": {
+   "post": {
+    "description": "Officer verifies a citizen account as a property owner (audited).\nUnverified owners can draft listings but cannot be published.",
+    "operationId": "verify_owner_api_v1_rentals_owners_verify_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/OwnerVerifyRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Verify Owner",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/signup": {
+   "post": {
+    "description": "Citizen signup with Fayda ID capture. Renter by default; property\nowners remain unverified until a rental officer verifies them.",
+    "operationId": "citizen_signup_api_v1_rentals_signup_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CitizenSignup"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Citizen Signup",
+    "tags": [
+     "Rentals",
+     "Rentals"
     ]
    }
   },
