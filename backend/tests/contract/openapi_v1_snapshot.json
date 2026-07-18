@@ -2678,6 +2678,94 @@
     "title": "PublicListingResponse",
     "type": "object"
    },
+   "RenewalCheckRequest": {
+    "description": "Proposed renewal rent for an active contract. Validated server-side\nagainst the configured legal cap over the contract's current rent.",
+    "properties": {
+     "proposed_rent": {
+      "description": "Proposed renewal rent in ETB/month",
+      "exclusiveMinimum": 0.0,
+      "title": "Proposed Rent",
+      "type": "number"
+     }
+    },
+    "required": [
+     "proposed_rent"
+    ],
+    "title": "RenewalCheckRequest",
+    "type": "object"
+   },
+   "RentIndexResponse": {
+    "properties": {
+     "data": {
+      "items": {
+       "$ref": "#/components/schemas/RentIndexRow"
+      },
+      "title": "Data",
+      "type": "array"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success",
+     "data"
+    ],
+    "title": "RentIndexResponse",
+    "type": "object"
+   },
+   "RentIndexRow": {
+    "additionalProperties": false,
+    "description": "One published district/subtype/bedrooms median for a period.\nsample_size below the suppression threshold never reaches this model \u2014\nthe service filters those rows out before serialization.",
+    "properties": {
+     "bedrooms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bedrooms"
+     },
+     "district": {
+      "title": "District",
+      "type": "string"
+     },
+     "median_rent": {
+      "title": "Median Rent",
+      "type": "number"
+     },
+     "period": {
+      "title": "Period",
+      "type": "string"
+     },
+     "property_subtype": {
+      "title": "Property Subtype",
+      "type": "string"
+     },
+     "sample_size": {
+      "title": "Sample Size",
+      "type": "integer"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "district",
+     "property_subtype",
+     "median_rent",
+     "sample_size",
+     "source",
+     "period"
+    ],
+    "title": "RentIndexRow",
+    "type": "object"
+   },
    "ReportMetadata": {
     "description": "Report metadata",
     "properties": {
@@ -7872,6 +7960,32 @@
     ]
    }
   },
+  "/api/v1/rentals/contracts/export": {
+   "get": {
+    "description": "CSV export of the contracts registry \u2014 the tax-base deliverable for\nthe administration (rental_officer only; party IDs are intentionally\nincluded, unlike every public serializer in this module).",
+    "operationId": "export_contracts_api_v1_rentals_contracts_export_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Export Contracts",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
   "/api/v1/rentals/contracts/{contract_no}/deposit": {
    "post": {
     "description": "Officer records a deposit receipt. A matching amount activates the\ncontract (draft \u2192 active); a mismatch is rejected.",
@@ -7972,6 +8086,130 @@
      }
     ],
     "summary": "Download Contract Pdf",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/contracts/{contract_no}/renewal": {
+   "post": {
+    "description": "Contract-shape stub: validates a proposed renewal rent against the\nconfigured legal cap over the contract's current rent. Settles the API\nshape now; the full renewal workflow (a new contract record, signatures,\nPDF) is post-pilot (plan decision).",
+    "operationId": "check_contract_renewal_api_v1_rentals_contracts__contract_no__renewal_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "contract_no",
+      "required": true,
+      "schema": {
+       "title": "Contract No",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RenewalCheckRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Check Contract Renewal",
+    "tags": [
+     "Rentals",
+     "Rentals"
+    ]
+   }
+  },
+  "/api/v1/rentals/index": {
+   "get": {
+    "description": "Public district rent index. Groups below the minimum-sample threshold\nare absent from the response, never zeroed or estimated \u2014 an empty\nresult for a filter is the honest \"insufficient data yet\" state.",
+    "operationId": "rent_index_api_v1_rentals_index_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "district",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "District"
+      }
+     },
+     {
+      "in": "query",
+      "name": "property_subtype",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Property Subtype"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RentIndexResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Rent Index",
     "tags": [
      "Rentals",
      "Rentals"
