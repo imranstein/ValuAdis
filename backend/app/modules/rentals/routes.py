@@ -8,10 +8,11 @@ Owner (property_owner role): create listing, my-listings, withdraw.
 Officer (rental_officer role): review queue, publish/adjust/reject, owner verify.
 """
 
+import csv
 import io
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -39,7 +40,18 @@ from app.modules.valuation.certificate_service import CertificateService
 from app.services.auth_service import AuthService
 from .application_service import RentalApplicationService
 from .contract_service import TenancyContractService
-from .exceptions import BandViolationError, RateLimitError
+from .exceptions import BandViolationError, RateLimitError, RenewalCapExceededError
+from .index_service import RentIndexService
+from .rate_limit import (
+    SEARCH_RATE_LIMIT_MAX_REQUESTS,
+    SEARCH_RATE_LIMIT_WINDOW_SECONDS,
+    SIGNUP_RATE_LIMIT_MAX_REQUESTS,
+    SIGNUP_RATE_LIMIT_WINDOW_SECONDS,
+    client_ip,
+    search_rate_limiter,
+    signup_rate_limiter,
+)
+from .renewal_cap_service import RenewalCapService
 from .schemas import (
     ApplicationCreate,
     ApplicationDecisionRequest,
@@ -55,6 +67,8 @@ from .schemas import (
     OwnerVerifyRequest,
     PublicListingListResponse,
     PublicListingResponse,
+    RenewalCheckRequest,
+    RentIndexResponse,
 )
 from .services import RentalListingService, _is_rental_officer
 
@@ -145,6 +159,14 @@ def get_contract_service(db: Session = Depends(get_db)) -> TenancyContractServic
     return TenancyContractService(db)
 
 
+def get_index_service(db: Session = Depends(get_db)) -> RentIndexService:
+    return RentIndexService(db)
+
+
+def get_renewal_cap_service(db: Session = Depends(get_db)) -> RenewalCapService:
+    return RenewalCapService(db)
+
+
 # ---------------------------------------------------------------------------
 # Citizen signup (public)
 # ---------------------------------------------------------------------------
@@ -206,9 +228,16 @@ def _get_or_create_role(db: Session, name: str) -> Role:
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED, tags=["Rentals"])
-async def citizen_signup(signup: CitizenSignup, response: Response, db: Session = Depends(get_db)):
+async def citizen_signup(signup: CitizenSignup, request: Request, response: Response, db: Session = Depends(get_db)):
     """Citizen signup with Fayda ID capture. Renter by default; property
     owners remain unverified until a rental officer verifies them."""
+    try:
+        signup_rate_limiter.check(
+            client_ip(request), SIGNUP_RATE_LIMIT_WINDOW_SECONDS, SIGNUP_RATE_LIMIT_MAX_REQUESTS
+        )
+    except RateLimitError as exc:
+        return _error(status.HTTP_429_TOO_MANY_REQUESTS, str(exc))
+
     if not validate_ethiopian_phone_number(signup.phone):
         return _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid Ethiopian phone number format")
 
@@ -277,6 +306,7 @@ async def create_listing(
 
 @router.get("/listings", tags=["Rentals"])
 async def browse_listings(
+    request: Request,
     status_filter: Optional[str] = Query(None, alias="status"),
     district: Optional[str] = None,
     property_subtype: Optional[str] = None,
@@ -311,6 +341,15 @@ async def browse_listings(
             )
         listings, total = service.get_review_queue(status_filter, skip, limit)
         return ListingListResponse(success=True, data=listings, total=total, skip=skip, limit=limit)
+
+    # Rate limit only the anonymous public-search path — an officer's
+    # review-queue traffic above must never be throttled by this budget.
+    try:
+        search_rate_limiter.check(
+            client_ip(request), SEARCH_RATE_LIMIT_WINDOW_SECONDS, SEARCH_RATE_LIMIT_MAX_REQUESTS
+        )
+    except RateLimitError as exc:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc))
 
     listings, total = service.search_published(
         district=district,
@@ -411,6 +450,32 @@ async def verify_owner(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except ValuAdisException as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Rent index (Phase D) — public, aggregate-only
+# ---------------------------------------------------------------------------
+
+# Aggregation runs at most a few times a day (index_service.run_aggregation
+# is a standalone/scheduled job, not per-request); a short public cache
+# lets a shared cache or the browser avoid hammering the DB for a read that
+# cannot change faster than that.
+RENT_INDEX_CACHE_CONTROL = "public, max-age=300"
+
+
+@router.get("/index", response_model=RentIndexResponse, tags=["Rentals"])
+async def rent_index(
+    response: Response,
+    district: Optional[str] = None,
+    property_subtype: Optional[str] = None,
+    service: RentIndexService = Depends(get_index_service),
+):
+    """Public district rent index. Groups below the minimum-sample threshold
+    are absent from the response, never zeroed or estimated — an empty
+    result for a filter is the honest "insufficient data yet" state."""
+    rows = service.get_public_index(district=district, property_subtype=property_subtype)
+    response.headers["Cache-Control"] = RENT_INDEX_CACHE_CONTROL
+    return RentIndexResponse(success=True, data=rows)
 
 
 # ---------------------------------------------------------------------------
@@ -536,6 +601,42 @@ async def list_contracts(
     return ContractListResponse(success=True, data=contracts, total=total, skip=skip, limit=limit)
 
 
+@router.get("/contracts/export", tags=["Rentals"])
+async def export_contracts(
+    officer: User = Depends(require_rental_officer),
+    service: TenancyContractService = Depends(get_contract_service),
+):
+    """CSV export of the contracts registry — the tax-base deliverable for
+    the administration (rental_officer only; party IDs are intentionally
+    included, unlike every public serializer in this module)."""
+    rows = service.list_contracts_for_export()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "contract_no", "property_address", "municipality", "subcity",
+            "owner_name", "owner_fayda_id", "renter_name", "renter_fayda_id",
+            "monthly_rent", "deposit_amount", "deposit_receipt_ref",
+            "status", "start_date", "end_date", "created_at",
+        ]
+    )
+    for row in rows:
+        writer.writerow(
+            [
+                row["contract_no"], row["property_address"], row["municipality"], row["subcity"],
+                row["owner_name"], row["owner_fayda_id"], row["renter_name"], row["renter_fayda_id"],
+                row["monthly_rent"], row["deposit_amount"], row["deposit_receipt_ref"],
+                row["status"], row["start_date"], row["end_date"], row["created_at"],
+            ]
+        )
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=rental_contracts_export.csv"},
+    )
+
+
 @router.get("/my-contracts", response_model=ContractListResponse, tags=["Rentals"])
 async def my_contracts(
     skip: int = 0,
@@ -575,6 +676,36 @@ async def record_deposit(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except ValuAdisException as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.post("/contracts/{contract_no}/renewal", tags=["Rentals"])
+async def check_contract_renewal(
+    contract_no: str,
+    body: RenewalCheckRequest,
+    officer: User = Depends(require_rental_officer),
+    contract_service: TenancyContractService = Depends(get_contract_service),
+    cap_service: RenewalCapService = Depends(get_renewal_cap_service),
+):
+    """Contract-shape stub: validates a proposed renewal rent against the
+    configured legal cap over the contract's current rent. Settles the API
+    shape now; the full renewal workflow (a new contract record, signatures,
+    PDF) is post-pilot (plan decision)."""
+    contract = contract_service.get_contract(contract_no)
+    if contract is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found")
+
+    try:
+        result = cap_service.validate_renewal(contract.monthly_rent, body.proposed_rent)
+    except RenewalCapExceededError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except ValidationException as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+    return {
+        "success": True,
+        "data": result,
+        "message": "Renewal rent is within the legal cap. Full renewal registration is not yet available.",
+    }
 
 
 @router.get("/contracts/{contract_no}/pdf", tags=["Rentals"])

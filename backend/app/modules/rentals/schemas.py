@@ -189,6 +189,43 @@ class DepositRecordRequest(BaseModel):
     paid_on: Optional[date] = Field(None, description="Date the deposit was paid")
 
 
+# ---------------------------------------------------------------------------
+# Rent index (Phase D) — public, aggregate-only (no PII, no per-contract data)
+# ---------------------------------------------------------------------------
+
+class RentIndexRow(BaseModel):
+    """One published district/subtype/bedrooms median for a period.
+    sample_size below the suppression threshold never reaches this model —
+    the service filters those rows out before serialization."""
+
+    district: str
+    property_subtype: str
+    bedrooms: Optional[int] = None
+    median_rent: float
+    sample_size: int
+    source: str
+    period: str
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class RentIndexResponse(BaseModel):
+    success: bool
+    data: List[RentIndexRow]
+
+
+# ---------------------------------------------------------------------------
+# Renewal cap check (Phase D) — contract-shape stub, full renewal flow
+# lands post-pilot
+# ---------------------------------------------------------------------------
+
+class RenewalCheckRequest(BaseModel):
+    """Proposed renewal rent for an active contract. Validated server-side
+    against the configured legal cap over the contract's current rent."""
+
+    proposed_rent: float = Field(..., gt=0, description="Proposed renewal rent in ETB/month")
+
+
 class ContractResponse(BaseModel):
     success: bool
     data: Optional[dict] = None

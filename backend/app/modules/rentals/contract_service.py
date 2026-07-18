@@ -41,6 +41,9 @@ DEFAULT_DEPOSIT_MONTHS = 2
 # path (there is no third-party file store in this phase), mirroring how
 # valuation certificates are served.
 CONTRACT_PDF_PATH_TEMPLATE = "/api/v1/rentals/contracts/{contract_no}/pdf"
+# Named cap on the tax-base CSV export (hardening: pagination/row caps on
+# every list-producing endpoint), matching the property export's precedent.
+CONTRACTS_EXPORT_MAX_ROWS = 10000
 
 
 class TenancyContractService:
@@ -265,6 +268,41 @@ class TenancyContractService:
     def list_contracts(self, skip: int = 0, limit: int = 20) -> Tuple[List[Dict[str, Any]], int]:
         contracts, total = self.repo.list_all(skip, limit)
         return [self.to_dict(c) for c in contracts], total
+
+    def list_contracts_for_export(self, limit: int = CONTRACTS_EXPORT_MAX_ROWS) -> List[Dict[str, Any]]:
+        """Full contract rows for the tax-base CSV export (officer-gated —
+        party IDs are intentionally included here, unlike every public
+        serializer in this module)."""
+        contracts, _ = self.repo.list_all(0, limit)
+        return [self._to_export_dict(c) for c in contracts]
+
+    def _to_export_dict(self, contract: TenancyContract) -> Dict[str, Any]:
+        listing = contract.listing
+        application = contract.application
+        prop = listing.property if listing else None
+        owner = self.db.query(User).filter(User.id == listing.owner_user_id).first() if listing else None
+        renter = (
+            self.db.query(User).filter(User.id == application.renter_user_id).first()
+            if application
+            else None
+        )
+        return {
+            "contract_no": contract.contract_no,
+            "property_address": prop.address if prop else "",
+            "municipality": prop.municipality if prop else "",
+            "subcity": prop.subcity if prop else "",
+            "owner_name": owner.full_name if owner else "",
+            "owner_fayda_id": owner.fayda_id_number if owner else "",
+            "renter_name": renter.full_name if renter else "",
+            "renter_fayda_id": renter.fayda_id_number if renter else "",
+            "monthly_rent": contract.monthly_rent,
+            "deposit_amount": contract.deposit_amount,
+            "deposit_receipt_ref": contract.deposit_receipt_ref or "",
+            "status": contract.status,
+            "start_date": contract.start_date.isoformat() if contract.start_date else "",
+            "end_date": contract.end_date.isoformat() if contract.end_date else "",
+            "created_at": contract.created_at.isoformat() if contract.created_at else "",
+        }
 
     def get_contract(self, contract_no: str) -> Optional[TenancyContract]:
         return self.repo.get_by_contract_no(contract_no)

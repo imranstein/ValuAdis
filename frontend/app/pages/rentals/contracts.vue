@@ -14,12 +14,18 @@
           <i class="pi pi-refresh" aria-hidden="true"></i>
           Refresh
         </button>
+        <button class="btn-secondary" type="button" :disabled="exporting" @click="exportContracts">
+          <i class="pi pi-download" aria-hidden="true"></i>
+          {{ exporting ? 'Exporting…' : 'Export CSV (tax base)' }}
+        </button>
         <NuxtLink to="/rentals" class="btn-primary">
           <i class="pi pi-inbox" aria-hidden="true"></i>
           Review queue
         </NuxtLink>
       </div>
     </section>
+
+    <p v-if="exportError" class="inline-error" role="alert">{{ exportError }}</p>
 
     <section class="panel create-panel">
       <div class="panel-head">
@@ -204,6 +210,8 @@ const contractsError = ref('')
 const contracts = ref<TenancyContract[]>([])
 const total = ref(0)
 const downloading = ref('')
+const exporting = ref(false)
+const exportError = ref('')
 
 const lookupPublicId = ref('')
 const lookingUp = ref(false)
@@ -342,6 +350,26 @@ async function downloadPdf(contractNo: string) {
     contractsError.value = error instanceof Error ? error.message : 'Could not download the contract.'
   } finally {
     downloading.value = ''
+  }
+}
+
+async function exportContracts() {
+  exporting.value = true
+  exportError.value = ''
+  try {
+    const blob = await rentalService.downloadContractsExport()
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'rental_contracts_export.csv'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    exportError.value = error instanceof Error ? error.message : 'Could not export contracts.'
+  } finally {
+    exporting.value = false
   }
 }
 

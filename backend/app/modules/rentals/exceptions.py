@@ -15,3 +15,7 @@ class BandViolationError(ValidationException):
 
 class RateLimitError(ValidationException):
     """Too many applications from one account in the window → HTTP 429."""
+
+
+class RenewalCapExceededError(ValidationException):
+    """Proposed renewal rent exceeds the legal cap over current rent → HTTP 422."""

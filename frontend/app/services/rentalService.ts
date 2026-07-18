@@ -114,6 +114,26 @@ interface ListEnvelope<T> {
   limit: number
 }
 
+export interface RentIndexRow {
+  district: string
+  property_subtype: string
+  bedrooms?: number | null
+  median_rent: number
+  sample_size: number
+  source: string
+  period: string
+}
+
+export interface RenewalCheckResult {
+  current_rent: number
+  proposed_rent: number
+  cap_pct: number
+  max_allowed_rent: number
+  allowed: boolean
+  region: string
+  directive_reference?: string | null
+}
+
 class RentalService {
   private base(): string {
     const config = useRuntimeConfig()
@@ -301,6 +321,38 @@ class RentalService {
     if (!response.ok) {
       const body = await response.json().catch(() => ({}))
       throw new Error(body.detail || `Download failed with ${response.status}`)
+    }
+    return response.blob()
+  }
+
+  async getRentIndex(filters: { district?: string; property_subtype?: string } = {}): Promise<RentIndexRow[]> {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value)
+    }
+    const query = params.toString()
+    const response = await fetch(`${this.base()}/index${query ? `?${query}` : ''}`)
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async checkRenewal(contractNo: string, proposedRent: number): Promise<RenewalCheckResult> {
+    const response = await fetch(`${this.base()}/contracts/${encodeURIComponent(contractNo)}/renewal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+      body: JSON.stringify({ proposed_rent: proposedRent }),
+    })
+    const body = await this.parse(response)
+    return body.data
+  }
+
+  async downloadContractsExport(): Promise<Blob> {
+    const response = await fetch(`${this.base()}/contracts/export`, {
+      headers: this.authHeaders(),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      throw new Error(body.detail || `Export failed with ${response.status}`)
     }
     return response.blob()
   }

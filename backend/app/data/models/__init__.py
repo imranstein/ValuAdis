@@ -8,6 +8,8 @@ from .district_rent_ratio import DistrictRentRatio
 from .rental_listing import RentalListing
 from .rental_application import RentalApplication
 from .tenancy_contract import TenancyContract, RentalContractSequence
+from .rent_index_snapshot import RentIndexSnapshot
+from .renewal_cap_config import RenewalCapConfig
 from .audit_log import AuditLog
 from .role import Role, Permission, UserRole
 from .scraper import ScraperTarget, ScraperLog
