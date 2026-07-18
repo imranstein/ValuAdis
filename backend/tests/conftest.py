@@ -101,12 +101,20 @@ def client(db_session):
             yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
+    # The rentals module's public-endpoint rate limiters (search, signup)
+    # are in-process singletons keyed by client IP; TestClient always uses
+    # the same synthetic IP, so state must be reset per test or unrelated
+    # tests hitting those endpoints would bleed into each other's counts.
+    from app.modules.rentals.rate_limit import search_rate_limiter, signup_rate_limiter
+    search_rate_limiter._hits.clear()
+    signup_rate_limiter._hits.clear()
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     app.dependency_overrides.clear()
 
 
