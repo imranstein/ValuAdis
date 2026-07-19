@@ -153,6 +153,16 @@ python -m uvicorn app.main:app --reload  # dev server (localhost:8000)
 - The rentals E2E chain (`rental-registry-workflow.spec.ts`) ran green (10/10) with `E2E_SKIP_WEBSERVER=1`, a manually built+served frontend, and a fresh `is_admin=True` account at `E2E_OFFICER_EMAIL`/`E2E_OFFICER_PASSWORD`.
 - The Bash sandbox's destructive-op guard has false positives on some innocuous commands (`grep -rl ...`, `rm ...; ls ...`) — use `grep --files-with-matches` and `python3 -c "os.remove(...)"` as workarounds.
 
+### 2026-07-19 (mobile-rentals dev-completion, fix/dev-completion-mobile)
+
+- Gitignore trap #2: the root Python `lib/` rule silently swallowed ALL of `mobile-rentals/lib/` and the `DESIGN.md` scratch rule swallowed `mobile-rentals/DESIGN.md` — the Rentals app source was never committed until this branch. Allowlist entries (`!mobile-rentals/lib/`, `!mobile-rentals/lib/**`, `!mobile-rentals/DESIGN.md`) fixed it. Every new top-level Flutter app needs the same pair.
+- mobile-rentals now consumes the photo backend: `NetworkPhoto`/`PhotoCarousel` render `photo_urls` (placeholder only when a listing truly has none), owner `PhotoManagerScreen` uploads/deletes with client-side 8-photo/5MB mirroring, register flow uploads picked photos post-create, and published listings expose the agreement PDF download.
+- Live-sweep bug: the backend reuses deleted photo integer ids on SQLite, so a re-upload can claim an old photo's URL and `cached_network_image` serves the stale deleted image. Client works around it with `PropertyPhoto.versionedUrl` (`?v=<created_at ms>`); the proper fix is backend photo URLs keyed by the uuid filename — flag when the photo API is next touched.
+- Live-sweep bug: `BandRangeBar`'s legend Row overflowed (RenderFlex 0.556px) via the apply sheet; legend/offer/footer Rows are now Flexible+ellipsis. Sub-pixel overflows only surface in the runtime logcat watch, never in `flutter analyze`/tests.
+- Emulator drive gotchas: screenshots from `adb emu screenrecord screenshot` are physical-res (1280x2856) but display scaled — multiply displayed coords by 1.43 for `input tap` or taps silently miss; hand-crafted minimal JPEGs pass Pillow server-side but fail Flutter's codec silently (seed real PIL-rendered images); `run-as com.valuadis.rent sh -c 'rm -rf cache/*'` clears image cache without killing the login session.
+- iOS builds (`--no-codesign` and `--simulator`) are blocked on this machine: Xcode 26.6 lacks the "iOS 26.5" platform component (Xcode > Settings > Components). CocoaPods + Xcode invocation work; it is an environment gap, not code.
+- Sweep gates: `flutter analyze` clean, `flutter test` 52/52 (8 new PhotoManagerCubit tests), 27 light+dark proof screenshots for both personas in `plans/valuadis-rentals/proof/dev-completion/mobile/`.
+
 ### 2026-07-15
 
 - The refresh cookie path is `/api/v1/auth` (widened from `/api/v1/auth/refresh`) so browser logout can revoke server-side. Logout/rotation denylist the refresh jti via `backend/app/core/token_denylist.py` (Redis, in-process fallback); reusing a rotated or logged-out refresh token returns 401.
