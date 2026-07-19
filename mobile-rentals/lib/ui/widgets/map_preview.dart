@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 /// A non-interactive location preview. When coordinates are missing it shows an
 /// honest "location not pinned" placeholder rather than a misleading default pin.
@@ -38,7 +39,9 @@ class MapPreview extends StatelessWidget {
             children: [
               Icon(Icons.location_off_outlined, color: c.inkMuted, size: 26),
               const SizedBox(height: 6),
-              Text('Location not pinned',
+              Text(
+                  AppLocalizations.of(context)?.locationNotPinnedLabel ??
+                      'Location not pinned',
                   style: AppType.label(c, color: c.inkMuted)),
             ],
           ),

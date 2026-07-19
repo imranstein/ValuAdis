@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/registry_status.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Status pill: tonal wash + dot + label, consistent across applications,
 /// listings, and contracts. Tone comes from the centralised [RegistryStatus].
@@ -33,7 +34,7 @@ class StatusPill extends StatelessWidget {
             decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(RegistryStatus.labelOf(rawStatus),
+          Text(RegistryStatus.localizedLabelOf(context, rawStatus),
               style: AppType.caption(c, color: fg)
                   .copyWith(fontWeight: FontWeight.w600)),
         ],
@@ -77,7 +78,7 @@ class CertifiedBadge extends StatelessWidget {
           Icon(Icons.verified_outlined,
               size: 13, color: onDark ? c.gold : c.gold),
           const SizedBox(width: 5),
-          Text('Certified',
+          Text(AppLocalizations.of(context)?.certifiedBadgeLabel ?? 'Certified',
               style: AppType.caption(c, color: onDark ? c.gold : c.gold)
                   .copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.4)),
         ],

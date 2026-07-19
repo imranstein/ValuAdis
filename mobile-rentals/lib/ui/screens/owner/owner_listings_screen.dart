@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/owner_listing.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/band_range_bar.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/pills.dart';
@@ -49,6 +50,7 @@ class OwnerListingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final cubit = context.read<MyListingsCubit>();
     final user = context.watch<AuthBloc>().state.user;
     final needsVerification = user?.needsOwnerVerification ?? false;
@@ -58,8 +60,8 @@ class OwnerListingsScreen extends StatelessWidget {
       child: Column(
         children: [
           ScreenHeader(
-            title: 'My listings',
-            subtitle: 'Properties you have put up for rent',
+            title: l10n.screenTitleMyListings,
+            subtitle: l10n.screenSubtitleMyListings,
             trailing: HeaderIconButton(
                 icon: Icons.add, onTap: () => _register(context)),
           ),
@@ -70,7 +72,7 @@ class OwnerListingsScreen extends StatelessWidget {
               builder: (context, state) {
                 if (state.isError) {
                   return ErrorView(
-                      message: state.error ?? 'Could not load listings.',
+                      message: state.error ?? l10n.errorLoadListings,
                       onRetry: cubit.load);
                 }
                 if (!state.isReady) {
@@ -80,12 +82,9 @@ class OwnerListingsScreen extends StatelessWidget {
                 if (listings.isEmpty) {
                   return EmptyState(
                     icon: Icons.home_work_outlined,
-                    title: 'List your first property',
-                    message:
-                        'Register a property and we will suggest an honest rent '
-                        'band from an official valuation. An officer reviews it '
-                        'before it goes public.',
-                    actionLabel: 'Register a property',
+                    title: l10n.emptyNoListingsTitle,
+                    message: l10n.emptyNoListingsMessage,
+                    actionLabel: l10n.actionRegisterProperty,
                     onAction: () => _register(context),
                   );
                 }
@@ -120,6 +119,7 @@ class _VerificationBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       padding: const EdgeInsets.all(14),
@@ -137,13 +137,12 @@ class _VerificationBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Verification pending',
+                Text(l10n.verificationPendingTitle,
                     style: AppType.label(c, color: c.ink)
                         .copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 3),
                 Text(
-                  'A rental officer is reviewing your Fayda ID. You can prepare '
-                  'listings now, but they publish only after you are verified.',
+                  l10n.verificationPendingMessage,
                   style: AppType.caption(c, color: c.inkSecondary)
                       .copyWith(height: 1.45),
                 ),
@@ -203,6 +202,7 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final listing = widget.listing;
     final showAgreement = listing.isPublished && listing.hasAgreement;
     return Container(
@@ -244,7 +244,7 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
                     decoration: BoxDecoration(
                         color: c.surfaceSunken.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10)),
-                    child: Text('Officer note: ${listing.reviewReason}',
+                    child: Text(l10n.officerNoteLabel(listing.reviewReason!),
                         style: AppType.caption(c, color: c.inkSecondary)),
                   ),
                 ],
@@ -255,15 +255,17 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
                     Flexible(
                       child: Text(
                           listing.isPublished
-                              ? 'Published ${Fmt.date(listing.publishedAt)}'
-                              : 'Created ${Fmt.date(listing.createdAt)}',
+                              ? l10n.publishedOnLabel(
+                                  Fmt.date(listing.publishedAt))
+                              : l10n.createdOnLabel(
+                                  Fmt.date(listing.createdAt)),
                           overflow: TextOverflow.ellipsis,
                           style: AppType.caption(c, color: c.inkMuted)),
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('View applications',
+                        Text(l10n.actionViewApplications,
                             style: AppType.caption(c, color: c.green)
                                 .copyWith(fontWeight: FontWeight.w600)),
                         Icon(Icons.chevron_right, size: 16, color: c.green),
@@ -281,7 +283,7 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
             children: [
               Expanded(
                 child: GhostButton(
-                  label: 'Manage photos',
+                  label: l10n.actionManagePhotos,
                   icon: Icons.photo_camera_outlined,
                   expand: true,
                   onPressed: () => _openPhotos(context),
@@ -291,7 +293,9 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GhostButton(
-                    label: _downloadingAgreement ? 'Preparing...' : 'Agreement',
+                    label: _downloadingAgreement
+                        ? l10n.preparingEllipsis
+                        : l10n.actionAgreement,
                     icon: Icons.picture_as_pdf_outlined,
                     expand: true,
                     onPressed: _downloadingAgreement

@@ -7,6 +7,7 @@ import '../../../core/constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/network_photo.dart';
 import '../../widgets/pressable.dart';
 import '../../widgets/states.dart';
@@ -67,6 +68,7 @@ class _PhotoManagerViewState extends State<_PhotoManagerView> {
 
   Future<void> _showSourcePicker(BuildContext context) async {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: c.surface,
@@ -76,12 +78,12 @@ class _PhotoManagerViewState extends State<_PhotoManagerView> {
           children: [
             ListTile(
               leading: Icon(Icons.photo_library_outlined, color: c.green),
-              title: Text('Choose from gallery', style: AppType.body(c)),
+              title: Text(l10n.actionChooseFromGallery, style: AppType.body(c)),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: Icon(Icons.photo_camera_outlined, color: c.green),
-              title: Text('Take a photo', style: AppType.body(c)),
+              title: Text(l10n.actionTakePhoto, style: AppType.body(c)),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
           ],
@@ -95,20 +97,22 @@ class _PhotoManagerViewState extends State<_PhotoManagerView> {
 
   Future<void> _delete(BuildContext context, int photoId) async {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: c.surface,
-        title: Text('Remove this photo?', style: AppType.headline(c)),
-        content: Text('This cannot be undone.',
+        title: Text(l10n.dialogRemovePhotoTitle, style: AppType.headline(c)),
+        content: Text(l10n.dialogCannotUndo,
             style: AppType.body(c, color: c.inkSecondary)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel', style: AppType.label(c, color: c.inkMuted))),
+              child: Text(l10n.actionCancel,
+                  style: AppType.label(c, color: c.inkMuted))),
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Remove',
+              child: Text(l10n.actionRemove,
                   style: AppType.label(c, color: c.danger)
                       .copyWith(fontWeight: FontWeight.w700))),
         ],
@@ -125,10 +129,11 @@ class _PhotoManagerViewState extends State<_PhotoManagerView> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
       appBar: AppBar(
-        title: const Text('Photos'),
+        title: Text(l10n.screenTitlePhotos),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(20),
           child: Padding(
@@ -148,7 +153,7 @@ class _PhotoManagerViewState extends State<_PhotoManagerView> {
             }
             if (state.isError && state.photos.isEmpty) {
               return ErrorView(
-                message: state.error ?? 'Could not load photos.',
+                message: state.error ?? l10n.errorLoadPhotos,
                 onRetry: context.read<PhotoManagerCubit>().load,
               );
             }
@@ -204,14 +209,13 @@ class _PhotoGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     if (state.photos.isEmpty && !state.uploading) {
       return EmptyState(
         icon: Icons.photo_camera_back_outlined,
-        title: 'No photos yet',
-        message:
-            'Add up to ${AppConstants.maxPhotosPerProperty} real photos so '
-            'renters see the actual unit, not a placeholder.',
-        actionLabel: 'Add a photo',
+        title: l10n.emptyNoPhotosTitle,
+        message: l10n.emptyNoPhotosMessage(AppConstants.maxPhotosPerProperty),
+        actionLabel: l10n.actionAddPhoto,
         onAction: onAdd,
       );
     }
@@ -280,6 +284,7 @@ class _AddTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Pressable(
       onTap: uploading ? null : onTap,
       child: Container(
@@ -306,7 +311,11 @@ class _AddTile extends StatelessWidget {
                         color: onTap == null ? c.inkMuted : c.green,
                         size: 24),
                     const SizedBox(height: 6),
-                    Text(onTap == null ? 'Limit reached' : 'Add photo',
+                    Text(
+                        onTap == null
+                            ? l10n.labelLimitReached
+                            : l10n.actionAddPhoto,
+                        textAlign: TextAlign.center,
                         style: AppType.caption(c, color: c.inkMuted)),
                   ],
                 ),

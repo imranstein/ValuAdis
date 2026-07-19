@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'blocs/auth/auth_bloc.dart';
+import 'core/locale_controller.dart';
 import 'data/api/api_client.dart';
 import 'data/api/token_storage.dart';
 import 'data/repositories/auth_repository.dart';
@@ -33,10 +34,12 @@ void main() {
     final authRepository = AuthRepository(apiClient, storage);
     authBloc = AuthBloc(authRepository)..add(const AuthCheckRequested());
     final rentalsRepository = RentalsRepository(apiClient);
+    final localeController = LocaleController();
 
     runApp(ValuAdisRentApp(
       authBloc: authBloc,
       rentalsRepository: rentalsRepository,
+      localeController: localeController,
     ));
   }, _reportError);
 }

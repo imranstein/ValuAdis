@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/motion.dart';
+import '../../l10n/app_localizations.dart';
 import 'buttons.dart';
 
 /// Composed, serif-headline empty state. Used for honest "nothing here yet"
@@ -83,7 +84,8 @@ class ErrorView extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: 20),
               GhostButton(
-                  label: 'Try again',
+                  label: AppLocalizations.of(context)?.actionTryAgain ??
+                      'Try again',
                   icon: Icons.refresh,
                   onPressed: onRetry,
                   expand: false),

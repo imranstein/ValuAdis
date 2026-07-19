@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/listing.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/inputs.dart';
 import '../../widgets/listing_card.dart';
@@ -43,14 +44,15 @@ class _BrowseScreenState extends State<BrowseScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final cubit = context.watch<BrowseCubit>();
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
           ScreenHeader(
-            title: 'Find a home',
-            subtitle: 'Verified listings across Addis Ababa',
+            title: l10n.screenTitleFindHome,
+            subtitle: l10n.screenSubtitleFindHome,
             trailing: HeaderIconButton(
               icon: Icons.notifications_none,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -75,18 +77,18 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 }
                 if (state.isError) {
                   return ErrorView(
-                      message: state.error ?? 'Could not load listings.',
+                      message: state.error ?? l10n.errorLoadListings,
                       onRetry: cubit.load);
                 }
                 final listings = state.data ?? const <Listing>[];
                 if (listings.isEmpty) {
                   return EmptyState(
                     icon: Icons.travel_explore_outlined,
-                    title: 'No matches yet',
+                    title: l10n.emptyNoMatchesTitle,
                     message: cubit.hasFilters
-                        ? 'No published listings fit these filters. Try widening your search.'
-                        : 'There are no published listings right now. Check back soon.',
-                    actionLabel: cubit.hasFilters ? 'Clear filters' : null,
+                        ? l10n.emptyNoMatchesFilteredMessage
+                        : l10n.emptyNoMatchesMessage,
+                    actionLabel: cubit.hasFilters ? l10n.actionClearFilters : null,
                     onAction: cubit.hasFilters ? cubit.clearFilters : null,
                   );
                 }
@@ -130,13 +132,15 @@ class _Toolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final filterLabel = cubit.hasFilters
         ? [
             cubit.subCity,
-            if (cubit.bedrooms != null) '${cubit.bedrooms} bed',
-            if (cubit.maxRent != null) '<= ${Fmt.rent(cubit.maxRent!)}',
+            if (cubit.bedrooms != null) l10n.bedCount(cubit.bedrooms!),
+            if (cubit.maxRent != null)
+              l10n.maxRentSummary(Fmt.rent(cubit.maxRent!)),
           ].where((e) => e != null).join(' · ')
-        : 'Filter listings';
+        : l10n.filterListingsLabel;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Row(
@@ -275,8 +279,8 @@ class _MapResults extends StatelessWidget {
                 border: Border.all(color: c.border),
               ),
               child: Text(
-                '${listings.length - located.length} of ${listings.length} '
-                'listings have no map pin yet and are shown only in the list.',
+                AppLocalizations.of(context)!.mapPinMissingInfo(
+                    listings.length - located.length, listings.length),
                 style: AppType.caption(c, color: c.inkSecondary),
               ),
             ),
@@ -314,6 +318,7 @@ class _MapPill extends StatelessWidget {
 
 Future<void> _openFilterSheet(BuildContext context, BrowseCubit cubit) async {
   final c = AppColors.of(context);
+  final l10n = AppLocalizations.of(context)!;
   String? subCity = cubit.subCity;
   int? bedrooms = cubit.bedrooms;
   final maxRentCtrl = TextEditingController(
@@ -347,25 +352,26 @@ Future<void> _openFilterSheet(BuildContext context, BrowseCubit cubit) async {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Text('Filter', style: AppType.title(c)),
+                Text(l10n.filterSheetTitle, style: AppType.title(c)),
                 const SizedBox(height: 18),
                 AppDropdownField<String?>(
-                  label: 'Sub-city',
+                  label: l10n.fieldSubCity,
                   value: subCity,
-                  hint: 'Any sub-city',
+                  hint: l10n.hintAnySubCity,
                   items: <String?>[null, ...AppConstants.addisSubCities],
-                  itemLabel: (v) => v ?? 'Any sub-city',
+                  itemLabel: (v) => v ?? l10n.hintAnySubCity,
                   onChanged: (v) => setSheet(() => subCity = v),
                 ),
                 const SizedBox(height: 14),
-                Text('Bedrooms', style: AppType.label(c, color: c.inkSecondary)),
+                Text(l10n.fieldBedrooms,
+                    style: AppType.label(c, color: c.inkSecondary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: [
                     for (final n in <int?>[null, 1, 2, 3, 4])
                       _ChoiceChipX(
-                        label: n == null ? 'Any' : '$n+',
+                        label: n == null ? l10n.labelAny : l10n.bedCountPlus(n),
                         selected: bedrooms == n,
                         onTap: () => setSheet(() => bedrooms = n),
                       ),
@@ -373,15 +379,15 @@ Future<void> _openFilterSheet(BuildContext context, BrowseCubit cubit) async {
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
-                  label: 'Max rent (ETB/month)',
+                  label: l10n.fieldMaxRent,
                   controller: maxRentCtrl,
                   keyboardType: TextInputType.number,
-                  hint: 'No limit',
+                  hint: l10n.hintNoLimit,
                   prefixIcon: Icons.payments_outlined,
                 ),
                 const SizedBox(height: 22),
                 PrimaryButton(
-                  label: 'Show results',
+                  label: l10n.actionShowResults,
                   onPressed: () {
                     final maxRent = double.tryParse(maxRentCtrl.text.trim());
                     cubit.applyFilters(
@@ -398,7 +404,7 @@ Future<void> _openFilterSheet(BuildContext context, BrowseCubit cubit) async {
                       cubit.clearFilters();
                       Navigator.of(context).pop();
                     },
-                    child: Text('Reset filters',
+                    child: Text(l10n.actionResetFilters,
                         style: AppType.label(c, color: c.inkMuted)),
                   ),
                 ),

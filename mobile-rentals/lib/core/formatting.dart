@@ -9,10 +9,10 @@ class Fmt {
   static final DateFormat _date = DateFormat('d MMM yyyy');
   static final DateFormat _monthDay = DateFormat('d MMM');
 
-  /// "27,500 ETB/mo" style rent label.
+  /// "27,500 ETB" style rent label. The localized "/month" suffix is appended
+  /// at the call site (AppLocalizations.perMonthSuffixShort) so the per-month
+  /// abbreviation renders in the active locale, not a hardcoded "/mo".
   static String rent(num value) => '${_etb.format(value)} ETB';
-
-  static String rentPerMonth(num value) => '${rent(value)}/mo';
 
   static String date(DateTime? value) =>
       value == null ? '—' : _date.format(value.toLocal());

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Honest imagery for the photography-forward card. Shown only when a listing
 /// has no real uploaded photos yet, so rather than fake a stock photo of a real
@@ -59,7 +60,9 @@ class ListingPlaceholder extends StatelessWidget {
                   Icon(Icons.photo_camera_back_outlined,
                       size: 12, color: c.onGreen.withValues(alpha: 0.75)),
                   const SizedBox(width: 4),
-                  Text('Photo pending',
+                  Text(
+                      AppLocalizations.of(context)?.photoPendingLabel ??
+                          'Photo pending',
                       style: AppType.caption(c,
                           color: c.onGreen.withValues(alpha: 0.75))),
                 ],

@@ -1,0 +1,339 @@
+{
+  "@@locale": "en",
+
+  "navListings": "Listings",
+  "navContracts": "Contracts",
+  "navIndex": "Index",
+  "navProfile": "Profile",
+  "navBrowse": "Browse",
+  "navApplications": "Applications",
+
+  "fieldEmail": "Email",
+  "fieldPassword": "Password",
+  "fieldFullName": "Full name",
+  "fieldPhone": "Phone (Ethiopian)",
+  "hintPhoneFormat": "09xxxxxxxx or +2519xxxxxxxx",
+  "fieldSubCity": "Sub-city",
+  "hintAnySubCity": "Any sub-city",
+  "fieldFaydaId": "Fayda ID number",
+  "hintFaydaId": "Your national digital ID",
+  "hintPasswordRules": "8+ chars, an uppercase letter and a number",
+  "fieldAddress": "Address",
+  "hintAddress": "Building, street, area",
+  "fieldType": "Type",
+  "fieldSubtype": "Subtype",
+  "fieldArea": "Area (m2)",
+  "fieldYearBuilt": "Year built",
+  "hintOptional": "Optional",
+  "fieldBedrooms": "Bedrooms",
+  "fieldBathrooms": "Bathrooms",
+  "fieldCondition": "Condition",
+  "hintSelectCondition": "Select condition",
+  "fieldOptionalMessage": "Optional message",
+  "hintReviewerMessage": "Anything the reviewer should know",
+  "fieldMapPin": "Map pin (tap to place)",
+  "fieldMessageToOwner": "Message to the owner (optional)",
+  "hintMessageToOwner": "Introduce yourself, move-in date, etc.",
+  "fieldMaxRent": "Max rent (ETB/month)",
+  "hintNoLimit": "No limit",
+  "labelPhone": "Phone",
+  "labelFaydaId": "Fayda ID",
+  "labelPropertyType": "Property type",
+  "labelFloors": "Floors",
+  "labelPublished": "Published",
+  "labelAreaM2": "m2 area",
+  "labelContract": "Contract",
+  "labelMonthlyRent": "Monthly rent",
+  "labelTerm": "Term",
+  "labelDeposit": "Deposit",
+  "labelDepositReceipt": "Deposit receipt",
+  "labelYourOffer": "Your offer",
+  "labelOffer": "Offer",
+  "labelLimitReached": "Limit reached",
+  "labelAny": "Any",
+
+  "actionSignIn": "Sign in",
+  "actionCancel": "Cancel",
+  "actionAccept": "Accept",
+  "actionDecline": "Decline",
+  "actionDone": "Done",
+  "actionRemove": "Remove",
+  "actionAddPhoto": "Add photo",
+  "actionAddShort": "Add",
+  "actionChooseFromGallery": "Choose from gallery",
+  "actionTakePhoto": "Take a photo",
+  "actionManagePhotos": "Manage photos",
+  "actionAgreement": "Agreement",
+  "preparingEllipsis": "Preparing...",
+  "actionViewApplications": "View applications",
+  "actionRegisterProperty": "Register a property",
+  "actionSubmitForReview": "Submit for review",
+  "actionSubmitApplication": "Submit application",
+  "actionApply": "Apply",
+  "actionClearFilters": "Clear filters",
+  "actionResetFilters": "Reset filters",
+  "actionShowResults": "Show results",
+  "actionDownloadContractPdf": "Download contract PDF",
+  "preparingPdfEllipsis": "Preparing PDF...",
+  "actionSignOut": "Sign out",
+  "actionTryAgain": "Try again",
+  "actionCreateAccountShort": "Create account",
+  "welcomeCreateAccountCta": "Create an account",
+  "authAlreadyHaveAccount": "I already have an account",
+  "loginNewHerePrefix": "New here?",
+
+  "validationFullName": "Enter your full name.",
+  "validationEmail": "Enter a valid email address.",
+  "validationPhone": "Enter your phone number.",
+  "validationFaydaId": "Enter your Fayda ID number.",
+  "validationPasswordLength": "Password must be at least 8 characters.",
+  "validationPasswordUppercase": "Password needs an uppercase letter.",
+  "validationPasswordNumber": "Password needs a number.",
+  "validationAddress": "Enter the full property address (at least 5 characters).",
+  "validationArea": "Enter the area in square metres.",
+  "validationPhotoLimit": "A property may have at most {max} photos.",
+  "@validationPhotoLimit": {
+    "placeholders": { "max": { "type": "int" } }
+  },
+  "onePhotoOversized": "One photo was over {mb}MB and was not added.",
+  "@onePhotoOversized": {
+    "placeholders": { "mb": { "type": "int" } }
+  },
+  "multiplePhotosOversized": "{count} photos were over {mb}MB and were not added.",
+  "@multiplePhotosOversized": {
+    "placeholders": { "count": { "type": "int" }, "mb": { "type": "int" } }
+  },
+  "photosPartiallyAdded": "Only the first {remaining} photos were added ({max} max).",
+  "@photosPartiallyAdded": {
+    "placeholders": { "remaining": { "type": "int" }, "max": { "type": "int" } }
+  },
+
+  "screenTitleApplications": "Applications",
+  "screenTitleMyListings": "My listings",
+  "screenSubtitleMyListings": "Properties you have put up for rent",
+  "screenTitlePhotos": "Photos",
+  "screenTitleRegisterProperty": "Register a property",
+  "screenTitleFindHome": "Find a home",
+  "screenSubtitleFindHome": "Verified listings across Addis Ababa",
+  "screenTitleAbout": "About & the law",
+  "screenTitleActivity": "Activity",
+  "screenTitleMyContracts": "My contracts",
+  "screenSubtitleMyContracts": "Registered tenancy agreements",
+  "screenTitleMyApplications": "My applications",
+  "screenSubtitleMyApplications": "Every offer you have made",
+  "screenTitleRentIndex": "Rent index",
+  "screenSubtitleRentIndex": "Median registered rents by sub-city",
+
+  "loginSubtitle": "Sign in to your registry account",
+  "signupSubtitle": "Create your registry account",
+  "signupTypeRenterTitle": "Rent a home",
+  "signupTypeOwnerTitle": "List a property",
+  "signupOwnerNote": "Owner accounts are verified by a rental officer before a listing can be published. You can prepare listings right away.",
+  "welcomeAgency": "Addis Ababa Housing Administration",
+  "welcomeHero": "Rent a home at an honest, valuation-certified price. Every listing and contract is registered with the government.",
+  "welcomePoint1Title": "Certified prices",
+  "welcomePoint1Body": "A published band from an official valuation, not a broker guess.",
+  "welcomePoint2Title": "Registered contracts",
+  "welcomePoint2Body": "Written and registered under Proclamation 1320/2024.",
+  "welcomePoint3Title": "A public rent index",
+  "welcomePoint3Body": "See the median rent per sub-city before you decide.",
+  "welcomeHeroCaption": "28,000 ETB/mo · Bole",
+  "splashTagline": "Government-mediated rental registry",
+
+  "emptyNoApplicationsTitle": "No applications yet",
+  "ownerEmptyApplicationsMessage": "When renters apply within your band, their offers appear here for you to accept or decline.",
+  "renterEmptyApplicationsMessage": "When you apply to a listing, it will appear here so you can track the owner's decision.",
+  "emptyNoListingsTitle": "List your first property",
+  "emptyNoListingsMessage": "Register a property and we will suggest an honest rent band from an official valuation. An officer reviews it before it goes public.",
+  "emptyNoPhotosTitle": "No photos yet",
+  "emptyNoPhotosMessage": "Add up to {max} real photos so renters see the actual unit, not a placeholder.",
+  "@emptyNoPhotosMessage": {
+    "placeholders": { "max": { "type": "int" } }
+  },
+  "emptyNoMatchesTitle": "No matches yet",
+  "emptyNoMatchesFilteredMessage": "No published listings fit these filters. Try widening your search.",
+  "emptyNoMatchesMessage": "There are no published listings right now. Check back soon.",
+  "emptyActivityTitle": "Nothing new",
+  "emptyActivityMessage": "Status changes on your applications and contracts show up here. This updates automatically while the app is open.",
+  "emptyNoContractsTitle": "No contracts yet",
+  "emptyNoContractsMessage": "Once an application is accepted and an officer registers the tenancy, your contract will appear here with its PDF.",
+  "emptyIndexTitle": "Index still building",
+  "emptyIndexMessage": "The index publishes a median only where enough contracts have been registered. As the registry grows, medians per sub-city appear here.",
+
+  "errorLoadApplications": "Could not load applications.",
+  "errorLoadListings": "Could not load listings.",
+  "errorLoadPhotos": "Could not load photos.",
+  "errorLoadListing": "Could not load this listing.",
+  "errorLoadContracts": "Could not load contracts.",
+  "errorLoadIndex": "Could not load the index.",
+
+  "dialogAcceptTitle": "Accept this applicant?",
+  "dialogAcceptContent": "Accepting {name} at {rent} marks the listing as rented and declines the others. A rental officer then registers the contract.",
+  "@dialogAcceptContent": {
+    "placeholders": { "name": { "type": "String" }, "rent": { "type": "String" } }
+  },
+  "defaultRenterName": "this renter",
+  "defaultApplicantLabel": "Applicant",
+  "dialogRemovePhotoTitle": "Remove this photo?",
+  "dialogCannotUndo": "This cannot be undone.",
+
+  "snackApplicationAccepted": "Accepted. An officer will register the contract.",
+  "snackApplicationDeclined": "Application declined.",
+  "snackApplicationSent": "Application sent at {price}. Track it under Applications.",
+  "@snackApplicationSent": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+
+  "verificationPendingTitle": "Verification pending",
+  "verificationPendingMessage": "A rental officer is reviewing your Fayda ID. You can prepare listings now, but they publish only after you are verified.",
+  "officerNoteLabel": "Officer note: {reason}",
+  "@officerNoteLabel": {
+    "placeholders": { "reason": { "type": "String" } }
+  },
+  "publishedOnLabel": "Published {date}",
+  "@publishedOnLabel": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "createdOnLabel": "Created {date}",
+  "@createdOnLabel": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "bandRangeLabel": "Band {min} - {max}",
+  "@bandRangeLabel": {
+    "placeholders": { "min": { "type": "String" }, "max": { "type": "String" } }
+  },
+
+  "resultSubmittedTitle": "Submitted for review",
+  "resultSubmittedMessage": "A rental officer will verify the details and publish your listing at the band below.",
+  "onePhotoUploadFailed": "One photo could not be uploaded. Add it from Manage photos on this listing.",
+  "multiplePhotosUploadFailed": "{count} photos could not be uploaded. Add them from Manage photos on this listing.",
+  "@multiplePhotosUploadFailed": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sectionLocation": "Location",
+  "sectionProperty": "Property",
+  "sectionPhotos": "Photos",
+  "sectionNoteToOfficer": "Note to the officer",
+  "photoUploadHint": "Photos upload to the registry when you submit. JPG, PNG or WEBP, up to {mb}MB each, {max} max.",
+  "@photoUploadHint": {
+    "placeholders": { "mb": { "type": "int" }, "max": { "type": "int" } }
+  },
+
+  "applySheetTitle": "Apply to rent",
+  "applyWithinBand": "Within the allowed band",
+
+  "filterListingsLabel": "Filter listings",
+  "bedCount": "{n} bed",
+  "@bedCount": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "bathCount": "{n} bath",
+  "@bathCount": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "bedCountPlus": "{n}+",
+  "@bedCountPlus": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "maxRentSummary": "<= {price}",
+  "@maxRentSummary": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "filterSheetTitle": "Filter",
+  "mapPinMissingInfo": "{count} of {total} listings have no map pin yet and are shown only in the list.",
+  "@mapPinMissingInfo": {
+    "placeholders": { "count": { "type": "int" }, "total": { "type": "int" } }
+  },
+
+  "perMonthSuffix": "/month",
+  "perMonthSuffixShort": "/mo",
+  "bandPanelTitle": "Allowed rent band",
+  "bandPanelBody": "You can apply at any amount inside this band. Offers outside it are not accepted. The band is set from an official valuation, not a broker.",
+  "propertyDetailsTitle": "Property details",
+  "chooseYourOfferLabel": "Choose your offer",
+
+  "aboutIntro": "A government-mediated rental registry for Addis Ababa.",
+  "aboutLawTitle": "The law: Proclamation 1320/2024",
+  "aboutLawBody": "Ethiopia's Rent Control and Administration Proclamation requires residential rental contracts to be written and registered with the district housing administration. Rent increases are capped, and Addis Ababa set the ceiling at 11.5% for 2026/27. This app is the digital way to meet that mandate.",
+  "aboutCertifiedTitle": "Certified prices, not broker guesses",
+  "aboutCertifiedBody": "Every listing carries a rent band from an official valuation. You apply at any amount inside the band; owners choose a tenant, not a price war. There is no bidding.",
+  "aboutContractsBody": "When an owner accepts you, a rental officer registers the tenancy and issues a contract with a public contract number. The contract becomes active once your deposit receipt is recorded at the administration.",
+  "aboutDataTitle": "Your data",
+  "aboutDataBody": "Your Fayda ID and phone are used to verify you and appear only on your own contracts, never on public listings. Officers verify owner accounts before a listing can be published.",
+  "aboutMissingTitle": "What is not here yet",
+  "aboutMissingBody": "Deposits are recorded, not held in custody, in this version. There is no in-app chat; contact details are on the registered contract. Photo upload and Amharic are on the way.",
+  "aboutFooter": "Operated with the Addis Ababa Housing Administration",
+  "aboutSublabel": "Proclamation 1320/2024 explained",
+
+  "activityApplicationLabel": "Application · {address}",
+  "@activityApplicationLabel": {
+    "placeholders": { "address": { "type": "String" } }
+  },
+  "activityContractLabel": "Contract · {contractNo}",
+  "@activityContractLabel": {
+    "placeholders": { "contractNo": { "type": "String" } }
+  },
+
+  "termRangeLabel": "{start}  ->  {end}",
+  "@termRangeLabel": {
+    "placeholders": { "start": { "type": "String" }, "end": { "type": "String" } }
+  },
+  "depositRecorded": "Recorded",
+  "depositAwaiting": "Awaiting record",
+  "contractActivatesNote": "This contract activates once the officer records your deposit receipt at the housing administration.",
+
+  "defaultListingLabel": "Listing {id}",
+  "@defaultListingLabel": {
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "appliedOnLabel": "Applied {date}",
+  "@appliedOnLabel": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "roleOwner": "Property owner",
+  "roleRenter": "Renter",
+  "roleOfficer": "Rental officer",
+  "roleCitizen": "Citizen",
+  "defaultAccountName": "Your account",
+  "statusVerified": "Verified",
+  "statusVerificationPending": "Pending",
+  "settingsLanguageLabel": "Language",
+  "settingsLanguageSublabel": "Choose the app language",
+  "languageEnglish": "English",
+  "languageAmharic": "አማርኛ",
+
+  "indexIntroText": "Medians from registered tenancy contracts for {period}. Low-sample cells are hidden, so what you see is real.",
+  "@indexIntroText": {
+    "placeholders": { "period": { "type": "String" } }
+  },
+  "sampleSizeLabel": "n={n}",
+  "@sampleSizeLabel": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+
+  "bandSpreadLabel": "{percent}% band",
+  "@bandSpreadLabel": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "suggestedPriceLabel": "Suggested {price}",
+  "@suggestedPriceLabel": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+
+  "photoPendingLabel": "Photo pending",
+  "locationNotPinnedLabel": "Location not pinned",
+  "certifiedBadgeLabel": "Certified",
+
+  "statusPending": "Pending",
+  "statusAccepted": "Accepted",
+  "statusRejected": "Not selected",
+  "statusWithdrawn": "Withdrawn",
+  "statusDraft": "Draft",
+  "statusPendingReview": "Under review",
+  "statusPublished": "Published",
+  "statusRented": "Rented",
+  "statusActive": "Active",
+  "statusTerminated": "Terminated",
+  "statusExpired": "Expired"
+}

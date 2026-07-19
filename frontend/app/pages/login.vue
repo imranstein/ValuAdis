@@ -10,28 +10,28 @@
         <div class="brand-panel-top">
           <span class="brand-panel-mark">V</span>
           <p class="brand-panel-title">ValuAdis</p>
-          <p class="brand-panel-sub">Civic valuation ledger</p>
+          <p class="brand-panel-sub">{{ t('auth.brandSubtitle') }}</p>
         </div>
         <div class="brand-panel-parcels">
           <span></span>
           <span></span>
           <span></span>
         </div>
-        <p class="brand-panel-note">
-          Property and vehicle records, valuation reviews, and audit exports for Ethiopian
-          municipal teams.
-        </p>
+        <p class="brand-panel-note">{{ t('auth.brandNote') }}</p>
       </aside>
 
       <div class="login-form-panel">
-        <div class="login-header">
-          <NuxtLink to="/" class="login-logo">ValuAdis</NuxtLink>
-          <p class="login-tagline">Sign in to the valuation workspace</p>
+        <div class="login-header-row">
+          <div class="login-header">
+            <NuxtLink to="/" class="login-logo">ValuAdis</NuxtLink>
+            <p class="login-tagline">{{ t('auth.signInTagline') }}</p>
+          </div>
+          <LanguageSwitcher />
         </div>
 
         <form ref="formEl" @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
-            <label for="email">Email</label>
+            <label for="email">{{ t('auth.email') }}</label>
             <InputText
               id="email"
               v-model="credentials.email"
@@ -43,7 +43,7 @@
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">{{ t('auth.password') }}</label>
             <Password
               id="password"
               v-model="credentials.password"
@@ -64,7 +64,7 @@
             class="login-btn"
             :disabled="authStore.loading"
           >
-            {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
+            {{ authStore.loading ? t('auth.signingIn') : t('auth.signIn') }}
           </button>
 
           <button
@@ -74,10 +74,10 @@
             :disabled="authStore.loading"
             @click="loginAsDemoUser"
           >
-            Use demo account
+            {{ t('auth.useDemoAccount') }}
           </button>
 
-          <p v-if="canUseDemoLogin" class="login-hint">Local demo access is available in development mode.</p>
+          <p v-if="canUseDemoLogin" class="login-hint">{{ t('auth.demoHint') }}</p>
         </form>
       </div>
     </div>
@@ -87,8 +87,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { useI18n } from '~/composables/useI18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 definePageMeta({ middleware: 'guest', layout: 'landing' })
+
+const { t } = useI18n()
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -118,12 +122,12 @@ async function handleLogin() {
 
   // Client-side validation
   if (!credentials.value.email || !credentials.value.password) {
-    errorMessage.value = 'Please fill in all fields'
+    errorMessage.value = t('auth.fillAllFields')
     return
   }
 
   if (!credentials.value.email.includes('@')) {
-    errorMessage.value = 'Please enter a valid email address'
+    errorMessage.value = t('auth.invalidEmailAddress')
     return
   }
 
@@ -134,7 +138,7 @@ async function handleLogin() {
     errorMessage.value =
       err?.message ||
     authStore.error ||
-      'Login failed. Please check your credentials.'
+      t('auth.loginFailedGeneric')
   }
 }
 
@@ -294,8 +298,15 @@ function syncCredentialsFromForm() {
   padding: clamp(28px, 5vw, 44px);
 }
 
-.login-header {
+.login-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-6);
+}
+
+.login-header {
   text-align: left;
 }
 
