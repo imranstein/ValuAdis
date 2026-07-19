@@ -12,6 +12,7 @@ application auto-rejects its pending siblings and moves the listing to
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 import structlog
 
@@ -32,6 +33,10 @@ logger = structlog.get_logger()
 # Per-account application rate limit (abuse control, plan risk: fake renters).
 RATE_LIMIT_WINDOW_SECONDS = 3600
 RATE_LIMIT_MAX_APPLICATIONS = 10
+
+# Retry budget for the accept row-lock, mirroring
+# contract_service._next_sequence_value's SQLite "database is locked" hedge.
+ACCEPT_LOCK_MAX_ATTEMPTS = 3
 
 
 class RentalApplicationService:
@@ -138,16 +143,48 @@ class RentalApplicationService:
             raise ValidationException(
                 f"Only a pending application can be decided (this one is '{application.status}')."
             )
-        if listing.status != RentalListingStatus.PUBLISHED.value:
-            raise ValidationException(
-                f"The listing is no longer published (status '{listing.status}')."
-            )
 
         if action == "reject":
+            if listing.status != RentalListingStatus.PUBLISHED.value:
+                raise ValidationException(
+                    f"The listing is no longer published (status '{listing.status}')."
+                )
             return self._reject(application, owner, reason)
         if action == "accept":
-            return self._accept(application, listing, owner)
+            # The published check happens inside _accept_with_lock, under a
+            # row lock on the listing, so two concurrent accepts on sibling
+            # applications cannot both observe "published" before either
+            # commits its status change.
+            return self._accept_with_lock(application, listing.id, owner)
         raise ValidationException(f"Unknown decision action '{action}'")
+
+    def _accept_with_lock(
+        self, application: RentalApplication, listing_id: int, owner: User
+    ) -> Dict[str, Any]:
+        last_error: Optional[Exception] = None
+        for _ in range(ACCEPT_LOCK_MAX_ATTEMPTS):
+            try:
+                listing = self.listing_repo.get_locked(listing_id)
+                if listing is None:
+                    raise ValuAdisException("Listing not found")
+                if listing.status != RentalListingStatus.PUBLISHED.value:
+                    raise ValidationException(
+                        f"The listing is no longer published (status '{listing.status}')."
+                    )
+                # Re-check under the lock: a concurrent accept on a sibling
+                # application may have rejected this one between the initial
+                # read in decide() and acquiring the listing lock here.
+                self.db.refresh(application)
+                if application.status != RentalApplicationStatus.PENDING.value:
+                    raise ValidationException(
+                        f"Only a pending application can be decided (this one is '{application.status}')."
+                    )
+                return self._accept(application, listing, owner)
+            except OperationalError as exc:
+                # e.g. SQLite "database is locked" under contention — retry.
+                self.db.rollback()
+                last_error = exc
+        raise ValuAdisException(f"Could not accept application after retries: {last_error}")
 
     def _reject(self, application: RentalApplication, owner: User, reason: Optional[str]) -> Dict[str, Any]:
         updated = self.repo.update(
