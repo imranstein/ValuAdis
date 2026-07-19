@@ -205,7 +205,10 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
+        # Containerized deployment must bind all interfaces for Docker port
+        # publishing to work (see backend/Dockerfile); production actually
+        # launches via `uvicorn app.main:app --host 0.0.0.0`, not this block.
+        host="0.0.0.0",  # nosec B104
         port=8000,
         reload=_is_dev,
     )

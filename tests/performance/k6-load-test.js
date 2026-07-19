@@ -21,6 +21,13 @@ import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.1/index.js";
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8000";
 const API_BASE = `${BASE_URL}/api/v1`;
 
+// "smoke" runs a short, low-concurrency pass suitable for a freshly-booted,
+// single-worker backend inside a PR CI job (correctness signal only).
+// "full" is the 100-VU baseline-comparison profile — scheduled/manual only,
+// since it needs a stable, production-like target to produce a meaningful
+// ms-level regression signal (see .github/workflows/performance-test.yml).
+const PROFILE = __ENV.K6_PROFILE === "smoke" ? "smoke" : "full";
+
 // Baseline p95 values (ms) from baseline.json — used to detect >10% degradation
 const BASELINES = {
   health_check: 50,
@@ -53,60 +60,67 @@ const totalRequests = new Counter("total_requests");
 // K6 Options — Load Profile
 // ---------------------------------------------------------------------------
 
-export const options = {
-  stages: [
-    // Ramp up to 100 concurrent users over 30s
-    { duration: "30s", target: 100 },
-    // Sustain 100 VUs for 60s (steady state)
-    { duration: "60s", target: 100 },
-    // Ramp down over 15s
-    { duration: "15s", target: 0 },
+// Correctness thresholds apply regardless of profile — even a short smoke
+// pass must prove the API doesn't error out under light concurrency.
+const correctnessThresholds = {
+  http_req_failed: ["rate<0.01"],
+  custom_error_rate: ["rate<0.01"],
+};
+
+// Absolute per-endpoint latency budgets are only meaningful when compared
+// against the dedicated 100-VU baseline load, not a smoke pass.
+const baselineThresholds = {
+  http_req_duration: ["p(95)<500", "p(99)<1000"],
+  duration_health: [
+    `p(95)<${Math.ceil(BASELINES.health_check * DEGRADATION_FACTOR)}`,
   ],
-  thresholds: {
-    // Global HTTP error rate must stay below 1%
-    http_req_failed: ["rate<0.01"],
+  duration_login: [
+    `p(95)<${Math.ceil(BASELINES.login * DEGRADATION_FACTOR)}`,
+  ],
+  duration_refresh: [
+    `p(95)<${Math.ceil(BASELINES.refresh * DEGRADATION_FACTOR)}`,
+  ],
+  duration_list_valuations: [
+    `p(95)<${Math.ceil(BASELINES.list_valuations * DEGRADATION_FACTOR)}`,
+  ],
+  duration_create_valuation: [
+    `p(95)<${Math.ceil(BASELINES.create_valuation * DEGRADATION_FACTOR)}`,
+  ],
+  duration_get_valuation: [
+    `p(95)<${Math.ceil(BASELINES.get_valuation * DEGRADATION_FACTOR)}`,
+  ],
+  duration_list_vehicles: [
+    `p(95)<${Math.ceil(BASELINES.list_vehicles * DEGRADATION_FACTOR)}`,
+  ],
+};
 
-    // Global p95 must be under 500ms (primary acceptance criterion)
-    http_req_duration: ["p(95)<500", "p(99)<1000"],
-
-    // Custom error tracking
-    custom_error_rate: ["rate<0.01"],
-
-    // Per-endpoint p95 thresholds with 10% degradation tolerance
-    duration_health: [
-      `p(95)<${Math.ceil(BASELINES.health_check * DEGRADATION_FACTOR)}`,
-    ],
-    duration_login: [
-      `p(95)<${Math.ceil(BASELINES.login * DEGRADATION_FACTOR)}`,
-    ],
-    duration_refresh: [
-      `p(95)<${Math.ceil(BASELINES.refresh * DEGRADATION_FACTOR)}`,
-    ],
-    duration_list_valuations: [
-      `p(95)<${Math.ceil(BASELINES.list_valuations * DEGRADATION_FACTOR)}`,
-    ],
-    duration_create_valuation: [
-      `p(95)<${Math.ceil(BASELINES.create_valuation * DEGRADATION_FACTOR)}`,
-    ],
-    duration_get_valuation: [
-      `p(95)<${Math.ceil(BASELINES.get_valuation * DEGRADATION_FACTOR)}`,
-    ],
-    duration_list_vehicles: [
-      `p(95)<${Math.ceil(BASELINES.list_vehicles * DEGRADATION_FACTOR)}`,
-    ],
-  },
+export const options = {
+  stages:
+    PROFILE === "smoke"
+      ? [
+          // Smoke: prove the live API handles light concurrent traffic
+          // without erroring — not a performance regression signal.
+          { duration: "10s", target: 5 },
+          { duration: "15s", target: 5 },
+          { duration: "5s", target: 0 },
+        ]
+      : [
+          // Ramp up to 100 concurrent users over 30s
+          { duration: "30s", target: 100 },
+          // Sustain 100 VUs for 60s (steady state)
+          { duration: "60s", target: 100 },
+          // Ramp down over 15s
+          { duration: "15s", target: 0 },
+        ],
+  thresholds:
+    PROFILE === "smoke"
+      ? correctnessThresholds
+      : { ...correctnessThresholds, ...baselineThresholds },
 };
 
 // ---------------------------------------------------------------------------
 // Shared Test Fixtures
 // ---------------------------------------------------------------------------
-
-// Generate a unique phone number per VU to avoid registration conflicts
-function vuPhone() {
-  // Ethiopian format: +251911XXXXXX (6-digit suffix padded)
-  const suffix = String(__VU * 10 + __ITER).padStart(6, "0").slice(-6);
-  return `+251911${suffix}`;
-}
 
 const commonHeaders = {
   "Content-Type": "application/json",
@@ -118,9 +132,12 @@ const commonHeaders = {
 // ---------------------------------------------------------------------------
 
 export function setup() {
-  // Use a dedicated load-test account; real deployments should seed this user
+  // Use a dedicated load-test account; the CI job seeds this user (and one
+  // property) via app.modules.auth's real /auth/login contract, which takes
+  // `email` — not `phone_number` (the schema this script targeted has since
+  // been superseded).
   const loginPayload = JSON.stringify({
-    phone_number: __ENV.LT_PHONE || "+251911000001",
+    email: __ENV.LT_EMAIL || "loadtest@valuadis.example",
     password: __ENV.LT_PASSWORD || "LoadTest@123",
   });
 
@@ -132,11 +149,11 @@ export function setup() {
     console.warn(
       `Setup: login failed (${res.status}). Authenticated tests will be skipped.`
     );
-    return { token: null, valuationId: null };
+    return { token: null, valuationId: null, propertyId: null };
   }
 
   const body = JSON.parse(res.body);
-  const token = body.access_token || body.token || null;
+  const token = body.data ? body.data.access_token : body.access_token;
 
   // Pre-fetch an existing valuation ID for single-resource GET tests
   let valuationId = null;
@@ -153,7 +170,46 @@ export function setup() {
     }
   }
 
-  return { token, valuationId };
+  // property_id required by POST /api/v1/valuations (ValuationCreate);
+  // the CI job seeds one property and passes its id through.
+  const propertyId = __ENV.LT_PROPERTY_ID
+    ? Number(__ENV.LT_PROPERTY_ID)
+    : null;
+
+  return { valuationId, propertyId };
+}
+
+// ---------------------------------------------------------------------------
+// Per-VU auth state
+// ---------------------------------------------------------------------------
+
+// /auth/refresh rotates the refresh token on every call and denylists the
+// previous one (see backend/app/modules/auth/routes.py). A token shared
+// across all 100 VUs (as setup()'s return value necessarily is) would only
+// let the first refresh call in the whole run succeed — every other VU would
+// get a legitimate 401 "revoked" response, which is a rotation-safety
+// feature working as intended, not an API bug. Each VU therefore logs in
+// independently (same seeded credentials, k6 module scope is per-VU) and
+// owns its own evolving access/refresh token pair for the life of the VU.
+let vuAuth = null;
+
+function ensureVuAuth() {
+  if (vuAuth) return vuAuth;
+  const loginPayload = JSON.stringify({
+    email: __ENV.LT_EMAIL || "loadtest@valuadis.example",
+    password: __ENV.LT_PASSWORD || "LoadTest@123",
+  });
+  const res = http.post(`${API_BASE}/auth/login`, loginPayload, {
+    headers: commonHeaders,
+  });
+  if (res.status !== 200) {
+    vuAuth = { token: null, refreshToken: null };
+    return vuAuth;
+  }
+  const body = JSON.parse(res.body);
+  const data = body.data || body;
+  vuAuth = { token: data.access_token, refreshToken: data.refresh_token };
+  return vuAuth;
 }
 
 // ---------------------------------------------------------------------------
@@ -161,7 +217,9 @@ export function setup() {
 // ---------------------------------------------------------------------------
 
 export default function (data) {
-  const { token, valuationId } = data;
+  const { valuationId, propertyId } = data;
+  const auth = ensureVuAuth();
+  const token = auth.token;
   const authHeaders = token
     ? { ...commonHeaders, Authorization: `Bearer ${token}` }
     : commonHeaders;
@@ -239,11 +297,18 @@ export default function (data) {
   // 5. Token Refresh (every 5th iteration to simulate session maintenance)
   if (__ITER % 5 === 0) {
     group("token_refresh", () => {
-      if (!token) return;
+      if (!auth.refreshToken) return;
+      // /auth/refresh authenticates via the *refresh* token, not the access
+      // token used everywhere else (see ensureVuAuth()).
       const res = http.post(
         `${API_BASE}/auth/refresh`,
         JSON.stringify({}),
-        { headers: authHeaders }
+        {
+          headers: {
+            ...commonHeaders,
+            Authorization: `Bearer ${auth.refreshToken}`,
+          },
+        }
       );
       refreshDuration.add(res.timings.duration);
       totalRequests.add(1);
@@ -253,18 +318,36 @@ export default function (data) {
           r.status === 200 || r.status === 201,
       });
       errorRate.add(!ok);
+
+      // Rotation: the old refresh token is now denylisted — adopt the new
+      // pair so this VU's next refresh (and subsequent requests) stay valid.
+      if (ok) {
+        const body = JSON.parse(res.body);
+        const rotated = body.data || body;
+        auth.token = rotated.access_token;
+        auth.refreshToken = rotated.refresh_token;
+      }
     });
   }
 
   // 6. Create Valuation (write operation — lower frequency, every 10th iteration)
   if (__ITER % 10 === 0) {
     group("create_valuation", () => {
-      if (!token) return;
+      if (!token || !propertyId) return;
+      // Matches ValuationCreate (backend/app/modules/valuation/schemas.py):
+      // property_id + a closed boundary polygon are required.
       const payload = JSON.stringify({
+        property_id: propertyId,
         property_type: "residential",
-        location: "Addis Ababa",
+        municipality: "Addis Ababa",
         area_sqm: 100 + (__VU % 50),
-        bedrooms: 2 + (__VU % 3),
+        coordinates: [
+          [38.7578, 9.032],
+          [38.758, 9.032],
+          [38.758, 9.0318],
+          [38.7578, 9.0318],
+          [38.7578, 9.032],
+        ],
       });
       const res = http.post(`${API_BASE}/valuations/`, payload, {
         headers: authHeaders,
@@ -289,7 +372,9 @@ export default function (data) {
 // ---------------------------------------------------------------------------
 
 export function teardown(data) {
-  console.log(`Load test complete. Total VUs: 100. Token acquired: ${!!data.token}`);
+  console.log(
+    `Load test complete. Seeded property: ${data.propertyId}, valuation: ${data.valuationId}.`
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -25,15 +25,23 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            frontend/app/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      # frontend/ is CI/build tooling (playwright, eslint) that runs in every
+      # pipeline; frontend/app is the deployed Nuxt app shipped in production
+      # (see frontend/Dockerfile, which builds app/package*.json). Both are
+      # real supply-chain surfaces, so both get audited.
       - name: Install frontend dependencies
-        run: npm ci --prefix frontend
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix frontend/app --ignore-scripts
 
       - name: npm audit — block on critical vulnerabilities
         run: |
@@ -43,7 +51,15 @@ jobs:
             --json \
             --audit-level=critical \
             > reports/security/dependency/npm-audit.json 2>&1 || {
-              echo "::error::Critical npm vulnerabilities detected. Run 'npm audit fix --prefix frontend'."
+              echo "::error::Critical npm vulnerabilities detected in frontend/. Run 'npm audit fix --prefix frontend'."
+              exit 1
+            }
+          npm audit \
+            --prefix frontend/app \
+            --json \
+            --audit-level=critical \
+            > reports/security/dependency/npm-audit-app.json 2>&1 || {
+              echo "::error::Critical npm vulnerabilities detected in frontend/app (deployed web app). Run 'npm audit fix --prefix frontend/app'."
               exit 1
             }
 
@@ -52,11 +68,35 @@ jobs:
 
       - name: pip-audit — block on any vulnerable packages
         run: |
+          # Ignored findings, each individually justified (not a blanket
+          # suppression — every other finding must still fail the build):
+          #   PYSEC-2026-161/248/249/1941/1943/2280/2281 (starlette 0.36.3)
+          #     pinned by fastapi==0.109.2 (requires starlette<0.37.0,>=0.36.3);
+          #     fix needs a major FastAPI upgrade + full regression pass.
+          #   PYSEC-2026-2263 (pyasn1 0.4.8)
+          #     pinned by python-jose[cryptography]==3.4.0 (requires pyasn1<0.5.0);
+          #     the fix (0.6.3) is out of that range.
+          #   PYSEC-2026-1325 (ecdsa 0.19.2)
+          #     Minerva timing-attack; upstream has no fix (documented wontfix).
+          #   PYSEC-2026-1845 (pytest 7.4.4)
+          #     local-only /tmp dir DoS/privilege issue on shared Unix hosts;
+          #     dev/test-only dependency, fix is a major version bump (7 -> 9).
           pip-audit \
             --requirement backend/requirements.txt \
             --format json \
             --output reports/security/dependency/pip-audit.json \
-            --vulnerability-service pypi || {
+            --vulnerability-service pypi \
+            --ignore-vuln PYSEC-2026-161 \
+            --ignore-vuln PYSEC-2026-248 \
+            --ignore-vuln PYSEC-2026-249 \
+            --ignore-vuln PYSEC-2026-1941 \
+            --ignore-vuln PYSEC-2026-1943 \
+            --ignore-vuln PYSEC-2026-2280 \
+            --ignore-vuln PYSEC-2026-2281 \
+            --ignore-vuln PYSEC-2026-2263 \
+            --ignore-vuln PYSEC-2026-1325 \
+            --ignore-vuln PYSEC-2026-1845 \
+            || {
               echo "::error::Vulnerable Python packages detected."
               exit 1
             }
@@ -75,17 +115,92 @@ jobs:
           echo "## Dependency Scan" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tool | Report |" >> "$GITHUB_STEP_SUMMARY"
           echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| npm audit | reports/security/dependency/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit (frontend/ tooling) | reports/security/dependency/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit (frontend/app — deployed web app) | reports/security/dependency/npm-audit-app.json |" >> "$GITHUB_STEP_SUMMARY"
           echo "| pip-audit | reports/security/dependency/pip-audit.json |" >> "$GITHUB_STEP_SUMMARY"
 
   # ── Job 2: OWASP ZAP API scan ───────────────────────────────────────────────
+  # ZAP needs a live target to scan. On a PR there is no deployed staging
+  # environment, so this job boots the real FastAPI backend against ephemeral
+  # Postgres/Redis services and scans that (unless OWASP_TARGET_URL points ZAP
+  # at a real staging deployment instead).
   owasp-scan:
     name: OWASP ZAP Security Scan
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+        if: ${{ secrets.OWASP_TARGET_URL == '' }}
+
+      - name: Install backend dependencies
+        if: ${{ secrets.OWASP_TARGET_URL == '' }}
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Migrate database to head
+        if: ${{ secrets.OWASP_TARGET_URL == '' }}
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+          JWT_SECRET: test-secret-key
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Start backend server
+        if: ${{ secrets.OWASP_TARGET_URL == '' }}
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          JWT_SECRET: test-secret-key
+          # development (not "testing"): app.main only serves /openapi.json —
+          # ZAP's scan target — when ENVIRONMENT == "development".
+          ENVIRONMENT: development
+        run: |
+          cd backend
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > ../backend-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/api/v1/health > /dev/null; then
+              echo "Backend is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Backend did not become healthy in time."
+          cat ../backend-server.log
+          exit 1
 
       - name: Create reports directory
         run: mkdir -p reports/security/owasp
@@ -94,9 +209,12 @@ jobs:
         env:
           TARGET_URL: ${{ secrets.OWASP_TARGET_URL }}
         run: |
-          # Default to localhost when no staging URL is configured
           RESOLVED_TARGET="${TARGET_URL:-http://localhost:8000}"
-          docker run --rm \
+          # --network host lets the ZAP container reach the backend the
+          # previous step started directly on the runner's localhost; this
+          # only matters for the local-boot path (no-op against a real
+          # external staging URL).
+          docker run --rm --network host \
             -v "$(pwd)/reports/security/owasp:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-api-scan.py \
@@ -116,7 +234,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: owasp-zap-report-${{ github.run_number }}
-          path: reports/security/owasp/
+          path: |
+            reports/security/owasp/
+            backend-server.log
           retention-days: 30
 
       - name: OWASP summary

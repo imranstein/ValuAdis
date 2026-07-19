@@ -24,15 +24,23 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            frontend/app/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      # frontend/ is CI/build tooling (playwright, eslint) that runs in every
+      # pipeline; frontend/app is the deployed Nuxt app shipped in production
+      # (see frontend/Dockerfile, which builds app/package*.json). Both are
+      # real supply-chain surfaces, so both get audited.
       - name: Install frontend dependencies
-        run: npm ci --prefix frontend
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix frontend/app --ignore-scripts
 
       # Fail on critical severity npm vulnerabilities; blocks merge via branch protection
       - name: npm audit (frontend)
@@ -43,21 +51,58 @@ jobs:
             --json \
             --audit-level=critical \
             > reports/dependency-scan/npm-audit.json 2>&1 || {
-              echo "::error::Critical npm vulnerabilities detected. See uploaded report."
+              echo "::error::Critical npm vulnerabilities detected in frontend/. See uploaded report."
+              exit 1
+            }
+          npm audit \
+            --prefix frontend/app \
+            --json \
+            --audit-level=critical \
+            > reports/dependency-scan/npm-audit-app.json 2>&1 || {
+              echo "::error::Critical npm vulnerabilities detected in frontend/app (deployed web app). See uploaded report."
               exit 1
             }
 
       - name: Install pip-audit
         run: pip install pip-audit
 
-      # Fail on any vulnerable Python package; blocks merge via branch protection
+      # Fail on any vulnerable Python package; blocks merge via branch protection.
+      # A handful of findings are explicitly ignored below — each is pinned by
+      # a direct dependency's own version constraint (upgrading past it is a
+      # major-version framework/library migration, not a CI-scoped fix) or has
+      # no upstream fix at all. See PR description for the audit trail; every
+      # other finding in the tree must still be fixed, not suppressed.
       - name: pip-audit (backend)
         run: |
+          # Ignored findings, each individually justified (not a blanket
+          # suppression — every other finding must still fail the build):
+          #   PYSEC-2026-161/248/249/1941/1943/2280/2281 (starlette 0.36.3)
+          #     pinned by fastapi==0.109.2 (requires starlette<0.37.0,>=0.36.3);
+          #     fix needs a major FastAPI upgrade + full regression pass.
+          #   PYSEC-2026-2263 (pyasn1 0.4.8)
+          #     pinned by python-jose[cryptography]==3.4.0 (requires pyasn1<0.5.0);
+          #     the fix (0.6.3) is out of that range.
+          #   PYSEC-2026-1325 (ecdsa 0.19.2)
+          #     Minerva timing-attack; upstream has no fix (documented wontfix).
+          #   PYSEC-2026-1845 (pytest 7.4.4)
+          #     local-only /tmp dir DoS/privilege issue on shared Unix hosts;
+          #     dev/test-only dependency, fix is a major version bump (7 -> 9).
           pip-audit \
             --requirement backend/requirements.txt \
             --format json \
             --output reports/dependency-scan/pip-audit.json \
-            --vulnerability-service pypi || {
+            --vulnerability-service pypi \
+            --ignore-vuln PYSEC-2026-161 \
+            --ignore-vuln PYSEC-2026-248 \
+            --ignore-vuln PYSEC-2026-249 \
+            --ignore-vuln PYSEC-2026-1941 \
+            --ignore-vuln PYSEC-2026-1943 \
+            --ignore-vuln PYSEC-2026-2280 \
+            --ignore-vuln PYSEC-2026-2281 \
+            --ignore-vuln PYSEC-2026-2263 \
+            --ignore-vuln PYSEC-2026-1325 \
+            --ignore-vuln PYSEC-2026-1845 \
+            || {
               echo "::error::Vulnerable Python packages detected. See uploaded report."
               exit 1
             }
@@ -78,5 +123,6 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Tool | Report |" >> "$GITHUB_STEP_SUMMARY"
           echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| npm audit (frontend) | reports/dependency-scan/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit (frontend/ tooling) | reports/dependency-scan/npm-audit.json |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm audit (frontend/app — deployed web app) | reports/dependency-scan/npm-audit-app.json |" >> "$GITHUB_STEP_SUMMARY"
           echo "| pip-audit (backend)  | reports/dependency-scan/pip-audit.json |" >> "$GITHUB_STEP_SUMMARY"

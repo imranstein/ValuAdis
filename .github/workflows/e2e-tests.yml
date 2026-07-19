@@ -39,7 +39,12 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        # 3.11 matches the backend's actual runtime (backend/Dockerfile is
+        # python:3.11-slim) and every other workflow. This job was the lone
+        # 3.9 outlier; the security-patched backend deps (python-multipart
+        # >=0.0.21, etc.) require Python >=3.10, so 3.9 can no longer install
+        # requirements.txt.
+        python-version: '3.11'
         cache: 'pip'
 
     - name: Install backend dependencies

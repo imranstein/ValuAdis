@@ -12,8 +12,8 @@ redis==5.0.1
 python-jose[cryptography]==3.4.0
 passlib[bcrypt]==1.7.4
 psycopg2-binary==2.9.9
-python-multipart==0.0.20
-python-dotenv==1.0.0
+python-multipart==0.0.32
+python-dotenv==1.2.2
 pydantic[email]==2.5.3
 pydantic-settings==2.1.0
 reportlab==4.0.9
@@ -26,3 +26,9 @@ pytest-cov==4.1.0
 httpx==0.26.0
 playwright==1.58.0
 beautifulsoup4==4.14.3
+
+# Transitive pins bumped to close pip-audit findings (loosely-constrained by
+# their parents — fastapi/uvicorn/qrcode/sentry-sdk all allow these ranges):
+click>=8.3.3          # via uvicorn[standard]; PYSEC-2026-2132
+pillow>=12.2.0         # via qrcode[pil]; PYSEC-2026-165 and others
+urllib3>=2.7.0         # via sentry-sdk; PYSEC-2026-142, PYSEC-2026-141
