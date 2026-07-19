@@ -41,9 +41,14 @@
   "nav": {
     "dashboard": "ዋና ገጽ",
     "properties": "ንብረቶች",
+    "vehicles": "ተሽከርካሪዎች",
     "valuations": "ግምቶች",
     "quickValuation": "ፈጣን ግምት",
     "analytics": "ትንተና",
+    "propertyMap": "የንብረት ካርታ",
+    "reports": "ሪፖርቶች",
+    "scrapers": "ስክራፐሮች",
+    "users": "ተጠቃሚዎች",
     "audit": "ኦዲት እና ተገዢነት",
     "settings": "ቅንብሮች",
     "profile": "መገለጫ"

@@ -10,6 +10,13 @@ from app.api.schemas.scraper import (
     ScraperTestRequest,
     ScraperTestResponse
 )
+from app.core.scraper_limits import (
+    SCRAPER_HEALTH_LOG_WINDOW,
+    SCRAPER_TEST_SAMPLE_LIMIT,
+    SCRAPER_TEST_NAVIGATION_TIMEOUT_MS,
+    SCRAPER_TEST_SELECTOR_WAIT_MS,
+)
+from scraper.quality import count_consecutive_failures
 import asyncio
 from playwright.async_api import async_playwright
 
@@ -59,7 +66,7 @@ class ScraperService:
         if not scraper:
             return None
 
-        update_data = scraper_data.dict(exclude_unset=True)
+        update_data = scraper_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(scraper, field, value)
 
@@ -128,6 +135,36 @@ class ScraperService:
             last_run=last_run,
             avg_success_rate=round(avg_success_rate, 2)
         )
+
+    @staticmethod
+    def get_scraper_health(db: Session) -> List[Dict[str, Any]]:
+        """Per-source health: last run, status, and consecutive failures."""
+        health: List[Dict[str, Any]] = []
+        scrapers = db.query(ScraperTarget).order_by(ScraperTarget.id).all()
+        for scraper in scrapers:
+            recent_logs = (
+                db.query(ScraperLog)
+                .filter(ScraperLog.scraper_id == scraper.id)
+                .order_by(desc(ScraperLog.created_at))
+                .limit(SCRAPER_HEALTH_LOG_WINDOW)
+                .all()
+            )
+            statuses = [log.status for log in recent_logs]
+            last_error_message = next(
+                (log.error_message for log in recent_logs if log.error_message),
+                None,
+            )
+            health.append({
+                "id": scraper.id,
+                "domain": scraper.domain,
+                "enabled": scraper.enabled,
+                "last_run": scraper.last_run,
+                "last_status": scraper.last_status,
+                "consecutive_failures": count_consecutive_failures(statuses),
+                "total_listings": scraper.total_listings or 0,
+                "last_error_message": last_error_message,
+            })
+        return health
 
     @staticmethod
     def get_scraper_logs(
@@ -204,8 +241,12 @@ class ScraperService:
                 page = await context.new_page()
 
                 url = test_data.url_template.format(page=test_data.test_page)
-                await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                await asyncio.sleep(2)
+                await page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=SCRAPER_TEST_NAVIGATION_TIMEOUT_MS
+                )
+                await page.wait_for_timeout(SCRAPER_TEST_SELECTOR_WAIT_MS)
 
                 # Try to extract items using provided selectors
                 items = []
@@ -217,18 +258,27 @@ class ScraperService:
                     # Try to get sample data
                     if 'title' in selectors:
                         titles = await page.query_selector_all(selectors['title'])
-                        for i, title_elem in enumerate(titles[:3]):  # Get first 3 samples
+                        prices = await page.query_selector_all(selectors.get('price', '')) if 'price' in selectors else []
+                        locations = await page.query_selector_all(selectors.get('location', '')) if 'location' in selectors else []
+
+                        for i, title_elem in enumerate(titles[:SCRAPER_TEST_SAMPLE_LIMIT]):
                             item = {}
                             item['title'] = await title_elem.inner_text() if title_elem else None
 
                             # Try to get other fields
                             if 'price' in selectors:
-                                price_elem = await page.query_selector(selectors['price'])
-                                item['price'] = await price_elem.inner_text() if price_elem else None
+                                item['price'] = (
+                                    await prices[i].inner_text()
+                                    if i < len(prices) and prices[i] is not None
+                                    else None
+                                )
 
                             if 'location' in selectors:
-                                loc_elem = await page.query_selector(selectors['location'])
-                                item['location'] = await loc_elem.inner_text() if loc_elem else None
+                                item['location'] = (
+                                    await locations[i].inner_text()
+                                    if i < len(locations) and locations[i] is not None
+                                    else None
+                                )
 
                             items.append(item)
 

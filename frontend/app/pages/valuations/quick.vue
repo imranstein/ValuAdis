@@ -491,41 +491,41 @@
     </div>
 
     <!-- Results Card -->
-    <Card v-if="result" style="margin-top: 2rem; background: linear-gradient(to right, #f0fdf4, #dbeafe);">
+    <Card v-if="result" style="margin-top: 2rem; background: linear-gradient(to right, var(--green-soft), var(--blue-soft));">
       <template #header>
-        <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
-          <h2 style="font-size: 1.5rem; font-weight: 600; color: #111827;">Valuation Results</h2>
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--line);">
+          <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--ink);">Valuation Results</h2>
         </div>
       </template>
       <template #content>
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
           <!-- Market Value -->
-          <div style="padding: 1rem; background-color: white; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Market Value</p>
-            <p style="font-size: 2rem; font-weight: bold; color: #1E3A8A;">
+          <div style="padding: 1rem; background-color: white; border-radius: 0.5rem; border: 1px solid var(--line);">
+            <p style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.5rem;">Market Value</p>
+            <p style="font-size: 2rem; font-weight: bold; color: var(--blue);">
               {{ formatCurrency(result.market_value) }} ETB
             </p>
           </div>
 
           <!-- Taxable Value -->
-          <div style="padding: 1rem; background-color: white; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">
+          <div style="padding: 1rem; background-color: white; border-radius: 0.5rem; border: 1px solid var(--line);">
+            <p style="font-size: 0.875rem; color: var(--muted); margin-bottom: 0.5rem;">
               Taxable Value (25% of Market Value)
             </p>
-            <p style="font-size: 2rem; font-weight: bold; color: #078160;">
+            <p style="font-size: 2rem; font-weight: bold; color: var(--green);">
               {{ formatCurrency(result.taxable_value) }} ETB
             </p>
           </div>
 
           <!-- Compliance Badge -->
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background-color: white; border-radius: 0.5rem; border: 2px solid #078160;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background-color: white; border-radius: 0.5rem; border: 2px solid var(--green);">
             <div style="display: flex; align-items: center; gap: 1rem;">
-              <div style="width: 3rem; height: 3rem; background-color: #078160; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 3rem; height: 3rem; background-color: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <i class="pi pi-shield" style="font-size: 1.5rem; color: white;"></i>
               </div>
               <div>
-                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Proclamation 1365/2025 Compliant</h3>
-                <p style="font-size: 0.875rem; color: #6b7280;">25% taxable value calculation applied</p>
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--ink);">Proclamation 1365/2025 Compliant</h3>
+                <p style="font-size: 0.875rem; color: var(--muted);">25% taxable value calculation applied</p>
               </div>
             </div>
             <Badge value="✓ Compliant" severity="success" size="large" />
@@ -534,33 +534,33 @@
           <!-- Calculation Details -->
           <Divider />
           <div>
-            <h3 style="font-size: 1rem; font-weight: 600; color: #111827; margin-bottom: 1rem;">Calculation Details</h3>
+            <h3 style="font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem;">Calculation Details</h3>
             <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Property Type:</span>
-                <span style="font-weight: 500; color: #111827;">{{ getPropertyTypeLabel(formData.property_type) }}</span>
+                <span style="color: var(--muted);">Property Type:</span>
+                <span style="font-weight: 500; color: var(--ink);">{{ getPropertyTypeLabel(formData.property_type) }}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Municipality:</span>
-                <span style="font-weight: 500; color: #111827;">{{ formData.municipality }}</span>
+                <span style="color: var(--muted);">Municipality:</span>
+                <span style="font-weight: 500; color: var(--ink);">{{ formData.municipality }}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Land Area:</span>
-                <span style="font-weight: 500; color: #111827;">{{ formData.area_sqm }} m²</span>
+                <span style="color: var(--muted);">Land Area:</span>
+                <span style="font-weight: 500; color: var(--ink);">{{ formData.area_sqm }} m²</span>
               </div>
               <div v-if="formData.building_area_sqm" style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Building Area:</span>
-                <span style="font-weight: 500; color: #111827;">{{ formData.building_area_sqm }} m²</span>
+                <span style="color: var(--muted);">Building Area:</span>
+                <span style="font-weight: 500; color: var(--ink);">{{ formData.building_area_sqm }} m²</span>
               </div>
               <div v-if="formData.year_built" style="display: flex; justify-content: space-between;">
-                <span style="color: #6b7280;">Year Built:</span>
-                <span style="font-weight: 500; color: #111827;">{{ formData.year_built }}</span>
+                <span style="color: var(--muted);">Year Built:</span>
+                <span style="font-weight: 500; color: var(--ink);">{{ formData.year_built }}</span>
               </div>
             </div>
           </div>
 
           <!-- Actions -->
-          <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+          <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--line);">
             <Button
               label="Calculate Again"
               severity="secondary"
@@ -569,7 +569,7 @@
             <Button
               label="Save as Property"
               icon="pi pi-save"
-              style="background-color: #078160; border-color: #078160;"
+              style="background-color: var(--green); border-color: var(--green);"
               @click="saveAsProperty"
             />
           </div>
@@ -578,9 +578,9 @@
     </Card>
 
     <!-- Error Message -->
-    <Card v-if="error" style="margin-top: 2rem; background-color: #fef2f2; border: 1px solid #fecaca;">
+    <Card v-if="error" style="margin-top: 2rem; background-color: var(--red-soft); border: 1px solid var(--red-soft);">
       <template #content>
-        <p style="color: #dc2626;">{{ error }}</p>
+        <p style="color: var(--red);">{{ error }}</p>
       </template>
     </Card>
   </div>
@@ -974,7 +974,7 @@ function saveAsProperty() {
   align-items: flex-start;
   margin-bottom: 2rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, var(--green) 0%, var(--green) 100%);
   border-radius: 16px;
   color: white;
   box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
@@ -1011,11 +1011,11 @@ function saveAsProperty() {
 
 .action-button.primary {
   background: white;
-  color: #059669;
+  color: var(--green);
 }
 
 .action-button.primary:hover {
-  background: #f8fafc;
+  background: var(--surface-2);
   transform: translateY(-2px);
 }
 
@@ -1039,7 +1039,7 @@ function saveAsProperty() {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 
 .progress-step {
@@ -1054,8 +1054,8 @@ function saveAsProperty() {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--surface-2);
+  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1065,34 +1065,34 @@ function saveAsProperty() {
 }
 
 .progress-step.active .step-number {
-  background: linear-gradient(135deg, #059669, #047857);
+  background: linear-gradient(135deg, var(--green), var(--green));
   color: white;
   transform: scale(1.1);
 }
 
 .step-label {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--muted);
   font-weight: 500;
   text-align: center;
 }
 
 .progress-step.active .step-label {
-  color: #059669;
+  color: var(--green);
   font-weight: 600;
 }
 
 .progress-line {
   flex: 1;
   height: 2px;
-  background: #e2e8f0;
+  background: var(--line);
   margin: 0 1rem;
   margin-top: -20px;
   transition: all 0.3s;
 }
 
 .progress-line.active {
-  background: linear-gradient(90deg, #059669, #047857);
+  background: linear-gradient(90deg, var(--green), var(--green));
 }
 
 /* Form Container */
@@ -1100,7 +1100,7 @@ function saveAsProperty() {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   overflow: hidden;
 }
 
@@ -1111,7 +1111,7 @@ function saveAsProperty() {
 /* Form Sections */
 .form-section {
   padding: 2rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--surface-2);
 }
 
 .form-section:last-child {
@@ -1125,12 +1125,12 @@ function saveAsProperty() {
 .section-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--ink-soft);
   margin: 0 0 0.5rem 0;
 }
 
 .section-header p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -1155,14 +1155,14 @@ function saveAsProperty() {
 .form-field label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-soft);
 }
 
 .form-field input,
 .form-field select,
 .form-field textarea {
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
@@ -1173,13 +1173,13 @@ function saveAsProperty() {
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: #059669;
+  border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
 .form-field input[readonly] {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--surface-2);
+  color: var(--muted);
 }
 
 .form-field textarea {
@@ -1200,13 +1200,13 @@ function saveAsProperty() {
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--ink-soft);
 }
 
 .checkbox-item input[type="checkbox"] {
   width: auto;
   margin: 0;
-  accent-color: #059669;
+  accent-color: var(--green);
 }
 
 /* Form Actions */
@@ -1215,8 +1215,8 @@ function saveAsProperty() {
   justify-content: space-between;
   align-items: center;
   padding: 2rem;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
 }
 
 .form-actions .action-button {
@@ -1227,10 +1227,10 @@ function saveAsProperty() {
 .form-status {
   margin: 0;
   padding: 0.9rem 2rem 1.5rem;
-  background: #f8fafc;
-  color: #065f46;
+  background: var(--surface-2);
+  color: var(--green-dark);
   font-weight: 700;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--line);
 }
 
 /* Results Section */
@@ -1279,12 +1279,12 @@ function saveAsProperty() {
 /* Enhanced Field Styling */
 .form-field input:invalid,
 .form-field select:invalid {
-  border-color: #ef4444;
+  border-color: var(--red);
 }
 
 .form-field input:valid,
 .form-field select:valid {
-  border-color: #10b981;
+  border-color: var(--green);
 }
 
 /* Loading State */
@@ -1300,7 +1300,7 @@ function saveAsProperty() {
 }
 
 .form-section:hover {
-  background: #fafbfc;
+  background: var(--surface-2);
 }
 
 /* Professional Styling */
@@ -1316,14 +1316,14 @@ function saveAsProperty() {
 .form-field label:has(+ input[required])::after,
 .form-field label:has(+ select[required])::after {
   content: ' *';
-  color: #ef4444;
+  color: var(--red);
 }
 
 /* Modern Input Styling */
 .form-field input::placeholder,
 .form-field select::placeholder,
 .form-field textarea::placeholder {
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 /* Focus Management */

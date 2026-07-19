@@ -1,6 +1,12 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, Dict, Any
 from datetime import datetime
+from app.core.scraper_limits import (
+    SCRAPER_CREATE_DEFAULT_PAGES,
+    SCRAPER_CREATE_MAX_PAGES,
+    SCRAPER_RUN_SCHEMA_MAX_PAGES,
+    SCRAPER_RUN_SCHEMA_MAX_TARGET_ITEMS,
+)
 
 
 class ScraperSelectorsSchema(BaseModel):
@@ -22,15 +28,22 @@ class ScraperTargetCreate(BaseModel):
     enabled: bool = Field(default=True, description="Whether scraper is enabled")
     selectors: Dict[str, Any] = Field(..., description="CSS selectors configuration")
     schedule: str = Field(default="daily", description="Scraping schedule (daily, weekly, custom)")
-    max_pages: int = Field(default=50, ge=1, le=100, description="Maximum pages to scrape")
+    max_pages: int = Field(
+        default=SCRAPER_CREATE_DEFAULT_PAGES,
+        ge=1,
+        le=SCRAPER_CREATE_MAX_PAGES,
+        description="Maximum pages to scrape"
+    )
 
-    @validator('url_template')
+    @field_validator("url_template")
+    @classmethod
     def validate_url_template(cls, v):
         if '{page}' not in v:
             raise ValueError('URL template must contain {page} placeholder')
         return v
 
-    @validator('schedule')
+    @field_validator("schedule")
+    @classmethod
     def validate_schedule(cls, v):
         valid_schedules = ['daily', 'weekly', 'custom', 'manual']
         if v not in valid_schedules:
@@ -45,15 +58,17 @@ class ScraperTargetUpdate(BaseModel):
     enabled: Optional[bool] = None
     selectors: Optional[Dict[str, Any]] = None
     schedule: Optional[str] = None
-    max_pages: Optional[int] = Field(None, ge=1, le=100)
+    max_pages: Optional[int] = Field(None, ge=1, le=SCRAPER_CREATE_MAX_PAGES)
 
-    @validator('url_template')
+    @field_validator("url_template")
+    @classmethod
     def validate_url_template(cls, v):
         if v and '{page}' not in v:
             raise ValueError('URL template must contain {page} placeholder')
         return v
 
-    @validator('schedule')
+    @field_validator("schedule")
+    @classmethod
     def validate_schedule(cls, v):
         if v:
             valid_schedules = ['daily', 'weekly', 'custom', 'manual']
@@ -76,9 +91,7 @@ class ScraperTargetResponse(BaseModel):
     total_listings: int
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScraperLogResponse(BaseModel):
@@ -92,9 +105,7 @@ class ScraperLogResponse(BaseModel):
     listings_saved: int
     error_message: Optional[str]
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScraperStatsResponse(BaseModel):
@@ -106,6 +117,18 @@ class ScraperStatsResponse(BaseModel):
     last_24h_listings: int
     last_run: Optional[datetime]
     avg_success_rate: float
+
+
+class ScraperHealthResponse(BaseModel):
+    """Per-source operational health for the scraper ops desk"""
+    id: int
+    domain: str
+    enabled: bool
+    last_run: Optional[datetime]
+    last_status: Optional[str]
+    consecutive_failures: int
+    total_listings: int
+    last_error_message: Optional[str]
 
 
 class ScraperTestRequest(BaseModel):
@@ -125,5 +148,5 @@ class ScraperTestResponse(BaseModel):
 
 class ScraperRunRequest(BaseModel):
     """Schema for manual scraper run"""
-    max_pages: Optional[int] = Field(None, ge=1, le=100)
-    target_items: Optional[int] = Field(None, ge=1, le=1000)
+    max_pages: Optional[int] = Field(None, ge=1, le=SCRAPER_RUN_SCHEMA_MAX_PAGES)
+    target_items: Optional[int] = Field(None, ge=1, le=SCRAPER_RUN_SCHEMA_MAX_TARGET_ITEMS)

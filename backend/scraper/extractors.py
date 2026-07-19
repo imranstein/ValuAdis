@@ -1,249 +1,337 @@
+"""
+Pure HTML extractors for Ethiopian property portals.
+
+Each extractor takes raw page HTML and returns normalized listing dicts.
+No network access and no Playwright — the browser driver fetches HTML,
+extraction stays pure so it can be tested offline against fixtures.
+"""
+
 import re
-from typing import Dict, Any, List
+from typing import Any, Callable, Dict, List, Optional
 
-def parse_price(val: str) -> float:
+from bs4 import BeautifulSoup
+
+Listing = Dict[str, Any]
+Extractor = Callable[[str], List[Listing]]
+
+EPC_BASE_URL = "https://ethiopiapropertycentre.com"
+JIJI_BASE_URL = "https://jiji.com.et"
+LIVINGETHIO_BASE_URL = "https://livingethio.com"
+
+CURRENCY_TOKENS = ("etb", "birr", "br")
+BILLION = 1_000_000_000.0
+MILLION = 1_000_000.0
+THOUSAND = 1_000.0
+
+
+def parse_price(val: Optional[str]) -> float:
+    """Normalize a price string (Br/ETB/birr, commas, million/k suffixes) to ETB."""
     if not val:
         return 0.0
-    val = val.lower().replace('etb', '').replace('br', '').replace('birr', '').replace(',', '').replace(' ', '')
-    try:
-        # handle "million" / "k" / "billion" ? Usually it's digits.
-        return float(re.sub(r'[^\d.]', '', val))
-    except ValueError:
+    text = str(val).lower().replace(",", "")
+    for token in CURRENCY_TOKENS:
+        text = text.replace(token, " ")
+    match = re.search(r"\d+(?:\.\d+)?", text)
+    if not match:
         return 0.0
+    amount = float(match.group())
+    suffix = text[match.end():]
+    if "billion" in suffix:
+        amount *= BILLION
+    elif "million" in suffix or re.match(r"\s*m\b", suffix):
+        amount *= MILLION
+    elif re.match(r"\s*k\b", suffix):
+        amount *= THOUSAND
+    return amount
 
-def parse_int(val: str) -> int:
+
+def parse_int(val: Optional[str]) -> int:
     if not val:
         return 0
-    try:
-        return int(re.sub(r'[^\d]', '', val))
-    except ValueError:
-        return 0
+    match = re.search(r"\d+", str(val))
+    return int(match.group()) if match else 0
 
-def parse_float(val: str) -> float:
+
+def parse_float(val: Optional[str]) -> float:
     if not val:
         return 0.0
-    try:
-        return float(re.sub(r'[^\d.]', '', val))
-    except ValueError:
-        return 0.0
+    match = re.search(r"\d+(?:\.\d+)?", str(val))
+    return float(match.group()) if match else 0.0
 
 
-async def extract_epc(page) -> List[Dict[str, Any]]:
-    # ethiopiapropertycentre.com
-    results = []
-    # Actual elements from analysis: classes like "property" inside a "property-list"
-    items = await page.locator('.property, .wp-block-property').all()
-    for item in items:
-        try:
-            link_loc = item.locator('a[itemprop="url"], h4.content-title a, .property-title a, a[href*="/for-sale/property/"], a[href*="/for-rent/property/"]').first
-            if await link_loc.count() == 0:
-                # Some sites use itemprop, or just h4 a
-                link_loc = item.locator('a').first
-                if await link_loc.count() == 0:
-                    continue
-            title = await link_loc.inner_text()
-            listing_url = await link_loc.get_attribute('href')
-            
-            price_loc = item.locator('.price, span[itemprop="price"], h3.price').first
-            price_str = await price_loc.inner_text() if await price_loc.count() > 0 else ""
-            
-            address_loc = item.locator('.address, address').first
-            location_subcity = await address_loc.inner_text() if await address_loc.count() > 0 else ""
-            
-            beds_loc = item.locator('.beds strong, ul.amenities li:has(i.fa-bed) span').first
-            bedrooms = parse_int(await beds_loc.inner_text()) if await beds_loc.count() > 0 else 0
-            
-            baths_loc = item.locator('.baths strong, ul.amenities li:has(i.fa-bath) span').first
-            bathrooms = parse_int(await baths_loc.inner_text()) if await baths_loc.count() > 0 else 0
-            
-            area_loc = item.locator('.area strong, ul.amenities li:has(i.fa-arrows-alt) span').first
-            area_sqm = parse_float(await area_loc.inner_text()) if await area_loc.count() > 0 else 0.0
-            
-            type_loc = item.locator('.property-type, span:has-text("Type:") + span').first
-            property_type = await type_loc.inner_text() if await type_loc.count() > 0 else "Unknown"
+def _absolute_url(href: str, base_url: str) -> str:
+    return f"{base_url}{href}" if href.startswith("/") else href
 
-            results.append({
-                "title": title.strip(),
-                "asking_price_etb": parse_price(price_str),
-                "location_subcity": location_subcity.strip(),
+
+def _text(node) -> str:
+    return node.get_text(" ", strip=True) if node else ""
+
+
+def extract_epc(html: str) -> List[Listing]:
+    """ethiopiapropertycentre.com listing/search result pages.
+
+    Tries the 2026 Tailwind card layout first, then falls back to the
+    legacy WordPress-style markup so older cached pages still parse.
+    """
+    listings = _extract_epc_cards(html)
+    if listings:
+        return listings
+    return _extract_epc_legacy(html)
+
+
+_EPC_AREA_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:sqm|m²|m2|ካሬ)", re.IGNORECASE)
+
+
+def _extract_epc_cards(html: str) -> List[Listing]:
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select("article"):
+        link = item.find("a", href=True)
+        href = link.get("href") if link else None
+        title = _text(item.find("h3"))
+        if not href or not title:
+            continue
+
+        price = parse_price(_text(item.select_one(".flex.items-baseline")))
+        chips = [_text(c) for c in item.select(".inline-flex")]
+        bedrooms = bathrooms = 0
+        for chip in chips:
+            lowered = chip.lower()
+            if "bed" in lowered:
+                bedrooms = parse_int(chip)
+            elif "bath" in lowered:
+                bathrooms = parse_int(chip)
+
+        area_sqm = 0.0
+        area_match = _EPC_AREA_RE.search(item.get_text(" ", strip=True))
+        if area_match:
+            area_sqm = float(area_match.group(1))
+
+        location = ""
+        for chip in chips:
+            # The location chip is the comma-separated place hierarchy
+            if "," in chip and "bed" not in chip.lower() and "bath" not in chip.lower():
+                location = chip
+                break
+
+        listings.append(
+            {
+                "title": title,
+                "asking_price_etb": price,
+                "location_subcity": location,
                 "area_sqm": area_sqm,
-                "property_type": property_type.strip(),
+                "property_type": _text(item.select_one(".text-primary")) or "Unknown",
                 "bedrooms": bedrooms,
                 "bathrooms": bathrooms,
-                "listing_url": ("https://ethiopiapropertycentre.com" + listing_url) if listing_url.startswith('/') else listing_url,
-            })
-        except Exception as e:
-            print(f"Error extracting EPC item: {e}")
+                "listing_url": _absolute_url(href, EPC_BASE_URL),
+            }
+        )
+    return listings
+
+
+def _extract_epc_legacy(html: str) -> List[Listing]:
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select("div.wp-block.property.list"):
+        link = item.select_one('.wp-block-title a[itemprop="url"]') or item.select_one(
+            ".wp-block-title a, h4.content-title a"
+        )
+        href = link.get("href") if link else None
+        if not href:
             continue
-    return results
-
-
-async def extract_jiji(page) -> List[Dict[str, Any]]:
-    # jiji.com.et/real-estate
-    # item class: .b-list-advert-base
-    results = []
-    items = await page.locator('.b-list-advert-base').all()
-    for item in items:
-        try:
-            title_loc = item.locator('.qa-advert-title').first
-            if await title_loc.count() == 0:
-                continue
-            title = await title_loc.inner_text()
-            
-            # The item itself is an <a> tag sometimes:
-            # Let's check if the item is <a> or has <a>
-            if await item.evaluate('el => el.tagName') == 'A':
-                listing_url = await item.get_attribute('href')
-            else:
-                a_loc = item.locator('a').first
-                listing_url = await a_loc.get_attribute('href') if await a_loc.count() > 0 else None
-                
-            if not listing_url:
-                continue
-            
-            price_loc = item.locator('.qa-advert-price').first
-            price_str = await price_loc.inner_text() if await price_loc.count() > 0 else ""
-            
-            # Jiji has attributes in `.b-list-advert-base__item-attr`
-            attrs_locs = await item.locator('.b-list-advert-base__item-attr').all()
-            attrs = [await x.inner_text() for x in attrs_locs]
-            
-            area_sqm = 0.0
-            bedrooms = 0
-            for a in attrs:
-                if 'sqm' in a.lower():
-                    area_sqm = parse_float(a)
-                if 'bed' in a.lower():
-                    bedrooms = parse_int(a)
-            
-            results.append({
-                "title": title.strip(),
-                "asking_price_etb": parse_price(price_str),
-                "location_subcity": "", 
+        title = _text(item.select_one('h3[itemprop="name"]')) or _text(link)
+        if not title:
+            continue
+        bedrooms, bathrooms, area_sqm = _epc_aux_info(item)
+        listings.append(
+            {
+                "title": title,
+                "asking_price_etb": _epc_price(item),
+                "location_subcity": _text(item.select_one("address")),
                 "area_sqm": area_sqm,
-                "property_type": "Unknown", 
+                "property_type": _text(item.select_one("h4.content-title")) or "Unknown",
                 "bedrooms": bedrooms,
-                "bathrooms": 0, 
-                "listing_url": ("https://jiji.com.et" + listing_url) if listing_url.startswith('/') else listing_url,
-            })
-        except Exception as e:
-            print(f"Error extracting Jiji item: {e}")
-            continue
-    return results
+                "bathrooms": bathrooms,
+                "listing_url": _absolute_url(href, EPC_BASE_URL),
+            }
+        )
+    return listings
 
 
-async def extract_zegebeya(page) -> List[Dict[str, Any]]:
-    # zegebeya.com items
-    results = []
-    # RealHomes theme uses article.property-item or .rh_list_card__wrap or .rhea_property_card
-    items = await page.locator('article.property-item, .rh_list_card__wrap, .rhea_property_card').all()
-    for item in items:
+def _epc_price(item) -> float:
+    # EPC embeds the numeric amount in a content attribute next to the
+    # currency span; prefer it over display text.
+    for span in item.select("span.price[content]"):
         try:
-            link_loc = item.locator('h3 a, h2.entry-title a, h4 a, .rhea_property_title a').first
-            if await link_loc.count() == 0:
-                continue
-            title = await link_loc.inner_text()
-            listing_url = await link_loc.get_attribute('href')
-            
-            price_loc = item.locator('.price, .rh_prop_card__price').first
-            price_str = await price_loc.inner_text() if await price_loc.count() > 0 else ""
-            
-            bed_loc = item.locator('.rh_prop_card__meta figure[data-tooltip="Bedrooms"] + div, .rhea_meta_bed .figure, span:has-text("Bedrooms")').first
-            bedrooms = parse_int(await bed_loc.inner_text()) if await bed_loc.count() > 0 else 0
-            
-            bath_loc = item.locator('.rh_prop_card__meta figure[data-tooltip="Bathrooms"] + div, .rhea_meta_bath .figure, span:has-text("Bathrooms")').first
-            bathrooms = parse_int(await bath_loc.inner_text()) if await bath_loc.count() > 0 else 0
-            
-            area_loc = item.locator('.rh_prop_card__meta figure[data-tooltip="Area"] + div, .rhea_meta_area .figure, span:has-text("Sq Ft")').first
-            area_sqm = parse_float(await area_loc.inner_text()) if await area_loc.count() > 0 else 0.0
-            
-            results.append({
-                "title": title.strip(),
-                "asking_price_etb": parse_price(price_str),
-                "location_subcity": "", 
+            value = float(span.get("content", ""))
+        except ValueError:
+            continue
+        if value > 0:
+            return value
+    return parse_price(" ".join(_text(span) for span in item.select("span.price")))
+
+
+def _epc_aux_info(item):
+    bedrooms = 0
+    bathrooms = 0
+    area_sqm = 0.0
+    for entry in item.select("ul.aux-info li"):
+        icon = entry.select_one("i")
+        icon_classes = set(icon.get("class", [])) if icon else set()
+        text = _text(entry)
+        if "fa-bed" in icon_classes:
+            bedrooms = parse_int(text)
+        elif "fa-bath" in icon_classes:
+            bathrooms = parse_int(text)
+        elif "fa-square" in icon_classes:
+            area_sqm = parse_float(text)
+    return bedrooms, bathrooms, area_sqm
+
+
+def extract_jiji(html: str) -> List[Listing]:
+    """jiji.com.et real-estate listing pages."""
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select(".b-list-advert-base"):
+        title = _text(item.select_one(".qa-advert-title"))
+        if not title:
+            continue
+        if item.name == "a":
+            href = item.get("href")
+        else:
+            anchor = item.select_one("a")
+            href = anchor.get("href") if anchor else None
+        if not href:
+            continue
+        area_sqm = 0.0
+        bedrooms = 0
+        for attr in item.select(".b-list-advert-base__item-attr"):
+            attr_text = _text(attr)
+            if "sqm" in attr_text.lower():
+                area_sqm = parse_float(attr_text)
+            if "bed" in attr_text.lower():
+                bedrooms = parse_int(attr_text)
+        listings.append(
+            {
+                "title": title,
+                "asking_price_etb": parse_price(_text(item.select_one(".qa-advert-price"))),
+                "location_subcity": "",
                 "area_sqm": area_sqm,
                 "property_type": "Unknown",
                 "bedrooms": bedrooms,
-                "bathrooms": bathrooms,
-                "listing_url": listing_url,
-            })
-        except Exception as e:
-            print(f"Error extracting Zegebeya item: {e}")
-            continue
-    return results
+                "bathrooms": 0,
+                "listing_url": _absolute_url(href, JIJI_BASE_URL),
+            }
+        )
+    return listings
 
-async def extract_ethiopianproperties(page) -> List[Dict[str, Any]]:
-    results = []
-    # Theme element
-    items = await page.locator('article.property, .property-item, .rh_list_card__wrap').all()
-    for item in items:
-        try:
-            link_loc = item.locator('h3 a, h2.entry-title a, h4 a, .property-title a').first
-            if await link_loc.count() == 0:
-                continue
-            title = await link_loc.inner_text()
-            listing_url = await link_loc.get_attribute('href')
-            
-            price_loc = item.locator('.price, .property-price').first
-            price_str = await price_loc.inner_text() if await price_loc.count() > 0 else ""
-            
-            results.append({
-                "title": title.strip(),
-                "asking_price_etb": parse_price(price_str),
+
+def extract_zegebeya(html: str) -> List[Listing]:
+    """zegebeya.com (RealHomes theme) listing pages."""
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select("article.property-item, .rh_list_card__wrap, .rhea_property_card"):
+        link = item.select_one("h3 a, h2.entry-title a, h4 a, .rhea_property_title a")
+        href = link.get("href") if link else None
+        if not href:
+            continue
+        listings.append(
+            {
+                "title": _text(link),
+                "asking_price_etb": parse_price(
+                    _text(item.select_one(".price, .rh_prop_card__price"))
+                ),
+                "location_subcity": "",
+                "area_sqm": parse_float(
+                    _text(item.select_one('figure[data-tooltip="Area"] + div'))
+                ),
+                "property_type": "Unknown",
+                "bedrooms": parse_int(
+                    _text(item.select_one('figure[data-tooltip="Bedrooms"] + div'))
+                ),
+                "bathrooms": parse_int(
+                    _text(item.select_one('figure[data-tooltip="Bathrooms"] + div'))
+                ),
+                "listing_url": href,
+            }
+        )
+    return listings
+
+
+def extract_ethiopianproperties(html: str) -> List[Listing]:
+    """ethiopianproperties.com listing pages."""
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select("article.property, .property-item, .rh_list_card__wrap"):
+        link = item.select_one("h3 a, h2.entry-title a, h4 a, .property-title a")
+        href = link.get("href") if link else None
+        if not href:
+            continue
+        listings.append(
+            {
+                "title": _text(link),
+                "asking_price_etb": parse_price(
+                    _text(item.select_one(".price, .property-price"))
+                ),
                 "location_subcity": "",
                 "area_sqm": 0.0,
                 "property_type": "Unknown",
                 "bedrooms": 0,
                 "bathrooms": 0,
-                "listing_url": listing_url,
-            })
-        except Exception as e:
-            print(f"Error extracting ethiopianproperties item: {e}")
-            continue
-    return results
+                "listing_url": href,
+            }
+        )
+    return listings
 
-async def extract_livingethio(page) -> List[Dict[str, Any]]:
-    # livingethio loads via Angular/PrimeNG.
-    # Property cards
-    results = []
-    items = await page.locator('.b-list-advert-base, .property-card, .p-card').all()
-    for item in items:
-        # We need a robust general approach if standard selectors fail.
-        # livingethio json API is at /api/properties/search. Let's do basic scraping if they render them with .p-card
-        try:
-            title_loc = item.locator('.p-card-title').first
-            if await title_loc.count() == 0:
-                continue
-            title = await title_loc.inner_text()
-            
-            price_loc = item.locator('.price, .text-primary-500').first
-            price_str = await price_loc.inner_text() if await price_loc.count() > 0 else ""
-            
-            # URL: might be inside an a tag under card
-            a_loc = item.locator('a').first
-            if await a_loc.count() == 0:
-                continue
-            listing_url = await a_loc.get_attribute('href')
-            
-            results.append({
-                "title": title.strip(),
-                "asking_price_etb": parse_price(price_str),
-                "location_subcity": "", 
+
+def extract_livingethio(html: str) -> List[Listing]:
+    """livingethio.com (PrimeNG card layout) listing pages."""
+    soup = BeautifulSoup(html, "html.parser")
+    listings = []
+    for item in soup.select(".property-card, .p-card"):
+        title = _text(item.select_one(".p-card-title"))
+        if not title:
+            continue
+        anchor = item.select_one("a")
+        href = anchor.get("href") if anchor else None
+        if not href:
+            continue
+        listings.append(
+            {
+                "title": title,
+                "asking_price_etb": parse_price(
+                    _text(item.select_one(".price, .text-primary-500"))
+                ),
+                "location_subcity": "",
                 "area_sqm": 0.0,
                 "property_type": "Unknown",
                 "bedrooms": 0,
                 "bathrooms": 0,
-                "listing_url": ("https://livingethio.com" + listing_url) if listing_url.startswith('/') else listing_url,
-            })
-        except Exception as e:
-            print(f"Error extracting livingethio item: {e}")
-            continue
-    return results
+                "listing_url": _absolute_url(href, LIVINGETHIO_BASE_URL),
+            }
+        )
+    return listings
 
-EXTRACTORS = {
-    'ethiopiapropertycentre.com': extract_epc,
-    'jiji.com.et': extract_jiji,
-    'zegebeya.com': extract_zegebeya,
-    'ethiopianproperties.com': extract_ethiopianproperties,
-    'livingethio.com': extract_livingethio
+
+EXTRACTORS: Dict[str, Extractor] = {
+    "ethiopiapropertycentre.com": extract_epc,
+    "jiji.com.et": extract_jiji,
+    "zegebeya.com": extract_zegebeya,
+    "ethiopianproperties.com": extract_ethiopianproperties,
+    "livingethio.com": extract_livingethio,
 }
+
+
+def get_extractor(domain: Optional[str]) -> Optional[Extractor]:
+    """Resolve the site-specific extractor for a scraper target domain."""
+    if not domain:
+        return None
+    normalized = domain.lower().strip()
+    if normalized.startswith("www."):
+        normalized = normalized[len("www."):]
+    if normalized in EXTRACTORS:
+        return EXTRACTORS[normalized]
+    for key, extractor in EXTRACTORS.items():
+        if normalized.endswith(f".{key}"):
+            return extractor
+    return None

@@ -1,4 +1,5 @@
 import { test as base } from '@playwright/test';
+import { setupApiMock } from './api-mock';
 import { LoginPage } from '../page-objects/LoginPage';
 import { DashboardPage } from '../page-objects/DashboardPage';
 import { PropertiesPage } from '../page-objects/PropertiesPage';
@@ -24,6 +25,10 @@ type MyFixtures = {
 };
 
 export const test = base.extend<MyFixtures>({
+  page: async ({ page }, use) => {
+    await setupApiMock(page);
+    await use(page);
+  },
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
   },

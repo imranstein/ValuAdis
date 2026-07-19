@@ -1,6 +1,7 @@
 import apiService from './api'
 import type { Property, PropertyCreate, PaginatedResponse } from '~/types'
 import { getAccessToken } from '~/utils/authToken'
+import { useRuntimeConfig } from '#imports'
 
 class PropertyService {
   async getProperties(params?: any): Promise<PaginatedResponse<Property>> {

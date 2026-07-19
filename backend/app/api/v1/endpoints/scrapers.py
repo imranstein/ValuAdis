@@ -2,7 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.rbac import require_staff
+from app.core.scraper_limits import (
+    SCRAPER_LIST_DEFAULT_LIMIT,
+    SCRAPER_LIST_MAX_LIMIT,
+    SCRAPER_LOG_DEFAULT_LIMIT,
+    SCRAPER_LOG_MAX_LIMIT,
+    SCRAPER_RUN_MAX_PAGES,
+    SCRAPER_RUN_MAX_TARGET_ITEMS,
+)
 from app.data.models.user import User
 from app.services.scraper_service import ScraperService
 from app.api.schemas.scraper import (
@@ -11,6 +19,7 @@ from app.api.schemas.scraper import (
     ScraperTargetResponse,
     ScraperLogResponse,
     ScraperStatsResponse,
+    ScraperHealthResponse,
     ScraperTestRequest,
     ScraperTestResponse,
     ScraperRunRequest
@@ -19,6 +28,7 @@ from datetime import datetime
 import asyncio
 import subprocess
 import os
+import sys
 
 router = APIRouter()
 
@@ -26,34 +36,52 @@ router = APIRouter()
 @router.get("/", response_model=List[ScraperTargetResponse])
 def get_all_scrapers(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = SCRAPER_LIST_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get all scraper targets"""
-    scrapers = ScraperService.get_all_scrapers(db, skip=skip, limit=limit)
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), SCRAPER_LIST_MAX_LIMIT)
+    scrapers = ScraperService.get_all_scrapers(db, skip=safe_skip, limit=safe_limit)
     return scrapers
 
 
 @router.get("/stats", response_model=ScraperStatsResponse)
 def get_scraper_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper statistics"""
     return ScraperService.get_scraper_stats(db)
+
+
+@router.get("/health", response_model=List[ScraperHealthResponse])
+def get_scraper_health(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff)
+):
+    """Per-source scraper health for the operations desk"""
+    return ScraperService.get_scraper_health(db)
 
 
 @router.get("/logs", response_model=List[ScraperLogResponse])
 def get_scraper_logs(
     scraper_id: int = None,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = SCRAPER_LOG_DEFAULT_LIMIT,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper logs"""
-    logs = ScraperService.get_scraper_logs(db, scraper_id=scraper_id, skip=skip, limit=limit)
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), SCRAPER_LOG_MAX_LIMIT)
+    logs = ScraperService.get_scraper_logs(
+        db,
+        scraper_id=scraper_id,
+        skip=safe_skip,
+        limit=safe_limit
+    )
     return logs
 
 
@@ -61,7 +89,7 @@ def get_scraper_logs(
 def get_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Get scraper by ID"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)
@@ -77,7 +105,7 @@ def get_scraper(
 def create_scraper(
     scraper_data: ScraperTargetCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Create new scraper target"""
     # Check if domain already exists
@@ -97,7 +125,7 @@ def update_scraper(
     scraper_id: int,
     scraper_data: ScraperTargetUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Update scraper target"""
     # Check if domain is being changed and if it already exists
@@ -122,7 +150,7 @@ def update_scraper(
 def delete_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Delete scraper target"""
     success = ScraperService.delete_scraper(db, scraper_id)
@@ -138,7 +166,7 @@ def delete_scraper(
 def toggle_scraper(
     scraper_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Toggle scraper enabled status"""
     scraper = ScraperService.toggle_scraper(db, scraper_id)
@@ -155,7 +183,7 @@ async def test_scraper(
     scraper_id: int,
     test_data: ScraperTestRequest = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Test scraper configuration"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)
@@ -182,7 +210,7 @@ async def run_scraper(
     scraper_id: int,
     run_data: ScraperRunRequest = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_staff)
 ):
     """Manually trigger scraper run"""
     scraper = ScraperService.get_scraper_by_id(db, scraper_id)
@@ -213,12 +241,15 @@ async def run_scraper(
         backend_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         scraper_script = os.path.join(backend_path, "scraper", "run_scraper.py")
 
-        # Build command
-        cmd = ["python3", scraper_script, "--scraper-id", str(scraper_id)]
+        # Build command. Use the API's interpreter so the worker runs in the
+        # same environment (Playwright, BeautifulSoup, app dependencies).
+        cmd = [sys.executable, scraper_script, "--scraper-id", str(scraper_id)]
         if run_data and run_data.max_pages:
-            cmd.extend(["--max-pages", str(run_data.max_pages)])
+            max_pages = min(max(int(run_data.max_pages), 1), SCRAPER_RUN_MAX_PAGES)
+            cmd.extend(["--max-pages", str(max_pages)])
         if run_data and run_data.target_items:
-            cmd.extend(["--limit", str(run_data.target_items)])
+            target_items = min(max(int(run_data.target_items), 1), SCRAPER_RUN_MAX_TARGET_ITEMS)
+            cmd.extend(["--limit", str(target_items)])
 
         # Start process in background
         process = subprocess.Popen(

@@ -114,16 +114,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAccessToken } from '~/utils/authToken'
 
 definePageMeta({ middleware: 'auth' })
 
 const router = useRouter()
+// Saved filters (U8): persist the operator's registry filter selection per
+// device so it survives navigation and reloads.
+const FILTER_STORAGE_KEY = 'valuadis_property_filters'
 const searchQuery = ref('')
 const selectedMunicipality = ref('')
 const selectedType = ref('')
+
+function restoreFilters() {
+  if (!process.client) return
+  try {
+    const saved = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}')
+    searchQuery.value = saved.search || ''
+    selectedMunicipality.value = saved.municipality || ''
+    selectedType.value = saved.type || ''
+  } catch {
+    /* ignore malformed saved filters */
+  }
+}
+
+watch([searchQuery, selectedMunicipality, selectedType], ([search, municipality, type]) => {
+  if (!process.client) return
+  localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ search, municipality, type }))
+})
 const loading = ref(true)
 const allProperties = ref<any[]>([])
 const config = useRuntimeConfig()
@@ -146,7 +166,10 @@ const metrics = computed(() => [
   { label: 'Under review', value: String(allProperties.value.filter((property) => property.statusClass === 'warn').length), note: 'Require valuation attention' }
 ])
 
-onMounted(loadProperties)
+onMounted(() => {
+  restoreFilters()
+  loadProperties()
+})
 
 async function loadProperties() {
   loading.value = true

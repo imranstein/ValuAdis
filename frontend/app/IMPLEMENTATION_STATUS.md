@@ -1,8 +1,26 @@
 # ValuAdis Frontend Implementation Status
 
-**Date**: 2026-03-02  
-**Status**: Phase 1-4 Complete, Phase 5 In Progress  
-**Completion**: ~40% of full application
+**Date**: 2026-06-06  
+**Status**: Archived implementation snapshot (read-only, deprecated for release-readiness decisions)  
+**Completion**: Historical only; does not represent live readiness.
+
+## Current execution status (2026-06-05) — deprecated source
+
+This file is read-only archival context and must not be used for live release-readiness decisions. Its paired historical archive is `docs/IMPLEMENTATION_STATUS.md`. For live release-readiness status and blocker tracking, use:
+
+- `frontend/tests/e2e/E2E_TEST_PLAN_STATUS.md`
+- `frontend/tests/e2e/TEST_RUN.md`
+- `mobile/docs/MOBILE_TASK_CHECKLIST.md`
+- `mobile/docs/WHATS_LEFT.md`
+
+Latest readiness outcome (2026-06-06) — stale/deprecated:
+
+- Feature implementation and test cases are in place for the current sprint scope.
+- Remaining work is deployment/runtime unblockers, not code paths.
+- Web blockers: Playwright webServer port allocation and browser launch permissions; Firefox missing in local cache.
+- Mobile blockers: Flutter cache write restriction in this host, Android integration runner launch/teardown timeout behavior.
+
+Treat all earlier implementation percentages and phase tables below as historical-only for implementation context.
 
 ---
 
@@ -129,7 +147,7 @@
 
 ---
 
-## 📋 PENDING PHASES
+## 📋 PENDING PHASES (historical snapshot; revalidate at runtime)
 
 ### Phase 6: Valuation System (0% Complete)
 
@@ -239,9 +257,9 @@
 ## 🚀 DEPLOYMENT READINESS
 
 ### Current Status: Development
-- ✅ Development server functional
-- ✅ Hot module replacement working
-- ✅ TypeScript compilation successful
+- ⚠️ Live deployment-readiness assertions are stale due environment blockers
+- ⏳ Development server / HMR verification blocked (`get-port-please` EPERM on localhost bind)
+- ✅ TypeScript compilation successful (historical snapshot)
 - ⏳ Production build not yet tested
 - ⏳ Docker configuration pending
 

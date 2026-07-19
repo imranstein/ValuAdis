@@ -10,9 +10,9 @@ export class DashboardPage {
   constructor(page: Page) {
     this.page = page;
     this.pageTitle = page.locator('h1').first();
-    this.statsCards = page.locator('.stat-card');
-    this.recentActivities = page.locator('.content-card').first();
-    this.quickActions = page.locator('.welcome-actions');
+    this.statsCards = page.locator('.metric-card');
+    this.recentActivities = page.locator('.table-panel').filter({ hasText: 'Recent valuations' });
+    this.quickActions = page.locator('.page-actions');
   }
 
   async goto() {

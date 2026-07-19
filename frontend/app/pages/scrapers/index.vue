@@ -12,7 +12,9 @@
       </button>
     </section>
 
-    <ScraperManagement 
+    <ScraperHealthDesk />
+
+    <ScraperManagement
       :initial-scraper-type="'property'"
     />
   </div>
@@ -21,6 +23,7 @@
 <script setup>
 import { useNotifications } from '~/composables/useNotifications.js'
 import ScraperManagement from '~/components/settings/ScraperManagement.vue'
+import ScraperHealthDesk from '~/components/scraper/ScraperHealthDesk.vue'
 
 definePageMeta({
   middleware: ['auth', 'admin'],

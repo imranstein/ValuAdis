@@ -1,29 +1,15 @@
 import { clearAuthTokens, getAccessToken } from '~/utils/authToken'
+import { isJwtExpired } from '~/utils/jwt'
 
-/**
- * Check if JWT token is expired
- */
-function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return true
+function buildLoginRedirect(path: string, reason?: string) {
+  const query: Record<string, string> = { redirect: path }
+  if (reason) {
+    query.reason = reason
+  }
 
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(char => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .join('')
-    ))
-
-    if (!payload.exp) return true
-
-    const expiryTime = payload.exp * 1000
-    const currentTime = Date.now()
-
-    return expiryTime <= currentTime
-  } catch {
-    return true
+  return {
+    path: '/login',
+    query,
   }
 }
 
@@ -41,23 +27,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const token = getAccessToken()
 
     if (!token) {
-      return navigateTo('/login')
+      return navigateTo(buildLoginRedirect(to.fullPath))
     }
 
-    // Check if token is expired
-    if (isTokenExpired(token)) {
+    if (isJwtExpired(token)) {
       clearAuthTokens()
       authStore.logout()
-      return navigateTo('/login?reason=token-expired')
+      return navigateTo(buildLoginRedirect(to.fullPath, 'token-expired'))
     }
 
-    // Ensure the Pinia store has the user populated
     if (!authStore.user) {
       try {
         await authStore.fetchCurrentUser()
       } catch {
         authStore.logout()
-        return navigateTo('/login')
+        return navigateTo(buildLoginRedirect(to.fullPath))
       }
     }
   }

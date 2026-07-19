@@ -692,7 +692,7 @@ async function loadVehicleForEdit(vehicleId) {
 .page-header {
   margin-bottom: 2rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, var(--green) 0%, var(--green) 100%);
   border-radius: 16px;
   color: white;
   box-shadow: 0 10px 30px rgba(5, 150, 105, 0.2);
@@ -748,25 +748,25 @@ async function loadVehicleForEdit(vehicleId) {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   overflow: hidden;
 }
 
 .section-header {
   padding: 1.5rem 2rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
 }
 
 .section-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--ink-soft);
   margin: 0 0 0.5rem 0;
 }
 
 .section-header p {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -785,10 +785,10 @@ async function loadVehicleForEdit(vehicleId) {
 .form-group h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-soft);
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--line);
 }
 
 .form-row {
@@ -809,7 +809,7 @@ async function loadVehicleForEdit(vehicleId) {
 
 .form-field label {
   font-weight: 500;
-  color: #374151;
+  color: var(--ink-soft);
   font-size: 0.875rem;
 }
 
@@ -817,7 +817,7 @@ async function loadVehicleForEdit(vehicleId) {
 .form-field select,
 .form-field textarea {
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
@@ -827,13 +827,13 @@ async function loadVehicleForEdit(vehicleId) {
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: #059669;
+  border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
 .form-field input.error,
 .form-field select.error {
-  border-color: #ef4444;
+  border-color: var(--red);
 }
 
 .form-field input.error:focus,
@@ -850,8 +850,8 @@ async function loadVehicleForEdit(vehicleId) {
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -861,7 +861,7 @@ async function loadVehicleForEdit(vehicleId) {
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--ink-soft);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -871,7 +871,7 @@ async function loadVehicleForEdit(vehicleId) {
 
 .error-text {
   font-size: 0.75rem;
-  color: #dc2626;
+  color: var(--red);
   margin-top: 0.25rem;
 }
 
@@ -881,13 +881,13 @@ async function loadVehicleForEdit(vehicleId) {
   justify-content: space-between;
   align-items: center;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--line);
   margin-top: 2rem;
 }
 
 .submit-status {
   margin: 1rem 0 0;
-  color: #065f46;
+  color: var(--green-dark);
   font-weight: 700;
 }
 
@@ -905,12 +905,12 @@ async function loadVehicleForEdit(vehicleId) {
 }
 
 .btn-primary {
-  background: #059669;
+  background: var(--green);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #047857;
+  background: var(--green);
   transform: translateY(-1px);
 }
 
@@ -920,14 +920,14 @@ async function loadVehicleForEdit(vehicleId) {
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
 }
 
 .btn-secondary:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: var(--line);
+  border-color: var(--muted);
 }
 
 /* Valuation Preview */
@@ -938,7 +938,7 @@ async function loadVehicleForEdit(vehicleId) {
 .preview-placeholder {
   text-align: center;
   padding: 3rem 2rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .preview-placeholder i {
@@ -958,19 +958,19 @@ async function loadVehicleForEdit(vehicleId) {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--line);
 }
 
 .preview-header h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--ink-soft);
   margin: 0;
 }
 
 .preview-status {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--amber-soft);
+  color: var(--gold);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -988,25 +988,25 @@ async function loadVehicleForEdit(vehicleId) {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   border-radius: 8px;
 }
 
 .value-label {
   font-weight: 500;
-  color: #374151;
+  color: var(--ink-soft);
 }
 
 .value-amount {
   font-weight: 600;
-  color: #059669;
+  color: var(--green);
   font-size: 1.125rem;
 }
 
 .preview-factors h4 {
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--ink-soft);
   margin: 0 0 1rem 0;
 }
 
@@ -1021,19 +1021,19 @@ async function loadVehicleForEdit(vehicleId) {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  background: #f8fafc;
+  background: var(--surface-2);
   border-radius: 6px;
 }
 
 .factor-label {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .factor-value {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--ink-soft);
 }
 
 .preview-disclaimer {
@@ -1041,10 +1041,10 @@ async function loadVehicleForEdit(vehicleId) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-soft);
   border-radius: 8px;
-  color: #1e40af;
+  color: var(--blue);
   font-size: 0.875rem;
 }
 

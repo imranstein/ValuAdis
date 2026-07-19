@@ -9,12 +9,22 @@ import os
 import logging
 from typing import Optional
 
-import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+except ImportError:
+    sentry_sdk = None
+    FastApiIntegration = None
+    SqlalchemyIntegration = None
+    RedisIntegration = None
+    LoggingIntegration = None
+    StarletteIntegration = None
+
+SENTRY_SDK_AVAILABLE = sentry_sdk is not None
 
 from app.core.config import settings
 
@@ -29,6 +39,10 @@ class SentryManager:
         
     def initialize(self) -> bool:
         """Initialize Sentry SDK"""
+        if not SENTRY_SDK_AVAILABLE or sentry_sdk is None:
+            logging.info("Sentry SDK not installed; monitoring disabled")
+            return False
+
         if not self.dsn or self.environment == "development":
             logging.info("Sentry disabled in development environment")
             return False

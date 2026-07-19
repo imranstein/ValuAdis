@@ -6,9 +6,9 @@
         <h1 class="page-title">Register property.</h1>
         <p class="page-subtitle">Complete the property record, location, valuation, ownership, and document fields.</p>
       </div>
-      <button class="btn-secondary" type="button" @click="router.push('/properties')">
+      <button class="btn-secondary" type="button" @click="router.push(backTarget)">
         <i class="pi pi-arrow-left" aria-hidden="true"></i>
-        Properties
+        {{ backLabel }}
       </button>
     </section>
 
@@ -17,10 +17,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import PropertyWizard from '~/components/property/PropertyWizard.vue'
+import { usePersona } from '~/composables/usePersona'
 
 const router = useRouter()
+// Phase E: property owners reach this page from /rentals/my-listings and
+// cannot open the staff /properties registry — send them back to their own
+// shell instead of a route the permission matrix will immediately bounce.
+const { isOwner } = usePersona()
+const backTarget = computed(() => (isOwner.value ? '/rentals/my-listings' : '/properties'))
+const backLabel = computed(() => (isOwner.value ? 'My listings' : 'Properties'))
 </script>
 
 <style scoped>

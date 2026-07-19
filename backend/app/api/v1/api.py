@@ -7,8 +7,18 @@ Main API router for Ethiopian Property Valuation Platform
 from fastapi import APIRouter
 
 # Import all endpoint routers
-from app.api.v1.endpoints import auth, properties, health, valuations, audit, analytics, scrapers, users, vehicles, vehicle_data
-from app.api.v1.endpoints import valuation_feedback, validation
+from app.api.v1.endpoints import health, scrapers, vehicle_data
+from app.api.v1.endpoints import validation
+from app.modules.property import property_router
+from app.modules.vehicle import vehicle_router
+from app.modules.valuation import valuation_router, valuation_feedback_router
+from app.modules.analytics import analytics_router
+from app.modules.audit import audit_router
+from app.modules.auth import auth_router
+from app.modules.users import users_router
+from app.modules.settings import settings_router
+from app.modules.notifications import notifications_router
+from app.modules.rentals import rentals_router
 
 # Create main API router
 api_router = APIRouter()
@@ -21,31 +31,31 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    auth.router,
+    auth_router,
     prefix="/auth",
     tags=["Authentication"]
 )
 
 api_router.include_router(
-    properties.router,
+    property_router,
     prefix="/properties",
     tags=["Properties"]
 )
 
 api_router.include_router(
-    valuations.router,
+    valuation_router,
     prefix="/valuations",
     tags=["Valuations"]
 )
 
 api_router.include_router(
-    audit.router,
+    audit_router,
     prefix="/audit",
     tags=["Audit"]
 )
 
 api_router.include_router(
-    analytics.router,
+    analytics_router,
     prefix="/analytics",
     tags=["Analytics"]
 )
@@ -57,23 +67,41 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    users.router,
+    users_router,
     prefix="/users",
     tags=["Users"]
 )
 
 api_router.include_router(
-    valuation_feedback.router,
+    valuation_feedback_router,
     prefix="/valuation-feedback",
     tags=["Valuation Feedback"],
 )
 
-# vehicles.router already has prefix="/vehicles" defined internally
-api_router.include_router(vehicles.router)
+# vehicle_router already has prefix="/vehicles" defined internally
+api_router.include_router(vehicle_router)
 api_router.include_router(vehicle_data.router)
 
 api_router.include_router(
     validation.router,
     prefix="/validate",
     tags=["Validation"]
+)
+
+api_router.include_router(
+    settings_router,
+    prefix="/settings",
+    tags=["Settings"]
+)
+
+api_router.include_router(
+    notifications_router,
+    prefix="/notifications",
+    tags=["Notifications"]
+)
+
+api_router.include_router(
+    rentals_router,
+    prefix="/rentals",
+    tags=["Rentals"]
 )

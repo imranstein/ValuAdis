@@ -102,9 +102,9 @@ npm run typecheck        # TypeScript type checking
 
 ## 🔐 Authentication
 
-Default test credentials:
-- Email: `admin@valuadis.com`
-- Password: `password123`
+Local test credentials come from environment variables (no passwords in the repo):
+- Email: `ADMIN_EMAIL` (defaults to `admin@valuadis.com`)
+- Password: `ADMIN_PASSWORD` (set when running `backend/create_admin.py`; demo login reads `NUXT_PUBLIC_DEMO_LOGIN_EMAIL` / `NUXT_PUBLIC_DEMO_LOGIN_PASSWORD`)
 
 ## 🗺️ Map Integration
 

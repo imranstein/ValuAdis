@@ -2,7 +2,7 @@
   <main class="landing-page">
     <nav class="landing-nav" aria-label="Public navigation">
       <NuxtLink to="/" class="landing-brand">
-        <span class="landing-mark">V</span>
+        <span class="landing-mark" aria-hidden="true">V</span>
         <span>ValuAdis</span>
       </NuxtLink>
       <div class="landing-links">
@@ -15,28 +15,39 @@
 
     <section class="landing-hero">
       <div class="hero-copy">
-        <p class="page-kicker">Municipal valuation infrastructure</p>
-        <h1>ValuAdis</h1>
+        <p class="hero-kicker">Municipal valuation infrastructure</p>
+        <h1>
+          A civic ledger for
+          <em>Ethiopian valuation</em>
+          work.
+        </h1>
         <p class="hero-lede">
-          A civic ledger for Ethiopian valuation teams: property evidence, jurisdiction records,
-          AI-assisted estimates, approvals, and exportable audit packs in one operating desk.
+          Property and vehicle evidence, jurisdiction records, AI-assisted estimates, review
+          approvals, and exportable audit packs — kept together in one operating desk.
         </p>
         <div class="hero-actions">
           <NuxtLink to="/login" class="btn-primary">Enter workspace</NuxtLink>
+          <a href="#workflow" class="hero-secondary">See the workflow</a>
         </div>
       </div>
 
       <div class="hero-stage" aria-label="ValuAdis operating preview">
-        <img src="/images/valuadis-civic-ledger-hero.png" alt="" class="hero-image" />
+        <img
+          src="/images/valuadis-civic-ledger-hero.png"
+          alt=""
+          class="hero-image"
+          width="1200"
+          height="900"
+        />
         <div class="case-file">
           <div class="case-file-head">
-            <span>Case file</span>
-            <strong>AA-BOL-0427</strong>
+            <span>Specimen record</span>
+            <strong>Case file</strong>
           </div>
           <dl>
             <div>
               <dt>Jurisdiction</dt>
-              <dd>Bole Sub-City</dd>
+              <dd>Sub-city registry</dd>
             </div>
             <div>
               <dt>Asset class</dt>
@@ -44,11 +55,11 @@
             </div>
             <div>
               <dt>Review state</dt>
-              <dd>Valuer approved</dd>
+              <dd>Draft &rarr; approved</dd>
             </div>
           </dl>
         </div>
-        <div class="map-ledger" aria-hidden="true">
+        <div class="parcel-motif" aria-hidden="true">
           <span></span>
           <span></span>
           <span></span>
@@ -74,7 +85,7 @@
 
     <section id="operating-desk" class="landing-band desk-band">
       <div class="section-head">
-        <p class="page-kicker">Operating desk</p>
+        <p class="section-kicker">Operating desk</p>
         <h2>Built around the record, not the presentation.</h2>
       </div>
 
@@ -82,11 +93,11 @@
         <article class="desk-panel primary-panel">
           <div class="panel-meta">
             <span>Registry intake</span>
-            <strong>Evidence complete</strong>
+            <strong>Evidence stays connected</strong>
           </div>
-          <h3>Property files stay connected to location, valuation, and approval history.</h3>
+          <h3>Property files keep location, valuation, and approval history in one dossier.</h3>
           <p>
-            Municipal teams can review parcel data, ownership evidence, comparable signals, and
+            Municipal teams review parcel data, ownership evidence, comparable signals, and
             generated reports without moving between disconnected files.
           </p>
         </article>
@@ -97,10 +108,10 @@
           <p>Valuation output follows the configured proclamation calculation contract.</p>
         </article>
 
-        <article class="desk-panel table-panel">
+        <article class="desk-panel ledger-panel">
           <div class="ledger-row">
             <span>Residential parcels</span>
-            <strong>Ready</strong>
+            <strong>Registry</strong>
           </div>
           <div class="ledger-row">
             <span>Commercial blocks</span>
@@ -108,11 +119,11 @@
           </div>
           <div class="ledger-row">
             <span>Vehicle asset files</span>
-            <strong>Synced</strong>
+            <strong>Valuation</strong>
           </div>
           <div class="ledger-row">
             <span>Audit exports</span>
-            <strong>Queued</strong>
+            <strong>Reporting</strong>
           </div>
         </article>
       </div>
@@ -120,7 +131,7 @@
 
     <section id="workflow" class="workflow-band">
       <div class="section-head">
-        <p class="page-kicker">Workflow</p>
+        <p class="section-kicker">Workflow</p>
         <h2>One disciplined path from intake to certificate.</h2>
       </div>
 
@@ -158,7 +169,7 @@
 
     <section id="assurance" class="assurance-band">
       <div class="assurance-copy">
-        <p class="page-kicker">Assurance</p>
+        <p class="section-kicker">Assurance</p>
         <h2>Controls that make public-sector review defensible.</h2>
         <p>
           ValuAdis keeps role access, workflow state, valuation evidence, and export history visible
@@ -182,7 +193,7 @@
     </section>
 
     <footer class="landing-footer">
-      <span>ValuAdis civic valuation ledger</span>
+      <span>ValuAdis &mdash; civic valuation ledger</span>
       <NuxtLink to="/login">Workspace sign in</NuxtLink>
     </footer>
   </main>
@@ -197,24 +208,25 @@ definePageMeta({ layout: 'landing' })
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    linear-gradient(rgba(23, 26, 23, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(23, 26, 23, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(27, 35, 29, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 35, 29, 0.03) 1px, transparent 1px),
     var(--canvas);
   background-size: 56px 56px, 56px 56px, auto;
   color: var(--ink);
 }
 
+/* --- Navigation --- */
 .landing-nav {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 20;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
+  gap: var(--space-5);
   height: 72px;
-  border-bottom: 1px solid rgba(215, 221, 212, 0.84);
-  background: rgba(246, 247, 244, 0.92);
+  border-bottom: 1px solid rgba(222, 216, 198, 0.85);
+  background: rgba(246, 243, 234, 0.92);
   padding: 0 clamp(18px, 5vw, 64px);
   backdrop-filter: blur(14px);
 }
@@ -229,11 +241,11 @@ definePageMeta({ layout: 'landing' })
 }
 
 .landing-brand {
-  gap: 10px;
+  gap: var(--space-3);
   color: var(--ink);
-  font-family: var(--display);
-  font-size: 24px;
-  font-weight: 750;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
 }
 
 .landing-mark {
@@ -244,20 +256,21 @@ definePageMeta({ layout: 'landing' })
   border-radius: var(--radius);
   background: var(--green);
   color: var(--surface);
+  font-size: 20px;
 }
 
 .landing-links {
-  gap: 26px;
+  gap: var(--space-5);
 }
 
 .landing-links a,
 .landing-login {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  transition: color 160ms var(--ease), border-color 160ms var(--ease), background-color 160ms var(--ease);
+  transition: color var(--duration-normal) var(--ease), border-color var(--duration-normal) var(--ease), background-color var(--duration-normal) var(--ease);
 }
 
 .landing-links a:hover,
@@ -266,11 +279,16 @@ definePageMeta({ layout: 'landing' })
 }
 
 .landing-login {
-  min-height: 38px;
-  border: 1px solid var(--line);
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--surface);
-  padding: 0 14px;
+  padding: 0 var(--space-4);
+}
+
+.landing-login:hover {
+  border-color: var(--green);
+  color: var(--green);
 }
 
 .landing-login:active,
@@ -278,14 +296,15 @@ definePageMeta({ layout: 'landing' })
   transform: scale(0.98);
 }
 
+/* --- Hero --- */
 .landing-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 0.95fr);
   gap: clamp(28px, 5vw, 74px);
   min-height: 94vh;
   align-items: center;
-  padding: 122px clamp(18px, 5vw, 64px) 132px;
+  padding: 128px clamp(18px, 5vw, 64px) 148px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -293,62 +312,100 @@ definePageMeta({ layout: 'landing' })
   position: relative;
   z-index: 2;
   max-width: 760px;
+  animation: rise 640ms var(--ease) both;
 }
 
-.page-kicker {
-  margin: 0 0 16px;
-  color: var(--green);
+.hero-kicker,
+.section-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  color: var(--gold);
   font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+}
+
+.hero-kicker::before,
+.section-kicker::before {
+  content: "";
+  width: 34px;
+  height: 2px;
+  background: var(--gold-bright);
 }
 
 .hero-copy h1 {
   margin: 0;
-  font-family: var(--display);
-  font-size: clamp(76px, 12vw, 164px);
-  font-weight: 760;
-  letter-spacing: 0;
-  line-height: 0.84;
+  font-family: var(--serif);
+  font-size: clamp(52px, 8vw, 108px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 0.98;
+}
+
+.hero-copy h1 em {
+  color: var(--green);
+  font-style: italic;
+  font-weight: 500;
 }
 
 .hero-lede {
-  max-width: 660px;
-  margin: 28px 0 0;
+  max-width: 620px;
+  margin: var(--space-5) 0 0;
   color: var(--ink-soft);
-  font-size: clamp(18px, 2vw, 23px);
-  line-height: 1.55;
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.6;
 }
 
 .hero-actions {
   display: flex;
-  margin-top: 32px;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
 }
 
 .btn-primary {
-  min-height: 46px;
+  min-height: 48px;
   justify-content: center;
   border-radius: var(--radius);
   background: var(--green);
-  padding: 0 18px;
+  padding: 0 var(--space-5);
   color: var(--surface);
-  font-weight: 850;
-  transition: transform 160ms var(--ease), background-color 160ms var(--ease);
+  font-weight: 700;
+  transition: transform var(--duration-fast) var(--ease), background-color var(--duration-normal) var(--ease);
 }
 
 .btn-primary:hover {
   background: var(--green-dark);
 }
 
+.hero-secondary {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--gold-bright);
+  padding-bottom: 3px;
+  transition: color var(--duration-normal) var(--ease);
+}
+
+.hero-secondary:hover {
+  color: var(--green);
+}
+
 .hero-stage {
   position: relative;
-  min-height: min(68vh, 680px);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  min-height: min(64vh, 640px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
+  animation: rise 640ms var(--ease) 120ms both;
 }
 
 .hero-image {
@@ -359,7 +416,7 @@ definePageMeta({ layout: 'landing' })
   display: block;
   object-fit: cover;
   opacity: 0.82;
-  filter: saturate(0.8) contrast(0.98);
+  filter: saturate(0.78) contrast(0.98) sepia(0.06);
 }
 
 .hero-stage::after {
@@ -367,19 +424,19 @@ definePageMeta({ layout: 'landing' })
   inset: 0;
   content: "";
   background:
-    linear-gradient(180deg, rgba(252, 252, 250, 0.06), rgba(23, 26, 23, 0.18)),
-    linear-gradient(90deg, rgba(252, 252, 250, 0.82) 0%, rgba(252, 252, 250, 0.28) 44%, rgba(23, 26, 23, 0.16) 100%);
+    linear-gradient(180deg, rgba(252, 250, 243, 0.05), rgba(19, 31, 24, 0.22)),
+    linear-gradient(90deg, rgba(252, 250, 243, 0.8) 0%, rgba(252, 250, 243, 0.24) 44%, rgba(19, 31, 24, 0.18) 100%);
 }
 
 .case-file {
   position: absolute;
-  left: 24px;
-  bottom: 24px;
+  left: var(--space-5);
+  bottom: var(--space-5);
   z-index: 2;
   width: min(360px, calc(100% - 48px));
-  border: 1px solid rgba(215, 221, 212, 0.92);
+  border: 1px solid rgba(222, 216, 198, 0.92);
   border-radius: var(--radius);
-  background: rgba(252, 252, 250, 0.92);
+  background: rgba(252, 250, 243, 0.94);
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(12px);
 }
@@ -387,9 +444,9 @@ definePageMeta({ layout: 'landing' })
 .case-file-head {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--space-4);
   border-bottom: 1px solid var(--line);
-  padding: 14px 16px;
+  padding: var(--space-3) var(--space-4);
 }
 
 .case-file-head span,
@@ -399,9 +456,13 @@ definePageMeta({ layout: 'landing' })
 .assurance-ledger span {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.09em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.case-file-head span {
+  color: var(--gold);
 }
 
 .case-file-head strong,
@@ -416,15 +477,15 @@ definePageMeta({ layout: 'landing' })
 
 .case-file dl {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0;
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .case-file dl div {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--space-4);
 }
 
 .case-file dd {
@@ -434,48 +495,53 @@ definePageMeta({ layout: 'landing' })
   text-align: right;
 }
 
-.map-ledger {
+/* Cadastral parcel motif */
+.parcel-motif {
   position: absolute;
-  top: 24px;
-  right: 24px;
+  top: var(--space-5);
+  right: var(--space-5);
   z-index: 2;
   display: grid;
   grid-template-columns: 1fr 0.8fr;
-  gap: 8px;
+  gap: var(--space-2);
   width: min(220px, 42%);
   aspect-ratio: 1.2;
-  opacity: 0.82;
+  opacity: 0.85;
 }
 
-.map-ledger span {
-  border: 1px solid rgba(31, 107, 79, 0.44);
-  background: rgba(223, 233, 227, 0.62);
+.parcel-motif span {
+  border: 1px solid rgba(199, 154, 62, 0.72);
+  background: rgba(243, 233, 208, 0.4);
 }
 
-.map-ledger span:nth-child(1) {
+.parcel-motif span:nth-child(1) {
   grid-row: span 2;
+  border-color: rgba(35, 92, 67, 0.55);
+  background: rgba(223, 232, 221, 0.5);
 }
 
-.map-ledger span:nth-child(3) {
+.parcel-motif span:nth-child(3) {
   margin-left: 22px;
 }
 
 .hero-ledger {
   position: absolute;
   right: clamp(18px, 5vw, 64px);
-  bottom: 34px;
+  bottom: 40px;
   left: clamp(18px, 5vw, 64px);
   display: grid;
   grid-template-columns: 1.1fr 0.9fr 0.8fr;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
+  border-top: 2px solid var(--gold-bright);
   border-radius: var(--radius);
-  background: rgba(252, 252, 250, 0.94);
+  background: rgba(252, 250, 243, 0.95);
   box-shadow: var(--shadow-sm);
+  animation: rise 640ms var(--ease) 240ms both;
 }
 
 .hero-ledger div {
   min-width: 0;
-  padding: 17px 18px;
+  padding: var(--space-4) var(--space-4);
   border-right: 1px solid var(--line);
 }
 
@@ -485,12 +551,14 @@ definePageMeta({ layout: 'landing' })
 
 .hero-ledger strong {
   display: block;
-  margin-top: 8px;
-  color: var(--ink);
-  font-size: clamp(18px, 2vw, 27px);
-  line-height: 1.1;
+  margin-top: var(--space-2);
+  color: var(--green);
+  font-size: clamp(15px, 1.6vw, 20px);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
+/* --- Bands --- */
 .landing-band,
 .workflow-band,
 .assurance-band {
@@ -498,18 +566,18 @@ definePageMeta({ layout: 'landing' })
 }
 
 .section-head {
-  max-width: 820px;
-  margin-bottom: 30px;
+  max-width: 860px;
+  margin-bottom: var(--space-6);
 }
 
 .section-head h2,
 .assurance-copy h2 {
   margin: 0;
-  font-family: var(--display);
-  font-size: clamp(40px, 6vw, 76px);
-  font-weight: 760;
-  letter-spacing: 0;
-  line-height: 0.98;
+  font-family: var(--serif);
+  font-size: clamp(38px, 5.4vw, 68px);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.02;
 }
 
 .desk-grid {
@@ -518,7 +586,7 @@ definePageMeta({ layout: 'landing' })
   grid-template-areas:
     "primary metric"
     "primary table";
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .desk-panel {
@@ -540,15 +608,15 @@ definePageMeta({ layout: 'landing' })
 .primary-panel h3 {
   max-width: 830px;
   margin: 0;
-  font-family: var(--display);
-  font-size: clamp(34px, 5vw, 68px);
-  font-weight: 740;
-  line-height: 1;
+  font-family: var(--serif);
+  font-size: clamp(32px, 4.6vw, 58px);
+  font-weight: 600;
+  line-height: 1.04;
 }
 
 .primary-panel p {
   max-width: 720px;
-  margin: 24px 0 0;
+  margin: var(--space-5) 0 0;
   color: var(--muted);
   font-size: 17px;
   line-height: 1.62;
@@ -557,11 +625,11 @@ definePageMeta({ layout: 'landing' })
 .panel-meta {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--space-4);
   color: var(--muted);
   font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -572,22 +640,25 @@ definePageMeta({ layout: 'landing' })
 .metric-panel {
   grid-area: metric;
   min-height: 190px;
-  padding: 24px;
+  border-top: 2px solid var(--gold-bright);
+  padding: var(--space-5);
 }
 
 .metric-panel strong {
   display: block;
-  margin-top: 18px;
-  font-size: clamp(32px, 4vw, 50px);
+  margin-top: var(--space-4);
+  color: var(--green);
+  font-size: clamp(30px, 3.6vw, 44px);
+  font-weight: 600;
   line-height: 1;
 }
 
 .metric-panel p {
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
   color: var(--muted);
 }
 
-.table-panel {
+.ledger-panel {
   grid-area: table;
   overflow: hidden;
 }
@@ -595,8 +666,8 @@ definePageMeta({ layout: 'landing' })
 .ledger-row {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px 20px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--line);
 }
 
@@ -607,17 +678,18 @@ definePageMeta({ layout: 'landing' })
 .ledger-row span {
   min-width: 0;
   color: var(--ink-soft);
-  font-weight: 740;
+  font-weight: 600;
 }
 
 .ledger-row strong {
-  color: var(--green);
+  color: var(--gold);
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
+/* --- Workflow --- */
 .workflow-band {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -631,8 +703,8 @@ definePageMeta({ layout: 'landing' })
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--line);
-  border: 1px solid var(--line);
+  background: var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -640,10 +712,10 @@ definePageMeta({ layout: 'landing' })
 .workflow-list li {
   display: grid;
   grid-template-columns: 68px minmax(0, 1fr);
-  gap: 20px;
+  gap: var(--space-4);
   min-height: 190px;
   background: var(--surface);
-  padding: 24px;
+  padding: var(--space-5);
 }
 
 .workflow-list li:nth-child(2),
@@ -652,17 +724,17 @@ definePageMeta({ layout: 'landing' })
 }
 
 .workflow-list span {
-  color: var(--green);
+  color: var(--gold);
   font-family: var(--mono);
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .workflow-list h3 {
-  margin: 0 0 14px;
-  font-family: var(--display);
+  margin: 0 0 var(--space-3);
+  font-family: var(--serif);
   font-size: 34px;
-  font-weight: 740;
+  font-weight: 600;
 }
 
 .workflow-list p {
@@ -672,6 +744,7 @@ definePageMeta({ layout: 'landing' })
   line-height: 1.58;
 }
 
+/* --- Assurance --- */
 .assurance-band {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
@@ -679,9 +752,9 @@ definePageMeta({ layout: 'landing' })
   align-items: end;
 }
 
-.assurance-copy p:not(.page-kicker) {
+.assurance-copy p:not(.section-kicker) {
   max-width: 640px;
-  margin: 24px 0 0;
+  margin: var(--space-5) 0 0;
   color: var(--muted);
   font-size: 17px;
   line-height: 1.62;
@@ -690,6 +763,7 @@ definePageMeta({ layout: 'landing' })
 .assurance-ledger {
   display: grid;
   border: 1px solid var(--line);
+  border-top: 2px solid var(--gold-bright);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -699,8 +773,8 @@ definePageMeta({ layout: 'landing' })
 .assurance-ledger div {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  padding: 22px 24px;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5);
   border-bottom: 1px solid var(--line);
 }
 
@@ -716,36 +790,41 @@ definePageMeta({ layout: 'landing' })
   white-space: nowrap;
 }
 
+/* --- Footer --- */
 .landing-footer {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--space-4);
   border-top: 1px solid var(--line);
-  padding: 28px clamp(18px, 5vw, 64px);
+  padding: var(--space-6) clamp(18px, 5vw, 64px);
   color: var(--muted);
   font-size: 13px;
-  font-weight: 760;
+  font-weight: 600;
 }
 
 .landing-footer a {
   color: var(--green);
   text-decoration: none;
-  transition: color 160ms var(--ease);
+  transition: color var(--duration-normal) var(--ease);
 }
 
 .landing-footer a:hover {
   color: var(--green-dark);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 1ms !important;
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+/* --- Responsive --- */
 @media (max-width: 980px) {
   .landing-links {
     display: none;
@@ -799,11 +878,11 @@ definePageMeta({ layout: 'landing' })
   }
 
   .landing-brand {
-    font-size: 21px;
+    font-size: 22px;
   }
 
   .landing-login {
-    min-height: 36px;
+    min-height: 40px;
   }
 
   .landing-hero {
@@ -814,16 +893,22 @@ definePageMeta({ layout: 'landing' })
     min-height: 360px;
   }
 
+  .hero-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
   .case-file {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: var(--space-3);
     width: auto;
   }
 
-  .map-ledger {
-    top: 14px;
-    right: 14px;
+  .parcel-motif {
+    top: var(--space-3);
+    right: var(--space-3);
     width: 46%;
   }
 
@@ -833,7 +918,7 @@ definePageMeta({ layout: 'landing' })
   .ledger-row {
     align-items: flex-start;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .case-file dd {

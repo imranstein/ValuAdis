@@ -1,36 +1,80 @@
 {
-  "$schema": "ValuAdis design tokens for web (CSS) and mobile (Flutter) parity",
+  "$schema": "ValuAdis design tokens for web (CSS) and mobile (Flutter) parity — Ethiopian civic-tech ledger",
   "colors": {
     "primary": {
-      "main": "#0f172a",
-      "hover": "#1e293b",
-      "light": "#334155",
-      "50": "#f8fafc",
-      "100": "#f1f5f9"
+      "main": "#235c43",
+      "hover": "#163c2b",
+      "light": "#5c8a70",
+      "soft": "#dfe8dd",
+      "50": "#eef3ee",
+      "100": "#dfe8dd"
     },
     "accent": {
-      "main": "#2dd4bf",
-      "hover": "#14b8a6",
-      "muted": "#99f6e4",
-      "50": "#f0fdfa"
+      "main": "#8a5f14",
+      "bright": "#c79a3e",
+      "hover": "#6e4b10",
+      "muted": "#e7d3a2",
+      "50": "#faf4e4"
     },
     "surface": {
-      "default": "#ffffff",
-      "elevated": "#fafaf9"
+      "canvas": "#f6f3ea",
+      "default": "#fcfaf3",
+      "elevated": "#eeeadd",
+      "sunken": "#e5e0cf"
+    },
+    "shell": {
+      "background": "#131f18",
+      "raised": "#1c2b21",
+      "active": "#23392c",
+      "text": "#f1eee0",
+      "muted": "#9db0a0",
+      "gold": "#d3a94c"
     },
     "text": {
-      "primary": "#0f172a",
-      "secondary": "#64748b",
-      "muted": "#94a3b8"
+      "primary": "#1b231d",
+      "secondary": "#39443b",
+      "muted": "#5c665d"
+    },
+    "border": {
+      "default": "#ded8c6",
+      "strong": "#c2bba4"
+    },
+    "semantic": {
+      "success": "#235c43",
+      "successSoft": "#dfe8dd",
+      "warning": "#8a5f14",
+      "warningSoft": "#f3e9d0",
+      "danger": "#9d3a28",
+      "dangerSoft": "#f3ddd5",
+      "info": "#33566a",
+      "infoSoft": "#dfe8ec"
     }
   },
+  "typography": {
+    "display": "Cormorant Garamond",
+    "body": "DM Sans",
+    "mono": "JetBrains Mono"
+  },
   "spacing": {
+    "scale": [4, 8, 12, 16, 24, 32, 48, 64, 96],
     "touchTargetMinHeight": 44
   },
   "borderRadius": {
-    "sm": "0.375rem",
+    "sm": "0.25rem",
     "md": "0.5rem",
     "lg": "0.75rem",
-    "xl": "1rem"
+    "xl": "1rem",
+    "full": "999px"
+  },
+  "shadows": {
+    "sm": "0 8px 24px rgba(27, 35, 29, 0.06)",
+    "md": "0 18px 45px rgba(27, 35, 29, 0.09)",
+    "lg": "0 28px 70px rgba(27, 35, 29, 0.14)"
+  },
+  "motion": {
+    "fast": "120ms",
+    "normal": "180ms",
+    "slow": "320ms",
+    "ease": "cubic-bezier(0.23, 1, 0.32, 1)"
   }
 }

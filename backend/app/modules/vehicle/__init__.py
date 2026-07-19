@@ -1,23 +1,19 @@
 """
 Vehicle Valuation Module
 
-Handles vehicle valuation operations including:
-- Vehicle data collection and validation
-- Market value calculation using AI
-- Ethiopian vehicle market integration
-- Certificate generation for vehicle valuations
+Single owner of the vehicle stack: /api/v1/vehicles routes, request/response
+schemas, and the Ethiopian-market valuation engine.
 """
 
 from .routes import router as vehicle_router
-from .services import VehicleValuationService
-from .models import Vehicle, VehicleValuation
-from .repositories import VehicleRepository, VehicleValuationRepository
+from .services import VehicleValuationService, vehicle_valuation_service
+from .models import Vehicle, VehicleValuation, VehicleValuationStatus
 
 __all__ = [
     "vehicle_router",
     "VehicleValuationService",
+    "vehicle_valuation_service",
     "Vehicle",
     "VehicleValuation",
-    "VehicleRepository",
-    "VehicleValuationRepository",
+    "VehicleValuationStatus",
 ]

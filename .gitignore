@@ -16,6 +16,10 @@ eggs/
 .eggs/
 lib/
 lib64/
+# The Flutter app's source lives under mobile/lib — the Python lib/ rule above
+# must not swallow it.
+!mobile/lib/
+!mobile/lib/**
 parts/
 sdist/
 var/
@@ -83,6 +87,8 @@ uploads/
 *.key
 secrets/
 .env.production
+.cpanel.env.*
+valuadis_ocr.txt
 
 # Testing
 .coverage
@@ -90,12 +96,20 @@ htmlcov/
 .pytest_cache/
 coverage/
 .nyc_output/
+# Local test artifacts
+playwright-transform-cache-*/
+pytest-of-imranabdul/
 
 # Documentation (as requested)
 Docs/
 .windsurf/
 .agent/
 .cursor/
+
+# Local scratch files
+AGENT_BRIEF.md
+DESIGN.md
+PRODUCT.md
 
 # Logs
 logs/
@@ -119,3 +133,12 @@ frontend/test-results/
 **/test-results/
 **/playwright-report/
 CLAUDE.local.md
+
+# Generated reports / caches
+reports/
+backend/stress_test/reports/
+frontend/.playwright_cache/
+nitro-worker-*.sock
+
+# Agent-native local plan bridge tokens
+plans/**/.plan-url

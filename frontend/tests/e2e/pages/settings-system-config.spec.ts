@@ -29,16 +29,19 @@ test.describe('System settings completion', () => {
   test('updates email, rate-limit, and API key settings', async ({ page }) => {
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByTestId('email-settings-section')).toBeVisible();
-    await expect(page.getByTestId('rate-limit-settings-section')).toBeVisible();
-    await expect(page.getByTestId('api-key-settings-section')).toBeVisible();
+    await expect(page.locator('.panel-title', { hasText: 'Email delivery' })).toBeVisible();
+    await expect(page.locator('.panel-title', { hasText: 'Security limits' })).toBeVisible();
+    await expect(page.locator('.panel-title', { hasText: 'API keys' })).toBeVisible();
 
-    await page.getByTestId('smtp-host-input').fill('smtp.valuadis.et');
-    await page.getByTestId('rate-limit-input').fill('1200');
-    await page.getByTestId('generate-api-key-button').click();
-    await page.getByTestId('settings-save-button').click();
+    await page.locator('.field', { hasText: 'SMTP host' }).locator('input').fill('smtp.valuadis.et');
+    await page.locator('.field', { hasText: 'Requests per window' }).locator('input').fill('1200');
 
-    await expect(page.getByTestId('api-key-row')).toHaveCount(3);
-    await expect(page.getByTestId('settings-save-status')).toContainText('Settings saved');
+    const keyRows = page.locator('.table-panel tbody tr:not(:has(.empty-cell))');
+    page.once('dialog', (dialog) => dialog.accept('Config key'));
+    await page.getByRole('button', { name: /create api key/i }).click();
+    await expect(keyRows).toHaveCount(1);
+
+    await page.getByRole('button', { name: /save settings/i }).click();
+    await expect(page.locator('.table-panel .panel-subtitle')).toContainText(/Saved to backend/i);
   });
 });

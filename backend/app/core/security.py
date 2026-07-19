@@ -6,6 +6,7 @@ JWT authentication, password hashing, and security utilities
 
 from datetime import datetime, timedelta
 from typing import Optional, Union
+from uuid import uuid4
 from jose import JWTError, jwt
 import bcrypt
 import base64
@@ -18,38 +19,32 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash with direct bcrypt"""
+    """Verify a password against its bcrypt hash.
+
+    Fails closed: anything that is not a bcrypt hash (plaintext, SHA-256,
+    corrupt values) never verifies.
+    """
+    if not hashed_password or not hashed_password.startswith('$2'):
+        return False
+
+    # Truncate password to 72 characters max for bcrypt compatibility
+    if len(plain_password) > 72:
+        plain_password = plain_password[:72]
+
     try:
-        # Truncate password to 72 characters max for bcrypt compatibility
-        if len(plain_password) > 72:
-            plain_password = plain_password[:72]
-        
-        # If the hash doesn't look like a bcrypt hash, compare directly (for testing only)
-        if not hashed_password.startswith('$2'):
-            return plain_password == hashed_password
-            
-        # Use direct bcrypt to avoid passlib context issues
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-    except Exception:
-        # Fallback to direct comparison if bcrypt fails
-        return plain_password == hashed_password
+    except ValueError:
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Generate password hash with direct bcrypt"""
-    try:
-        # Truncate password to 72 characters max for bcrypt compatibility
-        if len(password) > 72:
-            password = password[:72]
-        
-        # Generate salt and hash directly
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8')
-    except Exception as e:
-        # Fallback to simple hash if bcrypt fails
-        import hashlib
-        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    # Truncate password to 72 characters max for bcrypt compatibility
+    if len(password) > 72:
+        password = password[:72]
+
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -70,7 +65,8 @@ def create_refresh_token(data: dict) -> str:
     """Create JWT refresh token"""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
+    # jti makes every refresh token unique so rotation always changes the value
+    to_encode.update({"exp": expire, "type": "refresh", "jti": str(uuid4())})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 

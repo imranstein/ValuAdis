@@ -12,19 +12,34 @@ echo "🚀 Running ValuAdis E2E Tests - Phase: $PHASE, Type: $TEST_TYPE"
 
 # Check if services are running
 echo "📋 Checking services..."
-if ! curl -s http://localhost:3020/ > /dev/null; then
-    echo "❌ Frontend is not running on http://localhost:3020"
+
+FRONTEND_URL="${E2E_BASE_URL:-http://127.0.0.1:${E2E_FRONTEND_PORT:-3020}}"
+BACKEND_URL="${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8020}"
+
+check_service() {
+  local url="$1"
+  local name="$2"
+  if ! curl -fsS "$url" > /dev/null; then
+    echo "❌ $name is not available at $url"
+    return 1
+  fi
+  echo "✅ $name is available at $url"
+}
+
+if [[ "${E2E_SKIP_FRONTEND_CHECK:-0}" != "1" ]]; then
+  if ! check_service "$FRONTEND_URL" "Frontend"; then
     echo "Please start the frontend with: npm run dev"
     exit 1
+  fi
 fi
 
-if ! curl -s http://localhost:8020/health > /dev/null; then
-    echo "❌ Backend is not running on http://localhost:8020"
+if [[ "${E2E_SKIP_BACKEND_CHECK:-0}" != "1" ]]; then
+  if ! check_service "${BACKEND_URL}/health" "Backend"; then
     echo "Please start the backend with: docker-compose up backend"
     exit 1
+  fi
 fi
-
-echo "✅ Services are running"
+echo "✅ Services check completed"
 
 # Run tests based on phase and type
 case $PHASE in

@@ -6,7 +6,7 @@ Following ValuAdis clean architecture and Ethiopian compliance requirements
 """
 
 from datetime import datetime, timedelta
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Enum as SQLEnum, func
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Enum as SQLEnum, CheckConstraint, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from geoalchemy2 import Geometry
@@ -34,6 +34,19 @@ class PropertyType(str, enum.Enum):
     RESIDENTIAL = "residential"
     COMMERCIAL = "commercial"
     AGRICULTURAL = "agricultural"
+
+
+class ValuationPurpose(str, enum.Enum):
+    """
+    Valuation purpose enumeration.
+
+    Rent valuations reuse the Valuation model (and its draft/pending/approved
+    state machine) instead of a separate table — see
+    plans/valuadis-rentals/plan.mdx ("Rent valuations are Valuation rows
+    with purpose='rent'").
+    """
+    SALE = "sale"
+    RENT = "rent"
 
 
 class Valuation(Base):
@@ -64,6 +77,11 @@ class Valuation(Base):
     
     # Status and workflow
     status = Column(SQLEnum(ValuationStatus), default=ValuationStatus.DRAFT, nullable=False, index=True)
+
+    # 'sale' (market value, the original behavior) or 'rent' (suggested
+    # monthly rent). Plain string + CHECK constraint rather than a native
+    # DB enum type — see migration 2026_07_19_0900 for rationale.
+    purpose = Column(String(10), nullable=False, server_default=ValuationPurpose.SALE.value, index=True)
     
     # Spatial data - PostGIS Geometry for property boundaries
     coordinates = Column(
@@ -89,7 +107,11 @@ class Valuation(Base):
     user = relationship("User", back_populates="valuations")
     property = relationship("Property", back_populates="valuations")
     feedback = relationship("ValuationFeedback", back_populates="valuation")
-    
+
+    __table_args__ = (
+        CheckConstraint("purpose IN ('sale', 'rent')", name="ck_valuations_purpose"),
+    )
+
     def __repr__(self):
         """String representation of valuation"""
         return (
@@ -109,6 +131,7 @@ class Valuation(Base):
             "market_value": self.market_value,
             "taxable_value": self.taxable_value,
             "status": self.status.value if self.status else None,
+            "purpose": self.purpose or ValuationPurpose.SALE.value,
             "valuation_date": self.valuation_date.isoformat() if self.valuation_date else None,
             "notes": self.notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,

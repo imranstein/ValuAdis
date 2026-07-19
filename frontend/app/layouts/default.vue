@@ -61,8 +61,9 @@
           <button class="action-btn" type="button" aria-label="Search" @click="toggleSearch">
             <i class="pi pi-search" aria-hidden="true"></i>
           </button>
-          <button class="action-btn" type="button" aria-label="Notifications" @click="toggleNotifications">
+          <button class="action-btn notif-btn" type="button" aria-label="Notifications" @click="toggleNotifications">
             <i class="pi pi-bell" aria-hidden="true"></i>
+            <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
           <button class="header-avatar" type="button" aria-label="Profile menu" @click="toggleProfileMenu">
             {{ userInitials }}
@@ -153,7 +154,11 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions.js'
-import { clearAuthTokens, getAccessToken } from '~/utils/authToken'
+import { usePersona } from '~/composables/usePersona'
+import { useI18n } from '~/composables/useI18n'
+import { getAccessToken } from '~/utils/authToken'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -163,6 +168,7 @@ const {
   canManageUsers,
   hasPermission
 } = usePermissions()
+const { persona } = usePersona()
 
 const sidebarOpen = ref(false)
 const showNotifications = ref(false)
@@ -187,36 +193,99 @@ type NavigationGroup = {
   items: NavigationItem[]
 }
 
-const navigation = computed<NavigationGroup[]>(() => [
+// Phase E: role-scoped nav. Staff keep the full pre-rentals workspace (plus
+// the rentals module, since staff/admin has full access there too).
+// Officers, owners, and renters each get a citizen/officer shell scoped to
+// only the routes their persona is allowed to reach — no staff nav items,
+// per the permission matrix (plans/valuadis-rentals/tasks/phase-e.md).
+const STAFF_NAVIGATION: NavigationGroup[] = [
   {
     label: 'Workspace',
     items: [
-      { label: 'Dashboard', to: '/dashboard', icon: 'pi pi-home' },
-      { label: 'Properties', to: '/properties', icon: 'pi pi-building' },
-      { label: 'Vehicles', to: '/vehicles', icon: 'pi pi-car' },
-      { label: 'Valuations', to: '/valuations', icon: 'pi pi-calculator' },
-      { label: 'Quick Valuation', to: '/valuations/quick', icon: 'pi pi-bolt' }
+      { label: t('nav.dashboard'), to: '/dashboard', icon: 'pi pi-home' },
+      { label: t('nav.properties'), to: '/properties', icon: 'pi pi-building' },
+      { label: t('nav.vehicles'), to: '/vehicles', icon: 'pi pi-car' },
+      { label: t('nav.valuations'), to: '/valuations', icon: 'pi pi-calculator' },
+      { label: t('nav.quickValuation'), to: '/valuations/quick', icon: 'pi pi-bolt' }
+    ]
+  },
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
+      { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
+      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
+      { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
+      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' }
     ]
   },
   {
     label: 'Intelligence',
     items: [
-      { label: 'Analytics', to: '/analytics', icon: 'pi pi-chart-bar' },
-      { label: 'Property Map', to: '/map', icon: 'pi pi-map' },
-      { label: 'Reports', to: '/reports', icon: 'pi pi-file-pdf' }
+      { label: t('nav.analytics'), to: '/analytics', icon: 'pi pi-chart-bar' },
+      { label: t('nav.propertyMap'), to: '/map', icon: 'pi pi-map' },
+      { label: t('nav.reports'), to: '/reports', icon: 'pi pi-file-pdf' }
     ]
   },
   {
     label: 'Administration',
     admin: true,
     items: [
-      { label: 'Scrapers', to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
-      { label: 'Users', to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
-      { label: 'Settings', to: '/settings', icon: 'pi pi-cog' },
-      { label: 'Audit Log', to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
+      { label: t('nav.scrapers'), to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
+      { label: t('nav.users'), to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
+      { label: t('nav.settings'), to: '/settings', icon: 'pi pi-cog' },
+      { label: t('nav.audit'), to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
     ]
   }
-])
+]
+
+const OFFICER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
+      { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const OWNER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
+      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
+      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const RENTER_NAVIGATION: NavigationGroup[] = [
+  {
+    label: 'Rentals',
+    items: [
+      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
+      { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
+      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
+    ]
+  }
+]
+
+const navigation = computed<NavigationGroup[]>(() => {
+  switch (persona.value) {
+    case 'officer':
+      return OFFICER_NAVIGATION
+    case 'owner':
+      return OWNER_NAVIGATION
+    case 'renter':
+      return RENTER_NAVIGATION
+    default:
+      return STAFF_NAVIGATION
+  }
+})
 
 const visibleNavigation = computed(() => {
   return navigation.value
@@ -234,6 +303,11 @@ const pages: Record<string, { title: string; subtitle: string }> = {
   '/vehicles': { title: 'Vehicles', subtitle: 'Fleet assets, registration state, and valuation records.' },
   '/valuations': { title: 'Valuations', subtitle: 'Pricing decisions, audit state, and valuation history.' },
   '/valuations/quick': { title: 'Quick Valuation', subtitle: 'Rapid estimate workflow for field and desk review.' },
+  '/rentals': { title: 'Rental Review Queue', subtitle: 'Verify owners, review rent bands, and publish registry listings.' },
+  '/rentals/contracts': { title: 'Contracts Registry', subtitle: 'Register tenancy contracts and record deposit receipts.' },
+  '/rentals/my-listings': { title: 'My Rental Listings', subtitle: 'Register properties for rent and track officer review.' },
+  '/rentals/my-applications': { title: 'My Applications', subtitle: 'Track your applications to published rental listings.' },
+  '/rentals/my-contracts': { title: 'My Tenancy Contracts', subtitle: 'Registered contracts where you are a party, with PDF download.' },
   '/analytics': { title: 'Analytics', subtitle: 'Market movement, municipal coverage, and compliance signals.' },
   '/map': { title: 'Property Map', subtitle: 'Geographic review of registered assets and boundaries.' },
   '/reports': { title: 'Reports', subtitle: 'Generate civic records, valuation summaries, and exports.' },
@@ -248,6 +322,7 @@ const pageTitle = computed(() => pages[route.path]?.title || 'ValuAdis')
 const pageSubtitle = computed(() => pages[route.path]?.subtitle || 'Civic property valuation platform.')
 
 const notifications = ref<Array<{ id: number; title: string; message: string; time: string; read: boolean }>>([])
+const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
 
 const userInitials = computed(() => {
   if (!userName.value) return 'VA'
@@ -339,6 +414,28 @@ function markAllAsRead() {
   })
 }
 
+async function loadNotifications() {
+  const token = getAccessToken()
+  if (!token) return
+  try {
+    const config = useRuntimeConfig()
+    const res = await fetch(`${config.public.apiBaseUrl}/api/v1/notifications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return
+    const body = await res.json()
+    notifications.value = (body.notifications || []).map((n: any, index: number) => ({
+      id: index,
+      title: n.title,
+      message: n.message,
+      time: n.timestamp ? new Date(n.timestamp).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '',
+      read: false,
+    }))
+  } catch {
+    // Honest empty state on failure; never fabricate notifications.
+  }
+}
+
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 function debouncedSearch() {
@@ -352,15 +449,37 @@ function navigateToQuickLink(path: string) {
 }
 
 function handleLogout() {
-  clearAuthTokens()
+  // Store logout clears the httpOnly refresh cookie server-side too;
+  // clearing only local tokens would let the cookie resurrect the session.
+  useAuthStore().logout()
   router.push('/login')
 }
 
 onMounted(() => {
   loadUserData()
   loadCurrentUser()
+  loadNotifications()
 })
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
 })
 </script>
+
+<style scoped>
+.notif-btn { position: relative; }
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--red, #9d3a28);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+</style>

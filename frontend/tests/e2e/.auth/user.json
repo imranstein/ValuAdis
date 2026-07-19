@@ -2,11 +2,19 @@
   "cookies": [],
   "origins": [
     {
-      "origin": "http://localhost:3020",
+      "origin": "http://localhost:3021",
       "localStorage": [
         {
           "name": "valuadis_token",
           "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkB2YWx1YWRpcy5jb20iLCJleHAiOjk5OTk5OTk5OTl9.mock-e2e-signature"
+        },
+        {
+          "name": "valuadis_refresh_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkB2YWx1YWRpcy5jb20iLCJleHAiOjk5OTk5OTk5OTl9.mock-e2e-signature"
+        },
+        {
+          "name": "valuadis_user",
+          "value": "{\"id\":1,\"email\":\"admin@valuadis.com\",\"full_name\":\"Admin User\",\"is_admin\":true,\"is_valuer\":false,\"is_active\":true}"
         }
       ]
     }

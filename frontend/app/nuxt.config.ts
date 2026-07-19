@@ -30,8 +30,8 @@ export default defineNuxtConfig({
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500&display=swap' }
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap' }
       ]
     }
   },
@@ -62,7 +62,8 @@ export default defineNuxtConfig({
       mapDefaultLng: process.env.NUXT_PUBLIC_MAP_DEFAULT_LNG || '38.7578',
       defaultLanguage: process.env.NUXT_PUBLIC_DEFAULT_LANGUAGE || 'en',
       demoLoginEmail: process.env.NUXT_PUBLIC_DEMO_LOGIN_EMAIL || '',
-      demoLoginPassword: process.env.NUXT_PUBLIC_DEMO_LOGIN_PASSWORD || ''
+      demoLoginPassword: process.env.NUXT_PUBLIC_DEMO_LOGIN_PASSWORD || '',
+      sentryDsn: ''
     }
   },
 

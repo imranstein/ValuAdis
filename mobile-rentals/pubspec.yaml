@@ -1,0 +1,42 @@
+name: valuadis_rent
+description: "ValuAdis Rent - Ethiopian government-mediated rental registry for renters and property owners."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+  # Network & auth
+  dio: ^5.7.0
+  flutter_secure_storage: ^9.2.2
+  # Typography (cached at runtime by google_fonts; graceful fallback offline)
+  google_fonts: ^6.2.1
+  # Location & map
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  # Media (owner property photos)
+  image_picker: ^1.1.2
+  # Files (contract PDF download + open)
+  path_provider: ^2.1.4
+  open_filex: ^4.5.0
+  # Formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true

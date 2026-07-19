@@ -23,17 +23,9 @@ test.describe('Ethiopian Compliance - Proclamation 1365/2025', () => {
     }
   });
 
-  test('should have Proclamation 1365/2025 compliance toggle', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const valuationTab = page.locator('button:has-text("Valuation")');
-    await valuationTab.click();
-    await page.waitForTimeout(300);
-    
-    const proclamationToggle = page.locator('input[type="checkbox"]:near(:text("Proclamation 1365"))');
-    if (await proclamationToggle.count() > 0) {
-      await expect(proclamationToggle).toBeVisible();
-    }
+  test('should reference Proclamation 1365/2025 in the valuation workflow', async ({ page }) => {
+    await page.goto('/valuations/quick', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText(/Proclamation 1365\/2025/i)).toBeVisible();
   });
 
   test('should validate Ethiopian property types', async ({ page }) => {
@@ -107,17 +99,12 @@ test.describe('Ethiopian Compliance - Proclamation 1365/2025', () => {
     }
   });
 
-  test('should display required documentation for Ethiopian compliance', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const valuationTab = page.locator('button:has-text("Valuation")');
-    await valuationTab.click();
-    await page.waitForTimeout(300);
-    
-    const documentationSection = page.locator('label:has-text("Required Documentation"), h3:has-text("Documentation")');
-    if (await documentationSection.count() > 0) {
-      await expect(documentationSection.first()).toBeVisible();
-    }
+  test('should offer Ethiopian municipalities in the property registry filter', async ({ page }) => {
+    await page.goto('/properties', { waitUntil: 'domcontentloaded' });
+    const municipalityFilter = page.locator('select[aria-label="Filter by municipality"]');
+    await expect(municipalityFilter).toBeVisible();
+    const options = await municipalityFilter.locator('option').allTextContents();
+    expect(options.some((opt) => /Addis Ababa|Mekelle|Bahir Dar|Dire Dawa/.test(opt))).toBeTruthy();
   });
 
   test('should validate property ownership documentation', async ({ page }) => {
@@ -168,12 +155,16 @@ test.describe('Ethiopian Business License Validation', () => {
 
         const licenseInput = page.locator('input[name*="license"], input[placeholder*="license" i]');
         if (await licenseInput.count() > 0) {
-          // Test a valid license format
           await licenseInput.fill(validLicenses[0]);
+          await licenseInput.blur();
           await page.waitForTimeout(200);
 
-          // Check if validation passes (no error message visible)
-          const errorMessage = page.locator('.error:has-text("license"), .invalid:has-text("license")');
+          const isInvalid = await licenseInput.evaluate(
+            (el) => (el as HTMLInputElement).validity.valid === false
+          );
+          expect(isInvalid).toBeFalsy();
+
+          const errorMessage = page.locator('.error, .invalid-feedback, [role="alert"]');
           const hasError = await errorMessage.count() > 0 && await errorMessage.isVisible().catch(() => false);
           expect(hasError).toBeFalsy();
         }
@@ -211,16 +202,26 @@ test.describe('Ethiopian Business License Validation', () => {
 
         const licenseInput = page.locator('input[name*="license"], input[placeholder*="license" i]');
         if (await licenseInput.count() > 0) {
-          // Test an invalid license format
-          await licenseInput.fill(invalidLicenses[2]); // AA1234567890
+          const candidate = invalidLicenses[2]; // AA1234567890
+          await licenseInput.fill(candidate);
           await licenseInput.blur();
           await page.waitForTimeout(300);
 
           // Check if validation error appears
           const errorMessage = page.locator('.error, .invalid-feedback, [role="alert"]');
           // Either error shows or field has invalid state
-          const hasValidation = await errorMessage.count() > 0 || await licenseInput.evaluate(el => (el as HTMLInputElement).validity?.valid === false).catch(() => false);
-          expect(hasValidation || true).toBeTruthy(); // License validation should be active
+          const hasValidation =
+            (await errorMessage.count() > 0 && await errorMessage.first().isVisible().catch(() => false)) ||
+            (await licenseInput.evaluate((el) => (el as HTMLInputElement).validity?.valid === false).catch(() => false));
+
+          const apiValidation = await page.request.post('/api/v1/validate/license', {
+            data: JSON.stringify({ license: candidate }),
+            headers: { 'content-type': 'application/json' },
+          });
+          const apiBody = await apiValidation.json();
+          const apiRejected = apiBody.valid === false;
+
+          expect(hasValidation || apiRejected).toBeTruthy();
         }
       }
     }
@@ -280,7 +281,7 @@ test.describe('Ethiopian Business License Validation', () => {
             }
           }
 
-          expect(errorFound || true).toBeTruthy();
+          expect(errorFound).toBeTruthy();
         }
       }
     }
@@ -323,10 +324,9 @@ test.describe('Ethiopian Business License Validation', () => {
           await licenseInput.blur();
           await page.waitForTimeout(300);
 
-          // Should show error for invalid format
           const hasError = await page.locator('.error, .invalid-feedback').count() > 0 ||
-                          await licenseInput.evaluate(el => (el as HTMLInputElement).classList.contains('is-invalid')).catch(() => false);
-          expect(hasError || true).toBeTruthy();
+            await licenseInput.evaluate((el) => (el as HTMLInputElement).classList.contains('is-invalid')).catch(() => false);
+          expect(hasError).toBeTruthy();
         }
       }
     }
@@ -336,28 +336,11 @@ test.describe('Ethiopian Business License Validation', () => {
 test.describe('Ethiopian Market Data Integration', () => {
   test.use({ storageState: 'tests/e2e/.auth/user.json' });
 
-  test('should display Ethiopian property sources in scraper', async ({ page }) => {
-    await page.goto('/settings');
-    
-    const scraperTab = page.locator('button:has-text("Web Scraper")');
-    await scraperTab.click();
-    await page.waitForTimeout(300);
-    
-    const table = page.locator('table');
-    if (await table.count() > 0) {
-      const tableText = await table.textContent();
-      
-      const ethiopianSources = [
-        'livingethio.com',
-        'ethiopiapropertycentre.com',
-        'ethiopianproperties.com',
-        'zegebeya.com',
-        'jiji.com.et'
-      ];
-      
-      const hasEthiopianSource = ethiopianSources.some(source => tableText?.includes(source));
-      expect(hasEthiopianSource).toBeTruthy();
-    }
+  test('should expose the property-scraper data-operations surface', async ({ page }) => {
+    await page.goto('/scrapers', { waitUntil: 'domcontentloaded' });
+    // The scraper surface is now its own admin route; verify it renders rather
+    // than living behind a settings tab.
+    await expect(page.locator('h1').first()).toContainText(/scraper/i);
   });
 
   test('should validate Ethiopian property listing data', async ({ page }) => {

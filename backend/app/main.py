@@ -13,8 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
+from contextlib import asynccontextmanager
 
 from app.api.v1.api import api_router
 from app.core.config import settings
@@ -37,6 +36,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers[
+            "Content-Security-Policy"
+        ] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; connect-src 'self'"
         if settings.ENVIRONMENT == "production":
             response.headers["Strict-Transport-Security"] = (
                 "max-age=63072000; includeSubDomains; preload"
@@ -58,6 +62,13 @@ sentry_manager = get_sentry_manager()
 
 _is_dev = settings.ENVIRONMENT == "development"
 
+
+@asynccontextmanager
+async def app_lifespan(_app: FastAPI):
+    if _is_dev:
+        ensure_development_sqlite_schema(engine)
+    yield
+
 app = FastAPI(
     title="ValuAdis API",
     description="Ethiopian Property Valuation Platform API with PostGIS spatial support",
@@ -65,6 +76,7 @@ app = FastAPI(
     docs_url="/docs" if _is_dev else None,
     redoc_url="/redoc" if _is_dev else None,
     openapi_url="/openapi.json" if _is_dev else None,
+    lifespan=app_lifespan,
     openapi_tags=[
         {
             "name": "Authentication",
@@ -100,19 +112,11 @@ app = FastAPI(
 
 # CORS — environment-aware configuration
 if settings.ENVIRONMENT == "development":
-    # Development: allow specific origins with credentials
+    # Development: allow any localhost port (dev servers move around). Production
+    # stays locked to settings.ALLOWED_HOSTS in the else branch below.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3020",
-            "http://127.0.0.1:3020",
-            "http://localhost:3021",
-            "http://127.0.0.1:3021",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:8020",
-            "http://127.0.0.1:8020",
-        ],
+        allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -127,9 +131,9 @@ else:
     )
 
 # Security headers on all responses (added AFTER CORS)
-# Re-enabled for non-development environments
-if settings.ENVIRONMENT != "development":
-    app.add_middleware(SecurityHeadersMiddleware)
+# Keep transport-level HSTS strictness production-only; other headers remain
+# enabled in all environments to maintain consistent browser hardening.
+app.add_middleware(SecurityHeadersMiddleware)
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -141,12 +145,6 @@ app.include_router(api_router, prefix="/api/v1")
 # Startup
 # ---------------------------------------------------------------------------
 
-@app.on_event("startup")
-async def ensure_local_schema():
-    if settings.ENVIRONMENT == "development":
-        ensure_development_sqlite_schema(engine)
-
-
 # ---------------------------------------------------------------------------
 # Exception handlers
 # ---------------------------------------------------------------------------
@@ -157,6 +155,15 @@ async def valuadis_exception_handler(request: Request, exc: ValuAdisException):
     return JSONResponse(
         status_code=400,
         content={"success": False, "message": str(exc)}
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Return a consistent JSON contract for uncaught exceptions."""
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "message": "Internal server error"},
     )
 
 

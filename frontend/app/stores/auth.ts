@@ -82,14 +82,35 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
-  async function initialize() {
+  // Single in-flight boot promise so middleware can await init exactly once
+  let initPromise: Promise<void> | null = null
+
+  function initialize(): Promise<void> {
+    if (!initPromise) {
+      initPromise = bootSession()
+    }
+    return initPromise
+  }
+
+  async function bootSession() {
     if (authService.isAuthenticated()) {
       activeSession.value = true
       try {
         await fetchCurrentUser()
-      } catch (err) {
+      } catch {
         logout()
       }
+      return
+    }
+
+    // No in-memory token (fresh load / reload): try the httpOnly refresh cookie
+    try {
+      await authService.refreshToken()
+      activeSession.value = true
+      await fetchCurrentUser()
+    } catch {
+      // No valid cookie — stay logged out; middleware will redirect
+      activeSession.value = false
     }
   }
 

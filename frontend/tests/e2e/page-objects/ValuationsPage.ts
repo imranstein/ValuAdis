@@ -18,8 +18,10 @@ export class ValuationsPage {
   constructor(page: Page) {
     this.page = page;
     this.pageTitle = page.locator('h1').first();
-    this.newValuationButton = page.locator('button.action-button.primary').last();
-    this.quickValuationButton = page.locator('button:has-text("Quick"), a:has-text("Quick")').first();
+    // The rebranded ledger has no inline "new valuation" button; the primary
+    // create entry point is the "Quick valuation" link to /valuations/quick.
+    this.newValuationButton = page.getByRole('link', { name: /quick valuation/i }).first();
+    this.quickValuationButton = page.getByRole('link', { name: /quick valuation/i }).first();
     this.searchInput = page.locator('input[placeholder*="Search"]');
     this.valuationsTable = page.locator('table');
     this.valuationRows = page.locator('tbody tr');

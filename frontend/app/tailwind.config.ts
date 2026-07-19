@@ -1,5 +1,10 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * ValuAdis "Ethiopian civic-tech ledger" tokens.
+ * Source of truth: assets/css/main.css custom properties.
+ * Mirror changes in frontend/design-tokens.json.
+ */
 export default {
   content: [
     './components/**/*.{vue,js,ts}',
@@ -12,76 +17,90 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Ethiopian Color Palette
-        ethiopian: {
-          green: '#078160',
-          'green-light': '#10B981',
-          'green-dark': '#065F46',
-          blue: '#1E3A8A',
-          'blue-light': '#3B82F6',
-          'blue-dark': '#1E40AF',
-          orange: '#EA580C',
-          'orange-light': '#F97316',
-          'orange-dark': '#C2410C',
-          teal: '#0F766E',
-          gold: '#F59E0B',
-          brown: '#92400E',
-          'sky-blue': '#0EA5E9',
-          'earth-brown': '#A16207'
+        canvas: '#f6f3ea',
+        surface: {
+          DEFAULT: '#fcfaf3',
+          2: '#eeeadd',
+          3: '#e5e0cf'
         },
-        // Primary/Secondary/Accent
+        ink: {
+          DEFAULT: '#1b231d',
+          soft: '#39443b',
+          muted: '#5c665d'
+        },
+        line: {
+          DEFAULT: '#ded8c6',
+          strong: '#c2bba4'
+        },
         primary: {
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#078160',
-          600: '#065F46',
-          700: '#064E3B',
-          800: '#053B29',
-          900: '#022C1F'
+          50: '#eef3ee',
+          100: '#dfe8dd',
+          200: '#bcd1c2',
+          300: '#8fb29b',
+          400: '#5c8a70',
+          500: '#235c43',
+          600: '#1d4f39',
+          700: '#163c2b',
+          800: '#102c20',
+          900: '#0a1d15'
         },
-        secondary: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#1E3A8A',
-          600: '#1E40AF',
-          700: '#1D4ED8',
-          800: '#1E3A8A',
-          900: '#1E3A8A'
+        gold: {
+          50: '#faf4e4',
+          100: '#f3e9d0',
+          200: '#e7d3a2',
+          300: '#d8b96c',
+          400: '#c79a3e',
+          500: '#a97c22',
+          600: '#8a5f14',
+          700: '#6e4b10',
+          800: '#52370c',
+          900: '#382507'
         },
-        accent: {
-          50: '#FFF7ED',
-          100: '#FFEDD5',
-          200: '#FED7AA',
-          300: '#FDBA74',
-          400: '#FB923C',
-          500: '#EA580C',
-          600: '#DC2626',
-          700: '#C2410C',
-          800: '#9A3412',
-          900: '#7C2D12'
+        shell: {
+          DEFAULT: '#131f18',
+          raised: '#1c2b21',
+          active: '#23392c',
+          ink: '#f1eee0',
+          muted: '#9db0a0',
+          gold: '#d3a94c'
+        },
+        danger: {
+          DEFAULT: '#9d3a28',
+          soft: '#f3ddd5'
+        },
+        info: {
+          DEFAULT: '#33566a',
+          soft: '#dfe8ec'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace']
       },
-      spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '128': '32rem'
-      },
-      letterSpacing: {
-        'amharic': '0.05em'
+      borderRadius: {
+        sm: '4px',
+        DEFAULT: '8px',
+        lg: '12px',
+        xl: '16px'
       },
       boxShadow: {
-        'ethiopian': '0 4px 6px -1px rgba(7, 129, 96, 0.1), 0 2px 4px -1px rgba(7, 129, 96, 0.06)',
-        'ethiopian-lg': '0 10px 15px -3px rgba(7, 129, 96, 0.1), 0 4px 6px -2px rgba(7, 129, 96, 0.05)'
+        sm: '0 8px 24px rgba(27, 35, 29, 0.06)',
+        DEFAULT: '0 18px 45px rgba(27, 35, 29, 0.09)',
+        lg: '0 28px 70px rgba(27, 35, 29, 0.14)'
+      },
+      transitionDuration: {
+        fast: '120ms',
+        normal: '180ms',
+        slow: '320ms'
+      },
+      transitionTimingFunction: {
+        ledger: 'cubic-bezier(0.23, 1, 0.32, 1)'
+      },
+      letterSpacing: {
+        amharic: '0.05em',
+        kicker: '0.18em'
       }
     }
   },

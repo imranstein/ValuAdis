@@ -5,13 +5,13 @@
         <p class="page-kicker">System controls</p>
         <h2 class="page-title">Operational settings.</h2>
           <p class="page-subtitle">
-          Review account context and prepare workspace defaults. Production notification and API-key controls require backend settings endpoints before deployment.
+          Account context, workspace defaults, and API-key management, saved to the backend settings service.
         </p>
       </div>
       <div class="page-actions">
         <button class="btn-secondary" type="button" @click="generateApiKey">
           <i class="pi pi-key" aria-hidden="true"></i>
-          Create draft key
+          Create API key
         </button>
         <button class="btn-primary" type="button" @click="saveOperationalSettings">
           <i class="pi pi-save" aria-hidden="true"></i>
@@ -66,10 +66,9 @@
           </div>
           <label class="field">
             <span>System language</span>
-            <select v-model="systemLanguage">
-              <option>English (International)</option>
-              <option>Amharic</option>
-              <option>Afaan Oromo</option>
+            <select v-model="systemLanguage" @change="applyLanguage">
+              <option value="en">English (International)</option>
+              <option value="am">Amharic (አማርኛ)</option>
             </select>
           </label>
         </div>
@@ -148,16 +147,16 @@
           </thead>
           <tbody>
             <tr v-if="apiKeys.length === 0">
-              <td colspan="3" class="empty-cell">No API keys are loaded. Backend key management is not connected yet.</td>
+              <td colspan="3" class="empty-cell">No API keys yet. Create one to integrate external systems.</td>
             </tr>
-            <tr v-for="key in apiKeys" :key="key.id">
+            <tr v-for="key in apiKeys" :key="key.id" :class="{ revoked: key.revoked }">
               <td><strong>{{ key.name }}</strong></td>
-              <td class="num">{{ maskApiKey(key.key) }}</td>
+              <td class="num">{{ maskApiKey(key) }}</td>
               <td class="text-right">
-                <button class="icon-button inline" type="button" aria-label="Copy API key" @click="copyApiKey(key.key)">
+                <button class="icon-button inline" type="button" aria-label="Copy API key" @click="copyApiKey(key)">
                   <i class="pi pi-copy" aria-hidden="true"></i>
                 </button>
-                <button class="icon-button inline danger" type="button" aria-label="Delete API key" @click="deleteApiKey(key.id)">
+                <button v-if="!key.revoked" class="icon-button inline danger" type="button" aria-label="Revoke API key" @click="deleteApiKey(key.id)">
                   <i class="pi pi-trash" aria-hidden="true"></i>
                 </button>
               </td>
@@ -172,14 +171,36 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import authService from '~/services/authService'
+import { getAccessToken } from '~/utils/authToken'
+import { useI18n } from '~/composables/useI18n'
 
 definePageMeta({ middleware: ['auth', 'admin'] })
 
+const { setLocale, locale } = useI18n()
+
+function applyLanguage() {
+  setLocale(systemLanguage.value === 'am' ? 'am' : 'en')
+}
+
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBaseUrl
+
+async function settingsFetch(path, options = {}) {
+  return fetch(`${apiBase}/api/v1/settings${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getAccessToken()}`,
+      ...(options.headers || {}),
+    },
+  })
+}
+
 const darkMode = ref(false)
 const dataDensity = ref('compact')
-const systemLanguage = ref('English (International)')
+const systemLanguage = ref(locale.value)
 const daysSincePasswordChange = ref('unknown')
-const saveStatus = ref('Local draft only')
+const saveStatus = ref('Loading…')
 const profileLoadError = ref('')
 
 const userProfile = ref({
@@ -218,8 +239,7 @@ const passwordAgeLabel = computed(() => {
 })
 
 onMounted(async () => {
-  loadLocalSettings()
-  await loadCurrentUser()
+  await Promise.all([loadSettings(), loadApiKeys(), loadCurrentUser()])
 })
 
 async function loadCurrentUser() {
@@ -237,18 +257,25 @@ async function loadCurrentUser() {
   }
 }
 
-function loadLocalSettings() {
-  const saved = localStorage.getItem('valuadis_operational_settings')
-  if (!saved) return
-
+async function loadSettings() {
   try {
-    const parsed = JSON.parse(saved)
-    emailSettings.value = { ...emailSettings.value, ...(parsed.email || {}) }
-    rateLimitSettings.value = { ...rateLimitSettings.value, ...(parsed.rateLimits || {}) }
-    apiKeys.value = Array.isArray(parsed.apiKeys) ? parsed.apiKeys : []
-    saveStatus.value = 'Local draft loaded'
+    const res = await settingsFetch('')
+    if (!res.ok) throw new Error('load failed')
+    const prefs = (await res.json()).preferences || {}
+    emailSettings.value = { ...emailSettings.value, ...(prefs.email || {}) }
+    rateLimitSettings.value = { ...rateLimitSettings.value, ...(prefs.rateLimits || {}) }
+    saveStatus.value = 'Loaded from backend'
   } catch {
-    saveStatus.value = 'Saved draft could not be read'
+    saveStatus.value = 'Could not load settings'
+  }
+}
+
+async function loadApiKeys() {
+  try {
+    const res = await settingsFetch('/api-keys')
+    apiKeys.value = res.ok ? await res.json() : []
+  } catch {
+    apiKeys.value = []
   }
 }
 
@@ -259,37 +286,56 @@ function normalizeRole(role) {
 }
 
 function maskApiKey(key) {
-  return `${key.substring(0, 7)}............${key.substring(key.length - 4)}`
+  // A freshly-created key carries the one-time plaintext; stored keys show a prefix.
+  if (key.key) return `${key.key.substring(0, 7)}............${key.key.slice(-4)}`
+  return `${key.key_prefix || '••••'}••••••••••••`
 }
 
 function copyApiKey(key) {
-  navigator.clipboard?.writeText(key)
+  if (!key.key) {
+    saveStatus.value = 'Full key is only shown once at creation'
+    return
+  }
+  navigator.clipboard?.writeText(key.key)
   saveStatus.value = 'Key copied'
 }
 
-function deleteApiKey(id) {
-  apiKeys.value = apiKeys.value.filter((key) => key.id !== id)
-  saveStatus.value = 'Key removed'
+async function deleteApiKey(id) {
+  const res = await settingsFetch(`/api-keys/${id}`, { method: 'DELETE' })
+  if (res.ok) {
+    await loadApiKeys()
+    saveStatus.value = 'Key revoked'
+  } else {
+    saveStatus.value = 'Could not revoke key'
+  }
 }
 
-function generateApiKey() {
-  const nextId = Math.max(...apiKeys.value.map((key) => key.id), 0) + 1
-  const randomPart = crypto.randomUUID?.() || `${Date.now()}`
-  apiKeys.value.push({
-    id: nextId,
-    name: `LOCAL_DRAFT_KEY_${nextId}`,
-    key: `local_draft_${randomPart.replace(/-/g, '').slice(0, 24)}`
+async function generateApiKey() {
+  const name = (typeof window !== 'undefined' && window.prompt('Name this API key:', 'Integration key')) || ''
+  if (!name.trim()) return
+  const res = await settingsFetch('/api-keys', {
+    method: 'POST',
+    body: JSON.stringify({ name: name.trim() }),
   })
-  saveStatus.value = 'Draft key created locally'
+  if (!res.ok) {
+    saveStatus.value = 'Could not create key'
+    return
+  }
+  const created = await res.json()
+  // Surface the one-time plaintext key at the top of the list for copying.
+  await loadApiKeys()
+  apiKeys.value = [created, ...apiKeys.value.filter((k) => k.id !== created.id)]
+  saveStatus.value = 'Key created — copy it now, it is shown only once'
 }
 
-function saveOperationalSettings() {
-  localStorage.setItem('valuadis_operational_settings', JSON.stringify({
-    email: emailSettings.value,
-    rateLimits: rateLimitSettings.value,
-    apiKeys: apiKeys.value
-  }))
-  saveStatus.value = 'Local draft saved'
+async function saveOperationalSettings() {
+  const res = await settingsFetch('', {
+    method: 'PUT',
+    body: JSON.stringify({
+      preferences: { email: emailSettings.value, rateLimits: rateLimitSettings.value },
+    }),
+  })
+  saveStatus.value = res.ok ? 'Saved to backend' : 'Save failed'
 }
 </script>
 

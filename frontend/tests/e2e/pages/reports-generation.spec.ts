@@ -58,7 +58,8 @@ test.describe('Report generation UI', () => {
     await page.getByTestId('report-end-date').fill('2026-03-31');
     await page.getByTestId('report-municipality-select').selectOption('Addis Ababa');
     await page.getByTestId('report-valuation-id').fill('1');
-    await page.getByTestId('report-download-button').click();
+    // The download control is a labelled button (no data-testid in the rebranded UI).
+    await page.getByRole('button', { name: /download|generating/i }).click();
 
     await expect.poll(() => certificateRequested).toBe(true);
     await expect(page.getByTestId('report-download-status')).toContainText('ValuAdis_Certificate_1.pdf');
