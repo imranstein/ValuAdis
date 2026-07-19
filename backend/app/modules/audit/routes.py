@@ -69,6 +69,10 @@ async def get_audit_logs(
         conditions.append("al.table_name = :module")
         params["module"] = module
 
+    # `where_clause` only ever joins fixed, hardcoded condition strings from
+    # the whitelist above (never raw request input); every value is bound via
+    # the `:param` placeholders in `params`, so this f-string assembly is not
+    # an injection vector despite bandit's static B608 pattern match.
     where_clause = " AND ".join(conditions) if conditions else "1=1"
     full_sql = f"""
         SELECT al.id, al.table_name, al.record_id, al.action, al.old_values, al.new_values,
@@ -77,8 +81,8 @@ async def get_audit_logs(
         WHERE {where_clause}
         ORDER BY al.timestamp DESC
         LIMIT :limit OFFSET :skip
-    """
-    count_sql = f"SELECT COUNT(*) FROM audit_logs al WHERE {where_clause}"
+    """  # nosec B608
+    count_sql = f"SELECT COUNT(*) FROM audit_logs al WHERE {where_clause}"  # nosec B608
 
     try:
         result = db.execute(text(full_sql), params)
