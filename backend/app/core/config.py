@@ -95,6 +95,12 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".pdf"]
+
+    # Property photo storage root. Photos are written to
+    # <MEDIA_ROOT>/property_photos/<property_id>/<server-generated-filename>.
+    # Relative paths resolve against the backend process's working directory
+    # (backend/ when run per CLAUDE.md's documented commands).
+    MEDIA_ROOT: str = "media"
     
     # Monitoring
     SENTRY_DSN: Optional[str] = None

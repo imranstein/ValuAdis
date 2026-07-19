@@ -226,6 +226,20 @@
     "title": "Body_bulk_import_properties_api_v1_properties_bulk_import_post",
     "type": "object"
    },
+   "Body_upload_property_photo_api_v1_properties__property_id__photos_post": {
+    "properties": {
+     "file": {
+      "format": "binary",
+      "title": "File",
+      "type": "string"
+     }
+    },
+    "required": [
+     "file"
+    ],
+    "title": "Body_upload_property_photo_api_v1_properties__property_id__photos_post",
+    "type": "object"
+   },
    "CitizenSignup": {
     "description": "Citizen self-registration for the rental registry.\n\nKept separate from /auth/register (the valuer registration contract is\nfrozen). Captures the Fayda national ID; new accounts default to the\nrenter role, and property_owner accounts stay unverified until a\nrental officer verifies them.",
     "properties": {
@@ -1852,6 +1866,80 @@
     "title": "PropertyListResponse",
     "type": "object"
    },
+   "PropertyPhotoListResponse": {
+    "properties": {
+     "data": {
+      "items": {
+       "$ref": "#/components/schemas/PropertyPhotoOut"
+      },
+      "title": "Data",
+      "type": "array"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success",
+     "data"
+    ],
+    "title": "PropertyPhotoListResponse",
+    "type": "object"
+   },
+   "PropertyPhotoOut": {
+    "description": "A single photo, exposed only as an opaque URL \u2014 never a filesystem\npath or the original filename.",
+    "properties": {
+     "created_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Created At"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "position": {
+      "title": "Position",
+      "type": "integer"
+     },
+     "url": {
+      "title": "Url",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "url",
+     "position"
+    ],
+    "title": "PropertyPhotoOut",
+    "type": "object"
+   },
+   "PropertyPhotoResponse": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/PropertyPhotoOut"
+     },
+     "success": {
+      "title": "Success",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "success",
+     "data"
+    ],
+    "title": "PropertyPhotoResponse",
+    "type": "object"
+   },
    "PropertyResponse": {
     "properties": {
      "data": {
@@ -2613,6 +2701,13 @@
        }
       ],
       "title": "Number Of Floors"
+     },
+     "photo_urls": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Photo Urls",
+      "type": "array"
      },
      "property_subtype": {
       "anyOf": [
@@ -7794,6 +7889,224 @@
      }
     ],
     "summary": "Property Market Evidence",
+    "tags": [
+     "Properties",
+     "Properties"
+    ]
+   }
+  },
+  "/api/v1/properties/{property_id}/photos": {
+   "get": {
+    "description": "List a property's photos in display order. Public when the property\nbacks a published rental listing; owner/staff/officer scoped otherwise.",
+    "operationId": "list_property_photos_api_v1_properties__property_id__photos_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "property_id",
+      "required": true,
+      "schema": {
+       "title": "Property Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PropertyPhotoListResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "summary": "List Property Photos",
+    "tags": [
+     "Properties",
+     "Properties"
+    ]
+   },
+   "post": {
+    "description": "Upload a photo (staff or the property's owner). Multipart body is\nread in bounded chunks so an oversized upload is aborted, not buffered\nwhole (mirrors bulk_import_properties); the bytes are then re-validated\nby decoding them as an image, not trusted from content-type alone.",
+    "operationId": "upload_property_photo_api_v1_properties__property_id__photos_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "property_id",
+      "required": true,
+      "schema": {
+       "title": "Property Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_upload_property_photo_api_v1_properties__property_id__photos_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PropertyPhotoResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Upload Property Photo",
+    "tags": [
+     "Properties",
+     "Properties"
+    ]
+   }
+  },
+  "/api/v1/properties/{property_id}/photos/{photo_id}": {
+   "delete": {
+    "description": "Delete a photo (staff or the property's owner).",
+    "operationId": "delete_property_photo_api_v1_properties__property_id__photos__photo_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "property_id",
+      "required": true,
+      "schema": {
+       "title": "Property Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "photo_id",
+      "required": true,
+      "schema": {
+       "title": "Photo Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "OAuth2PasswordBearer": []
+     }
+    ],
+    "summary": "Delete Property Photo",
+    "tags": [
+     "Properties",
+     "Properties"
+    ]
+   }
+  },
+  "/api/v1/properties/{property_id}/photos/{photo_id}/file": {
+   "get": {
+    "description": "Serve the raw photo bytes. Same public/private split as the list\nendpoint above; the response never reveals the filesystem path.",
+    "operationId": "get_property_photo_file_api_v1_properties__property_id__photos__photo_id__file_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "property_id",
+      "required": true,
+      "schema": {
+       "title": "Property Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "photo_id",
+      "required": true,
+      "schema": {
+       "title": "Photo Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "summary": "Get Property Photo File",
     "tags": [
      "Properties",
      "Properties"

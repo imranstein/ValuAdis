@@ -70,6 +70,7 @@ class PublicListingProperty(BaseModel):
     condition: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    photo_urls: List[str] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="forbid")
 
