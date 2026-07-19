@@ -3,77 +3,72 @@
     <nav class="rent-nav" aria-label="Public navigation">
       <NuxtLink to="/" class="rent-brand">
         <span class="rent-mark" aria-hidden="true">V</span>
-        <span>ValuAdis Rentals</span>
+        <span>{{ t('rentals.publicNav.brand') }}</span>
       </NuxtLink>
       <div class="rent-nav-links">
-        <NuxtLink to="/rent">Listings</NuxtLink>
-        <NuxtLink to="/login" class="rent-login">Workspace sign in</NuxtLink>
+        <NuxtLink to="/rent">{{ t('rentals.publicNav.listings') }}</NuxtLink>
+        <NuxtLink to="/login" class="rent-login">{{ t('rentals.publicNav.workspaceSignIn') }}</NuxtLink>
+        <LanguageSwitcher />
       </div>
     </nav>
 
     <section class="signup-panel">
-      <p class="rent-kicker">Citizen registration</p>
-      <h1>Register for the rental registry.</h1>
-      <p class="signup-lede">
-        Renters browse and apply to published listings. Property owners list their properties —
-        a rental officer verifies each owner account before any listing can publish.
-      </p>
+      <p class="rent-kicker">{{ t('rentals.signup.kicker') }}</p>
+      <h1>{{ t('rentals.signup.title') }}</h1>
+      <p class="signup-lede">{{ t('rentals.signup.lede') }}</p>
 
       <form class="signup-form" @submit.prevent="submit">
         <div class="field-row">
           <label class="field">
-            <span>Account type</span>
+            <span>{{ t('rentals.signup.accountType') }}</span>
             <select v-model="form.account_type" class="signup-input">
-              <option value="renter">Renter</option>
-              <option value="property_owner">Property owner</option>
+              <option value="renter">{{ t('rentals.signup.renter') }}</option>
+              <option value="property_owner">{{ t('rentals.signup.propertyOwner') }}</option>
             </select>
           </label>
           <label class="field">
-            <span>Full name</span>
+            <span>{{ t('rentals.signup.fullName') }}</span>
             <input v-model="form.full_name" type="text" required minlength="3" class="signup-input" autocomplete="name" />
           </label>
         </div>
 
         <div class="field-row">
           <label class="field">
-            <span>Email</span>
+            <span>{{ t('rentals.signup.email') }}</span>
             <input v-model="form.email" type="email" required class="signup-input" autocomplete="email" />
           </label>
           <label class="field">
-            <span>Phone (+2519… or 09…)</span>
+            <span>{{ t('rentals.signup.phone') }}</span>
             <input v-model="form.phone" type="tel" required class="signup-input" autocomplete="tel" />
           </label>
         </div>
 
         <div class="field-row">
           <label class="field">
-            <span>Fayda ID number</span>
+            <span>{{ t('rentals.signup.faydaId') }}</span>
             <input v-model="form.fayda_id_number" type="text" required minlength="6" class="signup-input" />
           </label>
           <label class="field">
-            <span>Municipality</span>
+            <span>{{ t('rentals.signup.municipality') }}</span>
             <input v-model="form.municipality" type="text" required minlength="2" class="signup-input" />
           </label>
         </div>
 
         <label class="field">
-          <span>Password (8+ chars, uppercase, digit, special)</span>
+          <span>{{ t('rentals.signup.password') }}</span>
           <input v-model="form.password" type="password" required minlength="8" class="signup-input" autocomplete="new-password" />
         </label>
 
         <p v-if="errorMessage" class="signup-error" role="alert">{{ errorMessage }}</p>
 
         <div v-if="ownerPending" class="verification-pending" role="status">
-          <strong>Registration complete — verification pending.</strong>
-          <span>
-            Your owner account must be verified by a rental officer before your listings can
-            publish. You can draft listings now; publication unlocks after verification.
-          </span>
-          <NuxtLink to="/rentals/my-listings" class="rent-btn-primary">Go to my listings</NuxtLink>
+          <strong>{{ t('rentals.signup.pendingTitle') }}</strong>
+          <span>{{ t('rentals.signup.pendingBody') }}</span>
+          <NuxtLink to="/rentals/my-listings" class="rent-btn-primary">{{ t('rentals.signup.goToMyListings') }}</NuxtLink>
         </div>
 
         <button v-else class="rent-btn-primary" type="submit" :disabled="submitting">
-          {{ submitting ? 'Registering…' : 'Register' }}
+          {{ submitting ? t('rentals.signup.registering') : t('rentals.signup.register') }}
         </button>
       </form>
     </section>
@@ -85,8 +80,12 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import rentalService from '~/services/rentalService'
 import { setAccessToken } from '~/utils/authToken'
+import { useI18n } from '~/composables/useI18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 definePageMeta({ layout: 'landing' })
+
+const { t } = useI18n()
 
 const router = useRouter()
 const submitting = ref(false)
@@ -120,7 +119,7 @@ async function submit() {
       router.push('/rent')
     }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Registration failed.'
+    errorMessage.value = error instanceof Error ? error.message : t('rentals.signup.registrationFailed')
   } finally {
     submitting.value = false
   }

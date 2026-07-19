@@ -7,6 +7,7 @@ import '../../../core/formatting.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/listing.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/band_range_bar.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/listing_placeholder.dart';
@@ -34,7 +35,8 @@ class ListingDetailScreen extends StatelessWidget {
                   _BackBar(publicId: publicId),
                   Expanded(
                     child: ErrorView(
-                        message: state.error ?? 'Could not load this listing.',
+                        message: state.error ??
+                            AppLocalizations.of(context)!.errorLoadListing,
                         onRetry: context.read<ListingDetailCubit>().load),
                   ),
                 ],
@@ -66,6 +68,7 @@ class _DetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final p = listing.property;
     return Stack(
       children: [
@@ -118,7 +121,7 @@ class _DetailBody extends StatelessWidget {
                         const SizedBox(width: 4),
                         Padding(
                           padding: const EdgeInsets.only(bottom: 5),
-                          child: Text('/month',
+                          child: Text(l10n.perMonthSuffix,
                               style: AppType.label(c, color: c.inkMuted)),
                         ),
                       ],
@@ -131,11 +134,14 @@ class _DetailBody extends StatelessWidget {
                         Icon(Icons.location_on_outlined,
                             size: 15, color: c.inkMuted),
                         const SizedBox(width: 4),
-                        Text(
-                            [p.subcity, p.municipality]
-                                .where((e) => e != null && e.isNotEmpty)
-                                .join(', '),
-                            style: AppType.label(c, color: c.inkMuted)),
+                        Flexible(
+                          child: Text(
+                              [p.subcity, p.municipality]
+                                  .where((e) => e != null && e.isNotEmpty)
+                                  .join(', '),
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.label(c, color: c.inkMuted)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -143,7 +149,7 @@ class _DetailBody extends StatelessWidget {
                     const SizedBox(height: 22),
                     _BandPanel(listing: listing),
                     const SizedBox(height: 22),
-                    Text('Location', style: AppType.headline(c)),
+                    Text(l10n.sectionLocation, style: AppType.headline(c)),
                     const SizedBox(height: 12),
                     MapPreview(
                         latitude: p.latitude, longitude: p.longitude),
@@ -173,13 +179,14 @@ class _FactsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final p = listing.property;
     final facts = <(IconData, String, String)>[
       if (p.bedrooms != null)
-        (Icons.bed_outlined, '${p.bedrooms}', 'Bedrooms'),
+        (Icons.bed_outlined, '${p.bedrooms}', l10n.fieldBedrooms),
       if (p.bathrooms != null)
-        (Icons.bathtub_outlined, '${p.bathrooms}', 'Bathrooms'),
-      (Icons.straighten_outlined, '${p.areaSqm.round()}', 'm2 area'),
+        (Icons.bathtub_outlined, '${p.bathrooms}', l10n.fieldBathrooms),
+      (Icons.straighten_outlined, '${p.areaSqm.round()}', l10n.labelAreaM2),
     ];
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -219,6 +226,7 @@ class _BandPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -233,16 +241,17 @@ class _BandPanel extends StatelessWidget {
             children: [
               Icon(Icons.balance_outlined, size: 18, color: c.green),
               const SizedBox(width: 8),
-              Text('Allowed rent band',
-                  style: AppType.headline(c).copyWith(fontSize: 16)),
+              Flexible(
+                child: Text(l10n.bandPanelTitle,
+                    style: AppType.headline(c).copyWith(fontSize: 16)),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           BandRangeBar(band: listing.band),
           const SizedBox(height: 14),
           Text(
-            'You can apply at any amount inside this band. Offers outside it are '
-            'not accepted. The band is set from an official valuation, not a broker.',
+            l10n.bandPanelBody,
             style: AppType.label(c, color: c.inkSecondary).copyWith(height: 1.45),
           ),
         ],
@@ -258,20 +267,23 @@ class _PropertyDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final p = listing.property;
     final rows = <(String, String?)>[
-      ('Property type', Fmt.humanize(p.propertyType)),
-      ('Subtype', p.propertySubtype == null ? null : Fmt.humanize(p.propertySubtype)),
-      ('Condition', p.condition == null ? null : Fmt.humanize(p.condition)),
-      ('Year built', p.yearBuilt?.toString()),
-      ('Floors', p.floors?.toString()),
-      ('Published', Fmt.date(listing.publishedAt)),
+      (l10n.labelPropertyType, Fmt.humanize(p.propertyType)),
+      (l10n.fieldSubtype,
+          p.propertySubtype == null ? null : Fmt.humanize(p.propertySubtype)),
+      (l10n.fieldCondition,
+          p.condition == null ? null : Fmt.humanize(p.condition)),
+      (l10n.fieldYearBuilt, p.yearBuilt?.toString()),
+      (l10n.labelFloors, p.floors?.toString()),
+      (l10n.labelPublished, Fmt.date(listing.publishedAt)),
     ].where((r) => r.$2 != null && r.$2!.isNotEmpty).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Property details', style: AppType.headline(c)),
+        Text(l10n.propertyDetailsTitle, style: AppType.headline(c)),
         const SizedBox(height: 8),
         for (final r in rows)
           Padding(
@@ -280,9 +292,13 @@ class _PropertyDetails extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(r.$1, style: AppType.label(c, color: c.inkMuted)),
-                Text(r.$2!,
-                    style: AppType.label(c,
-                        color: c.ink, weight: FontWeight.w600)),
+                Flexible(
+                  child: Text(r.$2!,
+                      textAlign: TextAlign.right,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.label(c,
+                          color: c.ink, weight: FontWeight.w600)),
+                ),
               ],
             ),
           ),
@@ -298,6 +314,7 @@ class _ApplyBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
       decoration: BoxDecoration(
@@ -313,16 +330,20 @@ class _ApplyBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Band ${Fmt.rent(listing.band.min)} - ${Fmt.rent(listing.band.max)}',
+                  Text(
+                      l10n.bandRangeLabel(Fmt.rent(listing.band.min),
+                          Fmt.rent(listing.band.max)),
+                      overflow: TextOverflow.ellipsis,
                       style: AppType.mono(c, size: 12, color: c.inkMuted)),
-                  Text('Choose your offer',
+                  Text(l10n.chooseYourOfferLabel,
+                      overflow: TextOverflow.ellipsis,
                       style: AppType.label(c, color: c.inkSecondary)),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             PrimaryButton(
-              label: 'Apply',
+              label: l10n.actionApply,
               icon: Icons.send_outlined,
               expand: false,
               onPressed: () => showApplySheet(context, listing),

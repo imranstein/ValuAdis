@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/application.dart';
 import '../../../data/models/owner_listing.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/pills.dart';
 import '../../widgets/states.dart';
@@ -19,11 +20,12 @@ class ListingApplicationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final cubit = context.read<ListingApplicationsCubit>();
     return Scaffold(
       backgroundColor: c.canvas,
       appBar: AppBar(
-        title: const Text('Applications'),
+        title: Text(l10n.screenTitleApplications),
       ),
       body: SafeArea(
         child: Column(
@@ -40,8 +42,14 @@ class ListingApplicationsScreen extends StatelessWidget {
                   Row(children: [
                     StatusPill(listing.status),
                     const SizedBox(width: 8),
-                    Text('Band ${Fmt.rent(listing.band.min)}-${Fmt.rent(listing.band.max)}',
-                        style: AppType.mono(c, size: 12, color: c.inkMuted)),
+                    Flexible(
+                      child: Text(
+                          l10n.bandRangeLabel(Fmt.rent(listing.band.min),
+                              Fmt.rent(listing.band.max)),
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              AppType.mono(c, size: 12, color: c.inkMuted)),
+                    ),
                   ]),
                 ],
               ),
@@ -52,7 +60,7 @@ class ListingApplicationsScreen extends StatelessWidget {
                 builder: (context, state) {
                   if (state.isError) {
                     return ErrorView(
-                        message: state.error ?? 'Could not load applications.',
+                        message: state.error ?? l10n.errorLoadApplications,
                         onRetry: cubit.load);
                   }
                   if (!state.isReady) {
@@ -60,12 +68,10 @@ class ListingApplicationsScreen extends StatelessWidget {
                   }
                   final apps = state.data!;
                   if (apps.isEmpty) {
-                    return const EmptyState(
+                    return EmptyState(
                       icon: Icons.inbox_outlined,
-                      title: 'No applications yet',
-                      message:
-                          'When renters apply within your band, their offers '
-                          'appear here for you to accept or decline.',
+                      title: l10n.emptyNoApplicationsTitle,
+                      message: l10n.ownerEmptyApplicationsMessage,
                     );
                   }
                   final hasAccepted =
@@ -95,6 +101,7 @@ class ListingApplicationsScreen extends StatelessWidget {
 
   Future<void> _decide(BuildContext context, ListingApplicationsCubit cubit,
       RentalApplication app, String action) async {
+    final l10n = AppLocalizations.of(context)!;
     if (action == 'accept') {
       final confirmed = await _confirmAccept(context, app);
       if (confirmed != true) return;
@@ -110,32 +117,32 @@ class ListingApplicationsScreen extends StatelessWidget {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
             content: Text(action == 'accept'
-                ? 'Accepted. An officer will register the contract.'
-                : 'Application declined.')));
+                ? l10n.snackApplicationAccepted
+                : l10n.snackApplicationDeclined)));
     }
   }
 
   Future<bool?> _confirmAccept(BuildContext context, RentalApplication app) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: c.surface,
-        title: Text('Accept this applicant?', style: AppType.headline(c)),
+        title: Text(l10n.dialogAcceptTitle, style: AppType.headline(c)),
         content: Text(
-          'Accepting ${app.renterName ?? 'this renter'} at '
-          '${Fmt.rentPerMonth(app.offeredRent)} marks the listing as rented and '
-          'declines the others. A rental officer then registers the contract.',
+          l10n.dialogAcceptContent(app.renterName ?? l10n.defaultRenterName,
+              '${Fmt.rent(app.offeredRent)}${l10n.perMonthSuffixShort}'),
           style: AppType.body(c, color: c.inkSecondary),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel',
+              child: Text(l10n.actionCancel,
                   style: AppType.label(c, color: c.inkMuted))),
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Accept',
+              child: Text(l10n.actionAccept,
                   style: AppType.label(c, color: c.green)
                       .copyWith(fontWeight: FontWeight.w700))),
         ],
@@ -154,6 +161,7 @@ class _OwnerApplicationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -179,7 +187,7 @@ class _OwnerApplicationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(app.renterName ?? 'Applicant',
+                    Text(app.renterName ?? l10n.defaultApplicantLabel,
                         style: AppType.headline(c).copyWith(fontSize: 16)),
                     if (app.renterPhone != null)
                       Text(app.renterPhone!,
@@ -193,9 +201,14 @@ class _OwnerApplicationCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Text('Offer  ', style: AppType.label(c, color: c.inkMuted)),
-              Text(Fmt.rentPerMonth(app.offeredRent),
-                  style: AppType.mono(c, size: 16, weight: FontWeight.w700)),
+              Text('${l10n.labelOffer}  ',
+                  style: AppType.label(c, color: c.inkMuted)),
+              Flexible(
+                child: Text('${Fmt.rent(app.offeredRent)}${l10n.perMonthSuffixShort}',
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        AppType.mono(c, size: 16, weight: FontWeight.w700)),
+              ),
             ],
           ),
           if (app.message != null && app.message!.isNotEmpty) ...[
@@ -215,7 +228,7 @@ class _OwnerApplicationCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: GhostButton(
-                    label: 'Decline',
+                    label: l10n.actionDecline,
                     danger: true,
                     onPressed: () => onDecide('reject'),
                   ),
@@ -223,7 +236,7 @@ class _OwnerApplicationCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Accept',
+                    label: l10n.actionAccept,
                     onPressed: () => onDecide('accept'),
                   ),
                 ),

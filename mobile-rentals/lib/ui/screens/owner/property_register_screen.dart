@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/owner_listing.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/band_range_bar.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/inputs.dart';
@@ -57,19 +58,21 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
       AppConstants.subtypesByType[_type] ?? const [];
 
   String? _validate() {
+    final l10n = AppLocalizations.of(context)!;
     if (_address.text.trim().length < 5) {
-      return 'Enter the full property address (at least 5 characters).';
+      return l10n.validationAddress;
     }
     final area = double.tryParse(_area.text.trim());
-    if (area == null || area <= 0) return 'Enter the area in square metres.';
+    if (area == null || area <= 0) return l10n.validationArea;
     return null;
   }
 
   Future<void> _pickPhotos() async {
+    final l10n = AppLocalizations.of(context)!;
     final remaining = AppConstants.maxPhotosPerProperty - _photos.length;
     if (remaining <= 0) {
       setState(() => _error =
-          'A property may have at most ${AppConstants.maxPhotosPerProperty} photos.');
+          l10n.validationPhotoLimit(AppConstants.maxPhotosPerProperty));
       return;
     }
     List<XFile> picked;
@@ -96,11 +99,11 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
       if (oversized > 0) {
         final maxMb = AppConstants.maxPhotoSizeBytes ~/ (1024 * 1024);
         _error = oversized == 1
-            ? 'One photo was over ${maxMb}MB and was not added.'
-            : '$oversized photos were over ${maxMb}MB and were not added.';
+            ? l10n.onePhotoOversized(maxMb)
+            : l10n.multiplePhotosOversized(oversized, maxMb);
       } else if (picked.length > remaining) {
-        _error =
-            'Only the first $remaining photos were added (${AppConstants.maxPhotosPerProperty} max).';
+        _error = l10n.photosPartiallyAdded(
+            remaining, AppConstants.maxPhotosPerProperty);
       }
     });
   }
@@ -159,6 +162,7 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
 
   Future<void> _showResult(OwnerListing listing, int failedPhotoCount) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -177,11 +181,10 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
               child: Icon(Icons.check_rounded, color: c.green, size: 30),
             ),
             const SizedBox(height: 16),
-            Text('Submitted for review', style: AppType.title(c)),
+            Text(l10n.resultSubmittedTitle, style: AppType.title(c)),
             const SizedBox(height: 6),
             Text(
-              'A rental officer will verify the details and publish your listing '
-              'at the band below.',
+              l10n.resultSubmittedMessage,
               style: AppType.body(c, color: c.inkMuted),
             ),
             const SizedBox(height: 20),
@@ -194,17 +197,16 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
                     color: c.goldWash, borderRadius: BorderRadius.circular(12)),
                 child: Text(
                   failedPhotoCount == 1
-                      ? 'One photo could not be uploaded. Add it from Manage '
-                          'photos on this listing.'
-                      : '$failedPhotoCount photos could not be uploaded. Add '
-                          'them from Manage photos on this listing.',
+                      ? l10n.onePhotoUploadFailed
+                      : l10n.multiplePhotosUploadFailed(failedPhotoCount),
                   style: AppType.label(c, color: c.inkSecondary),
                 ),
               ),
             ],
             const SizedBox(height: 24),
             PrimaryButton(
-                label: 'Done', onPressed: () => Navigator.of(context).pop()),
+                label: l10n.actionDone,
+                onPressed: () => Navigator.of(context).pop()),
           ],
         ),
       ),
@@ -214,22 +216,23 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
-      appBar: AppBar(title: const Text('Register a property')),
+      appBar: AppBar(title: Text(l10n.screenTitleRegisterProperty)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
-            _section(c, 'Location'),
+            _section(c, l10n.sectionLocation),
             AppTextField(
-                label: 'Address',
+                label: l10n.fieldAddress,
                 controller: _address,
-                hint: 'Building, street, area',
+                hint: l10n.hintAddress,
                 prefixIcon: Icons.place_outlined),
             const SizedBox(height: 14),
             AppDropdownField<String>(
-              label: 'Sub-city',
+              label: l10n.fieldSubCity,
               value: _subCity,
               items: AppConstants.addisSubCities,
               onChanged: (v) => setState(() => _subCity = v ?? _subCity),
@@ -238,12 +241,12 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
             _MapPin(
                 pin: _pin, onTap: (p) => setState(() => _pin = p)),
             const SizedBox(height: 24),
-            _section(c, 'Property'),
+            _section(c, l10n.sectionProperty),
             Row(
               children: [
                 Expanded(
                   child: AppDropdownField<String>(
-                    label: 'Type',
+                    label: l10n.fieldType,
                     value: _type,
                     items: AppConstants.propertyTypes,
                     onChanged: (v) => setState(() {
@@ -255,7 +258,7 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: AppDropdownField<String?>(
-                    label: 'Subtype',
+                    label: l10n.fieldSubtype,
                     value: _subtype,
                     items: _subtypes,
                     onChanged: (v) => setState(() => _subtype = v),
@@ -268,7 +271,7 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
               children: [
                 Expanded(
                   child: AppTextField(
-                    label: 'Area (m2)',
+                    label: l10n.fieldArea,
                     controller: _area,
                     keyboardType: TextInputType.number,
                     prefixIcon: Icons.straighten_outlined,
@@ -280,10 +283,10 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: AppTextField(
-                    label: 'Year built',
+                    label: l10n.fieldYearBuilt,
                     controller: _year,
                     keyboardType: TextInputType.number,
-                    hint: 'Optional',
+                    hint: l10n.hintOptional,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly
                     ],
@@ -293,34 +296,34 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
             ),
             const SizedBox(height: 16),
             _Stepper(
-                label: 'Bedrooms',
+                label: l10n.fieldBedrooms,
                 value: _bedrooms,
                 onChanged: (v) => setState(() => _bedrooms = v)),
             const SizedBox(height: 10),
             _Stepper(
-                label: 'Bathrooms',
+                label: l10n.fieldBathrooms,
                 value: _bathrooms,
                 onChanged: (v) => setState(() => _bathrooms = v)),
             const SizedBox(height: 16),
             AppDropdownField<String?>(
-              label: 'Condition',
+              label: l10n.fieldCondition,
               value: _condition,
-              hint: 'Select condition',
+              hint: l10n.hintSelectCondition,
               items: AppConstants.conditions,
               onChanged: (v) => setState(() => _condition = v),
             ),
             const SizedBox(height: 24),
-            _section(c, 'Photos'),
+            _section(c, l10n.sectionPhotos),
             _PhotoPicker(
                 photos: _photos,
                 onAdd: _pickPhotos,
                 onRemove: (i) => setState(() => _photos.removeAt(i))),
             const SizedBox(height: 24),
-            _section(c, 'Note to the officer'),
+            _section(c, l10n.sectionNoteToOfficer),
             AppTextField(
-                label: 'Optional message',
+                label: l10n.fieldOptionalMessage,
                 controller: _notes,
-                hint: 'Anything the reviewer should know',
+                hint: l10n.hintReviewerMessage,
                 maxLines: 3),
             if (_error != null) ...[
               const SizedBox(height: 16),
@@ -340,7 +343,7 @@ class _PropertyRegisterScreenState extends State<PropertyRegisterScreen> {
             ],
             const SizedBox(height: 24),
             PrimaryButton(
-              label: 'Submit for review',
+              label: l10n.actionSubmitForReview,
               loading: _submitting,
               onPressed: _submitting ? null : _submit,
             ),
@@ -385,7 +388,9 @@ class _Stepper extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-            child: Text(label, style: AppType.label(c, color: c.inkSecondary))),
+            child: Text(label,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.label(c, color: c.inkSecondary))),
         btn(Icons.remove, value > 0 ? () => onChanged(value - 1) : null),
         SizedBox(
           width: 40,
@@ -411,7 +416,7 @@ class _MapPin extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Map pin  (tap to place)',
+        Text(AppLocalizations.of(context)!.fieldMapPin,
             style: AppType.label(c, color: c.inkSecondary)),
         const SizedBox(height: 6),
         ClipRRect(
@@ -461,6 +466,7 @@ class _PhotoPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -485,7 +491,8 @@ class _PhotoPicker extends StatelessWidget {
                       Icon(Icons.add_a_photo_outlined,
                           color: c.green, size: 22),
                       const SizedBox(height: 4),
-                      Text('Add', style: AppType.caption(c, color: c.inkMuted)),
+                      Text(l10n.actionAddShort,
+                          style: AppType.caption(c, color: c.inkMuted)),
                     ],
                   ),
                 ),
@@ -526,9 +533,9 @@ class _PhotoPicker extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Photos upload to the registry when you submit. JPG, PNG or WEBP, '
-          'up to ${AppConstants.maxPhotoSizeBytes ~/ (1024 * 1024)}MB each, '
-          '${AppConstants.maxPhotosPerProperty} max.',
+          l10n.photoUploadHint(
+              AppConstants.maxPhotoSizeBytes ~/ (1024 * 1024),
+              AppConstants.maxPhotosPerProperty),
           style: AppType.caption(c, color: c.inkMuted).copyWith(height: 1.4),
         ),
       ],

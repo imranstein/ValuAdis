@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/session_user.dart';
 import '../../data/repositories/rentals_repository.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/pressable.dart';
 import 'owner/owner_listings_screen.dart';
 import 'renter/browse_screen.dart';
@@ -38,42 +39,46 @@ class _HomeShellState extends State<HomeShell> {
 
   List<_NavTab> _tabs(BuildContext context) {
     final repo = context.read<RentalsRepository>();
+    final l10n = AppLocalizations.of(context)!;
     if (widget.user.isOwner) {
       return [
-        _NavTab(Icons.home_work_outlined, Icons.home_work, 'Listings',
+        _NavTab(Icons.home_work_outlined, Icons.home_work, l10n.navListings,
             (_) => BlocProvider(
                 create: (_) => MyListingsCubit(repo)..load(),
                 child: const OwnerListingsScreen())),
-        _NavTab(Icons.description_outlined, Icons.description, 'Contracts',
+        _NavTab(Icons.description_outlined, Icons.description,
+            l10n.navContracts,
             (_) => BlocProvider(
                 create: (_) => ContractsCubit(repo)..load(),
                 child: const ContractsScreen())),
-        _NavTab(Icons.insights_outlined, Icons.insights, 'Index',
+        _NavTab(Icons.insights_outlined, Icons.insights, l10n.navIndex,
             (_) => BlocProvider(
                 create: (_) => RentIndexCubit(repo)..load(),
                 child: const RentIndexScreen())),
-        _NavTab(Icons.person_outline, Icons.person, 'Profile',
+        _NavTab(Icons.person_outline, Icons.person, l10n.navProfile,
             (_) => ProfileScreen(user: widget.user)),
       ];
     }
     return [
-      _NavTab(Icons.explore_outlined, Icons.explore, 'Browse',
+      _NavTab(Icons.explore_outlined, Icons.explore, l10n.navBrowse,
           (_) => BlocProvider(
               create: (_) => BrowseCubit(repo)..load(),
               child: const BrowseScreen())),
-      _NavTab(Icons.assignment_outlined, Icons.assignment, 'Applications',
+      _NavTab(Icons.assignment_outlined, Icons.assignment,
+          l10n.navApplications,
           (_) => BlocProvider(
               create: (_) => MyApplicationsCubit(repo)..load(),
               child: const MyApplicationsScreen())),
-      _NavTab(Icons.description_outlined, Icons.description, 'Contracts',
+      _NavTab(Icons.description_outlined, Icons.description,
+          l10n.navContracts,
           (_) => BlocProvider(
               create: (_) => ContractsCubit(repo)..load(),
               child: const ContractsScreen())),
-      _NavTab(Icons.insights_outlined, Icons.insights, 'Index',
+      _NavTab(Icons.insights_outlined, Icons.insights, l10n.navIndex,
           (_) => BlocProvider(
               create: (_) => RentIndexCubit(repo)..load(),
               child: const RentIndexScreen())),
-      _NavTab(Icons.person_outline, Icons.person, 'Profile',
+      _NavTab(Icons.person_outline, Icons.person, l10n.navProfile,
           (_) => ProfileScreen(user: widget.user)),
     ];
   }
@@ -148,9 +153,15 @@ class _NavItem extends StatelessWidget {
       children: [
         Icon(selected ? tab.activeIcon : tab.icon, size: 23, color: color),
         const SizedBox(height: 3),
-        Text(tab.label,
-            style: AppType.caption(c, color: color)
-                .copyWith(fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Text(tab.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: AppType.caption(c, color: color).copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+        ),
       ],
     );
   }

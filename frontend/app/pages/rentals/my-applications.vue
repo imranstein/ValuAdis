@@ -2,21 +2,18 @@
   <div class="page-shell my-applications-page">
     <section class="page-head">
       <div>
-        <p class="page-kicker">Rental registry</p>
-        <h2 class="page-title">My applications.</h2>
-        <p class="page-subtitle">
-          Applications you have made to published listings. Offers are accepted only inside each
-          listing's officer-published band.
-        </p>
+        <p class="page-kicker">{{ t('rentals.myApplications.kicker') }}</p>
+        <h2 class="page-title">{{ t('rentals.myApplications.title') }}</h2>
+        <p class="page-subtitle">{{ t('rentals.myApplications.subtitle') }}</p>
       </div>
       <div class="page-actions">
         <button class="btn-secondary" type="button" @click="load">
           <i class="pi pi-refresh" aria-hidden="true"></i>
-          Refresh
+          {{ t('rentals.myApplications.refresh') }}
         </button>
         <NuxtLink to="/rent" class="btn-primary">
           <i class="pi pi-search" aria-hidden="true"></i>
-          Browse listings
+          {{ t('rentals.myApplications.browseListings') }}
         </NuxtLink>
       </div>
     </section>
@@ -24,13 +21,13 @@
     <section class="table-panel">
       <div class="panel-head table-head">
         <div>
-          <h3 class="panel-title">Application records</h3>
-          <p class="panel-subtitle">Showing {{ applications.length }} of {{ total }} backend records</p>
+          <h3 class="panel-title">{{ t('rentals.myApplications.recordsTitle') }}</h3>
+          <p class="panel-subtitle">{{ t('rentals.myApplications.showingRecords', { shown: applications.length, total }) }}</p>
         </div>
       </div>
 
       <div v-if="errorMessage" class="state-panel error-state" role="alert">
-        <strong>Applications unavailable</strong>
+        <strong>{{ t('rentals.myApplications.unavailable') }}</strong>
         <span>{{ errorMessage }}</span>
       </div>
 
@@ -38,20 +35,20 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Listing</th>
-              <th>Property</th>
-              <th class="text-right">Your offer</th>
-              <th class="text-right">Band</th>
-              <th>Status</th>
-              <th>Submitted</th>
+              <th>{{ t('rentals.myApplications.colListing') }}</th>
+              <th>{{ t('rentals.myApplications.colProperty') }}</th>
+              <th class="text-right">{{ t('rentals.myApplications.colOffer') }}</th>
+              <th class="text-right">{{ t('rentals.myApplications.colBand') }}</th>
+              <th>{{ t('rentals.myApplications.colStatus') }}</th>
+              <th>{{ t('rentals.myApplications.colSubmitted') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="6">Loading your applications…</td>
+              <td colspan="6">{{ t('rentals.myApplications.loading') }}</td>
             </tr>
             <tr v-else-if="applications.length === 0">
-              <td colspan="6">No applications yet. Browse the public listings and apply within a band.</td>
+              <td colspan="6">{{ t('rentals.myApplications.noApplications') }}</td>
             </tr>
             <tr v-for="app in applications" v-else :key="app.id">
               <td class="record-id">
@@ -69,7 +66,7 @@
                 <template v-else>—</template>
               </td>
               <td>
-                <span class="status-pill" :class="statusClass(app.status)">{{ labelize(app.status) }}</span>
+                <span class="status-pill" :class="statusClass(app.status)">{{ statusLabel(app.status) }}</span>
               </td>
               <td>{{ formatDate(app.created_at) }}</td>
             </tr>
@@ -83,8 +80,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import rentalService, { type RenterApplication } from '~/services/rentalService'
+import { useI18n } from '~/composables/useI18n'
 
 definePageMeta({ middleware: 'auth' })
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const errorMessage = ref('')
@@ -101,7 +101,7 @@ async function load() {
     applications.value = result.data
     total.value = result.total
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not load your applications.'
+    errorMessage.value = error instanceof Error ? error.message : t('rentals.myApplications.unavailable')
     applications.value = []
     total.value = 0
   } finally {
@@ -120,6 +120,12 @@ function labelize(value: string) {
   return String(value || '')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function statusLabel(status: string) {
+  const key = status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const translated = t(`rentals.statuses.${key}`)
+  return translated === `rentals.statuses.${key}` ? labelize(status) : translated
 }
 
 function formatEtb(value: number) {

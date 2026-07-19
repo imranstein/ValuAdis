@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/listing_placeholder.dart';
@@ -18,6 +19,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
       body: SafeArea(
@@ -33,29 +35,29 @@ class WelcomeScreen extends StatelessWidget {
                       children: [
                         const RegistrySeal(size: 20),
                         const SizedBox(width: 8),
-                        Text('Addis Ababa Housing Administration',
-                            style: AppType.caption(c, color: c.inkMuted)),
+                        Flexible(
+                          child: Text(l10n.welcomeAgency,
+                              style: AppType.caption(c, color: c.inkMuted)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 28),
                     const BrandMark(size: 44),
                     const SizedBox(height: 14),
                     Text(
-                      'Rent a home at an honest, valuation-certified price. '
-                      'Every listing and contract is registered with the '
-                      'government.',
+                      l10n.welcomeHero,
                       style: AppType.body(c, color: c.inkSecondary)
                           .copyWith(fontSize: 16, height: 1.5),
                     ),
                     const SizedBox(height: 26),
                     const _HeroPreview(),
                     const SizedBox(height: 26),
-                    _point(c, Icons.verified_outlined, 'Certified prices',
-                        'A published band from an official valuation, not a broker guess.'),
-                    _point(c, Icons.gavel_outlined, 'Registered contracts',
-                        'Written and registered under Proclamation 1320/2024.'),
-                    _point(c, Icons.insights_outlined, 'A public rent index',
-                        'See the median rent per sub-city before you decide.'),
+                    _point(c, Icons.verified_outlined, l10n.welcomePoint1Title,
+                        l10n.welcomePoint1Body),
+                    _point(c, Icons.gavel_outlined, l10n.welcomePoint2Title,
+                        l10n.welcomePoint2Body),
+                    _point(c, Icons.insights_outlined, l10n.welcomePoint3Title,
+                        l10n.welcomePoint3Body),
                   ],
                 ),
               ),
@@ -65,7 +67,7 @@ class WelcomeScreen extends StatelessWidget {
               child: Column(
                 children: [
                   PrimaryButton(
-                    label: 'Create an account',
+                    label: l10n.welcomeCreateAccountCta,
                     icon: Icons.arrow_forward,
                     onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
@@ -73,7 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   GhostButton(
-                    label: 'I already have an account',
+                    label: l10n.authAlreadyHaveAccount,
                     onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (_) => const LoginScreen())),
@@ -154,7 +156,9 @@ class _HeroPreview extends StatelessWidget {
                     color: Colors.black.withValues(alpha: 0.42),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('28,000 ETB/mo · Bole',
+                  child: Text(
+                      AppLocalizations.of(context)?.welcomeHeroCaption ??
+                          '28,000 ETB/mo · Bole',
                       style: AppType.mono(c,
                           size: 14,
                           weight: FontWeight.w700,

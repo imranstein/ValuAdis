@@ -8,6 +8,7 @@ import '../../../core/formatting.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/pills.dart';
 import '../../widgets/states.dart';
 
@@ -21,10 +22,17 @@ class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
 
+enum _ActivityKind { application, contract }
+
+/// Holds the raw address/contract number rather than a pre-formatted title so
+/// the display string can be localized at build time — [_load] runs from
+/// [initState], where [BuildContext] isn't yet valid for an inherited-widget
+/// lookup like [AppLocalizations.of].
 class _ActivityItem {
-  const _ActivityItem(this.icon, this.title, this.status, this.when);
+  const _ActivityItem(this.icon, this.kind, this.label, this.status, this.when);
   final IconData icon;
-  final String title;
+  final _ActivityKind kind;
+  final String label;
   final String status;
   final DateTime? when;
 }
@@ -57,14 +65,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
         for (final a in apps)
           _ActivityItem(
             Icons.assignment_outlined,
-            'Application · ${a.propertyAddress ?? a.listingPublicId ?? ''}',
+            _ActivityKind.application,
+            a.propertyAddress ?? a.listingPublicId ?? '',
             a.status,
             a.decidedAt ?? a.createdAt,
           ),
         for (final k in contracts)
           _ActivityItem(
             Icons.description_outlined,
-            'Contract · ${k.contractNo}',
+            _ActivityKind.contract,
+            k.contractNo,
             k.status,
             k.createdAt,
           ),
@@ -88,27 +98,26 @@ class _ActivityScreenState extends State<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
-      appBar: AppBar(title: const Text('Activity')),
+      appBar: AppBar(title: Text(l10n.screenTitleActivity)),
       body: SafeArea(
-        child: _buildBody(c),
+        child: _buildBody(c, l10n),
       ),
     );
   }
 
-  Widget _buildBody(AppColors c) {
+  Widget _buildBody(AppColors c, AppLocalizations l10n) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return ErrorView(message: _error!, onRetry: _load);
     }
     if (_items.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.notifications_none,
-        title: 'Nothing new',
-        message:
-            'Status changes on your applications and contracts show up here. '
-            'This updates automatically while the app is open.',
+        title: l10n.emptyActivityTitle,
+        message: l10n.emptyActivityMessage,
       );
     }
     return RefreshIndicator(
@@ -120,6 +129,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, i) {
           final item = _items[i];
+          final title = item.kind == _ActivityKind.application
+              ? l10n.activityApplicationLabel(item.label)
+              : l10n.activityContractLabel(item.label);
           return StaggeredReveal(
             index: i,
             child: Container(
@@ -144,7 +156,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.title,
+                        Text(title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: AppType.label(c,

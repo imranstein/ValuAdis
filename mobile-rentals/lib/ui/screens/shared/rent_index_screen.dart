@@ -7,6 +7,7 @@ import '../../../core/formatting.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/rent_index.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/screen_header.dart';
 import '../../widgets/states.dart';
@@ -17,20 +18,21 @@ class RentIndexScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<RentIndexCubit>();
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
-          const ScreenHeader(
-              title: 'Rent index',
-              subtitle: 'Median registered rents by sub-city'),
+          ScreenHeader(
+              title: l10n.screenTitleRentIndex,
+              subtitle: l10n.screenSubtitleRentIndex),
           Expanded(
             child: BlocBuilder<RentIndexCubit,
                 AsyncState<List<RentIndexRow>>>(
               builder: (context, state) {
                 if (state.isError) {
                   return ErrorView(
-                      message: state.error ?? 'Could not load the index.',
+                      message: state.error ?? l10n.errorLoadIndex,
                       onRetry: cubit.load);
                 }
                 if (!state.isReady) {
@@ -38,13 +40,10 @@ class RentIndexScreen extends StatelessWidget {
                 }
                 final rows = state.data!;
                 if (rows.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.insights_outlined,
-                    title: 'Index still building',
-                    message:
-                        'The index publishes a median only where enough contracts '
-                        'have been registered. As the registry grows, medians per '
-                        'sub-city appear here.',
+                    title: l10n.emptyIndexTitle,
+                    message: l10n.emptyIndexMessage,
                   );
                 }
                 final byDistrict = <String, List<RentIndexRow>>{};
@@ -97,8 +96,7 @@ class _IndexIntro extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Medians from registered tenancy contracts for $period. Low-sample '
-              'cells are hidden, so what you see is real.',
+              AppLocalizations.of(context)!.indexIntroText(period),
               style: AppType.label(c, color: c.inkSecondary).copyWith(height: 1.4),
             ),
           ),
@@ -116,6 +114,7 @@ class _DistrictCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final sorted = [...rows]
       ..sort((a, b) => (a.bedrooms ?? 0).compareTo(b.bedrooms ?? 0));
     return Container(
@@ -132,7 +131,11 @@ class _DistrictCard extends StatelessWidget {
             children: [
               Icon(Icons.location_city_outlined, size: 18, color: c.green),
               const SizedBox(width: 8),
-              Text(district, style: AppType.headline(c)),
+              Flexible(
+                child: Text(district,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppType.headline(c)),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -144,15 +147,16 @@ class _DistrictCard extends StatelessWidget {
                   child: Text(
                     [
                       Fmt.humanize(r.propertySubtype),
-                      if (r.bedrooms != null) '${r.bedrooms} bed',
+                      if (r.bedrooms != null) l10n.bedCount(r.bedrooms!),
                     ].where((e) => e.isNotEmpty).join(' · '),
+                    overflow: TextOverflow.ellipsis,
                     style: AppType.label(c, color: c.inkSecondary),
                   ),
                 ),
-                Text('n=${r.sampleSize}',
+                Text(l10n.sampleSizeLabel(r.sampleSize),
                     style: AppType.caption(c, color: c.inkMuted)),
                 const SizedBox(width: 12),
-                Text(Fmt.rentPerMonth(r.medianRent),
+                Text('${Fmt.rent(r.medianRent)}${l10n.perMonthSuffixShort}',
                     style: AppType.mono(c, size: 15, weight: FontWeight.w700)),
               ],
             ),

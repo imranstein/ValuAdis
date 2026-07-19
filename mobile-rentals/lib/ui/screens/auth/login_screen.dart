@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../blocs/auth/auth_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/inputs.dart';
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
       appBar: AppBar(),
@@ -58,11 +60,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const BrandMark(size: 34),
                   const SizedBox(height: 8),
-                  Text('Sign in to your registry account',
+                  Text(l10n.loginSubtitle,
                       style: AppType.body(c, color: c.inkMuted)),
                   const SizedBox(height: 28),
                   AppTextField(
-                    label: 'Email',
+                    label: l10n.fieldEmail,
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icons.mail_outline,
@@ -70,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
-                    label: 'Password',
+                    label: l10n.fieldPassword,
                     controller: _password,
                     obscure: true,
                     prefixIcon: Icons.lock_outline,
@@ -78,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 26),
                   PrimaryButton(
-                    label: 'Sign in',
+                    label: l10n.actionSignIn,
                     loading: loading,
                     onPressed: loading ? null : _submit,
                   ),
@@ -92,9 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextSpan(
                           style: AppType.label(c, color: c.inkMuted),
                           children: [
-                            const TextSpan(text: 'New here?  '),
+                            TextSpan(text: '${l10n.loginNewHerePrefix}  '),
                             TextSpan(
-                                text: 'Create an account',
+                                text: l10n.welcomeCreateAccountCta,
                                 style: AppType.label(c, color: c.green)
                                     .copyWith(fontWeight: FontWeight.w600)),
                           ],

@@ -81,6 +81,9 @@ backend/media/
 *.webp
 !frontend/app/public/images/
 !frontend/app/public/images/valuadis-civic-ledger-hero.png
+# Phase proof screenshots are deliverables, not scratch — the blanket *.png
+# rule above must not swallow them (see plans/.../proof/<phase>/).
+!plans/**/proof/**
 
 # Database
 *.sql

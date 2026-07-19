@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/motion.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/brand.dart';
 
 /// Shown while the startup session check runs. A single, calm brand moment.
@@ -31,7 +32,9 @@ class SplashScreen extends StatelessWidget {
               const SizedBox(height: 16),
               const BrandMark(size: 40),
               const SizedBox(height: 10),
-              Text('Government-mediated rental registry',
+              Text(AppLocalizations.of(context)?.splashTagline ??
+                      'Government-mediated rental registry',
+                  textAlign: TextAlign.center,
                   style: AppType.label(c, color: c.inkMuted)),
               const SizedBox(height: 36),
               SizedBox(

@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/contract.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/pills.dart';
 import '../../widgets/screen_header.dart';
@@ -23,21 +24,22 @@ class ContractsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final cubit = context.read<ContractsCubit>();
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
-          const ScreenHeader(
-              title: 'My contracts',
-              subtitle: 'Registered tenancy agreements'),
+          ScreenHeader(
+              title: l10n.screenTitleMyContracts,
+              subtitle: l10n.screenSubtitleMyContracts),
           Expanded(
             child: BlocBuilder<ContractsCubit,
                 AsyncState<List<TenancyContract>>>(
               builder: (context, state) {
                 if (state.isError) {
                   return ErrorView(
-                      message: state.error ?? 'Could not load contracts.',
+                      message: state.error ?? l10n.errorLoadContracts,
                       onRetry: cubit.load);
                 }
                 if (!state.isReady) {
@@ -45,12 +47,10 @@ class ContractsScreen extends StatelessWidget {
                 }
                 final contracts = state.data!;
                 if (contracts.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.description_outlined,
-                    title: 'No contracts yet',
-                    message:
-                        'Once an application is accepted and an officer registers '
-                        'the tenancy, your contract will appear here with its PDF.',
+                    title: l10n.emptyNoContractsTitle,
+                    message: l10n.emptyNoContractsMessage,
                   );
                 }
                 return RefreshIndicator(
@@ -110,6 +110,7 @@ class _ContractCardState extends State<_ContractCard> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final contract = widget.contract;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -127,7 +128,7 @@ class _ContractCardState extends State<_ContractCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Contract',
+                    Text(l10n.labelContract,
                         style: AppType.caption(c, color: c.inkMuted)),
                     const SizedBox(height: 2),
                     Text(contract.contractNo,
@@ -139,18 +140,20 @@ class _ContractCardState extends State<_ContractCard> {
             ],
           ),
           const SizedBox(height: 16),
-          _row(c, 'Monthly rent', Fmt.rentPerMonth(contract.monthlyRent),
+          _row(c, l10n.labelMonthlyRent, '${Fmt.rent(contract.monthlyRent)}${l10n.perMonthSuffixShort}',
               mono: true),
-          _row(c, 'Term',
-              '${Fmt.date(contract.startDate)}  ->  ${Fmt.date(contract.endDate)}'),
+          _row(c, l10n.labelTerm,
+              l10n.termRangeLabel(
+                  Fmt.date(contract.startDate), Fmt.date(contract.endDate))),
           if (contract.depositAmount != null)
-            _row(c, 'Deposit', Fmt.rent(contract.depositAmount!), mono: true),
+            _row(c, l10n.labelDeposit, Fmt.rent(contract.depositAmount!),
+                mono: true),
           _row(
               c,
-              'Deposit receipt',
+              l10n.labelDepositReceipt,
               contract.depositRecorded
-                  ? 'Recorded'
-                  : 'Awaiting record',
+                  ? l10n.depositRecorded
+                  : l10n.depositAwaiting,
               valueColor:
                   contract.depositRecorded ? c.green : c.gold),
           const SizedBox(height: 8),
@@ -161,14 +164,15 @@ class _ContractCardState extends State<_ContractCard> {
               decoration: BoxDecoration(
                   color: c.goldWash, borderRadius: BorderRadius.circular(10)),
               child: Text(
-                'This contract activates once the officer records your deposit '
-                'receipt at the housing administration.',
+                l10n.contractActivatesNote,
                 style: AppType.caption(c, color: c.inkSecondary)
                     .copyWith(height: 1.4),
               ),
             ),
           GhostButton(
-            label: _downloading ? 'Preparing PDF...' : 'Download contract PDF',
+            label: _downloading
+                ? l10n.preparingPdfEllipsis
+                : l10n.actionDownloadContractPdf,
             icon: Icons.picture_as_pdf_outlined,
             onPressed: _downloading ? null : _download,
           ),

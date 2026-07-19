@@ -7,6 +7,7 @@ import '../../../core/constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/session_user.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/inputs.dart';
@@ -40,16 +41,17 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   String? _validate() {
-    if (_name.text.trim().length < 3) return 'Enter your full name.';
-    if (!_email.text.contains('@')) return 'Enter a valid email address.';
-    if (_phone.text.trim().length < 9) return 'Enter your phone number.';
-    if (_fayda.text.trim().length < 6) return 'Enter your Fayda ID number.';
+    final l10n = AppLocalizations.of(context)!;
+    if (_name.text.trim().length < 3) return l10n.validationFullName;
+    if (!_email.text.contains('@')) return l10n.validationEmail;
+    if (_phone.text.trim().length < 9) return l10n.validationPhone;
+    if (_fayda.text.trim().length < 6) return l10n.validationFaydaId;
     final pw = _password.text;
-    if (pw.length < 8) return 'Password must be at least 8 characters.';
+    if (pw.length < 8) return l10n.validationPasswordLength;
     if (!pw.contains(RegExp(r'[A-Z]'))) {
-      return 'Password needs an uppercase letter.';
+      return l10n.validationPasswordUppercase;
     }
-    if (!pw.contains(RegExp(r'[0-9]'))) return 'Password needs a number.';
+    if (!pw.contains(RegExp(r'[0-9]'))) return l10n.validationPasswordNumber;
     return null;
   }
 
@@ -72,6 +74,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: c.canvas,
       appBar: AppBar(),
@@ -91,7 +94,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 children: [
                   const BrandMark(size: 32),
                   const SizedBox(height: 8),
-                  Text('Create your registry account',
+                  Text(l10n.signupSubtitle,
                       style: AppType.body(c, color: c.inkMuted)),
                   const SizedBox(height: 22),
                   Row(
@@ -99,7 +102,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       Expanded(
                         child: _TypeCard(
                           icon: Icons.search,
-                          title: 'Rent a home',
+                          title: l10n.signupTypeRenterTitle,
                           selected: _type == AccountType.renter,
                           onTap: () =>
                               setState(() => _type = AccountType.renter),
@@ -109,7 +112,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       Expanded(
                         child: _TypeCard(
                           icon: Icons.home_work_outlined,
-                          title: 'List a property',
+                          title: l10n.signupTypeOwnerTitle,
                           selected: _type == AccountType.propertyOwner,
                           onTap: () => setState(
                               () => _type = AccountType.propertyOwner),
@@ -124,24 +127,24 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   const SizedBox(height: 20),
                   AppTextField(
-                      label: 'Full name',
+                      label: l10n.fieldFullName,
                       controller: _name,
                       prefixIcon: Icons.person_outline,
                       textInputAction: TextInputAction.next),
                   const SizedBox(height: 14),
                   AppTextField(
-                      label: 'Email',
+                      label: l10n.fieldEmail,
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.mail_outline,
                       textInputAction: TextInputAction.next),
                   const SizedBox(height: 14),
                   AppTextField(
-                    label: 'Phone (Ethiopian)',
+                    label: l10n.fieldPhone,
                     controller: _phone,
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icons.phone_outlined,
-                    hint: '09xxxxxxxx or +2519xxxxxxxx',
+                    hint: l10n.hintPhoneFormat,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))
                     ],
@@ -149,26 +152,26 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 14),
                   AppDropdownField<String>(
-                    label: 'Sub-city',
+                    label: l10n.fieldSubCity,
                     value: _subCity,
                     items: AppConstants.addisSubCities,
                     onChanged: (v) => setState(() => _subCity = v ?? _subCity),
                   ),
                   const SizedBox(height: 14),
                   AppTextField(
-                    label: 'Fayda ID number',
+                    label: l10n.fieldFaydaId,
                     controller: _fayda,
                     prefixIcon: Icons.badge_outlined,
-                    hint: 'Your national digital ID',
+                    hint: l10n.hintFaydaId,
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 14),
                   AppTextField(
-                    label: 'Password',
+                    label: l10n.fieldPassword,
                     controller: _password,
                     obscure: true,
                     prefixIcon: Icons.lock_outline,
-                    hint: '8+ chars, an uppercase letter and a number',
+                    hint: l10n.hintPasswordRules,
                     textInputAction: TextInputAction.done,
                   ),
                   if (_formError != null) ...[
@@ -177,7 +180,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                   const SizedBox(height: 22),
                   PrimaryButton(
-                    label: 'Create account',
+                    label: l10n.actionCreateAccountShort,
                     loading: loading,
                     onPressed: loading ? null : _submit,
                   ),
@@ -187,7 +190,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       onPressed: () => Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
                               builder: (_) => const LoginScreen())),
-                      child: Text('I already have an account',
+                      child: Text(l10n.authAlreadyHaveAccount,
                           style: AppType.label(c, color: c.green)),
                     ),
                   ),
@@ -262,8 +265,7 @@ class _OwnerNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Owner accounts are verified by a rental officer before a '
-              'listing can be published. You can prepare listings right away.',
+              AppLocalizations.of(context)!.signupOwnerNote,
               style: AppType.caption(c, color: c.inkSecondary)
                   .copyWith(height: 1.4),
             ),

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/listing.dart';
 import '../../../data/repositories/rentals_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../widgets/band_range_bar.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/inputs.dart';
@@ -45,6 +46,7 @@ class _ApplySheetState extends State<_ApplySheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _submitting = true;
       _error = null;
@@ -61,8 +63,7 @@ class _ApplySheetState extends State<_ApplySheet> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
-            content: Text(
-                'Application sent at ${Fmt.rent(_offer)}. Track it under Applications.')));
+            content: Text(l10n.snackApplicationSent(Fmt.rent(_offer)))));
     } on RentalsException catch (e) {
       setState(() {
         _error = e.message;
@@ -74,6 +75,7 @@ class _ApplySheetState extends State<_ApplySheet> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final band = widget.listing.band;
     // ~25 ETB per step keeps the thumb precise on narrow bands and still
     // manageable on wide ones.
@@ -102,7 +104,7 @@ class _ApplySheetState extends State<_ApplySheet> {
             ),
           ),
           const SizedBox(height: 18),
-          Text('Apply to rent', style: AppType.title(c)),
+          Text(l10n.applySheetTitle, style: AppType.title(c)),
           const SizedBox(height: 2),
           Text(widget.listing.property.address,
               maxLines: 1,
@@ -115,7 +117,7 @@ class _ApplySheetState extends State<_ApplySheet> {
               transitionBuilder: (child, anim) =>
                   FadeTransition(opacity: anim, child: child),
               child: Text(
-                Fmt.rentPerMonth(_offer),
+                '${Fmt.rent(_offer)}${l10n.perMonthSuffixShort}',
                 key: ValueKey(_offer.round()),
                 style: AppType.mono(c, size: 30, weight: FontWeight.w700),
               ),
@@ -123,7 +125,7 @@ class _ApplySheetState extends State<_ApplySheet> {
           ),
           const SizedBox(height: 6),
           Center(
-            child: Text('Within the allowed band',
+            child: Text(l10n.applyWithinBand,
                 style: AppType.caption(c, color: c.green)
                     .copyWith(fontWeight: FontWeight.w600)),
           ),
@@ -149,9 +151,9 @@ class _ApplySheetState extends State<_ApplySheet> {
           BandRangeBar(band: band, offer: _offer, showLabels: true),
           const SizedBox(height: 18),
           AppTextField(
-            label: 'Message to the owner (optional)',
+            label: l10n.fieldMessageToOwner,
             controller: _message,
-            hint: 'Introduce yourself, move-in date, etc.',
+            hint: l10n.hintMessageToOwner,
             maxLines: 3,
           ),
           if (_error != null) ...[
@@ -174,7 +176,7 @@ class _ApplySheetState extends State<_ApplySheet> {
           ],
           const SizedBox(height: 20),
           PrimaryButton(
-            label: 'Submit application',
+            label: l10n.actionSubmitApplication,
             loading: _submitting,
             onPressed: _submitting ? null : _submit,
           ),

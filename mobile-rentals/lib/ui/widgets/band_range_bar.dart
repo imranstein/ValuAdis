@@ -4,6 +4,7 @@ import '../../core/formatting.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/models/band.dart';
+import '../../l10n/app_localizations.dart';
 
 /// The product's core honesty gesture, visualized: the published band as a
 /// horizontal track with the suggested rent marked and both bounds labeled in
@@ -24,6 +25,7 @@ class BandRangeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,7 +44,9 @@ class BandRangeBar extends StatelessWidget {
                           color: c.inkMuted)),
                 ),
                 const SizedBox(width: 8),
-                Text('${band.spreadPercent}% band',
+                Text(
+                    l10n?.bandSpreadLabel(band.spreadPercent) ??
+                        '${band.spreadPercent}% band',
                     style: AppType.caption(c, color: c.inkMuted)),
                 const SizedBox(width: 8),
                 Flexible(
@@ -104,7 +108,9 @@ class BandRangeBar extends StatelessWidget {
                 _dot(c, c.green),
                 const SizedBox(width: 5),
                 Flexible(
-                  child: Text('Suggested ${Fmt.rent(band.suggested)}',
+                  child: Text(
+                      l10n?.suggestedPriceLabel(Fmt.rent(band.suggested)) ??
+                          'Suggested ${Fmt.rent(band.suggested)}',
                       overflow: TextOverflow.ellipsis,
                       style: AppType.caption(c, color: c.inkSecondary)),
                 ),
@@ -113,7 +119,7 @@ class BandRangeBar extends StatelessWidget {
                   _dot(c, c.gold),
                   const SizedBox(width: 5),
                   Flexible(
-                    child: Text('Your offer',
+                    child: Text(l10n?.labelYourOffer ?? 'Your offer',
                         overflow: TextOverflow.ellipsis,
                         style: AppType.caption(c, color: c.inkSecondary)),
                   ),

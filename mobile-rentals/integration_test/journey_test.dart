@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:valuadis_rent/app.dart';
 import 'package:valuadis_rent/blocs/auth/auth_bloc.dart';
+import 'package:valuadis_rent/core/locale_controller.dart';
 import 'package:valuadis_rent/data/api/api_client.dart';
 import 'package:valuadis_rent/data/api/token_storage.dart';
 import 'package:valuadis_rent/data/repositories/auth_repository.dart';
@@ -28,7 +29,9 @@ void main() {
     final authRepo = AuthRepository(api, storage);
     authBloc = AuthBloc(authRepo)..add(const AuthCheckRequested());
     return ValuAdisRentApp(
-        authBloc: authBloc, rentalsRepository: RentalsRepository(api));
+        authBloc: authBloc,
+        rentalsRepository: RentalsRepository(api),
+        localeController: LocaleController());
   }
 
   Future<void> settle(WidgetTester t, {int ms = 2200}) async {
