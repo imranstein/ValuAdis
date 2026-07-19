@@ -297,6 +297,26 @@ class TestReadAuthorization:
         assert response.headers["content-type"] == "image/png"
         assert len(response.content) > 0
 
+    def test_photo_file_response_allows_cross_origin_embedding(self, client, property_id, owner_token):
+        """The photo file is meant to be embedded as <img src> from the
+        frontend's own origin (a different port than the API by design);
+        the global same-origin CORP default must not block it (regression:
+        net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin found in the dev sweep)."""
+        upload = client.post(
+            f"/api/v1/properties/{property_id}/photos",
+            files={"file": ("photo.png", _valid_image_bytes(), "image/png")},
+            headers=_headers(owner_token),
+        )
+        photo_id = upload.json()["data"]["id"]
+        response = client.get(
+            f"/api/v1/properties/{property_id}/photos/{photo_id}/file", headers=_headers(owner_token)
+        )
+        assert response.headers["cross-origin-resource-policy"] == "cross-origin"
+
+    def test_other_endpoints_keep_same_origin_resource_policy(self, client, owner_token):
+        response = client.get("/api/v1/properties", headers=_headers(owner_token))
+        assert response.headers["cross-origin-resource-policy"] == "same-origin"
+
 
 class TestPublicListingVisibility:
     def _make_officer(self, client: TestClient, db_session) -> str:

@@ -9,6 +9,8 @@ Ethiopian Property Valuation Platform Backend
 - M-Pesa Integration
 """
 
+import re
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,6 +29,13 @@ from app.core.sentry import init_sentry, get_sentry_manager
 # Security headers middleware
 # ---------------------------------------------------------------------------
 
+# Property photo files are the one API response meant to be embedded
+# cross-origin — the frontend renders them as <img src> from its own origin
+# (apiBaseUrl is a different host/port than the Nuxt app by design). Every
+# other response keeps the strict same-origin default below.
+_EMBEDDABLE_PHOTO_FILE_PATH = re.compile(r"^/api/v1/properties/\d+/photos/\d+/file$")
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add OWASP-recommended security headers to every response."""
     async def dispatch(self, request: Request, call_next):
@@ -36,7 +45,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
-        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = (
+            "cross-origin" if _EMBEDDABLE_PHOTO_FILE_PATH.match(request.url.path) else "same-origin"
+        )
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers[
             "Content-Security-Policy"
