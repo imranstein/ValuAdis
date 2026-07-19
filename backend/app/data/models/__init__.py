@@ -1,6 +1,7 @@
 """Database models"""
 from .user import User
 from .property import Property
+from .property_photo import PropertyPhoto
 from .valuation import Valuation
 from .valuation_feedback import ValuationFeedback
 from .market_listing import RawMarketListing

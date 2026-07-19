@@ -100,6 +100,12 @@ class Property(Base):
     user = relationship("User", back_populates="properties")
     valuations = relationship("Valuation", back_populates="property")
     feedback = relationship("ValuationFeedback", back_populates="property", cascade="all, delete-orphan")
+    photos = relationship(
+        "PropertyPhoto",
+        back_populates="property",
+        cascade="all, delete-orphan",
+        order_by="PropertyPhoto.position",
+    )
 
     def to_dict(self):
         return {

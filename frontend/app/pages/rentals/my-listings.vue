@@ -122,6 +122,14 @@
                   <i class="pi pi-users" aria-hidden="true"></i>
                 </button>
                 <button
+                  class="icon-button inline"
+                  type="button"
+                  aria-label="Manage photos"
+                  @click="openPhotos(listing)"
+                >
+                  <i class="pi pi-images" aria-hidden="true"></i>
+                </button>
+                <button
                   v-if="listing.listing_agreement_pdf"
                   class="icon-button inline"
                   type="button"
@@ -212,13 +220,65 @@
         </table>
       </div>
     </section>
+
+    <section v-if="photosFor" class="table-panel photos-panel" aria-label="Listing photos">
+      <div class="panel-head table-head">
+        <div>
+          <h3 class="panel-title">Photos for {{ photosFor.property_address || `Property #${photosFor.property_id}` }}</h3>
+          <p class="panel-subtitle">
+            Up to {{ maxPhotos }} photos, {{ maxPhotoSizeMb }}MB each (JPEG, PNG, or WEBP). Visible to
+            renters once this listing is published.
+          </p>
+        </div>
+        <button class="icon-button" type="button" aria-label="Close photos" @click="photosFor = null">
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div v-if="photosError" class="state-panel error-state" role="alert">
+        <strong>Photos unavailable</strong>
+        <span>{{ photosError }}</span>
+      </div>
+
+      <label class="photo-upload" :class="{ disabled: uploadingPhoto || photos.length >= maxPhotos }">
+        <i class="pi pi-upload" aria-hidden="true"></i>
+        <span>{{ uploadingPhoto ? 'Uploading…' : 'Upload a photo' }}</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          :disabled="uploadingPhoto || photos.length >= maxPhotos"
+          @change="uploadPhoto"
+        />
+      </label>
+
+      <div v-if="loadingPhotos" class="inline-muted">Loading photos…</div>
+      <div v-else-if="photos.length === 0" class="inline-muted">No photos uploaded yet.</div>
+      <div v-else class="photo-grid">
+        <figure v-for="photo in photos" :key="photo.id" class="photo-tile">
+          <img :src="propertyService.resolvePhotoUrl(photo.url)" :alt="`Property photo ${photo.position + 1}`" />
+          <button
+            class="icon-button photo-delete"
+            type="button"
+            aria-label="Delete photo"
+            :disabled="deletingPhotoId === photo.id"
+            @click="deletePhoto(photo)"
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+          </button>
+        </figure>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import rentalService, { type OwnerApplication, type OwnerListing } from '~/services/rentalService'
+import propertyService, { type PropertyPhoto } from '~/services/propertyService'
 import { getAccessToken } from '~/utils/authToken'
+
+const MAX_PHOTOS = 8
+const MAX_PHOTO_SIZE_MB = 5
 
 definePageMeta({ middleware: 'auth' })
 
@@ -246,6 +306,15 @@ const listingApplications = ref<OwnerApplication[]>([])
 const loadingApplications = ref(false)
 const applicationsError = ref('')
 const decisionNotice = ref('')
+
+const photosFor = ref<OwnerListing | null>(null)
+const photos = ref<PropertyPhoto[]>([])
+const loadingPhotos = ref(false)
+const photosError = ref('')
+const uploadingPhoto = ref(false)
+const deletingPhotoId = ref<number | null>(null)
+const maxPhotos = MAX_PHOTOS
+const maxPhotoSizeMb = MAX_PHOTO_SIZE_MB
 
 const availableProperties = computed(() => {
   const activeIds = new Set(
@@ -365,6 +434,52 @@ async function decide(app: OwnerApplication, action: 'accept' | 'reject') {
   }
 }
 
+async function openPhotos(listing: OwnerListing) {
+  photosFor.value = listing
+  loadingPhotos.value = true
+  photosError.value = ''
+  try {
+    photos.value = await propertyService.listPhotos(listing.property_id)
+  } catch (error) {
+    photosError.value = error instanceof Error ? error.message : 'Could not load photos.'
+    photos.value = []
+  } finally {
+    loadingPhotos.value = false
+  }
+}
+
+async function uploadPhoto(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !photosFor.value) return
+
+  uploadingPhoto.value = true
+  photosError.value = ''
+  try {
+    const photo = await propertyService.uploadPhoto(photosFor.value.property_id, file)
+    photos.value = [...photos.value, photo]
+  } catch (error) {
+    photosError.value = error instanceof Error ? error.message : 'Could not upload the photo.'
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
+
+async function deletePhoto(photo: PropertyPhoto) {
+  if (!photosFor.value) return
+  deletingPhotoId.value = photo.id
+  photosError.value = ''
+  try {
+    await propertyService.deletePhoto(photosFor.value.property_id, photo.id)
+    photos.value = photos.value.filter((p) => p.id !== photo.id)
+  } catch (error) {
+    photosError.value = error instanceof Error ? error.message : 'Could not delete the photo.'
+  } finally {
+    deletingPhotoId.value = null
+  }
+}
+
 async function downloadAgreement(listing: OwnerListing) {
   acting.value = true
   listingsError.value = ''
@@ -481,6 +596,69 @@ function formatEtb(value: number) {
 
 .applications-panel .panel-subtitle {
   max-width: 560px;
+}
+
+.photos-panel .panel-subtitle {
+  max-width: 560px;
+}
+
+.photo-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  margin: var(--space-4) 0;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 var(--space-4);
+  cursor: pointer;
+}
+
+.photo-upload.disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.photo-upload input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.photo-tile {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--canvas);
+}
+
+.photo-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--surface);
 }
 
 .btn-compact {

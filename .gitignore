@@ -71,10 +71,12 @@ docker-compose.override.yml
 
 # Uploads & Generated Files
 uploads/
+backend/media/
 *.pdf
 *.png
 *.jpg
 *.jpeg
+*.webp
 !frontend/app/public/images/
 !frontend/app/public/images/valuadis-civic-ledger-hero.png
 

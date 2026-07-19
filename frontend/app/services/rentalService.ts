@@ -16,6 +16,7 @@ export interface PublicListingProperty {
   condition?: string | null
   latitude?: number | null
   longitude?: number | null
+  photo_urls: string[]
 }
 
 export interface PublicListing {

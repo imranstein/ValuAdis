@@ -56,6 +56,7 @@ def _fake_listing():
         owner_phone="+251911000000",
         owner_email="kebede@example.com",
         owner_id_number="FAYDA-123456789012",
+        photos=[],
     )
     return SimpleNamespace(
         id=3,

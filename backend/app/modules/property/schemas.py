@@ -192,6 +192,26 @@ class PropertyListResponse(BaseModel):
     message: Optional[str] = None
 
 
+class PropertyPhotoOut(BaseModel):
+    """A single photo, exposed only as an opaque URL — never a filesystem
+    path or the original filename."""
+
+    id: int
+    url: str
+    position: int
+    created_at: Optional[datetime] = None
+
+
+class PropertyPhotoResponse(BaseModel):
+    success: bool
+    data: PropertyPhotoOut
+
+
+class PropertyPhotoListResponse(BaseModel):
+    success: bool
+    data: List[PropertyPhotoOut]
+
+
 class PropertyDetail(BaseModel):
     id: int
     property_ref: Optional[str] = None
