@@ -71,7 +71,7 @@
                 <tr v-for="(row, i) in rows" :key="i">
                   <td>{{ formatSubtype(row.property_subtype) }}</td>
                   <td>{{ row.bedrooms != null ? row.bedrooms : t('rentals.index.allBedrooms') }}</td>
-                  <td class="text-right num">{{ formatEtb(row.median_rent) }}/mo</td>
+                  <td class="text-right num">{{ formatEtb(row.median_rent) }}{{ t('common.perMonthSuffix') }}</td>
                   <td class="text-right num">{{ t('rentals.index.contractsUnit', { n: row.sample_size }) }}</td>
                   <td>{{ row.period }}</td>
                   <td class="index-source">{{ formatSource(row.source) }}</td>

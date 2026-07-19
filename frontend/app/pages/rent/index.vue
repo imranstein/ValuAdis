@@ -84,7 +84,7 @@
           <div class="rent-card-band">
             <div>
               <span>{{ t('rentals.browse.suggestedRent') }}</span>
-              <strong>{{ formatEtb(listing.suggested_rent) }}/mo</strong>
+              <strong>{{ formatEtb(listing.suggested_rent) }}{{ t('common.perMonthSuffix') }}</strong>
             </div>
             <div>
               <span>{{ t('rentals.browse.publishedBand') }}</span>

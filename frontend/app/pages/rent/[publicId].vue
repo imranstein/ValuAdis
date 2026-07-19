@@ -44,7 +44,7 @@
       <section class="detail-band" aria-label="Published rent band">
         <div>
           <span>{{ t('rentals.detail.suggestedRent') }}</span>
-          <strong>{{ formatEtb(listing.suggested_rent) }}/mo</strong>
+          <strong>{{ formatEtb(listing.suggested_rent) }}{{ t('common.perMonthSuffix') }}</strong>
         </div>
         <div>
           <span>{{ t('rentals.detail.bandMin') }}</span>

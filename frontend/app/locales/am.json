@@ -5,6 +5,7 @@
   "common": {
     "appName": "ቫሉአዲስ",
     "tagline": "የኢትዮጵያ ንብረት ግምት መድረክ",
+    "perMonthSuffix": "/ወር",
     "loading": "በመጫን ላይ...",
     "save": "አስቀምጥ",
     "cancel": "ሰርዝ",

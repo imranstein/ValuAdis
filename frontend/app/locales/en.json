@@ -2,6 +2,7 @@
   "common": {
     "appName": "ValuAdis",
     "tagline": "Ethiopian Property Valuation Platform",
+    "perMonthSuffix": "/mo",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
