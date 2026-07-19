@@ -125,4 +125,71 @@ describe('propertyService', () => {
     const file = new File(['bad'], 'bad.csv', { type: 'text/csv' })
     await expect(propertyService.bulkImport(file)).rejects.toThrow('validation error')
   })
+
+  it('lists photos via apiService.get', async () => {
+    getMock.mockResolvedValueOnce({ success: true, data: [{ id: 1, url: '/api/v1/properties/11/photos/1/file', position: 0 }] })
+    const { propertyService } = await import('./propertyService')
+    const photos = await propertyService.listPhotos(11)
+
+    expect(getMock).toHaveBeenCalledWith('/api/v1/properties/11/photos')
+    expect(photos).toHaveLength(1)
+    expect(photos[0].id).toBe(1)
+  })
+
+  it('uploads a photo with the multipart body', async () => {
+    const response = {
+      ok: true,
+      json: vi.fn().mockResolvedValue({ success: true, data: { id: 2, url: '/api/v1/properties/11/photos/2/file', position: 1 } }),
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue(response)
+
+    const { propertyService } = await import('./propertyService')
+    const file = new File(['img'], 'photo.png', { type: 'image/png' })
+    const photo = await propertyService.uploadPhoto(11, file)
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:8020/api/v1/properties/11/photos',
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(photo.id).toBe(2)
+  })
+
+  it('throws when photo upload is rejected with a server detail', async () => {
+    const response = {
+      ok: false,
+      json: vi.fn().mockResolvedValue({ detail: 'File is not a valid JPEG, PNG, or WEBP image.' }),
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue(response)
+
+    const { propertyService } = await import('./propertyService')
+    const file = new File(['not an image'], 'fake.jpg', { type: 'image/jpeg' })
+    await expect(propertyService.uploadPhoto(11, file)).rejects.toThrow('not a valid JPEG')
+  })
+
+  it('deletes a photo', async () => {
+    const response = { ok: true, json: vi.fn().mockResolvedValue({ success: true }) }
+    globalThis.fetch = vi.fn().mockResolvedValue(response)
+
+    const { propertyService } = await import('./propertyService')
+    await propertyService.deletePhoto(11, 2)
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:8020/api/v1/properties/11/photos/2',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('resolves a host-relative photo url against the api base', async () => {
+    const { propertyService } = await import('./propertyService')
+    expect(propertyService.resolvePhotoUrl('/api/v1/properties/11/photos/2/file')).toBe(
+      'http://localhost:8020/api/v1/properties/11/photos/2/file',
+    )
+  })
+
+  it('leaves an already-absolute photo url untouched', async () => {
+    const { propertyService } = await import('./propertyService')
+    expect(propertyService.resolvePhotoUrl('https://cdn.example.com/photo.jpg')).toBe(
+      'https://cdn.example.com/photo.jpg',
+    )
+  })
 })

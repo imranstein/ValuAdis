@@ -59,6 +59,19 @@
         </p>
       </section>
 
+      <section class="detail-gallery" aria-label="Property photos">
+        <div v-if="listing.property.photo_urls.length" class="gallery-grid">
+          <img
+            v-for="url in listing.property.photo_urls"
+            :key="url"
+            :src="resolvePhotoUrl(url)"
+            :alt="`Photo of ${listing.property.address}`"
+            loading="lazy"
+          />
+        </div>
+        <div v-else class="rent-state gallery-placeholder">No photos have been uploaded for this listing yet.</div>
+      </section>
+
       <div class="detail-columns">
         <section class="detail-facts" aria-label="Property facts">
           <h2>Property facts</h2>
@@ -170,6 +183,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import rentalService, { type PublicListing, type RenterApplication } from '~/services/rentalService'
+import propertyService from '~/services/propertyService'
 import PropertyMap from '~/components/map/PropertyMap.vue'
 import { getAccessToken } from '~/utils/authToken'
 
@@ -268,6 +282,10 @@ function labelize(value: string) {
 
 function formatArea(value: number) {
   return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function resolvePhotoUrl(url: string) {
+  return propertyService.resolvePhotoUrl(url)
 }
 </script>
 
@@ -444,6 +462,29 @@ function formatArea(value: number) {
   font-size: 13px;
   line-height: 1.5;
   padding: var(--space-4) var(--space-5);
+}
+
+.detail-gallery {
+  padding: 0 clamp(18px, 5vw, 64px) var(--space-5);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.gallery-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+}
+
+.gallery-placeholder {
+  margin: 0;
 }
 
 .detail-columns {
