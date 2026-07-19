@@ -3,23 +3,21 @@
     <nav class="rent-nav" aria-label="Public navigation">
       <NuxtLink to="/" class="rent-brand">
         <span class="rent-mark" aria-hidden="true">V</span>
-        <span>ValuAdis Rentals</span>
+        <span>{{ t('rentals.publicNav.brand') }}</span>
       </NuxtLink>
       <div class="rent-nav-links">
-        <NuxtLink to="/rent" class="active">Listings</NuxtLink>
-        <NuxtLink to="/rent/index">Rent index</NuxtLink>
-        <NuxtLink to="/rent/signup">Citizen signup</NuxtLink>
-        <NuxtLink to="/login" class="rent-login">Workspace sign in</NuxtLink>
+        <NuxtLink to="/rent" class="active">{{ t('rentals.publicNav.listings') }}</NuxtLink>
+        <NuxtLink to="/rent/index">{{ t('rentals.publicNav.rentIndex') }}</NuxtLink>
+        <NuxtLink to="/rent/signup">{{ t('rentals.publicNav.citizenSignup') }}</NuxtLink>
+        <NuxtLink to="/login" class="rent-login">{{ t('rentals.publicNav.workspaceSignIn') }}</NuxtLink>
+        <LanguageSwitcher />
       </div>
     </nav>
 
     <header class="rent-hero">
-      <p class="rent-kicker">Addis Ababa Housing Administration pilot &mdash; Bole &amp; Yeka</p>
-      <h1>Registered rental listings at honest, published prices.</h1>
-      <p class="rent-lede">
-        Every listing is verified by a rental officer and published inside a valuation-backed
-        rent band under Proclamation 1320/2024. No brokers, no key money.
-      </p>
+      <p class="rent-kicker">{{ t('rentals.browse.kicker') }}</p>
+      <h1>{{ t('rentals.browse.title') }}</h1>
+      <p class="rent-lede">{{ t('rentals.browse.lede') }}</p>
     </header>
 
     <section class="rent-toolbar" aria-label="Listing filters">
@@ -28,39 +26,36 @@
         <input
           v-model="district"
           type="search"
-          placeholder="Sub-city (e.g. Bole, Yeka)"
+          :placeholder="t('rentals.browse.searchPlaceholder')"
           @keyup.enter="loadListings"
         />
       </div>
-      <select v-model="bedrooms" class="rent-filter-select" aria-label="Bedrooms">
-        <option value="">Any bedrooms</option>
-        <option v-for="n in 5" :key="n" :value="String(n)">{{ n }} bedroom{{ n > 1 ? 's' : '' }}</option>
+      <select v-model="bedrooms" class="rent-filter-select" :aria-label="t('rentals.browse.bedroomsLabel')">
+        <option value="">{{ t('rentals.browse.anyBedrooms') }}</option>
+        <option v-for="n in 5" :key="n" :value="String(n)">{{ formatBedroomOption(n) }}</option>
       </select>
       <input
         v-model="maxRent"
         type="number"
         min="0"
         class="rent-filter-select"
-        placeholder="Max monthly rent (ETB)"
-        aria-label="Maximum monthly rent"
+        :placeholder="t('rentals.browse.maxRentPlaceholder')"
+        :aria-label="t('rentals.browse.maxRentLabel')"
       />
-      <button class="rent-btn-primary" type="button" @click="loadListings">Search</button>
+      <button class="rent-btn-primary" type="button" @click="loadListings">{{ t('rentals.browse.search') }}</button>
     </section>
 
     <section class="rent-results" aria-label="Search results">
-      <div v-if="loading" class="rent-state">Loading published listings…</div>
+      <div v-if="loading" class="rent-state">{{ t('rentals.browse.loading') }}</div>
 
       <div v-else-if="errorMessage" class="rent-state rent-state-error" role="alert">
-        <strong>Listings unavailable</strong>
+        <strong>{{ t('rentals.browse.unavailable') }}</strong>
         <span>{{ errorMessage }}</span>
       </div>
 
       <div v-else-if="listings.length === 0" class="rent-state">
-        <strong>No published listings match these filters.</strong>
-        <span>
-          Listings appear here after a rental officer verifies and publishes them.
-          Check back soon or widen your filters.
-        </span>
+        <strong>{{ t('rentals.browse.noResultsTitle') }}</strong>
+        <span>{{ t('rentals.browse.noResultsBody') }}</span>
       </div>
 
       <div v-else class="rent-grid">
@@ -72,9 +67,9 @@
         >
           <div class="rent-card-head">
             <span class="rent-card-id">{{ listing.public_id }}</span>
-            <span class="rent-cert-badge" title="Backed by an approved rent valuation">
+            <span class="rent-cert-badge" :title="t('rentals.browse.certifiedTitle')">
               <i class="pi pi-verified" aria-hidden="true"></i>
-              Valuation certified
+              {{ t('rentals.browse.certifiedBadge') }}
             </span>
           </div>
           <h2>{{ listing.property.address }}</h2>
@@ -88,25 +83,23 @@
           </p>
           <div class="rent-card-band">
             <div>
-              <span>Suggested rent</span>
-              <strong>{{ formatEtb(listing.suggested_rent) }}/mo</strong>
+              <span>{{ t('rentals.browse.suggestedRent') }}</span>
+              <strong>{{ formatEtb(listing.suggested_rent) }}{{ t('common.perMonthSuffix') }}</strong>
             </div>
             <div>
-              <span>Published band</span>
+              <span>{{ t('rentals.browse.publishedBand') }}</span>
               <strong>{{ formatEtb(listing.band_min) }} – {{ formatEtb(listing.band_max) }}</strong>
             </div>
           </div>
         </NuxtLink>
       </div>
 
-      <p v-if="!loading && !errorMessage" class="rent-count">
-        {{ total }} published listing{{ total === 1 ? '' : 's' }} from the registry.
-      </p>
+      <p v-if="!loading && !errorMessage" class="rent-count">{{ formatCount(total) }}</p>
     </section>
 
     <footer class="rent-footer">
-      <span>ValuAdis &mdash; government-mediated rental registry</span>
-      <NuxtLink to="/rent/signup">Register as owner or renter</NuxtLink>
+      <span>{{ t('rentals.browse.footerTag') }}</span>
+      <NuxtLink to="/rent/signup">{{ t('rentals.browse.registerCta') }}</NuxtLink>
     </footer>
   </main>
 </template>
@@ -114,8 +107,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import rentalService, { type PublicListing } from '~/services/rentalService'
+import { useI18n } from '~/composables/useI18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 definePageMeta({ layout: 'landing' })
+
+const { t } = useI18n()
 
 const district = ref('')
 const bedrooms = ref('')
@@ -139,7 +136,7 @@ async function loadListings() {
     listings.value = result.data
     total.value = result.total
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not load listings.'
+    errorMessage.value = error instanceof Error ? error.message : t('rentals.browse.unavailable')
     listings.value = []
     total.value = 0
   } finally {
@@ -158,6 +155,14 @@ function formatSubtype(property: PublicListing['property']) {
 
 function formatArea(value: number) {
   return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function formatBedroomOption(n: number) {
+  return t(n > 1 ? 'rentals.browse.bedroomOther' : 'rentals.browse.bedroomOne', { n })
+}
+
+function formatCount(count: number) {
+  return t(count === 1 ? 'rentals.browse.countOne' : 'rentals.browse.countOther', { n: count })
 }
 </script>
 

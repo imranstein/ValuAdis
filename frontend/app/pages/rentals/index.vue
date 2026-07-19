@@ -134,6 +134,20 @@
         <div v-if="selected.review_reason"><dt>Note</dt><dd>{{ selected.review_reason }}</dd></div>
       </dl>
 
+      <div class="drawer-photos" aria-label="Property photos">
+        <p class="drawer-photos-label">Photos</p>
+        <div v-if="loadingDrawerPhotos" class="drawer-note">Loading photos…</div>
+        <div v-else-if="drawerPhotos.length === 0" class="drawer-note">No photos uploaded for this property.</div>
+        <div v-else class="drawer-photo-grid">
+          <img
+            v-for="photo in drawerPhotos"
+            :key="photo.id"
+            :src="propertyService.resolvePhotoUrl(photo.url)"
+            :alt="`Property photo ${photo.position + 1}`"
+          />
+        </div>
+      </div>
+
       <div v-if="actionError" class="state-panel error-state" role="alert">
         <strong>Action failed</strong>
         <span>{{ actionError }}</span>
@@ -209,6 +223,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import rentalService, { type OfficerListing } from '~/services/rentalService'
+import propertyService, { type PropertyPhoto } from '~/services/propertyService'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -225,6 +240,8 @@ const actionError = ref('')
 const actionNotice = ref('')
 const adjust = reactive({ bandMin: 0, bandMax: 0, reason: '' })
 const rejectReason = ref('')
+const drawerPhotos = ref<PropertyPhoto[]>([])
+const loadingDrawerPhotos = ref(false)
 
 const filteredListings = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -294,12 +311,25 @@ function openListing(listing: OfficerListing) {
   adjust.bandMax = listing.band_max
   adjust.reason = ''
   rejectReason.value = ''
+  loadDrawerPhotos(listing.property_id)
 }
 
 function closeDrawer() {
   selected.value = null
   actionError.value = ''
   actionNotice.value = ''
+  drawerPhotos.value = []
+}
+
+async function loadDrawerPhotos(propertyId: number) {
+  loadingDrawerPhotos.value = true
+  try {
+    drawerPhotos.value = await propertyService.listPhotos(propertyId)
+  } catch {
+    drawerPhotos.value = []
+  } finally {
+    loadingDrawerPhotos.value = false
+  }
 }
 
 async function verifyOwner() {
@@ -496,6 +526,30 @@ function formatArea(value?: number | null) {
   margin: 0;
   color: var(--ink);
   text-align: right;
+}
+
+.drawer-photos-label {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drawer-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.drawer-photo-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
 }
 
 .drawer-actions {

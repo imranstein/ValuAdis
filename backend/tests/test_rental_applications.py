@@ -268,6 +268,78 @@ class TestAcceptCascade:
         )
         assert blocked.status_code == 400
 
+    def test_accept_acquires_row_lock_on_listing(self, client, published, owner_token, monkeypatch):
+        """Accept must go through RentalListingRepository.get_locked (a
+        SELECT ... FOR UPDATE) rather than trusting the listing status read
+        earlier in decide() — that row lock is what stops two concurrent
+        accepts on sibling applications from both passing the published
+        check under a real (Postgres) database. Note: SQLite has no
+        row-level locking, so genuine concurrent-transaction behavior can't
+        be exercised in this suite; this test locks down that the guarded
+        code path is actually wired into the accept flow."""
+        from app.modules.rentals.repositories import RentalListingRepository
+
+        calls = []
+        original = RentalListingRepository.get_locked
+
+        def _spy(self, listing_id):
+            calls.append(listing_id)
+            return original(self, listing_id)
+
+        monkeypatch.setattr(RentalListingRepository, "get_locked", _spy)
+
+        app1 = self._apply_as(client, published["public_id"], RENTER_SIGNUP, published["suggested_rent"])
+        accept = client.post(
+            f"/api/v1/rentals/applications/{app1}/decision",
+            json={"action": "accept"},
+            headers=_headers(owner_token),
+        )
+
+        assert accept.status_code == 200, accept.text
+        assert len(calls) == 1
+
+    def test_accept_rechecks_application_status_after_acquiring_lock(
+        self, client, published, owner_token, monkeypatch
+    ):
+        """If another transaction's accept-cascade rejects this application
+        in the window between decide()'s initial PENDING check and the
+        listing lock being acquired, the recheck inside _accept_with_lock
+        (a `db.refresh(application)` under the lock) must still block it —
+        not the status captured before the lock was taken."""
+        from app.data.models.rental_application import RentalApplication
+        from app.modules.rentals.repositories import RentalListingRepository
+
+        app1 = self._apply_as(client, published["public_id"], RENTER_SIGNUP, published["suggested_rent"])
+        second_renter = {
+            **RENTER_SIGNUP,
+            "email": "renter2@example.com",
+            "phone": "+251944444444",
+            "fayda_id_number": "111122223333",
+        }
+        app2 = self._apply_as(client, published["public_id"], second_renter, published["band_max"])
+
+        original_get_locked = RentalListingRepository.get_locked
+
+        def _simulate_concurrent_sibling_rejection(self, listing_id):
+            # Runs exactly where a concurrent transaction's commit would
+            # land: after this request's own PENDING check, but before it
+            # acquires the listing lock.
+            sibling = self.db.query(RentalApplication).filter(RentalApplication.id == app2).first()
+            sibling.status = "rejected"
+            self.db.commit()
+            return original_get_locked(self, listing_id)
+
+        monkeypatch.setattr(RentalListingRepository, "get_locked", _simulate_concurrent_sibling_rejection)
+
+        decision = client.post(
+            f"/api/v1/rentals/applications/{app2}/decision",
+            json={"action": "accept"},
+            headers=_headers(owner_token),
+        )
+
+        assert decision.status_code == 400
+        assert "pending" in decision.json()["detail"].lower()
+
     def test_reject_keeps_listing_published(self, client, published, owner_token):
         app1 = self._apply_as(client, published["public_id"], RENTER_SIGNUP, published["suggested_rent"])
         reject = client.post(

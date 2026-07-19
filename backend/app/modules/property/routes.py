@@ -7,23 +7,31 @@ router with prefix="/properties".
 """
 
 from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 import csv
 import io
+import os
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.core.exceptions import SpatialOperationException, ValidationException
 from app.core.rbac import is_property_owner, is_rental_officer, is_staff, load_current_user, require_staff
+from app.data.models.property import Property
+from app.data.models.rental_listing import RentalListing, RentalListingStatus
 from app.data.models.user import User
 from app.services.spatial_service import SpatialService
+from .photo_service import MAX_PHOTO_SIZE_BYTES, PropertyPhotoService, photo_url
 from .schemas import (
     PropertyCreate,
     PropertyUpdate,
     PropertyResponse,
     PropertyListResponse,
+    PropertyPhotoListResponse,
+    PropertyPhotoOut,
+    PropertyPhotoResponse,
     SpatialRequest,
     OverlapRequest,
 )
@@ -32,6 +40,12 @@ from .services import PropertyService
 router = APIRouter()
 
 UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+# Optional bearer for photo reads: a property behind a published rental
+# listing is public, so these endpoints must not hard-require a token the
+# way the rest of the router does (mirrors rentals/routes.py's
+# optional_bearer for the same public/private split).
+optional_bearer = HTTPBearer(auto_error=False)
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +69,66 @@ def _property_writer(user: User = Depends(load_current_user)) -> User:
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Only staff or property owners can modify properties",
+    )
+
+
+def _optional_actor(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """Best-effort bearer resolution for photo reads: a missing or invalid
+    token means "anonymous", not a 401 — the public/private split is decided
+    per-property, not per-request."""
+    if credentials is None:
+        return None
+    try:
+        user_id = get_current_user_id(credentials.credentials)
+    except HTTPException:
+        return None
+    return db.query(User).filter(User.id == user_id).first()
+
+
+def _property_is_publicly_listed(db: Session, property_id: int) -> bool:
+    """A property behind a PUBLISHED rental listing has its photos open to
+    anonymous renters (Phase E matrix extended to photo galleries)."""
+    return (
+        db.query(RentalListing.id)
+        .filter(
+            RentalListing.property_id == property_id,
+            RentalListing.status == RentalListingStatus.PUBLISHED.value,
+        )
+        .first()
+        is not None
+    )
+
+
+def _authorize_photo_read(property_id: int, actor: Optional[User], db: Session) -> None:
+    """Public if the property backs a published listing; otherwise the same
+    staff/officer/owning-owner scope as property reads (_property_reader)."""
+    if _property_is_publicly_listed(db, property_id):
+        return
+    if actor is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    if is_staff(actor) or is_rental_officer(actor):
+        return
+    if is_property_owner(actor):
+        owns = (
+            db.query(Property.id)
+            .filter(Property.id == property_id, Property.user_id == actor.id)
+            .first()
+            is not None
+        )
+        if owns:
+            return
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view these photos")
+
+
+def _to_photo_response(photo) -> PropertyPhotoOut:
+    return PropertyPhotoOut(
+        id=photo.id,
+        url=photo_url(photo.property_id, photo.id),
+        position=photo.position,
+        created_at=photo.created_at,
     )
 
 
@@ -442,5 +516,111 @@ async def delete_property(
             status_code=404,
             detail="Property not found"
         )
-    
+
     return {"success": True, "message": "Property deleted successfully"}
+
+
+# ---------------------------------------------------------------------------
+# Photos — staff or the property's owner may upload/delete; reads are public
+# for a property behind a published rental listing, owner/staff/officer
+# scoped otherwise (Phase E matrix extended to photo galleries).
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/{property_id}/photos",
+    response_model=PropertyPhotoResponse,
+    status_code=201,
+    tags=["Properties"],
+)
+async def upload_property_photo(
+    property_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: User = Depends(_property_writer),
+):
+    """Upload a photo (staff or the property's owner). Multipart body is
+    read in bounded chunks so an oversized upload is aborted, not buffered
+    whole (mirrors bulk_import_properties); the bytes are then re-validated
+    by decoding them as an image, not trusted from content-type alone."""
+    property_service = PropertyService(db)
+    prop = await property_service.get_property_by_id(property_id, actor.id, scope_all=is_staff(actor))
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    chunks = []
+    total_size = 0
+    while chunk := await file.read(UPLOAD_CHUNK_SIZE):
+        total_size += len(chunk)
+        if total_size > MAX_PHOTO_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Photo exceeds the maximum size of {MAX_PHOTO_SIZE_BYTES // (1024 * 1024)}MB",
+            )
+        chunks.append(chunk)
+
+    photo_service = PropertyPhotoService(db)
+    try:
+        photo = photo_service.upload(property_id, b"".join(chunks), uploaded_by_user_id=actor.id)
+    except ValidationException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return PropertyPhotoResponse(success=True, data=_to_photo_response(photo))
+
+
+@router.get("/{property_id}/photos", response_model=PropertyPhotoListResponse, tags=["Properties"])
+async def list_property_photos(
+    property_id: int,
+    db: Session = Depends(get_db),
+    actor: Optional[User] = Depends(_optional_actor),
+):
+    """List a property's photos in display order. Public when the property
+    backs a published rental listing; owner/staff/officer scoped otherwise."""
+    _authorize_photo_read(property_id, actor, db)
+    photo_service = PropertyPhotoService(db)
+    photos = photo_service.list_for_property(property_id)
+    return PropertyPhotoListResponse(success=True, data=[_to_photo_response(p) for p in photos])
+
+
+@router.get("/{property_id}/photos/{photo_id}/file", tags=["Properties"])
+async def get_property_photo_file(
+    property_id: int,
+    photo_id: int,
+    db: Session = Depends(get_db),
+    actor: Optional[User] = Depends(_optional_actor),
+):
+    """Serve the raw photo bytes. Same public/private split as the list
+    endpoint above; the response never reveals the filesystem path."""
+    _authorize_photo_read(property_id, actor, db)
+    photo_service = PropertyPhotoService(db)
+    photo = photo_service.get_photo(property_id, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    file_path = photo_service.file_path_for(photo)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    with open(file_path, "rb") as fh:
+        data = fh.read()
+    return Response(content=data, media_type=photo.content_type)
+
+
+@router.delete("/{property_id}/photos/{photo_id}", tags=["Properties"])
+async def delete_property_photo(
+    property_id: int,
+    photo_id: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(_property_writer),
+):
+    """Delete a photo (staff or the property's owner)."""
+    property_service = PropertyService(db)
+    prop = await property_service.get_property_by_id(property_id, actor.id, scope_all=is_staff(actor))
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    photo_service = PropertyPhotoService(db)
+    deleted = photo_service.delete(property_id, photo_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    return {"success": True, "message": "Photo deleted"}

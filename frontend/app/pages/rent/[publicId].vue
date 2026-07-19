@@ -3,20 +3,21 @@
     <nav class="rent-nav" aria-label="Public navigation">
       <NuxtLink to="/" class="rent-brand">
         <span class="rent-mark" aria-hidden="true">V</span>
-        <span>ValuAdis Rentals</span>
+        <span>{{ t('rentals.publicNav.brand') }}</span>
       </NuxtLink>
       <div class="rent-nav-links">
-        <NuxtLink to="/rent">All listings</NuxtLink>
-        <NuxtLink to="/login" class="rent-login">Workspace sign in</NuxtLink>
+        <NuxtLink to="/rent">{{ t('rentals.publicNav.allListings') }}</NuxtLink>
+        <NuxtLink to="/login" class="rent-login">{{ t('rentals.publicNav.workspaceSignIn') }}</NuxtLink>
+        <LanguageSwitcher />
       </div>
     </nav>
 
-    <div v-if="loading" class="rent-state">Loading listing…</div>
+    <div v-if="loading" class="rent-state">{{ t('rentals.detail.loading') }}</div>
 
     <div v-else-if="errorMessage" class="rent-state rent-state-error" role="alert">
-      <strong>Listing unavailable</strong>
+      <strong>{{ t('rentals.detail.unavailable') }}</strong>
       <span>{{ errorMessage }}</span>
-      <NuxtLink to="/rent" class="rent-back-link">Back to all listings</NuxtLink>
+      <NuxtLink to="/rent" class="rent-back-link">{{ t('rentals.detail.backToListings') }}</NuxtLink>
     </div>
 
     <template v-else-if="listing">
@@ -24,9 +25,9 @@
         <div>
           <p class="detail-id">
             <span class="rent-card-id">{{ listing.public_id }}</span>
-            <span class="rent-cert-badge" title="Backed by an approved rent valuation">
+            <span class="rent-cert-badge" :title="t('rentals.detail.certifiedTitle')">
               <i class="pi pi-verified" aria-hidden="true"></i>
-              Valuation certified
+              {{ t('rentals.detail.certifiedBadge') }}
             </span>
           </p>
           <h1>{{ listing.property.address }}</h1>
@@ -34,7 +35,7 @@
             {{ listing.property.subcity || listing.property.municipality }},
             {{ listing.property.municipality }}
             <template v-if="listing.published_at">
-              · Published {{ formatDate(listing.published_at) }}
+              · {{ t('rentals.detail.publishedOn', { date: formatDate(listing.published_at) }) }}
             </template>
           </p>
         </div>
@@ -42,83 +43,89 @@
 
       <section class="detail-band" aria-label="Published rent band">
         <div>
-          <span>Suggested rent</span>
-          <strong>{{ formatEtb(listing.suggested_rent) }}/mo</strong>
+          <span>{{ t('rentals.detail.suggestedRent') }}</span>
+          <strong>{{ formatEtb(listing.suggested_rent) }}{{ t('common.perMonthSuffix') }}</strong>
         </div>
         <div>
-          <span>Band minimum</span>
+          <span>{{ t('rentals.detail.bandMin') }}</span>
           <strong>{{ formatEtb(listing.band_min) }}</strong>
         </div>
         <div>
-          <span>Band maximum</span>
+          <span>{{ t('rentals.detail.bandMax') }}</span>
           <strong>{{ formatEtb(listing.band_max) }}</strong>
         </div>
-        <p class="detail-band-note">
-          Applications are accepted only inside this officer-published band. The band is frozen
-          at publication and backed by an approved rent valuation.
-        </p>
+        <p class="detail-band-note">{{ t('rentals.detail.bandNote') }}</p>
+      </section>
+
+      <section class="detail-gallery" aria-label="Property photos">
+        <div v-if="listing.property.photo_urls.length" class="gallery-grid">
+          <img
+            v-for="url in listing.property.photo_urls"
+            :key="url"
+            :src="resolvePhotoUrl(url)"
+            :alt="t('rentals.detail.photoAlt', { address: listing.property.address })"
+            loading="lazy"
+          />
+        </div>
+        <div v-else class="rent-state gallery-placeholder">{{ t('rentals.detail.noPhotos') }}</div>
       </section>
 
       <div class="detail-columns">
         <section class="detail-facts" aria-label="Property facts">
-          <h2>Property facts</h2>
+          <h2>{{ t('rentals.detail.propertyFacts') }}</h2>
           <dl>
             <div>
-              <dt>Type</dt>
+              <dt>{{ t('rentals.detail.type') }}</dt>
               <dd>{{ labelize(listing.property.property_subtype || listing.property.property_type) }}</dd>
             </div>
             <div>
-              <dt>Area</dt>
+              <dt>{{ t('rentals.detail.area') }}</dt>
               <dd>{{ formatArea(listing.property.area_sqm) }} m²</dd>
             </div>
             <div v-if="listing.property.building_area_sqm">
-              <dt>Building area</dt>
+              <dt>{{ t('rentals.detail.buildingArea') }}</dt>
               <dd>{{ formatArea(listing.property.building_area_sqm) }} m²</dd>
             </div>
             <div v-if="listing.property.number_of_bedrooms != null">
-              <dt>Bedrooms</dt>
+              <dt>{{ t('rentals.detail.bedrooms') }}</dt>
               <dd>{{ listing.property.number_of_bedrooms }}</dd>
             </div>
             <div v-if="listing.property.number_of_bathrooms != null">
-              <dt>Bathrooms</dt>
+              <dt>{{ t('rentals.detail.bathrooms') }}</dt>
               <dd>{{ listing.property.number_of_bathrooms }}</dd>
             </div>
             <div v-if="listing.property.number_of_floors != null">
-              <dt>Floors</dt>
+              <dt>{{ t('rentals.detail.floors') }}</dt>
               <dd>{{ listing.property.number_of_floors }}</dd>
             </div>
             <div v-if="listing.property.year_built">
-              <dt>Year built</dt>
+              <dt>{{ t('rentals.detail.yearBuilt') }}</dt>
               <dd>{{ listing.property.year_built }}</dd>
             </div>
             <div v-if="listing.property.condition">
-              <dt>Condition</dt>
+              <dt>{{ t('rentals.detail.condition') }}</dt>
               <dd>{{ labelize(listing.property.condition) }}</dd>
             </div>
           </dl>
 
           <div class="apply-panel">
-            <h3>Apply for this listing</h3>
+            <h3>{{ t('rentals.detail.applyHeading') }}</h3>
 
             <template v-if="!isAuthenticated">
-              <p>
-                Applications are made through a registered citizen account, at any amount inside
-                the published band.
-              </p>
-              <NuxtLink to="/rent/signup" class="rent-btn-primary">Register as a renter</NuxtLink>
+              <p>{{ t('rentals.detail.applyUnauthed') }}</p>
+              <NuxtLink to="/rent/signup" class="rent-btn-primary">{{ t('rentals.detail.registerAsRenter') }}</NuxtLink>
             </template>
 
             <template v-else-if="applicationResult">
               <p class="apply-success" role="status">
-                Application submitted at {{ formatEtb(applicationResult.offered_rent) }}/mo.
-                Status: {{ labelize(applicationResult.status) }}. Track it under
-                <NuxtLink to="/rentals/my-applications">my applications</NuxtLink>.
+                {{ t('rentals.detail.applicationSubmitted', { amount: formatEtb(applicationResult.offered_rent), status: statusLabel(applicationResult.status) }) }}
+                <NuxtLink to="/rentals/my-applications">{{ t('rentals.detail.myApplicationsLink') }}</NuxtLink>.
               </p>
             </template>
 
             <form v-else class="apply-form" @submit.prevent="submitApplication">
               <label class="apply-field">
-                <span>Your offer (ETB/month, {{ formatEtb(listing.band_min) }} – {{ formatEtb(listing.band_max) }})</span>
+                <span>{{ t('rentals.detail.yourOffer', { min: formatEtb(listing.band_min), max: formatEtb(listing.band_max) }) }}</span>
                 <input
                   v-model.number="offeredRent"
                   type="number"
@@ -128,23 +135,21 @@
                   step="any"
                 />
               </label>
-              <p v-if="offerOutsideBand" class="apply-error" role="alert">
-                Offers outside the published band are rejected by the registry.
-              </p>
+              <p v-if="offerOutsideBand" class="apply-error" role="alert">{{ t('rentals.detail.offerOutsideBand') }}</p>
               <label class="apply-field">
-                <span>Message to the owner (optional)</span>
+                <span>{{ t('rentals.detail.messageToOwner') }}</span>
                 <textarea v-model="applicationMessage" rows="2" maxlength="1000"></textarea>
               </label>
               <p v-if="applyError" class="apply-error" role="alert">{{ applyError }}</p>
               <button class="rent-btn-primary" type="submit" :disabled="applying || offerOutsideBand">
-                {{ applying ? 'Submitting…' : 'Apply within band' }}
+                {{ applying ? t('rentals.detail.applySubmitting') : t('rentals.detail.applySubmit') }}
               </button>
             </form>
           </div>
         </section>
 
         <section class="detail-map" aria-label="Listing location">
-          <h2>Location</h2>
+          <h2>{{ t('rentals.detail.location') }}</h2>
           <ClientOnly>
             <PropertyMap
               v-if="mapProperties.length"
@@ -153,15 +158,15 @@
               :zoom="14"
               height="420px"
             />
-            <div v-else class="rent-state">Location coordinates are not published for this listing.</div>
+            <div v-else class="rent-state">{{ t('rentals.detail.noCoordinates') }}</div>
           </ClientOnly>
         </section>
       </div>
     </template>
 
     <footer class="rent-footer">
-      <span>ValuAdis &mdash; government-mediated rental registry</span>
-      <NuxtLink to="/rent">All listings</NuxtLink>
+      <span>{{ t('rentals.detail.footerTag') }}</span>
+      <NuxtLink to="/rent">{{ t('rentals.detail.allListings') }}</NuxtLink>
     </footer>
   </main>
 </template>
@@ -170,10 +175,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import rentalService, { type PublicListing, type RenterApplication } from '~/services/rentalService'
+import propertyService from '~/services/propertyService'
 import PropertyMap from '~/components/map/PropertyMap.vue'
 import { getAccessToken } from '~/utils/authToken'
+import { useI18n } from '~/composables/useI18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 definePageMeta({ layout: 'landing' })
+
+const { t } = useI18n()
 
 const route = useRoute()
 const loading = ref(true)
@@ -241,10 +251,10 @@ onMounted(async () => {
   } catch (error) {
     errorMessage.value =
       error instanceof Error && error.message.includes('404')
-        ? 'This listing is not published.'
+        ? t('rentals.detail.unavailable')
         : error instanceof Error
           ? error.message
-          : 'Could not load this listing.'
+          : t('rentals.detail.unavailable')
   } finally {
     loading.value = false
   }
@@ -266,8 +276,21 @@ function labelize(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
+// Known application-status enum values route through the shared glossary
+// translation; anything unrecognized falls back to a generic label so the
+// page never breaks on a new backend status.
+function statusLabel(status: string) {
+  const key = status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const translated = t(`rentals.statuses.${key}`)
+  return translated === `rentals.statuses.${key}` ? labelize(status) : translated
+}
+
 function formatArea(value: number) {
   return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function resolvePhotoUrl(url: string) {
+  return propertyService.resolvePhotoUrl(url)
 }
 </script>
 
@@ -444,6 +467,29 @@ function formatArea(value: number) {
   font-size: 13px;
   line-height: 1.5;
   padding: var(--space-4) var(--space-5);
+}
+
+.detail-gallery {
+  padding: 0 clamp(18px, 5vw, 64px) var(--space-5);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.gallery-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+}
+
+.gallery-placeholder {
+  margin: 0;
 }
 
 .detail-columns {

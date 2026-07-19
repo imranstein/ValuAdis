@@ -33,6 +33,18 @@ class RentalListingRepository(BaseRepository[RentalListing]):
             .first()
         )
 
+    def get_locked(self, listing_id: int) -> Optional[RentalListing]:
+        """Fetch a listing under a row lock (mirrors
+        contract_service._next_sequence_value's pattern) so a concurrent
+        accept on a sibling application cannot also pass the published
+        check before this transaction commits its status change."""
+        return (
+            self.db.query(RentalListing)
+            .filter(RentalListing.id == listing_id)
+            .with_for_update()
+            .first()
+        )
+
     def public_id_exists(self, public_id: str) -> bool:
         return (
             self.db.query(RentalListing.id)

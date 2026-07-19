@@ -362,6 +362,8 @@ class RentalListingService:
 
     @staticmethod
     def to_public_listing(listing: RentalListing) -> PublicListing:
+        from app.modules.property.photo_service import photo_url
+
         prop = listing.property
         return PublicListing(
             public_id=listing.public_id,
@@ -384,6 +386,7 @@ class RentalListingService:
                 condition=prop.condition,
                 latitude=prop.latitude,
                 longitude=prop.longitude,
+                photo_urls=[photo_url(prop.id, photo.id) for photo in prop.photos],
             ),
         )
 

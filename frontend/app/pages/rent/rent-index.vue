@@ -3,25 +3,21 @@
     <nav class="rent-nav" aria-label="Public navigation">
       <NuxtLink to="/" class="rent-brand">
         <span class="rent-mark" aria-hidden="true">V</span>
-        <span>ValuAdis Rentals</span>
+        <span>{{ t('rentals.publicNav.brand') }}</span>
       </NuxtLink>
       <div class="rent-nav-links">
-        <NuxtLink to="/rent">Listings</NuxtLink>
-        <NuxtLink to="/rent/index" class="active">Rent index</NuxtLink>
-        <NuxtLink to="/rent/signup">Citizen signup</NuxtLink>
-        <NuxtLink to="/login" class="rent-login">Workspace sign in</NuxtLink>
+        <NuxtLink to="/rent">{{ t('rentals.publicNav.listings') }}</NuxtLink>
+        <NuxtLink to="/rent/index" class="active">{{ t('rentals.publicNav.rentIndex') }}</NuxtLink>
+        <NuxtLink to="/rent/signup">{{ t('rentals.publicNav.citizenSignup') }}</NuxtLink>
+        <NuxtLink to="/login" class="rent-login">{{ t('rentals.publicNav.workspaceSignIn') }}</NuxtLink>
+        <LanguageSwitcher />
       </div>
     </nav>
 
     <header class="rent-hero">
-      <p class="rent-kicker">Addis Ababa Housing Administration pilot &mdash; Bole &amp; Yeka</p>
-      <h1>The public district rent index.</h1>
-      <p class="rent-lede">
-        Median monthly rent by sub-city, property type, and bedroom count, computed from
-        registered tenancy contracts under Proclamation 1320/2024. A district only appears once
-        enough contracts are registered to protect any single household's privacy — small
-        samples are withheld, never estimated or fabricated.
-      </p>
+      <p class="rent-kicker">{{ t('rentals.index.kicker') }}</p>
+      <h1>{{ t('rentals.index.title') }}</h1>
+      <p class="rent-lede">{{ t('rentals.index.lede') }}</p>
     </header>
 
     <section class="rent-toolbar" aria-label="Index filters">
@@ -30,34 +26,30 @@
         <input
           v-model="district"
           type="search"
-          placeholder="Sub-city (e.g. Bole, Yeka)"
+          :placeholder="t('rentals.index.searchPlaceholder')"
           @keyup.enter="loadIndex"
         />
       </div>
-      <select v-model="propertySubtype" class="rent-filter-select" aria-label="Property type">
-        <option value="">Any property type</option>
-        <option value="apartment">Apartment</option>
-        <option value="villa">Villa / house</option>
-        <option value="condominium">Condominium</option>
+      <select v-model="propertySubtype" class="rent-filter-select" :aria-label="t('rentals.index.propertyTypeLabel')">
+        <option value="">{{ t('rentals.index.anyPropertyType') }}</option>
+        <option value="apartment">{{ t('rentals.index.apartment') }}</option>
+        <option value="villa">{{ t('rentals.index.villa') }}</option>
+        <option value="condominium">{{ t('rentals.index.condominium') }}</option>
       </select>
-      <button class="rent-btn-primary" type="button" @click="loadIndex">Filter</button>
+      <button class="rent-btn-primary" type="button" @click="loadIndex">{{ t('rentals.index.filter') }}</button>
     </section>
 
     <section class="rent-results" aria-label="Rent index results">
-      <div v-if="loading" class="rent-state">Loading the rent index…</div>
+      <div v-if="loading" class="rent-state">{{ t('rentals.index.loading') }}</div>
 
       <div v-else-if="errorMessage" class="rent-state rent-state-error" role="alert">
-        <strong>Rent index unavailable</strong>
+        <strong>{{ t('rentals.index.unavailable') }}</strong>
         <span>{{ errorMessage }}</span>
       </div>
 
       <div v-else-if="Object.keys(groupedByDistrict).length === 0" class="rent-state">
-        <strong>Insufficient data{{ district ? ` for ${district}` : '' }} yet.</strong>
-        <span>
-          Not enough registered tenancy contracts exist in this district to publish a reliable
-          median without risking any single household's privacy. Check back as more contracts
-          register, or browse the listings directly.
-        </span>
+        <strong>{{ t('rentals.index.insufficientData', { district: district ? t('rentals.index.insufficientDataFor', { district }) : '' }) }}</strong>
+        <span>{{ t('rentals.index.insufficientBody') }}</span>
       </div>
 
       <div v-else class="index-groups">
@@ -67,20 +59,20 @@
             <table class="index-table">
               <thead>
                 <tr>
-                  <th>Property type</th>
-                  <th>Bedrooms</th>
-                  <th class="text-right">Median rent</th>
-                  <th class="text-right">Sample size</th>
-                  <th>Period</th>
-                  <th>Source</th>
+                  <th>{{ t('rentals.index.propertyType') }}</th>
+                  <th>{{ t('rentals.index.bedrooms') }}</th>
+                  <th class="text-right">{{ t('rentals.index.medianRent') }}</th>
+                  <th class="text-right">{{ t('rentals.index.sampleSize') }}</th>
+                  <th>{{ t('rentals.index.period') }}</th>
+                  <th>{{ t('rentals.index.source') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(row, i) in rows" :key="i">
                   <td>{{ formatSubtype(row.property_subtype) }}</td>
-                  <td>{{ row.bedrooms != null ? row.bedrooms : 'All' }}</td>
-                  <td class="text-right num">{{ formatEtb(row.median_rent) }}/mo</td>
-                  <td class="text-right num">{{ row.sample_size }} contracts</td>
+                  <td>{{ row.bedrooms != null ? row.bedrooms : t('rentals.index.allBedrooms') }}</td>
+                  <td class="text-right num">{{ formatEtb(row.median_rent) }}{{ t('common.perMonthSuffix') }}</td>
+                  <td class="text-right num">{{ t('rentals.index.contractsUnit', { n: row.sample_size }) }}</td>
                   <td>{{ row.period }}</td>
                   <td class="index-source">{{ formatSource(row.source) }}</td>
                 </tr>
@@ -92,8 +84,8 @@
     </section>
 
     <footer class="rent-footer">
-      <span>ValuAdis &mdash; government-mediated rental registry</span>
-      <NuxtLink to="/rent">Browse published listings</NuxtLink>
+      <span>{{ t('rentals.index.footerTag') }}</span>
+      <NuxtLink to="/rent">{{ t('rentals.index.browseListings') }}</NuxtLink>
     </footer>
   </main>
 </template>
@@ -101,6 +93,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import rentalService, { type RentIndexRow } from '~/services/rentalService'
+import { useI18n } from '~/composables/useI18n'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 // Nuxt's file-based router builds a route's NAME by joining every path
 // segment (including literal "index" segments), while only stripping
@@ -129,7 +125,7 @@ async function loadIndex() {
       property_subtype: propertySubtype.value || undefined,
     })
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not load the rent index.'
+    errorMessage.value = error instanceof Error ? error.message : t('rentals.index.unavailable')
     rows.value = []
   } finally {
     loading.value = false
@@ -154,9 +150,9 @@ function formatSubtype(value: string) {
 }
 
 function formatSource(source: string) {
-  if (source === 'contracts') return 'Registered contracts'
-  if (source === 'listings') return 'Published listings'
-  return 'Blended'
+  if (source === 'contracts') return t('rentals.index.sourceContracts')
+  if (source === 'listings') return t('rentals.index.sourceListings')
+  return t('rentals.index.sourceBlended')
 }
 </script>
 

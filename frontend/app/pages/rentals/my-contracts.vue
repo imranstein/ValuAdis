@@ -2,17 +2,14 @@
   <div class="page-shell my-contracts-page">
     <section class="page-head">
       <div>
-        <p class="page-kicker">Rental registry</p>
-        <h2 class="page-title">My tenancy contracts.</h2>
-        <p class="page-subtitle">
-          Registered contracts where you are the owner or renter party. A contract becomes active
-          once the deposit receipt is recorded by a rental officer.
-        </p>
+        <p class="page-kicker">{{ t('rentals.myContracts.kicker') }}</p>
+        <h2 class="page-title">{{ t('rentals.myContracts.title') }}</h2>
+        <p class="page-subtitle">{{ t('rentals.myContracts.subtitle') }}</p>
       </div>
       <div class="page-actions">
         <button class="btn-secondary" type="button" @click="load">
           <i class="pi pi-refresh" aria-hidden="true"></i>
-          Refresh
+          {{ t('rentals.myContracts.refresh') }}
         </button>
       </div>
     </section>
@@ -20,17 +17,17 @@
     <section class="table-panel">
       <div class="panel-head table-head">
         <div>
-          <h3 class="panel-title">Contract records</h3>
-          <p class="panel-subtitle">Showing {{ contracts.length }} of {{ total }} backend records</p>
+          <h3 class="panel-title">{{ t('rentals.myContracts.recordsTitle') }}</h3>
+          <p class="panel-subtitle">{{ t('rentals.myContracts.showingRecords', { shown: contracts.length, total }) }}</p>
         </div>
       </div>
 
       <div v-if="errorMessage" class="state-panel error-state" role="alert">
-        <strong>Contracts unavailable</strong>
+        <strong>{{ t('rentals.myContracts.unavailable') }}</strong>
         <span>{{ errorMessage }}</span>
       </div>
       <div v-if="downloadError" class="state-panel error-state" role="alert">
-        <strong>Download failed</strong>
+        <strong>{{ t('rentals.myContracts.downloadFailed') }}</strong>
         <span>{{ downloadError }}</span>
       </div>
 
@@ -38,24 +35,21 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Contract No.</th>
-              <th>Listing</th>
-              <th class="text-right">Monthly rent</th>
-              <th class="text-right">Deposit</th>
-              <th>Term</th>
-              <th>Status</th>
-              <th class="text-right">Actions</th>
+              <th>{{ t('rentals.myContracts.colContractNo') }}</th>
+              <th>{{ t('rentals.myContracts.colListing') }}</th>
+              <th class="text-right">{{ t('rentals.myContracts.colMonthlyRent') }}</th>
+              <th class="text-right">{{ t('rentals.myContracts.colDeposit') }}</th>
+              <th>{{ t('rentals.myContracts.colTerm') }}</th>
+              <th>{{ t('rentals.myContracts.colStatus') }}</th>
+              <th class="text-right">{{ t('rentals.myContracts.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="7">Loading your contracts…</td>
+              <td colspan="7">{{ t('rentals.myContracts.loading') }}</td>
             </tr>
             <tr v-else-if="contracts.length === 0">
-              <td colspan="7">
-                No registered contracts yet. Contracts appear here once a rental officer registers
-                them from an accepted application.
-              </td>
+              <td colspan="7">{{ t('rentals.myContracts.noContracts') }}</td>
             </tr>
             <tr v-for="contract in contracts" v-else :key="contract.contract_no">
               <td class="record-id">{{ contract.contract_no }}</td>
@@ -64,18 +58,18 @@
               <td class="text-right num">
                 {{ formatEtb(contract.deposit_amount) }}
                 <span class="deposit-state" :class="contract.deposit_receipt_ref ? 'good' : 'warn'">
-                  {{ contract.deposit_receipt_ref ? 'receipt recorded' : 'receipt pending' }}
+                  {{ contract.deposit_receipt_ref ? t('rentals.statuses.receiptRecorded') : t('rentals.statuses.receiptPending') }}
                 </span>
               </td>
               <td>{{ formatDate(contract.start_date) }} → {{ formatDate(contract.end_date) }}</td>
               <td>
-                <span class="status-pill" :class="statusClass(contract.status)">{{ labelize(contract.status) }}</span>
+                <span class="status-pill" :class="statusClass(contract.status)">{{ statusLabel(contract.status) }}</span>
               </td>
               <td class="text-right">
                 <button
                   class="icon-button inline"
                   type="button"
-                  aria-label="Download contract PDF"
+                  :aria-label="t('rentals.myContracts.downloadPdf')"
                   :disabled="downloading === contract.contract_no"
                   @click="downloadPdf(contract.contract_no)"
                 >
@@ -93,8 +87,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import rentalService, { type TenancyContract } from '~/services/rentalService'
+import { useI18n } from '~/composables/useI18n'
 
 definePageMeta({ middleware: 'auth' })
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const errorMessage = ref('')
@@ -113,7 +110,7 @@ async function load() {
     contracts.value = result.data
     total.value = result.total
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not load your contracts.'
+    errorMessage.value = error instanceof Error ? error.message : t('rentals.myContracts.unavailable')
     contracts.value = []
     total.value = 0
   } finally {
@@ -135,7 +132,7 @@ async function downloadPdf(contractNo: string) {
     anchor.remove()
     URL.revokeObjectURL(url)
   } catch (error) {
-    downloadError.value = error instanceof Error ? error.message : 'Could not download the contract.'
+    downloadError.value = error instanceof Error ? error.message : t('rentals.myContracts.downloadFailed')
   } finally {
     downloading.value = ''
   }
@@ -151,6 +148,12 @@ function labelize(value: string) {
   return String(value || '')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function statusLabel(status: string) {
+  const key = status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const translated = t(`rentals.statuses.${key}`)
+  return translated === `rentals.statuses.${key}` ? labelize(status) : translated
 }
 
 function formatEtb(value: number) {

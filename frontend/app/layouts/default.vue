@@ -32,13 +32,13 @@
         <div class="account-card">
           <div class="account-avatar">{{ userInitials }}</div>
           <div>
-            <p class="account-name">{{ userName || 'Signed-in user' }}</p>
-            <p class="account-role">{{ userRole || 'Workspace access' }}</p>
+            <p class="account-name">{{ userName || t('rentals.shell.signedInUser') }}</p>
+            <p class="account-role">{{ userRole || t('rentals.shell.workspaceAccess') }}</p>
           </div>
         </div>
         <button class="btn-danger" type="button" @click="handleLogout">
           <i class="pi pi-sign-out" aria-hidden="true"></i>
-          Logout
+          {{ t('rentals.shell.logout') }}
         </button>
       </div>
     </aside>
@@ -48,7 +48,7 @@
     <main class="app-main" id="main-content">
       <header class="app-header">
         <div class="header-left">
-          <button class="icon-button mobile-menu-toggle" type="button" aria-label="Open menu" @click="sidebarOpen = true">
+          <button class="icon-button mobile-menu-toggle" type="button" :aria-label="t('rentals.shell.openMenu')" @click="sidebarOpen = true">
             <i class="pi pi-bars" aria-hidden="true"></i>
           </button>
           <div class="header-title">
@@ -58,25 +58,25 @@
         </div>
 
         <div class="header-actions">
-          <button class="action-btn" type="button" aria-label="Search" @click="toggleSearch">
+          <button class="action-btn" type="button" :aria-label="t('rentals.shell.search')" @click="toggleSearch">
             <i class="pi pi-search" aria-hidden="true"></i>
           </button>
-          <button class="action-btn notif-btn" type="button" aria-label="Notifications" @click="toggleNotifications">
+          <button class="action-btn notif-btn" type="button" :aria-label="t('rentals.shell.notifications')" @click="toggleNotifications">
             <i class="pi pi-bell" aria-hidden="true"></i>
             <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
-          <button class="header-avatar" type="button" aria-label="Profile menu" @click="toggleProfileMenu">
+          <button class="header-avatar" type="button" :aria-label="t('rentals.shell.profileMenu')" @click="toggleProfileMenu">
             {{ userInitials }}
           </button>
         </div>
 
         <div v-if="showNotifications" class="dropdown-menu notifications-dropdown">
           <div class="dropdown-header">
-            <h3>Notifications</h3>
-            <button class="btn-ghost" type="button" @click="markAllAsRead">Mark read</button>
+            <h3>{{ t('rentals.shell.notifications') }}</h3>
+            <button class="btn-ghost" type="button" @click="markAllAsRead">{{ t('rentals.shell.markRead') }}</button>
           </div>
           <div class="notifications-list">
-            <div v-if="notifications.length === 0" class="empty-state">No notifications.</div>
+            <div v-if="notifications.length === 0" class="empty-state">{{ t('rentals.shell.noNotifications') }}</div>
             <div v-for="notification in notifications" :key="notification.id" class="notification-item">
               <span class="status-pill" :class="{ good: !notification.read }">{{ notification.read ? 'Read' : 'New' }}</span>
               <div>
@@ -122,22 +122,25 @@
           <div class="profile-header">
             <div class="account-avatar">{{ userInitials }}</div>
             <div>
-              <p class="profile-name">{{ userName || 'Signed-in user' }}</p>
-              <p class="profile-email">{{ userEmail || 'Profile details unavailable' }}</p>
+              <p class="profile-name">{{ userName || t('rentals.shell.signedInUser') }}</p>
+              <p class="profile-email">{{ userEmail || t('rentals.shell.profileDetailsUnavailable') }}</p>
             </div>
           </div>
           <div class="profile-menu-items">
             <button class="menu-item" type="button" @click="navigateToQuickLink('/profile')">
               <i class="pi pi-user" aria-hidden="true"></i>
-              My profile
+              {{ t('rentals.shell.myProfile') }}
             </button>
-            <button class="menu-item" type="button" @click="navigateToQuickLink('/settings')">
+            <button v-if="persona === 'staff'" class="menu-item" type="button" @click="navigateToQuickLink('/settings')">
               <i class="pi pi-cog" aria-hidden="true"></i>
               Settings
             </button>
+            <div v-if="persona !== 'staff'" class="menu-item menu-item-lang">
+              <LanguageSwitcher />
+            </div>
             <button class="menu-item" type="button" @click="handleLogout">
               <i class="pi pi-sign-out" aria-hidden="true"></i>
-              Logout
+              {{ t('rentals.shell.logout') }}
             </button>
           </div>
         </div>
@@ -157,6 +160,7 @@ import { usePermissions } from '~/composables/usePermissions.js'
 import { usePersona } from '~/composables/usePersona'
 import { useI18n } from '~/composables/useI18n'
 import { getAccessToken } from '~/utils/authToken'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { t } = useI18n()
 
@@ -198,92 +202,103 @@ type NavigationGroup = {
 // Officers, owners, and renters each get a citizen/officer shell scoped to
 // only the routes their persona is allowed to reach — no staff nav items,
 // per the permission matrix (plans/valuadis-rentals/tasks/phase-e.md).
-const STAFF_NAVIGATION: NavigationGroup[] = [
-  {
-    label: 'Workspace',
-    items: [
-      { label: t('nav.dashboard'), to: '/dashboard', icon: 'pi pi-home' },
-      { label: t('nav.properties'), to: '/properties', icon: 'pi pi-building' },
-      { label: t('nav.vehicles'), to: '/vehicles', icon: 'pi pi-car' },
-      { label: t('nav.valuations'), to: '/valuations', icon: 'pi pi-calculator' },
-      { label: t('nav.quickValuation'), to: '/valuations/quick', icon: 'pi pi-bolt' }
-    ]
-  },
-  {
-    label: 'Rentals',
-    items: [
-      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
-      { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
-      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
-      { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
-      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' }
-    ]
-  },
-  {
-    label: 'Intelligence',
-    items: [
-      { label: t('nav.analytics'), to: '/analytics', icon: 'pi pi-chart-bar' },
-      { label: t('nav.propertyMap'), to: '/map', icon: 'pi pi-map' },
-      { label: t('nav.reports'), to: '/reports', icon: 'pi pi-file-pdf' }
-    ]
-  },
-  {
-    label: 'Administration',
-    admin: true,
-    items: [
-      { label: t('nav.scrapers'), to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
-      { label: t('nav.users'), to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
-      { label: t('nav.settings'), to: '/settings', icon: 'pi pi-cog' },
-      { label: t('nav.audit'), to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
-    ]
-  }
-]
+// Phase G: these are functions (not plain consts) so they re-evaluate — and
+// re-translate — inside the `navigation` computed whenever locale changes.
+// The staff/admin workspace itself stays English (out of scope for Amharic).
+function buildStaffNavigation(): NavigationGroup[] {
+  return [
+    {
+      label: 'Workspace',
+      items: [
+        { label: t('nav.dashboard'), to: '/dashboard', icon: 'pi pi-home' },
+        { label: t('nav.properties'), to: '/properties', icon: 'pi pi-building' },
+        { label: t('nav.vehicles'), to: '/vehicles', icon: 'pi pi-car' },
+        { label: t('nav.valuations'), to: '/valuations', icon: 'pi pi-calculator' },
+        { label: t('nav.quickValuation'), to: '/valuations/quick', icon: 'pi pi-bolt' }
+      ]
+    },
+    {
+      label: 'Rentals',
+      items: [
+        { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
+        { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
+        { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
+        { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
+        { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' }
+      ]
+    },
+    {
+      label: 'Intelligence',
+      items: [
+        { label: t('nav.analytics'), to: '/analytics', icon: 'pi pi-chart-bar' },
+        { label: t('nav.propertyMap'), to: '/map', icon: 'pi pi-map' },
+        { label: t('nav.reports'), to: '/reports', icon: 'pi pi-file-pdf' }
+      ]
+    },
+    {
+      label: 'Administration',
+      admin: true,
+      items: [
+        { label: t('nav.scrapers'), to: '/scrapers', icon: 'pi pi-globe', visible: canManageScrapers.value },
+        { label: t('nav.users'), to: '/users', icon: 'pi pi-users', visible: canManageUsers.value },
+        { label: t('nav.settings'), to: '/settings', icon: 'pi pi-cog' },
+        { label: t('nav.audit'), to: '/audit', icon: 'pi pi-shield', visible: hasPermission('system:audit') }
+      ]
+    }
+  ]
+}
 
-const OFFICER_NAVIGATION: NavigationGroup[] = [
-  {
-    label: 'Rentals',
-    items: [
-      { label: 'Review Queue', to: '/rentals', icon: 'pi pi-inbox' },
-      { label: 'Contracts', to: '/rentals/contracts', icon: 'pi pi-file-edit' },
-      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
-    ]
-  }
-]
+function buildOfficerNavigation(): NavigationGroup[] {
+  return [
+    {
+      label: t('rentals.nav.groupLabel'),
+      items: [
+        { label: t('rentals.nav.reviewQueue'), to: '/rentals', icon: 'pi pi-inbox' },
+        { label: t('rentals.nav.contracts'), to: '/rentals/contracts', icon: 'pi pi-file-edit' },
+        { label: t('rentals.nav.profile'), to: '/profile', icon: 'pi pi-user' }
+      ]
+    }
+  ]
+}
 
-const OWNER_NAVIGATION: NavigationGroup[] = [
-  {
-    label: 'Rentals',
-    items: [
-      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
-      { label: 'My Listings', to: '/rentals/my-listings', icon: 'pi pi-list' },
-      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
-      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
-    ]
-  }
-]
+function buildOwnerNavigation(): NavigationGroup[] {
+  return [
+    {
+      label: t('rentals.nav.groupLabel'),
+      items: [
+        { label: t('rentals.nav.browse'), to: '/rent', icon: 'pi pi-search' },
+        { label: t('rentals.nav.myListings'), to: '/rentals/my-listings', icon: 'pi pi-list' },
+        { label: t('rentals.nav.myContracts'), to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+        { label: t('rentals.nav.profile'), to: '/profile', icon: 'pi pi-user' }
+      ]
+    }
+  ]
+}
 
-const RENTER_NAVIGATION: NavigationGroup[] = [
-  {
-    label: 'Rentals',
-    items: [
-      { label: 'Browse', to: '/rent', icon: 'pi pi-search' },
-      { label: 'My Applications', to: '/rentals/my-applications', icon: 'pi pi-send' },
-      { label: 'My Contracts', to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
-      { label: 'Profile', to: '/profile', icon: 'pi pi-user' }
-    ]
-  }
-]
+function buildRenterNavigation(): NavigationGroup[] {
+  return [
+    {
+      label: t('rentals.nav.groupLabel'),
+      items: [
+        { label: t('rentals.nav.browse'), to: '/rent', icon: 'pi pi-search' },
+        { label: t('rentals.nav.myApplications'), to: '/rentals/my-applications', icon: 'pi pi-send' },
+        { label: t('rentals.nav.myContracts'), to: '/rentals/my-contracts', icon: 'pi pi-file-pdf' },
+        { label: t('rentals.nav.profile'), to: '/profile', icon: 'pi pi-user' }
+      ]
+    }
+  ]
+}
 
 const navigation = computed<NavigationGroup[]>(() => {
   switch (persona.value) {
     case 'officer':
-      return OFFICER_NAVIGATION
+      return buildOfficerNavigation()
     case 'owner':
-      return OWNER_NAVIGATION
+      return buildOwnerNavigation()
     case 'renter':
-      return RENTER_NAVIGATION
+      return buildRenterNavigation()
     default:
-      return STAFF_NAVIGATION
+      return buildStaffNavigation()
   }
 })
 
@@ -297,29 +312,40 @@ const visibleNavigation = computed(() => {
     .filter((group) => group.items.length > 0)
 })
 
-const pages: Record<string, { title: string; subtitle: string }> = {
+// Staff/admin page chrome stays English (out of scope for Amharic); the
+// rentals + profile entries are translated and re-evaluated per locale so
+// citizen personas see localized titles without a reload.
+const STAFF_PAGES: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': { title: 'Dashboard', subtitle: 'Operating view for property and vehicle valuation work.' },
   '/properties': { title: 'Properties', subtitle: 'Registry records, locations, owners, and valuation readiness.' },
   '/vehicles': { title: 'Vehicles', subtitle: 'Fleet assets, registration state, and valuation records.' },
   '/valuations': { title: 'Valuations', subtitle: 'Pricing decisions, audit state, and valuation history.' },
   '/valuations/quick': { title: 'Quick Valuation', subtitle: 'Rapid estimate workflow for field and desk review.' },
-  '/rentals': { title: 'Rental Review Queue', subtitle: 'Verify owners, review rent bands, and publish registry listings.' },
-  '/rentals/contracts': { title: 'Contracts Registry', subtitle: 'Register tenancy contracts and record deposit receipts.' },
-  '/rentals/my-listings': { title: 'My Rental Listings', subtitle: 'Register properties for rent and track officer review.' },
-  '/rentals/my-applications': { title: 'My Applications', subtitle: 'Track your applications to published rental listings.' },
-  '/rentals/my-contracts': { title: 'My Tenancy Contracts', subtitle: 'Registered contracts where you are a party, with PDF download.' },
   '/analytics': { title: 'Analytics', subtitle: 'Market movement, municipal coverage, and compliance signals.' },
   '/map': { title: 'Property Map', subtitle: 'Geographic review of registered assets and boundaries.' },
   '/reports': { title: 'Reports', subtitle: 'Generate civic records, valuation summaries, and exports.' },
   '/settings': { title: 'Settings', subtitle: 'Operational controls, system configuration, and preferences.' },
   '/users': { title: 'Users', subtitle: 'Manage access for valuation and administrative teams.' },
   '/scrapers': { title: 'Web Scrapers', subtitle: 'Monitor public-data collection jobs and source health.' },
-  '/audit': { title: 'Audit Log', subtitle: 'Trace security, compliance, and record-change activity.' },
-  '/profile': { title: 'Profile', subtitle: 'Account details and workspace preferences.' }
+  '/audit': { title: 'Audit Log', subtitle: 'Trace security, compliance, and record-change activity.' }
 }
 
-const pageTitle = computed(() => pages[route.path]?.title || 'ValuAdis')
-const pageSubtitle = computed(() => pages[route.path]?.subtitle || 'Civic property valuation platform.')
+function pageTitleEntry(key: string) {
+  return { title: t(`rentals.pageTitles.${key}.title`), subtitle: t(`rentals.pageTitles.${key}.subtitle`) }
+}
+
+const pages = computed<Record<string, { title: string; subtitle: string }>>(() => ({
+  ...STAFF_PAGES,
+  '/rentals': pageTitleEntry('rentals'),
+  '/rentals/contracts': pageTitleEntry('rentalsContracts'),
+  '/rentals/my-listings': pageTitleEntry('myListings'),
+  '/rentals/my-applications': pageTitleEntry('myApplications'),
+  '/rentals/my-contracts': pageTitleEntry('myContracts'),
+  '/profile': pageTitleEntry('profile')
+}))
+
+const pageTitle = computed(() => pages.value[route.path]?.title || 'ValuAdis')
+const pageSubtitle = computed(() => pages.value[route.path]?.subtitle || 'Civic property valuation platform.')
 
 const notifications = ref<Array<{ id: number; title: string; message: string; time: string; read: boolean }>>([])
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
@@ -466,6 +492,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.menu-item-lang {
+  display: flex;
+  justify-content: center;
+  padding: 6px 12px;
+}
+
 .notif-btn { position: relative; }
 .notif-badge {
   position: absolute;

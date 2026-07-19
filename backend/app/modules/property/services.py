@@ -46,15 +46,21 @@ class PropertyService:
         
         if not self.spatial_service.validate_polygon(coordinates):
             raise ValidationException("Invalid polygon: must have minimum 3 vertices and be closed")
-        
-        # Calculate area
-        area_sqm = self.spatial_service.calculate_area(coordinates)
-        if area_sqm <= 0:
-            raise SpatialOperationException("Calculated area is invalid")
-        
+
+        # An explicitly provided area_sqm is the source of truth (it feeds legal
+        # contract PDFs); polygon-derived area is only a fallback when the caller
+        # did not supply one, or supplied zero/blank.
+        provided_area_sqm = property_data.get("area_sqm")
+        if provided_area_sqm:
+            area_sqm = provided_area_sqm
+        else:
+            area_sqm = self.spatial_service.calculate_area(coordinates)
+            if area_sqm <= 0:
+                raise SpatialOperationException("Calculated area is invalid")
+
         # Create boundary geometry for PostGIS
         boundary_wkt = self.spatial_service.create_wkt_polygon(coordinates)
-        
+
         # Prepare property data
         property_data = {
             **property_data,
@@ -113,14 +119,17 @@ class PropertyService:
             
             if not self.spatial_service.validate_polygon(coordinates):
                 raise ValidationException("Invalid polygon: must have minimum 3 vertices and be closed")
-            
-            # Recalculate area
-            area_sqm = self.spatial_service.calculate_area(coordinates)
-            if area_sqm <= 0:
-                raise SpatialOperationException("Calculated area is invalid")
-            
+
+            # An explicitly provided area_sqm is the source of truth; only fall
+            # back to the polygon-derived area when the caller did not supply
+            # one (or supplied zero/blank) alongside the new coordinates.
+            if not update_data.get("area_sqm"):
+                area_sqm = self.spatial_service.calculate_area(coordinates)
+                if area_sqm <= 0:
+                    raise SpatialOperationException("Calculated area is invalid")
+                update_data["area_sqm"] = area_sqm
+
             # Update boundary geometry
-            update_data["area_sqm"] = area_sqm
             update_data["boundary"] = self.spatial_service.create_wkt_polygon(coordinates)
             
             # Remove coordinates as they're now stored in boundary
