@@ -252,12 +252,16 @@ class _OwnerListingCardState extends State<_OwnerListingCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                        listing.isPublished
-                            ? 'Published ${Fmt.date(listing.publishedAt)}'
-                            : 'Created ${Fmt.date(listing.createdAt)}',
-                        style: AppType.caption(c, color: c.inkMuted)),
+                    Flexible(
+                      child: Text(
+                          listing.isPublished
+                              ? 'Published ${Fmt.date(listing.publishedAt)}'
+                              : 'Created ${Fmt.date(listing.createdAt)}',
+                          overflow: TextOverflow.ellipsis,
+                          style: AppType.caption(c, color: c.inkMuted)),
+                    ),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('View applications',
                             style: AppType.caption(c, color: c.green)

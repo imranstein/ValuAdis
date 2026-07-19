@@ -239,7 +239,7 @@ class _PhotoGrid extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   NetworkPhoto(
-                    url: photo.url,
+                    url: photo.versionedUrl,
                     headers: headers,
                     errorPlaceholder: ColoredBox(
                       color: c.surfaceSunken,

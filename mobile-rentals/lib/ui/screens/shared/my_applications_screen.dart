@@ -105,8 +105,11 @@ class _ApplicationCard extends StatelessWidget {
             children: [
               Text('Your offer  ',
                   style: AppType.label(c, color: c.inkMuted)),
-              Text(Fmt.rentPerMonth(app.offeredRent),
-                  style: AppType.mono(c, size: 15, weight: FontWeight.w700)),
+              Flexible(
+                child: Text(Fmt.rentPerMonth(app.offeredRent),
+                    overflow: TextOverflow.ellipsis,
+                    style: AppType.mono(c, size: 15, weight: FontWeight.w700)),
+              ),
             ],
           ),
           if (hasBand) ...[

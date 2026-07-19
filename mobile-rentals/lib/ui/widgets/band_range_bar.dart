@@ -103,14 +103,20 @@ class BandRangeBar extends StatelessWidget {
               children: [
                 _dot(c, c.green),
                 const SizedBox(width: 5),
-                Text('Suggested ${Fmt.rent(band.suggested)}',
-                    style: AppType.caption(c, color: c.inkSecondary)),
+                Flexible(
+                  child: Text('Suggested ${Fmt.rent(band.suggested)}',
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.caption(c, color: c.inkSecondary)),
+                ),
                 if (offer != null) ...[
                   const SizedBox(width: 14),
                   _dot(c, c.gold),
                   const SizedBox(width: 5),
-                  Text('Your offer',
-                      style: AppType.caption(c, color: c.inkSecondary)),
+                  Flexible(
+                    child: Text('Your offer',
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.caption(c, color: c.inkSecondary)),
+                  ),
                 ],
               ],
             ),
